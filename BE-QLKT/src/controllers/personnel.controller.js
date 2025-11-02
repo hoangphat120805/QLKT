@@ -1,0 +1,267 @@
+const personnelService = require('../services/personnel.service');
+const profileService = require('../services/profile.service');
+
+class PersonnelController {
+  /**
+   * GET /api/personnel?page=1&limit=10
+   * Lấy danh sách quân nhân
+   */
+  async getPersonnel(req, res) {
+    try {
+      const { page = 1, limit = 10 } = req.query;
+      const userRole = req.user.role;
+      const userQuanNhanId = req.user.quan_nhan_id;
+
+      const result = await personnelService.getPersonnel(page, limit, userRole, userQuanNhanId);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Lấy danh sách quân nhân thành công',
+        data: result,
+      });
+    } catch (error) {
+      console.error('Get personnel error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Lấy danh sách quân nhân thất bại',
+      });
+    }
+  }
+
+  /**
+   * GET /api/personnel/:id
+   * Lấy chi tiết 1 quân nhân
+   */
+  async getPersonnelById(req, res) {
+    try {
+      const { id } = req.params;
+      const userRole = req.user.role;
+      const userQuanNhanId = req.user.quan_nhan_id;
+
+      // Validate id parameter
+      if (!id || isNaN(parseInt(id))) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID quân nhân không hợp lệ',
+        });
+      }
+
+      const result = await personnelService.getPersonnelById(
+        parseInt(id),
+        userRole,
+        userQuanNhanId
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: 'Lấy thông tin quân nhân thành công',
+        data: result,
+      });
+    } catch (error) {
+      console.error('Get personnel by id error:', error);
+      return res.status(403).json({
+        success: false,
+        message: error.message || 'Lấy thông tin quân nhân thất bại',
+      });
+    }
+  }
+
+  /**
+   * POST /api/personnel
+   * Thêm quân nhân mới
+   */
+  async createPersonnel(req, res) {
+    try {
+      const { cccd, ho_ten, ngay_sinh, ngay_nhap_ngu, unit_id, position_id, role } = req.body;
+
+      // Validate input
+      if (!cccd || !ho_ten || !ngay_nhap_ngu || !unit_id || !position_id) {
+        return res.status(400).json({
+          success: false,
+          message:
+            'Vui lòng nhập đầy đủ thông tin: cccd, ho_ten, ngay_nhap_ngu, unit_id, position_id',
+        });
+      }
+
+      const result = await personnelService.createPersonnel({
+        cccd,
+        ho_ten,
+        ngay_sinh,
+        ngay_nhap_ngu,
+        unit_id,
+        position_id,
+        role, // Truyền role (optional, mặc định USER trong service)
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: 'Thêm quân nhân thành công',
+        data: result,
+      });
+    } catch (error) {
+      console.error('Create personnel error:', error);
+      return res.status(400).json({
+        success: false,
+        message: error.message || 'Thêm quân nhân thất bại',
+      });
+    }
+  }
+
+  /**
+   * PUT /api/personnel/:id
+   * Cập nhật quân nhân
+   */
+  async updatePersonnel(req, res) {
+    try {
+      const { id } = req.params;
+      const { unit_id, position_id, don_vi_id, chuc_vu_id, ho_ten, ngay_sinh, cccd, ngay_nhap_ngu } = req.body;
+      const userRole = req.user.role;
+      const userQuanNhanId = req.user.quan_nhan_id;
+
+      // Hỗ trợ cả 2 format: unit_id/position_id hoặc don_vi_id/chuc_vu_id
+      const finalUnitId = don_vi_id || unit_id;
+      const finalPositionId = chuc_vu_id || position_id;
+
+      const result = await personnelService.updatePersonnel(
+        parseInt(id),
+        { unit_id: finalUnitId, position_id: finalPositionId, ho_ten, ngay_sinh, cccd, ngay_nhap_ngu },
+        userRole,
+        userQuanNhanId
+      );
+
+      // Tự động cập nhật lại hồ sơ sau khi update
+      try {
+        await profileService.recalculateProfile(parseInt(id));
+        console.log(`✅ Auto-recalculated profile for personnel ${id}`);
+      } catch (recalcError) {
+        console.error(`⚠️ Failed to auto-recalculate profile for personnel ${id}:`, recalcError.message);
+        // Không throw error để không ảnh hưởng đến việc update personnel
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: 'Cập nhật quân nhân thành công',
+        data: result,
+      });
+    } catch (error) {
+      console.error('Update personnel error:', error);
+      return res.status(400).json({
+        success: false,
+        message: error.message || 'Cập nhật quân nhân thất bại',
+      });
+    }
+  }
+
+  /**
+   * DELETE /api/personnel/:id
+   * Xóa quân nhân
+   */
+  async deletePersonnel(req, res) {
+    try {
+      const { id } = req.params;
+      const userRole = req.user.role;
+      const userQuanNhanId = req.user.quan_nhan_id;
+
+      // Validate id parameter
+      if (!id || isNaN(parseInt(id))) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID quân nhân không hợp lệ',
+        });
+      }
+
+      const result = await personnelService.deletePersonnel(parseInt(id), userRole, userQuanNhanId);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Xóa quân nhân thành công',
+        data: result,
+      });
+    } catch (error) {
+      console.error('Delete personnel error:', error);
+      return res.status(400).json({
+        success: false,
+        message: error.message || 'Xóa quân nhân thất bại',
+      });
+    }
+  }
+
+  /**
+   * POST /api/personnel/import
+   * Import hàng loạt từ Excel
+   */
+  async importPersonnel(req, res) {
+    try {
+      if (!req.file || !req.file.buffer) {
+        return res.status(400).json({
+          success: false,
+          message: 'Không tìm thấy file upload. Vui lòng gửi form-data field "file"',
+        });
+      }
+
+      const result = await personnelService.importFromExcelBuffer(req.file.buffer);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Import quân nhân hoàn tất',
+        data: result,
+      });
+    } catch (error) {
+      console.error('Import personnel error:', error);
+      return res.status(400).json({
+        success: false,
+        message: error.message || 'Import quân nhân thất bại',
+      });
+    }
+  }
+
+  /**
+   * GET /api/personnel/export
+   * Xuất toàn bộ dữ liệu ra Excel
+   */
+  async exportPersonnel(req, res) {
+    try {
+      const buffer = await personnelService.exportPersonnel();
+
+      const fileName = `quan_nhan_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      );
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+      return res.status(200).send(buffer);
+    } catch (error) {
+      console.error('Export personnel error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Xuất dữ liệu quân nhân thất bại',
+      });
+    }
+  }
+
+  /**
+   * GET /api/personnel/export-sample
+   * Xuất file mẫu Excel để import
+   */
+  async exportPersonnelSample(req, res) {
+    try {
+      const buffer = await personnelService.exportPersonnelSample();
+
+      const fileName = `mau_quan_nhan.xlsx`;
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      );
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+      return res.status(200).send(buffer);
+    } catch (error) {
+      console.error('Export personnel sample error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Xuất file mẫu quân nhân thất bại',
+      });
+    }
+  }
+}
+
+module.exports = new PersonnelController();

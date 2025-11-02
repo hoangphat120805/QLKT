@@ -1,0 +1,75 @@
+const router = require('express').Router();
+
+// Import routes
+const authRoute = require('./auth.route');
+const accountRoute = require('./account.route');
+const unitRoute = require('./unit.route');
+const contributionGroupRoute = require('./contributionGroup.route');
+const positionRoute = require('./position.route');
+const personnelRoute = require('./personnel.route');
+const annualRewardRoute = require('./annualReward.route');
+const scientificAchievementRoute = require('./scientificAchievement.route');
+const positionHistoryRoute = require('./positionHistory.route');
+const profileRoute = require('./profile.route');
+const systemLogsRoute = require('./systemLogs.route');
+const categoriesRoute = require('./categories.route');
+const personnelNestedRoute = require('./personnelNested.route');
+const proposalRoute = require('./proposal.route');
+const awardsRoute = require('./awards.route');
+const notificationRoute = require('./notification.route');
+
+// API Routes
+// 1. Authentication
+router.use('/api/auth', authRoute);
+
+// 2. Account Management (SUPER_ADMIN)
+router.use('/api/accounts', accountRoute);
+
+// 3. Master Data Management (ADMIN)
+router.use('/api/units', unitRoute);
+router.use('/api/contribution-groups', contributionGroupRoute);
+router.use('/api/positions', positionRoute);
+
+// 3.1 Categories (alias routes for frontend compatibility)
+router.use('/api/categories', categoriesRoute);
+
+// 4. Personnel Management
+router.use('/api/personnel', personnelRoute);
+router.use('/api/personnel/:personnelId', personnelNestedRoute);
+
+// 5. Reward Management (Input)
+router.use('/api/annual-rewards', annualRewardRoute);
+router.use('/api/scientific-achievements', scientificAchievementRoute);
+router.use('/api/position-history', positionHistoryRoute);
+
+// 5.1. Proposal Management (Workflow: Đề xuất & Phê duyệt)
+router.use('/api/proposals', proposalRoute);
+
+// 5.2. Awards Management (Quản lý khen thưởng tổng hợp)
+router.use('/api/awards', awardsRoute);
+
+// 6. Profile & Calculation (Output)
+router.use('/api/profiles', profileRoute);
+router.use('/api/system-logs', systemLogsRoute);
+
+// 7. Notifications
+router.use('/api/notifications', notificationRoute);
+
+// Health check endpoint
+router.get('/health', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Server is running',
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// 404 handler
+router.use('*', (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'API endpoint không tồn tại',
+  });
+});
+
+module.exports = router;

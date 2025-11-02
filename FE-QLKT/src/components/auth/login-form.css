@@ -1,0 +1,348 @@
+/* Login Container */
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+
+/* Login Card */
+.login-card {
+  width: 100%;
+  max-width: 440px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 3rem 2.5rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+  z-index: 10;
+  animation: slideUp 0.6s ease-out;
+  margin-top: 4rem; /* Space for header */
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Login Header */
+.login-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.logo-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  animation: fadeInDown 0.8s ease-out;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.logo-image {
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  padding: 0;
+  transition: transform 0.3s ease;
+}
+
+.logo-image:hover {
+  transform: scale(1.05);
+}
+
+.login-title {
+  color: #ffffff !important;
+  font-size: 2rem !important;
+  font-weight: 700 !important;
+  margin-bottom: 0.5rem !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0, 0.3);
+  letter-spacing: 0.5px;
+}
+
+.login-subtitle {
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+/* Form Styles */
+.login-form {
+  margin-top: 2rem;
+}
+
+.form-label {
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.login-input {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 12px !important;
+  color: #ffffff !important;
+  transition: all 0.3s ease;
+}
+
+.login-input:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(59, 130, 246, 0.5) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+.login-input:focus,
+.login-input.ant-input-affix-wrapper-focused {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+}
+
+.login-input::placeholder {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.login-input input {
+  background: transparent !important;
+  color: #ffffff !important;
+}
+
+.login-input input::placeholder {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.input-icon {
+  color: rgba(255, 255, 255, 0.6) !important;
+  font-size: 1rem;
+}
+
+.login-input:hover .input-icon {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.login-input.ant-input-affix-wrapper-focused .input-icon {
+  color: #3b82f6 !important;
+}
+
+/* Password Input Specific */
+.login-input.ant-input-password {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.login-input.ant-input-password:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+.login-input.ant-input-password.ant-input-affix-wrapper-focused {
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+.login-input .ant-input-suffix {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.login-input:hover .ant-input-suffix {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Login Button */
+.login-button {
+  margin-top: 1.5rem;
+  height: 48px !important;
+  border-radius: 12px !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4) !important;
+  transition: all 0.3s ease !important;
+}
+
+.login-button:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.5) !important;
+  transform: translateY(-2px);
+}
+
+.login-button:active {
+  transform: translateY(0);
+}
+
+.login-button:focus {
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+}
+
+.login-button.ant-btn-loading {
+  pointer-events: none !important;
+  opacity: 0.9 !important;
+}
+
+.login-button .ant-btn-loading-icon {
+  margin-right: 8px !important;
+  display: inline-flex !important;
+}
+
+.login-button .ant-btn-loading-icon .anticon,
+.login-button .ant-btn-loading-icon span {
+  animation: spin 1s linear infinite !important;
+  display: inline-block !important;
+}
+
+.login-button.ant-btn-loading .ant-btn-loading-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Alert */
+.login-alert {
+  margin-bottom: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.login-alert .ant-alert-message {
+  color: #fecaca;
+}
+
+/* Footer */
+.login-footer {
+  margin-top: 2rem;
+  text-align: center;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.footer-text {
+  color: rgba(255, 255, 255, 0.6) !important;
+  font-size: 0.875rem;
+}
+
+/* Decorative Elements */
+.login-decoration {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.decoration-circle {
+  position: absolute;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+  filter: blur(60px);
+  animation: float 6s ease-in-out infinite;
+}
+
+.decoration-circle-1 {
+  width: 300px;
+  height: 300px;
+  top: -100px;
+  left: -100px;
+  animation-delay: 0s;
+}
+
+.decoration-circle-2 {
+  width: 200px;
+  height: 200px;
+  bottom: -50px;
+  right: -50px;
+  animation-delay: 2s;
+}
+
+.decoration-circle-3 {
+  width: 150px;
+  height: 150px;
+  top: 50%;
+  right: 10%;
+  animation-delay: 4s;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-20px) scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .login-card {
+    padding: 2rem 1.5rem;
+    max-width: 100%;
+  }
+
+  .login-title {
+    font-size: 1.75rem !important;
+  }
+
+  .logo-image {
+    width: 60px;
+    height: 60px;
+  }
+}
+
+/* Form Item Error Messages */
+.login-form .ant-form-item-explain-error {
+  color: #fca5a5 !important;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+/* Ant Design Form Overrides */
+.login-form .ant-form-item {
+  margin-bottom: 1.5rem;
+}
+
+.login-form .ant-form-item-label {
+  padding-bottom: 0.5rem;
+}
+
+/* Autofill Styles */
+.login-input input:-webkit-autofill,
+.login-input input:-webkit-autofill:hover,
+.login-input input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #ffffff !important;
+  -webkit-box-shadow: 0 0 0px 1000px rgba(255, 255, 255, 0.1) inset !important;
+  box-shadow: 0 0 0px 1000px rgba(255, 255, 255, 0.1) inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}

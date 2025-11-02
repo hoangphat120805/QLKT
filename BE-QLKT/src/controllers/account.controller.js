@@ -1,0 +1,251 @@
+const accountService = require('../services/account.service');
+
+class AccountController {
+  /**
+   * GET /api/accounts
+   * Lấy danh sách tài khoản (có phân trang)
+   */
+  async getAccounts(req, res) {
+    try {
+      const { page = 1, limit = 10, search = '', role } = req.query;
+      const userRole = req.user?.role;
+
+      // Nếu là ADMIN, chỉ cho phép xem MANAGER và USER
+      let roleFilter = role;
+      if (userRole === 'ADMIN') {
+        // Nếu có role filter, kiểm tra xem có hợp lệ không
+        if (role && !['MANAGER', 'USER'].includes(role)) {
+          return res.status(403).json({
+            success: false,
+            message: 'ADMIN chỉ có thể quản lý tài khoản MANAGER và USER',
+          });
+        }
+        // Nếu không có role filter, set default là MANAGER,USER
+        roleFilter = role || 'MANAGER,USER';
+      }
+
+      const result = await accountService.getAccounts(page, limit, search, roleFilter);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Lấy danh sách tài khoản thành công',
+        data: result,
+      });
+    } catch (error) {
+      console.error('Get accounts error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Lấy danh sách tài khoản thất bại',
+      });
+    }
+  }
+
+  /**
+   * GET /api/accounts/:id
+   * Lấy chi tiết 1 tài khoản
+   */
+  async getAccountById(req, res) {
+    try {
+      const { id } = req.params;
+      const result = await accountService.getAccountById(parseInt(id));
+
+      return res.status(200).json({
+        success: true,
+        message: 'Lấy chi tiết tài khoản thành công',
+        data: result,
+      });
+    } catch (error) {
+      return res.status(404).json({
+        success: false,
+        message: error.message || 'Không tìm thấy tài khoản',
+      });
+    }
+  }
+
+  /**
+   * POST /api/accounts
+   * Tạo tài khoản mới
+   */
+  async createAccount(req, res) {
+    try {
+      const { personnel_id, username, password, role, don_vi_id, chuc_vu_id } = req.body;
+      const userRole = req.user?.role;
+
+      // Validate input
+      if (!username || !password || !role) {
+        return res.status(400).json({
+          success: false,
+          message: 'Vui lòng nhập đầy đủ thông tin: username, password, role',
+        });
+      }
+
+      // Validate role based on user's role
+      let validRoles = ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'USER'];
+      if (userRole === 'ADMIN') {
+        // ADMIN chỉ có thể tạo MANAGER hoặc USER
+        validRoles = ['MANAGER', 'USER'];
+        if (!validRoles.includes(role)) {
+          return res.status(403).json({
+            success: false,
+            message: 'ADMIN chỉ có thể tạo tài khoản MANAGER và USER',
+          });
+        }
+      } else {
+        // SUPER_ADMIN có thể tạo tất cả
+        if (!validRoles.includes(role)) {
+          return res.status(400).json({
+            success: false,
+            message: 'Vai trò không hợp lệ. Vai trò hợp lệ: ' + validRoles.join(', '),
+          });
+        }
+      }
+
+      // Đối với MANAGER và USER, bắt buộc phải có don_vi_id và chuc_vu_id
+      if ((role === 'MANAGER' || role === 'USER') && (!don_vi_id || !chuc_vu_id)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Vui lòng chọn đơn vị và chức vụ cho tài khoản MANAGER/USER',
+        });
+      }
+
+      const result = await accountService.createAccount({
+        personnel_id,
+        username,
+        password,
+        role,
+        don_vi_id: don_vi_id ? parseInt(don_vi_id) : undefined,
+        chuc_vu_id: chuc_vu_id ? parseInt(chuc_vu_id) : undefined,
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: 'Tạo tài khoản thành công',
+        data: result,
+      });
+    } catch (error) {
+      console.error('Create account error:', error);
+      return res.status(400).json({
+        success: false,
+        message: error.message || 'Tạo tài khoản thất bại',
+      });
+    }
+  }
+
+  /**
+   * PUT /api/accounts/:id
+   * Cập nhật tài khoản (đổi vai trò)
+   */
+  async updateAccount(req, res) {
+    try {
+      const { id } = req.params;
+      const { role } = req.body;
+      const userRole = req.user?.role;
+
+      if (!role) {
+        return res.status(400).json({
+          success: false,
+          message: 'Vui lòng cung cấp vai trò mới',
+        });
+      }
+
+      // Validate role based on user's role
+      let validRoles = ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'USER'];
+      if (userRole === 'ADMIN') {
+        // ADMIN chỉ có thể cập nhật MANAGER hoặc USER
+        validRoles = ['MANAGER', 'USER'];
+        if (!validRoles.includes(role)) {
+          return res.status(403).json({
+            success: false,
+            message: 'ADMIN chỉ có thể cập nhật tài khoản thành MANAGER hoặc USER',
+          });
+        }
+
+        // Kiểm tra xem tài khoản hiện tại có phải là MANAGER hoặc USER không
+        const existingAccount = await accountService.getAccountById(parseInt(id));
+        if (!['MANAGER', 'USER'].includes(existingAccount.role)) {
+          return res.status(403).json({
+            success: false,
+            message: 'ADMIN chỉ có thể quản lý tài khoản MANAGER và USER',
+          });
+        }
+      } else {
+        // SUPER_ADMIN có thể cập nhật tất cả
+        if (!validRoles.includes(role)) {
+          return res.status(400).json({
+            success: false,
+            message: 'Vai trò không hợp lệ. Vai trò hợp lệ: ' + validRoles.join(', '),
+          });
+        }
+      }
+
+      const result = await accountService.updateAccount(parseInt(id), { role });
+
+      return res.status(200).json({
+        success: true,
+        message: 'Cập nhật tài khoản thành công',
+        data: result,
+      });
+    } catch (error) {
+      console.error('Update account error:', error);
+      return res.status(400).json({
+        success: false,
+        message: error.message || 'Cập nhật tài khoản thất bại',
+      });
+    }
+  }
+
+  /**
+   * POST /api/accounts/reset-password
+   * Đặt lại mật khẩu cho tài khoản
+   */
+  async resetPassword(req, res) {
+    try {
+      const { account_id } = req.body;
+
+      if (!account_id) {
+        return res.status(400).json({
+          success: false,
+          message: 'Vui lòng cung cấp account_id',
+        });
+      }
+
+      const result = await accountService.resetPassword(parseInt(account_id));
+
+      return res.status(200).json({
+        success: true,
+        message: result.message,
+      });
+    } catch (error) {
+      console.error('Reset password error:', error);
+      return res.status(400).json({
+        success: false,
+        message: error.message || 'Đặt lại mật khẩu thất bại',
+      });
+    }
+  }
+
+  /**
+   * DELETE /api/accounts/:id
+   * Xóa (vô hiệu hóa) tài khoản
+   */
+  async deleteAccount(req, res) {
+    try {
+      const { id } = req.params;
+
+      const result = await accountService.deleteAccount(parseInt(id));
+
+      return res.status(200).json({
+        success: true,
+        message: result.message,
+      });
+    } catch (error) {
+      console.error('Delete account error:', error);
+      return res.status(400).json({
+        success: false,
+        message: error.message || 'Xóa tài khoản thất bại',
+      });
+    }
+  }
+}
+
+module.exports = new AccountController();
