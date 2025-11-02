@@ -239,58 +239,6 @@ Khi làm việc với Claude hoặc Cursor, tham khảo:
 4. Mọi API call đều gửi kèm: `Authorization: Bearer <access_token>`
 5. Khi Access Token hết hạn → Dùng Refresh Token để lấy Access Token mới
 
-## 🚧 Roadmap
-
-### Phase 1 - Completed ✅
-- [x] Authentication & Authorization
-- [x] User Management
-- [x] Personnel Management
-- [x] Awards Management
-- [x] Excel Import/Export
-- [x] Profile Calculation
-
-### Phase 2 - In Progress 🚧
-- [ ] Advanced Reports & Analytics
-- [ ] Notifications System
-- [ ] Audit Logs
-- [ ] Advanced Search & Filters
-
-### Phase 3 - Planned 📋
-- [ ] Mobile App
-- [ ] Real-time Updates
-- [ ] Document Management
-- [ ] Integration with other systems
-
-## 🐛 Troubleshooting
-
-### Frontend không kết nối được Backend
-- Kiểm tra `NEXT_PUBLIC_API_URL` trong `.env.local`
-- Đảm bảo Backend đang chạy tại port 5000
-- Kiểm tra CORS configuration
-
-### Lỗi Database Connection
-- Kiểm tra `DATABASE_URL` trong `.env`
-- Đảm bảo PostgreSQL đang chạy
-- Chạy `npx prisma db push` để sync schema
-
-### Lỗi 401 Unauthorized
-- Token đã hết hạn → Đăng nhập lại
-- Token không hợp lệ → Clear localStorage
-- Check Authorization header format
-
-### Lỗi Import Excel
-- Đảm bảo file đúng format
-- Kiểm tra CCCD phải unique
-- Validate dữ liệu trước khi import
-
-## 👥 Contributing
-
-1. Fork repository
-2. Tạo feature branch: `git checkout -b feature/AmazingFeature`
-3. Commit changes: `git commit -m 'Add some AmazingFeature'`
-4. Push to branch: `git push origin feature/AmazingFeature`
-5. Tạo Pull Request
-
 ## 📄 License
 
 This project is proprietary software for Vietnam Military Science Academy.
