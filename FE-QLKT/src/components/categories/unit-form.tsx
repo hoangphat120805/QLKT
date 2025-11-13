@@ -1,102 +1,98 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import { Form, Input, Button, Space, message, Select, Typography } from "antd"
-import { apiClient } from "@/lib/api-client"
+import { useState, useEffect } from 'react';
+import { Form, Input, Button, Space, message, Select, Typography } from 'antd';
+import { apiClient } from '@/lib/api-client';
 
-const { Text } = Typography
+const { Text } = Typography;
 
 interface UnitFormProps {
-  unit?: any
-  units?: any[] // Danh sách đơn vị để chọn làm đơn vị cha
-  onSuccess?: () => void
-  onClose?: () => void
+  unit?: any;
+  units?: any[]; // Danh sách đơn vị để chọn làm đơn vị cha
+  onSuccess?: () => void;
+  onClose?: () => void;
 }
 
 export function UnitForm({ unit, units = [], onSuccess, onClose }: UnitFormProps) {
-  const [loading, setLoading] = useState(false)
-  const [form] = Form.useForm()
+  const [loading, setLoading] = useState(false);
+  const [form] = Form.useForm();
 
   useEffect(() => {
     if (unit) {
       // Nếu unit có id thì đang sửa, nếu không có id nhưng có co_quan_don_vi_id thì đang tạo đơn vị trực thuộc
       if (unit.id) {
         form.setFieldsValue({
-          ma_don_vi: unit.ma_don_vi || "",
-          ten_don_vi: unit.ten_don_vi || "",
+          ma_don_vi: unit.ma_don_vi || '',
+          ten_don_vi: unit.ten_don_vi || '',
           co_quan_don_vi_id: unit.co_quan_don_vi_id ? unit.co_quan_don_vi_id.toString() : undefined,
-        })
+        });
       } else if (unit.co_quan_don_vi_id) {
         // Đang tạo đơn vị trực thuộc, reset form và set co_quan_don_vi_id
-        form.resetFields()
+        form.resetFields();
         form.setFieldsValue({
           co_quan_don_vi_id: unit.co_quan_don_vi_id.toString(),
-        })
+        });
       } else {
         // Tạo mới cơ quan đơn vị (không có co_quan_don_vi_id)
-        form.resetFields()
+        form.resetFields();
       }
     } else {
       // Không có unit, reset form
-      form.resetFields()
+      form.resetFields();
     }
-  }, [unit, form])
+  }, [unit, form]);
 
   async function onSubmit(values: any) {
     try {
-      setLoading(true)
+      setLoading(true);
 
       const payload: any = {
         ma_don_vi: values.ma_don_vi,
         ten_don_vi: values.ten_don_vi,
-      }
+      };
 
       // Thêm co_quan_don_vi_id nếu có
       if (values.co_quan_don_vi_id) {
-        payload.co_quan_don_vi_id = values.co_quan_don_vi_id.toString() // Giữ nguyên string vì có thể là UUID
+        payload.co_quan_don_vi_id = values.co_quan_don_vi_id.toString(); // Giữ nguyên string vì có thể là UUID
       } else if (unit?.co_quan_don_vi_id && !unit?.id) {
         // Nếu đang tạo đơn vị trực thuộc (có co_quan_don_vi_id nhưng chưa có id)
-        payload.co_quan_don_vi_id = unit.co_quan_don_vi_id.toString()
+        payload.co_quan_don_vi_id = unit.co_quan_don_vi_id.toString();
       } else if (unit?.id && !values.co_quan_don_vi_id) {
         // Nếu đang sửa và không chọn co_quan_don_vi_id, set null
-        payload.co_quan_don_vi_id = null
+        payload.co_quan_don_vi_id = null;
       }
 
-      let res
+      let res;
       if (unit?.id) {
-        res = await apiClient.updateUnit(unit.id.toString(), payload)
+        res = await apiClient.updateUnit(unit.id.toString(), payload);
       } else {
-        res = await apiClient.createUnit(payload)
+        res = await apiClient.createUnit(payload);
       }
 
       if (res.success) {
-        message.success(unit?.id ? "Cập nhật đơn vị thành công" : "Tạo đơn vị thành công")
-        onSuccess?.()
-        onClose?.()
+        message.success(unit?.id ? 'Cập nhật đơn vị thành công' : 'Tạo đơn vị thành công');
+        onSuccess?.();
+        onClose?.();
       } else {
-        message.error(res.message || "Có lỗi xảy ra")
+        message.error(res.message || 'Có lỗi xảy ra');
       }
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message
-        || error?.response?.data?.error
-        || error?.message
-        || "Có lỗi xảy ra"
-      message.error(errorMessage)
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        'Có lỗi xảy ra';
+      message.error(errorMessage);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   // Lọc bỏ đơn vị hiện tại khỏi danh sách đơn vị cha (tránh vòng lặp)
-  const availableParentUnits = units.filter(u => u.id !== unit?.id)
+  const availableParentUnits = units.filter(u => u.id !== unit?.id);
 
   return (
-    <Form
-      form={form}
-      layout="vertical"
-      onFinish={onSubmit}
-      autoComplete="off"
-    >
+    <Form form={form} layout="vertical" onFinish={onSubmit} autoComplete="off">
       <Form.Item
         label="Mã Đơn vị"
         name="ma_don_vi"
@@ -131,7 +127,7 @@ export function UnitForm({ unit, units = [], onSuccess, onClose }: UnitFormProps
               (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase())
             }
           >
-            {availableParentUnits.map((u) => (
+            {availableParentUnits.map(u => (
               <Select.Option key={u.id} value={u.id.toString()}>
                 {u.ten_don_vi} ({u.ma_don_vi})
               </Select.Option>
@@ -139,14 +135,13 @@ export function UnitForm({ unit, units = [], onSuccess, onClose }: UnitFormProps
           </Select>
         </Form.Item>
       )}
-      
+
       {/* Hiển thị thông tin cơ quan đơn vị nếu đang tạo đơn vị trực thuộc (có co_quan_don_vi_id nhưng chưa có id) */}
       {unit && unit.co_quan_don_vi_id && !unit.id && (
         <Form.Item label="Cơ quan đơn vị">
           <Text type="secondary">
-            Đơn vị trực thuộc của: <strong>
-              {units.length > 0 ? units[0].ten_don_vi : 'Đang tải...'}
-            </strong>
+            Đơn vị trực thuộc của:{' '}
+            <strong>{units.length > 0 ? units[0].ten_don_vi : 'Đang tải...'}</strong>
           </Text>
         </Form.Item>
       )}
@@ -157,10 +152,10 @@ export function UnitForm({ unit, units = [], onSuccess, onClose }: UnitFormProps
             Hủy
           </Button>
           <Button type="primary" htmlType="submit" loading={loading}>
-            {unit ? "Cập nhật" : "Tạo mới"}
+            {unit ? 'Cập nhật' : 'Tạo mới'}
           </Button>
         </Space>
       </Form.Item>
     </Form>
-  )
+  );
 }

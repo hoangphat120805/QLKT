@@ -1,17 +1,23 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Input, Checkbox, Select } from "antd";
+import { useState } from 'react';
+import { Input, Checkbox, Select } from 'antd';
 
 interface EditableCellProps {
   value: any;
-  type: "text" | "checkbox" | "number" | "select";
+  type: 'text' | 'checkbox' | 'number' | 'select';
   onSave: (newValue: any) => void;
   editable?: boolean;
   options?: { label: string; value: string }[];
 }
 
-export function EditableCell({ value, type, onSave, editable = true, options = [] }: EditableCellProps) {
+export function EditableCell({
+  value,
+  type,
+  onSave,
+  editable = true,
+  options = [],
+}: EditableCellProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [currentValue, setCurrentValue] = useState(value);
 
@@ -23,32 +29,32 @@ export function EditableCell({ value, type, onSave, editable = true, options = [
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
+    if (e.key === 'Enter') {
       handleBlur();
     }
-    if (e.key === "Escape") {
+    if (e.key === 'Escape') {
       setCurrentValue(value);
       setIsEditing(false);
     }
   };
 
   if (!editable) {
-    if (type === "checkbox") {
+    if (type === 'checkbox') {
       return <Checkbox checked={!!value} disabled />;
     }
-    if (type === "select") {
+    if (type === 'select') {
       const option = options.find(opt => opt.value === value);
-      return <span style={{ color: "#666" }}>{option?.label || value || "-"}</span>;
+      return <span style={{ color: '#666' }}>{option?.label || value || '-'}</span>;
     }
-    return <span style={{ color: "#666" }}>{value || "-"}</span>;
+    return <span style={{ color: '#666' }}>{value || '-'}</span>;
   }
 
-  if (type === "checkbox") {
+  if (type === 'checkbox') {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Checkbox
           checked={!!currentValue}
-          onChange={(e) => {
+          onChange={e => {
             setCurrentValue(e.target.checked);
             onSave(e.target.checked);
           }}
@@ -57,15 +63,15 @@ export function EditableCell({ value, type, onSave, editable = true, options = [
     );
   }
 
-  if (type === "select") {
+  if (type === 'select') {
     return (
       <Select
         value={currentValue}
-        onChange={(val) => {
+        onChange={val => {
           setCurrentValue(val);
           onSave(val);
         }}
-        style={{ width: "100%" }}
+        style={{ width: '100%' }}
         size="small"
         options={options}
       />
@@ -75,9 +81,9 @@ export function EditableCell({ value, type, onSave, editable = true, options = [
   if (isEditing) {
     return (
       <Input
-        type={type === "number" ? "number" : "text"}
-        value={currentValue || ""}
-        onChange={(e) => setCurrentValue(e.target.value)}
+        type={type === 'number' ? 'number' : 'text'}
+        value={currentValue || ''}
+        onChange={e => setCurrentValue(e.target.value)}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         autoFocus
@@ -90,18 +96,18 @@ export function EditableCell({ value, type, onSave, editable = true, options = [
     <div
       onClick={() => setIsEditing(true)}
       style={{
-        cursor: "pointer",
-        padding: "4px 8px",
-        minHeight: "32px",
-        display: "flex",
-        alignItems: "center",
-        borderRadius: "4px",
-        transition: "background-color 0.2s",
+        cursor: 'pointer',
+        padding: '4px 8px',
+        minHeight: '32px',
+        display: 'flex',
+        alignItems: 'center',
+        borderRadius: '4px',
+        transition: 'background-color 0.2s',
       }}
-      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f5f5f5")}
-      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+      onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f5f5f5')}
+      onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
     >
-      {currentValue || <span style={{ color: "#bfbfbf", fontStyle: "italic" }}>Nhấn để sửa</span>}
+      {currentValue || <span style={{ color: '#bfbfbf', fontStyle: 'italic' }}>Nhấn để sửa</span>}
     </div>
   );
 }

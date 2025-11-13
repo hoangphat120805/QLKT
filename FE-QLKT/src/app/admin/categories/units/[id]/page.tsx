@@ -15,12 +15,7 @@ import {
   ConfigProvider,
   theme as antdTheme,
 } from 'antd';
-import {
-  ArrowLeftOutlined,
-  HomeOutlined,
-  PlusOutlined,
-  EditOutlined,
-} from '@ant-design/icons';
+import { ArrowLeftOutlined, HomeOutlined, PlusOutlined, EditOutlined } from '@ant-design/icons';
 import { UnitForm } from '@/components/categories/unit-form';
 import { UnitsTable } from '@/components/categories/units-table';
 import { PositionForm } from '@/components/categories/position-form';
@@ -160,7 +155,8 @@ export default function UnitDetailPage() {
               {unit.ten_don_vi}
             </Title>
             <Text type="secondary">
-              Mã: {unit.ma_don_vi} {unit.CoQuanDonVi && `• Trực thuộc: ${unit.CoQuanDonVi.ten_don_vi}`}
+              Mã: {unit.ma_don_vi}{' '}
+              {unit.CoQuanDonVi && `• Trực thuộc: ${unit.CoQuanDonVi.ten_don_vi}`}
             </Text>
           </div>
           <Button
@@ -173,164 +169,165 @@ export default function UnitDetailPage() {
           </Button>
         </div>
 
-      <Tabs
-        activeKey={activeTab}
-        onChange={setActiveTab}
-        items={[
-          {
-            key: 'info',
-            label: 'Thông tin',
-            children: (
-              <Card>
-                <Descriptions bordered column={2}>
-                  <Descriptions.Item label="Mã đơn vị" span={1}>
-                    {unit.ma_don_vi}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Tên đơn vị" span={1}>
-                    {unit.ten_don_vi}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Số lượng quân nhân" span={1}>
-                    {unit.so_luong || 0}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Cơ quan đơn vị" span={1}>
-                    {unit.CoQuanDonVi ? (
-                      <Link href={`/admin/categories/units/${unit.CoQuanDonVi.id}`}>
-                        {unit.CoQuanDonVi.ten_don_vi}
-                      </Link>
-                    ) : null}
-                  </Descriptions.Item>
-                  {/* Chỉ hiển thị "Số đơn vị trực thuộc" nếu đơn vị là cơ quan đơn vị (không có co_quan_don_vi_id) */}
-                  {!isDonViTrucThuoc && (
-                    <Descriptions.Item label="Số đơn vị trực thuộc" span={1}>
-                      {childUnits.length}
-                    </Descriptions.Item>
-                  )}
-                  <Descriptions.Item label="Số chức vụ" span={1}>
-                    <Tag color="cyan">{positions.length}</Tag>
-                  </Descriptions.Item>
-                </Descriptions>
-              </Card>
-            ),
-          },
-          // Chỉ hiển thị tab "Đơn vị trực thuộc" nếu đơn vị hiện tại là cơ quan đơn vị (không có co_quan_don_vi_id)
-          // Đơn vị trực thuộc không thể có đơn vị con
-          ...(!isDonViTrucThuoc
-            ? [
-                {
-                  key: 'child-units',
-                  label: `Đơn vị trực thuộc (${childUnits.length})`,
-                  children: (
-                    <>
-                      <div
-                        style={{
-                          marginBottom: 24,
-                          display: 'flex',
-                          justifyContent: 'flex-end',
-                          alignItems: 'center',
-                        }}
-                      >
-                        <Button
-                          type="primary"
-                          size="large"
-                          icon={<PlusOutlined />}
-                          onClick={() => handleOpenDialog('unit')}
-                        >
-                          Thêm Đơn vị trực thuộc
-                        </Button>
-                      </div>
-                      <Card>
-                        {childUnits.length > 0 ? (
-                          <UnitsTable
-                            units={childUnits}
-                            onEdit={(u) => handleOpenDialog('unit', u)}
-                            onRefresh={loadUnitDetail}
-                          />
-                        ) : (
-                          <div style={{ padding: '48px', textAlign: 'center' }}>
-                            <Text type="secondary">
-                              Chưa có đơn vị trực thuộc nào. Một cơ quan đơn vị có thể có hoặc không có đơn vị trực thuộc.
-                            </Text>
-                          </div>
-                        )}
-                      </Card>
-                    </>
-                  ),
-                },
-              ]
-            : []),
-          {
-            key: 'positions',
-            label: `Chức vụ (${positions.length})`,
-            children: (
-              <>
-                <div
-                  style={{
-                    marginBottom: 24,
-                    display: 'flex',
-                    justifyContent: 'flex-end',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Button
-                    type="primary"
-                    size="large"
-                    icon={<PlusOutlined />}
-                    onClick={() => handleOpenDialog('position')}
-                  >
-                    Thêm Chức vụ
-                  </Button>
-                </div>
+        <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          items={[
+            {
+              key: 'info',
+              label: 'Thông tin',
+              children: (
                 <Card>
-                  {positions.length > 0 ? (
-                    <PositionsTable
-                      positions={positions}
-                      onEdit={(p) => handleOpenDialog('position', p)}
-                      onRefresh={loadUnitDetail}
-                    />
-                  ) : (
-                    <div style={{ padding: '48px', textAlign: 'center' }}>
-                      <Text type="secondary">Chưa có chức vụ nào</Text>
-                    </div>
-                  )}
+                  <Descriptions bordered column={2}>
+                    <Descriptions.Item label="Mã đơn vị" span={1}>
+                      {unit.ma_don_vi}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Tên đơn vị" span={1}>
+                      {unit.ten_don_vi}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Số lượng quân nhân" span={1}>
+                      {unit.so_luong || 0}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Cơ quan đơn vị" span={1}>
+                      {unit.CoQuanDonVi ? (
+                        <Link href={`/admin/categories/units/${unit.CoQuanDonVi.id}`}>
+                          {unit.CoQuanDonVi.ten_don_vi}
+                        </Link>
+                      ) : null}
+                    </Descriptions.Item>
+                    {/* Chỉ hiển thị "Số đơn vị trực thuộc" nếu đơn vị là cơ quan đơn vị (không có co_quan_don_vi_id) */}
+                    {!isDonViTrucThuoc && (
+                      <Descriptions.Item label="Số đơn vị trực thuộc" span={1}>
+                        {childUnits.length}
+                      </Descriptions.Item>
+                    )}
+                    <Descriptions.Item label="Số chức vụ" span={1}>
+                      <Tag color="cyan">{positions.length}</Tag>
+                    </Descriptions.Item>
+                  </Descriptions>
                 </Card>
-              </>
-            ),
-          },
-        ]}
-      />
+              ),
+            },
+            // Chỉ hiển thị tab "Đơn vị trực thuộc" nếu đơn vị hiện tại là cơ quan đơn vị (không có co_quan_don_vi_id)
+            // Đơn vị trực thuộc không thể có đơn vị con
+            ...(!isDonViTrucThuoc
+              ? [
+                  {
+                    key: 'child-units',
+                    label: `Đơn vị trực thuộc (${childUnits.length})`,
+                    children: (
+                      <>
+                        <div
+                          style={{
+                            marginBottom: 24,
+                            display: 'flex',
+                            justifyContent: 'flex-end',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <Button
+                            type="primary"
+                            size="large"
+                            icon={<PlusOutlined />}
+                            onClick={() => handleOpenDialog('unit')}
+                          >
+                            Thêm Đơn vị trực thuộc
+                          </Button>
+                        </div>
+                        <Card>
+                          {childUnits.length > 0 ? (
+                            <UnitsTable
+                              units={childUnits}
+                              onEdit={u => handleOpenDialog('unit', u)}
+                              onRefresh={loadUnitDetail}
+                            />
+                          ) : (
+                            <div style={{ padding: '48px', textAlign: 'center' }}>
+                              <Text type="secondary">
+                                Chưa có đơn vị trực thuộc nào. Một cơ quan đơn vị có thể có hoặc
+                                không có đơn vị trực thuộc.
+                              </Text>
+                            </div>
+                          )}
+                        </Card>
+                      </>
+                    ),
+                  },
+                ]
+              : []),
+            {
+              key: 'positions',
+              label: `Chức vụ (${positions.length})`,
+              children: (
+                <>
+                  <div
+                    style={{
+                      marginBottom: 24,
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Button
+                      type="primary"
+                      size="large"
+                      icon={<PlusOutlined />}
+                      onClick={() => handleOpenDialog('position')}
+                    >
+                      Thêm Chức vụ
+                    </Button>
+                  </div>
+                  <Card>
+                    {positions.length > 0 ? (
+                      <PositionsTable
+                        positions={positions}
+                        onEdit={p => handleOpenDialog('position', p)}
+                        onRefresh={loadUnitDetail}
+                      />
+                    ) : (
+                      <div style={{ padding: '48px', textAlign: 'center' }}>
+                        <Text type="secondary">Chưa có chức vụ nào</Text>
+                      </div>
+                    )}
+                  </Card>
+                </>
+              ),
+            },
+          ]}
+        />
 
-      <Modal
-        open={dialogOpen}
-        onCancel={handleCloseDialog}
-        footer={null}
-        width={800}
-        title={
-          dialogType === 'unit'
-            ? editingItem?.id
-              ? 'Sửa đơn vị'
-              : 'Thêm Đơn vị trực thuộc'
-            : editingItem?.id
-            ? 'Sửa chức vụ'
-            : 'Thêm Chức vụ mới'
-        }
-      >
-        {dialogType === 'unit' && (
-          <UnitForm
-            unit={editingItem}
-            units={[unit]} // Truyền đơn vị hiện tại (là cơ quan đơn vị) để hiển thị tên trong form
-            onSuccess={handleSuccess}
-            onClose={handleCloseDialog}
-          />
-        )}
+        <Modal
+          open={dialogOpen}
+          onCancel={handleCloseDialog}
+          footer={null}
+          width={800}
+          title={
+            dialogType === 'unit'
+              ? editingItem?.id
+                ? 'Sửa đơn vị'
+                : 'Thêm Đơn vị trực thuộc'
+              : editingItem?.id
+                ? 'Sửa chức vụ'
+                : 'Thêm Chức vụ mới'
+          }
+        >
+          {dialogType === 'unit' && (
+            <UnitForm
+              unit={editingItem}
+              units={[unit]} // Truyền đơn vị hiện tại (là cơ quan đơn vị) để hiển thị tên trong form
+              onSuccess={handleSuccess}
+              onClose={handleCloseDialog}
+            />
+          )}
 
-        {dialogType === 'position' && (
-          <PositionForm
-            position={editingItem}
-            units={[unit]} // Chỉ cho phép tạo chức vụ cho đơn vị hiện tại
-            onSuccess={handleSuccess}
-            onClose={handleCloseDialog}
-          />
-        )}
+          {dialogType === 'position' && (
+            <PositionForm
+              position={editingItem}
+              units={[unit]} // Chỉ cho phép tạo chức vụ cho đơn vị hiện tại
+              onSuccess={handleSuccess}
+              onClose={handleCloseDialog}
+            />
+          )}
         </Modal>
       </div>
     </ConfigProvider>

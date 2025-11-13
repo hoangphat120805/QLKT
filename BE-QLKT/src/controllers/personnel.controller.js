@@ -97,7 +97,8 @@ class PersonnelController {
 
       return res.status(201).json({
         success: true,
-        message: 'Thêm quân nhân và tạo tài khoản thành công. Username: ' + cccd + ', Password: 123456',
+        message:
+          'Thêm quân nhân và tạo tài khoản thành công. Username: ' + cccd + ', Password: 123456',
         data: result,
       });
     } catch (error) {
@@ -116,7 +117,16 @@ class PersonnelController {
   async updatePersonnel(req, res) {
     try {
       const { id } = req.params;
-      const { unit_id, position_id, don_vi_id, chuc_vu_id, ho_ten, ngay_sinh, cccd, ngay_nhap_ngu } = req.body;
+      const {
+        unit_id,
+        position_id,
+        don_vi_id,
+        chuc_vu_id,
+        ho_ten,
+        ngay_sinh,
+        cccd,
+        ngay_nhap_ngu,
+      } = req.body;
       const userRole = req.user.role;
       const userQuanNhanId = req.user.quan_nhan_id;
 
@@ -126,7 +136,14 @@ class PersonnelController {
 
       const result = await personnelService.updatePersonnel(
         parseInt(id),
-        { unit_id: finalUnitId, position_id: finalPositionId, ho_ten, ngay_sinh, cccd, ngay_nhap_ngu },
+        {
+          unit_id: finalUnitId,
+          position_id: finalPositionId,
+          ho_ten,
+          ngay_sinh,
+          cccd,
+          ngay_nhap_ngu,
+        },
         userRole,
         userQuanNhanId
       );
@@ -136,7 +153,10 @@ class PersonnelController {
         await profileService.recalculateProfile(parseInt(id));
         console.log(`✅ Auto-recalculated profile for personnel ${id}`);
       } catch (recalcError) {
-        console.error(`⚠️ Failed to auto-recalculate profile for personnel ${id}:`, recalcError.message);
+        console.error(
+          `⚠️ Failed to auto-recalculate profile for personnel ${id}:`,
+          recalcError.message
+        );
         // Không throw error để không ảnh hưởng đến việc update personnel
       }
 

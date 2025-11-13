@@ -3,7 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, Form, Input, DatePicker, Button, Spin, Alert, message } from 'antd';
-import { UserOutlined, IdcardOutlined, CalendarOutlined, SaveOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import {
+  UserOutlined,
+  IdcardOutlined,
+  CalendarOutlined,
+  SaveOutlined,
+  InfoCircleOutlined,
+} from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import { apiClient } from '@/lib/api-client';
 import axiosInstance from '@/utils/axiosInstance';
@@ -58,16 +64,23 @@ export default function ProfileEditForm() {
           cccd: response.data.cccd,
           ngay_sinh: response.data.ngay_sinh ? dayjs(response.data.ngay_sinh) : null,
           ngay_nhap_ngu: response.data.ngay_nhap_ngu ? dayjs(response.data.ngay_nhap_ngu) : null,
-          don_vi: response.data.DonVi?.ten_don_vi || response.data.don_vi?.ten_don_vi || 'Chưa có thông tin',
-          chuc_vu: response.data.ChucVu?.ten_chuc_vu || response.data.chuc_vu?.ten_chuc_vu || 'Chưa có thông tin',
+          don_vi:
+            response.data.DonVi?.ten_don_vi ||
+            response.data.don_vi?.ten_don_vi ||
+            'Chưa có thông tin',
+          chuc_vu:
+            response.data.ChucVu?.ten_chuc_vu ||
+            response.data.chuc_vu?.ten_chuc_vu ||
+            'Chưa có thông tin',
         });
       }
     } catch (error: any) {
       console.error('Load personnel error:', error);
-      const errorMessage = error?.response?.data?.message
-        || error?.response?.data?.error
-        || error?.message
-        || 'Không thể tải thông tin cá nhân';
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        'Không thể tải thông tin cá nhân';
       message.error(errorMessage);
     } finally {
       setLoading(false);
@@ -92,7 +105,8 @@ export default function ProfileEditForm() {
           ? dayjs(values.ngay_nhap_ngu).format('YYYY-MM-DD')
           : null,
         don_vi_id: personnelData.DonVi?.id || personnelData.don_vi?.id || personnelData.don_vi_id,
-        chuc_vu_id: personnelData.ChucVu?.id || personnelData.chuc_vu?.id || personnelData.chuc_vu_id,
+        chuc_vu_id:
+          personnelData.ChucVu?.id || personnelData.chuc_vu?.id || personnelData.chuc_vu_id,
       };
 
       // Gọi API update
@@ -113,10 +127,11 @@ export default function ProfileEditForm() {
       }
     } catch (error: any) {
       console.error('Update error:', error);
-      const errorMessage = error?.response?.data?.message
-        || error?.response?.data?.error
-        || error?.message
-        || 'Đã xảy ra lỗi khi cập nhật';
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        'Đã xảy ra lỗi khi cập nhật';
       message.error(errorMessage);
     } finally {
       setSaving(false);
@@ -232,11 +247,7 @@ export default function ProfileEditForm() {
                 </span>
               }
             >
-              <Input
-                disabled
-                size="large"
-                className="rounded-lg bg-gray-50"
-              />
+              <Input disabled size="large" className="rounded-lg bg-gray-50" />
             </Form.Item>
 
             {/* Chức vụ (disabled - không cho user tự sửa) */}
@@ -250,11 +261,7 @@ export default function ProfileEditForm() {
                 </span>
               }
             >
-              <Input
-                disabled
-                size="large"
-                className="rounded-lg bg-gray-50"
-              />
+              <Input disabled size="large" className="rounded-lg bg-gray-50" />
             </Form.Item>
           </div>
 

@@ -115,7 +115,9 @@ export default function AnnualRewardsPage() {
         : await apiClient.createAnnualReward(personnelId, payload);
 
       if (res.success) {
-        message.success(editingReward ? 'Cập nhật khen thưởng thành công' : 'Thêm khen thưởng thành công');
+        message.success(
+          editingReward ? 'Cập nhật khen thưởng thành công' : 'Thêm khen thưởng thành công'
+        );
         handleCloseDialog();
         loadData();
       } else {

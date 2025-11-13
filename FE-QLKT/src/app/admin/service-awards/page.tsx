@@ -60,7 +60,7 @@ export default function ServiceAwardsPage() {
   useEffect(() => {
     if (searchText) {
       const filtered = profiles.filter(
-        (p) =>
+        p =>
           p.QuanNhan?.ho_ten?.toLowerCase().includes(searchText.toLowerCase()) ||
           p.QuanNhan?.cccd?.includes(searchText)
       );
@@ -204,11 +204,7 @@ export default function ServiceAwardsPage() {
       width: 100,
       fixed: 'right',
       render: (_, record) => (
-        <Button
-          type="link"
-          icon={<EditOutlined />}
-          onClick={() => handleEdit(record)}
-        >
+        <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(record)}>
           Sửa
         </Button>
       ),
@@ -241,7 +237,7 @@ export default function ServiceAwardsPage() {
       dataIndex: 'hcbvtq_total_months',
       key: 'total_months',
       width: 150,
-      render: (months) => `${months || 0} tháng`,
+      render: months => `${months || 0} tháng`,
       sorter: (a, b) => (a.hcbvtq_total_months || 0) - (b.hcbvtq_total_months || 0),
     },
     {
@@ -289,11 +285,7 @@ export default function ServiceAwardsPage() {
       width: 100,
       fixed: 'right',
       render: (_, record) => (
-        <Button
-          type="link"
-          icon={<EditOutlined />}
-          onClick={() => handleEdit(record)}
-        >
+        <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(record)}>
           Sửa
         </Button>
       ),
@@ -329,7 +321,7 @@ export default function ServiceAwardsPage() {
         <Search
           placeholder="Tìm theo tên hoặc CCCD"
           onSearch={setSearchText}
-          onChange={(e) => setSearchText(e.target.value)}
+          onChange={e => setSearchText(e.target.value)}
           style={{ width: 400 }}
           prefix={<SearchOutlined />}
         />
@@ -346,7 +338,7 @@ export default function ServiceAwardsPage() {
               loading={loading}
               pagination={{
                 pageSize: 20,
-                showTotal: (total) => `Tổng ${total} quân nhân`,
+                showTotal: total => `Tổng ${total} quân nhân`,
                 showSizeChanger: true,
               }}
               scroll={{ x: 1200 }}
@@ -360,7 +352,7 @@ export default function ServiceAwardsPage() {
               loading={loading}
               pagination={{
                 pageSize: 20,
-                showTotal: (total) => `Tổng ${total} quân nhân`,
+                showTotal: total => `Tổng ${total} quân nhân`,
                 showSizeChanger: true,
               }}
               scroll={{ x: 1200 }}

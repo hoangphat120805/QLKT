@@ -1,37 +1,37 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { Table, Button, Space, Popconfirm, message, Tag } from "antd"
-import type { ColumnsType } from 'antd/es/table'
-import { EditOutlined, DeleteOutlined, EyeOutlined } from "@ant-design/icons"
-import { useRouter } from "next/navigation"
-import { apiClient } from "@/lib/api-client"
+import { useState } from 'react';
+import { Table, Button, Space, Popconfirm, message, Tag } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import { EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
+import { useRouter } from 'next/navigation';
+import { apiClient } from '@/lib/api-client';
 
 interface UnitsTableProps {
-  units: any[]
-  onEdit?: (unit: any) => void
-  onRefresh?: () => void
+  units: any[];
+  onEdit?: (unit: any) => void;
+  onRefresh?: () => void;
 }
 
 export function UnitsTable({ units, onEdit, onRefresh }: UnitsTableProps) {
-  const router = useRouter()
-  const [loading, setLoading] = useState(false)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleDelete = async (id: string) => {
     try {
-      setLoading(true)
-      setDeletingId(id)
-      await apiClient.deleteUnit(id)
-      message.success("Xóa đơn vị thành công")
-      onRefresh?.()
+      setLoading(true);
+      setDeletingId(id);
+      await apiClient.deleteUnit(id);
+      message.success('Xóa đơn vị thành công');
+      onRefresh?.();
     } catch (error) {
-      message.error("Có lỗi xảy ra khi xóa")
+      message.error('Có lỗi xảy ra khi xóa');
     } finally {
-      setLoading(false)
-      setDeletingId(null)
+      setLoading(false);
+      setDeletingId(null);
     }
-  }
+  };
 
   const columns: ColumnsType<any> = [
     {
@@ -40,7 +40,7 @@ export function UnitsTable({ units, onEdit, onRefresh }: UnitsTableProps) {
       key: 'ma_don_vi',
       width: 120,
       align: 'center',
-      render: (text) => text,
+      render: text => text,
     },
     {
       title: 'Tên Đơn vị',
@@ -48,7 +48,7 @@ export function UnitsTable({ units, onEdit, onRefresh }: UnitsTableProps) {
       key: 'ten_don_vi',
       width: 250,
       align: 'left',
-      render: (text) => <strong>{text}</strong>,
+      render: text => <strong>{text}</strong>,
     },
     {
       title: 'Quân số',
@@ -56,7 +56,7 @@ export function UnitsTable({ units, onEdit, onRefresh }: UnitsTableProps) {
       key: 'so_luong',
       width: 100,
       align: 'center',
-      render: (val) => val ?? 0,
+      render: val => val ?? 0,
     },
     {
       title: 'Đơn vị trực thuộc',
@@ -64,7 +64,7 @@ export function UnitsTable({ units, onEdit, onRefresh }: UnitsTableProps) {
       key: 'children',
       width: 150,
       align: 'center',
-      render: (children) => children?.length ?? 0,
+      render: children => children?.length ?? 0,
     },
     {
       title: 'Hành động',
@@ -80,11 +80,7 @@ export function UnitsTable({ units, onEdit, onRefresh }: UnitsTableProps) {
           >
             Chi tiết
           </Button>
-          <Button
-            type="default"
-            icon={<EditOutlined />}
-            onClick={() => onEdit?.(record)}
-          >
+          <Button type="default" icon={<EditOutlined />} onClick={() => onEdit?.(record)}>
             Sửa
           </Button>
           <Popconfirm
@@ -107,7 +103,7 @@ export function UnitsTable({ units, onEdit, onRefresh }: UnitsTableProps) {
         </Space>
       ),
     },
-  ]
+  ];
 
   return (
     <Table
@@ -118,11 +114,11 @@ export function UnitsTable({ units, onEdit, onRefresh }: UnitsTableProps) {
       pagination={{
         pageSize: 10,
         showSizeChanger: true,
-        showTotal: (total) => `Tổng số ${total} đơn vị`,
+        showTotal: total => `Tổng số ${total} đơn vị`,
       }}
       locale={{
         emptyText: 'Không có dữ liệu',
       }}
     />
-  )
+  );
 }

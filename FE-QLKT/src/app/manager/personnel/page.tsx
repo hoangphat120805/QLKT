@@ -2,10 +2,28 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Button, Breadcrumb, Card, Input, Select, Modal, Typography, message, ConfigProvider, theme as antdTheme } from 'antd';
+import {
+  Button,
+  Breadcrumb,
+  Card,
+  Input,
+  Select,
+  Modal,
+  Typography,
+  message,
+  ConfigProvider,
+  theme as antdTheme,
+} from 'antd';
 import { Loading } from '@/components/ui/loading';
 import { useTheme } from '@/components/theme-provider';
-import { SyncOutlined, HomeOutlined, UserOutlined, UserSwitchOutlined, SafetyCertificateOutlined, EyeOutlined } from '@ant-design/icons';
+import {
+  SyncOutlined,
+  HomeOutlined,
+  UserOutlined,
+  UserSwitchOutlined,
+  SafetyCertificateOutlined,
+  EyeOutlined,
+} from '@ant-design/icons';
 import { PersonnelTable } from '@/components/personnel/personnel-table';
 import { PersonnelForm } from '@/components/personnel/personnel-form';
 import { apiClient } from '@/lib/api-client';
@@ -40,15 +58,18 @@ export default function ManagerPersonnelPage() {
       setManagerUnitId(user.don_vi_id);
     } else if (user?.quan_nhan_id) {
       // Fallback: Gọi API nếu chưa có don_vi_id (cho tài khoản đăng nhập cũ)
-      apiClient.getPersonnelById(user.quan_nhan_id).then(res => {
-        if (res.success && res.data?.don_vi_id) {
-          setManagerUnitId(res.data.don_vi_id);
-        } else {
-          message.error('Không thể xác định đơn vị quản lý.');
-        }
-      }).catch(() => {
-        message.error('Không thể tải thông tin đơn vị.');
-      });
+      apiClient
+        .getPersonnelById(user.quan_nhan_id)
+        .then(res => {
+          if (res.success && res.data?.don_vi_id) {
+            setManagerUnitId(res.data.don_vi_id);
+          } else {
+            message.error('Không thể xác định đơn vị quản lý.');
+          }
+        })
+        .catch(() => {
+          message.error('Không thể tải thông tin đơn vị.');
+        });
     } else {
       message.error('Không tìm thấy thông tin quản lý. Vui lòng đăng nhập lại.');
     }
@@ -164,181 +185,209 @@ export default function ManagerPersonnelPage() {
       }}
     >
       <div style={{ padding: '24px' }}>
-      {/* Breadcrumb */}
-      <Breadcrumb style={{ marginBottom: '24px' }}>
-        <Breadcrumb.Item>
-          <Link href="/manager/dashboard">
-            <HomeOutlined />
-          </Link>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item>Quản lý Quân nhân Đơn vị</Breadcrumb.Item>
-      </Breadcrumb>
+        {/* Breadcrumb */}
+        <Breadcrumb style={{ marginBottom: '24px' }}>
+          <Breadcrumb.Item>
+            <Link href="/manager/dashboard">
+              <HomeOutlined />
+            </Link>
+          </Breadcrumb.Item>
+          <Breadcrumb.Item>Quản lý Quân nhân Đơn vị</Breadcrumb.Item>
+        </Breadcrumb>
 
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
-        <div>
-          <Title level={1} style={{ margin: 0 }}>Quản lý Quân nhân Đơn vị</Title>
-          <Text type="secondary" style={{ display: 'block', marginTop: '8px' }}>
-            Xem và quản lý thông tin quân nhân thuộc đơn vị của bạn
-          </Text>
-        </div>
-        <Button
-          icon={<SyncOutlined spin={loading} />}
-          onClick={loadData}
-          disabled={loading}
+        {/* Header */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            marginBottom: '24px',
+            flexWrap: 'wrap',
+            gap: '16px',
+          }}
         >
-          Làm mới
-        </Button>
-      </div>
-
-      {/* Stats Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-        <Card>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px' }}>
-            <div style={{ padding: '8px', backgroundColor: '#e0f2fe', borderRadius: '8px' }}>
-              <UserOutlined style={{ fontSize: '20px', color: '#0284c7' }} />
-            </div>
-            <div>
-              <Text type="secondary" style={{ fontSize: '14px' }}>Tổng quân nhân</Text>
-              <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{totalPersonnel}</div>
-            </div>
+          <div>
+            <Title level={1} style={{ margin: 0 }}>
+              Quản lý Quân nhân Đơn vị
+            </Title>
+            <Text type="secondary" style={{ display: 'block', marginTop: '8px' }}>
+              Xem và quản lý thông tin quân nhân thuộc đơn vị của bạn
+            </Text>
           </div>
-        </Card>
-
-        <Card>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px' }}>
-            <div style={{ padding: '8px', backgroundColor: '#dcfce7', borderRadius: '8px' }}>
-              <UserSwitchOutlined style={{ fontSize: '20px', color: '#16a34a' }} />
-            </div>
-            <div>
-              <Text type="secondary" style={{ fontSize: '14px' }}>Đang hoạt động</Text>
-              <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{activePersonnel}</div>
-            </div>
-          </div>
-        </Card>
-
-        <Card>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px' }}>
-            <div style={{ padding: '8px', backgroundColor: '#f3e8ff', borderRadius: '8px' }}>
-              <SafetyCertificateOutlined style={{ fontSize: '20px', color: '#9333ea' }} />
-            </div>
-            <div>
-              <Text type="secondary" style={{ fontSize: '14px' }}>Số chức vụ khác nhau</Text>
-              <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{uniquePositions}</div>
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Filters */}
-      <Card style={{ marginBottom: '24px', padding: '16px' }}>
-        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-          <Input
-            placeholder="Tìm kiếm theo tên hoặc CCCD..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            onPressEnter={handleSearch}
-            style={{ flex: 1, minWidth: '200px' }}
-          />
-          <Select
-            value={selectedPosition}
-            onChange={setSelectedPosition}
-            style={{ width: 256 }}
-            placeholder="Lọc theo Chức vụ"
-          >
-            <Option value="">Tất cả chức vụ</Option>
-            {positions.map(position => (
-              <Option key={position.id} value={position.id.toString()}>
-                {position.ten_chuc_vu}
-              </Option>
-            ))}
-          </Select>
-          <Button type="primary" onClick={handleSearch} disabled={loading}>
-            Tìm kiếm
+          <Button icon={<SyncOutlined spin={loading} />} onClick={loadData} disabled={loading}>
+            Làm mới
           </Button>
         </div>
-      </Card>
 
-      {/* Table */}
-      {loading ? (
-        <Card style={{ padding: '32px', textAlign: 'center' }}>
-          <Text type="secondary">Đang tải dữ liệu...</Text>
-        </Card>
-      ) : (
-        <Card style={{ padding: 0, marginBottom: '24px' }}>
-          <PersonnelTable
-            personnel={filteredPersonnel}
-            onEdit={handleOpenDialog}
-            onRefresh={loadData}
-            readOnly={false}
-          />
-        </Card>
-      )}
+        {/* Stats Cards */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+            gap: '16px',
+            marginBottom: '24px',
+          }}
+        >
+          <Card>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px' }}>
+              <div style={{ padding: '8px', backgroundColor: '#e0f2fe', borderRadius: '8px' }}>
+                <UserOutlined style={{ fontSize: '20px', color: '#0284c7' }} />
+              </div>
+              <div>
+                <Text type="secondary" style={{ fontSize: '14px' }}>
+                  Tổng quân nhân
+                </Text>
+                <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{totalPersonnel}</div>
+              </div>
+            </div>
+          </Card>
 
-      {/* Pagination */}
-      {pagination.total > 0 && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-          <Text type="secondary">
-            Hiển thị {(pagination.page - 1) * pagination.limit + 1} -{' '}
-            {Math.min(pagination.page * pagination.limit, pagination.total)} trong tổng số{' '}
-            {pagination.total} quân nhân
-          </Text>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Card>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px' }}>
+              <div style={{ padding: '8px', backgroundColor: '#dcfce7', borderRadius: '8px' }}>
+                <UserSwitchOutlined style={{ fontSize: '20px', color: '#16a34a' }} />
+              </div>
+              <div>
+                <Text type="secondary" style={{ fontSize: '14px' }}>
+                  Đang hoạt động
+                </Text>
+                <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{activePersonnel}</div>
+              </div>
+            </div>
+          </Card>
+
+          <Card>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px' }}>
+              <div style={{ padding: '8px', backgroundColor: '#f3e8ff', borderRadius: '8px' }}>
+                <SafetyCertificateOutlined style={{ fontSize: '20px', color: '#9333ea' }} />
+              </div>
+              <div>
+                <Text type="secondary" style={{ fontSize: '14px' }}>
+                  Số chức vụ khác nhau
+                </Text>
+                <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{uniquePositions}</div>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* Filters */}
+        <Card style={{ marginBottom: '24px', padding: '16px' }}>
+          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+            <Input
+              placeholder="Tìm kiếm theo tên hoặc CCCD..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              onPressEnter={handleSearch}
+              style={{ flex: 1, minWidth: '200px' }}
+            />
             <Select
-              value={pagination.limit.toString()}
-              onChange={v => handleLimitChange(parseInt(v))}
-              style={{ width: 80 }}
+              value={selectedPosition}
+              onChange={setSelectedPosition}
+              style={{ width: 256 }}
+              placeholder="Lọc theo Chức vụ"
             >
-              <Option value="10">10</Option>
-              <Option value="20">20</Option>
-              <Option value="50">50</Option>
+              <Option value="">Tất cả chức vụ</Option>
+              {positions.map(position => (
+                <Option key={position.id} value={position.id.toString()}>
+                  {position.ten_chuc_vu}
+                </Option>
+              ))}
             </Select>
-            <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-              <Button
-                onClick={() => handlePageChange(pagination.page - 1)}
-                disabled={pagination.page <= 1}
+            <Button type="primary" onClick={handleSearch} disabled={loading}>
+              Tìm kiếm
+            </Button>
+          </div>
+        </Card>
+
+        {/* Table */}
+        {loading ? (
+          <Card style={{ padding: '32px', textAlign: 'center' }}>
+            <Text type="secondary">Đang tải dữ liệu...</Text>
+          </Card>
+        ) : (
+          <Card style={{ padding: 0, marginBottom: '24px' }}>
+            <PersonnelTable
+              personnel={filteredPersonnel}
+              onEdit={handleOpenDialog}
+              onRefresh={loadData}
+              readOnly={false}
+            />
+          </Card>
+        )}
+
+        {/* Pagination */}
+        {pagination.total > 0 && (
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '16px',
+            }}
+          >
+            <Text type="secondary">
+              Hiển thị {(pagination.page - 1) * pagination.limit + 1} -{' '}
+              {Math.min(pagination.page * pagination.limit, pagination.total)} trong tổng số{' '}
+              {pagination.total} quân nhân
+            </Text>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Select
+                value={pagination.limit.toString()}
+                onChange={v => handleLimitChange(parseInt(v))}
+                style={{ width: 80 }}
               >
-                Trước
-              </Button>
-              <span style={{ padding: '0 12px', fontSize: '14px' }}>
-                {pagination.page} / {Math.ceil(pagination.total / pagination.limit)}
-              </span>
-              <Button
-                onClick={() => handlePageChange(pagination.page + 1)}
-                disabled={pagination.page >= Math.ceil(pagination.total / pagination.limit)}
-              >
-                Sau
-              </Button>
+                <Option value="10">10</Option>
+                <Option value="20">20</Option>
+                <Option value="50">50</Option>
+              </Select>
+              <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                <Button
+                  onClick={() => handlePageChange(pagination.page - 1)}
+                  disabled={pagination.page <= 1}
+                >
+                  Trước
+                </Button>
+                <span style={{ padding: '0 12px', fontSize: '14px' }}>
+                  {pagination.page} / {Math.ceil(pagination.total / pagination.limit)}
+                </span>
+                <Button
+                  onClick={() => handlePageChange(pagination.page + 1)}
+                  disabled={pagination.page >= Math.ceil(pagination.total / pagination.limit)}
+                >
+                  Sau
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Dialog for viewing/editing details */}
-      <Modal
-        open={dialogOpen}
-        onCancel={handleCloseDialog}
-        footer={null}
-        width={800}
-        style={{ maxHeight: '90vh' }}
-        title={
-          <span>
-            <EyeOutlined style={{ marginRight: '8px' }} />
-            {viewingPersonnel ? 'Xem/Chỉnh sửa thông tin Quân nhân' : 'Thông tin Quân nhân'}
-          </span>
-        }
-      >
-        {viewingPersonnel && (
-          <PersonnelForm
-            personnel={viewingPersonnel}
-            units={units}
-            positions={positions}
-            onSuccess={data => handleUpdatePersonnel(viewingPersonnel.id, data)}
-            onClose={handleCloseDialog}
-            readOnly={false}
-          />
         )}
-      </Modal>
+
+        {/* Dialog for viewing/editing details */}
+        <Modal
+          open={dialogOpen}
+          onCancel={handleCloseDialog}
+          footer={null}
+          width={800}
+          style={{ maxHeight: '90vh' }}
+          title={
+            <span>
+              <EyeOutlined style={{ marginRight: '8px' }} />
+              {viewingPersonnel ? 'Xem/Chỉnh sửa thông tin Quân nhân' : 'Thông tin Quân nhân'}
+            </span>
+          }
+        >
+          {viewingPersonnel && (
+            <PersonnelForm
+              personnel={viewingPersonnel}
+              units={units}
+              positions={positions}
+              onSuccess={data => handleUpdatePersonnel(viewingPersonnel.id, data)}
+              onClose={handleCloseDialog}
+              readOnly={false}
+            />
+          )}
+        </Modal>
       </div>
     </ConfigProvider>
   );

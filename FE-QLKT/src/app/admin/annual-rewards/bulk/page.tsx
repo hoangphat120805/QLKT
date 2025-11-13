@@ -68,7 +68,7 @@ export default function BulkAddAnnualRewardsPage() {
           p.ho_ten?.toLowerCase().includes(searchText.toLowerCase()) || p.cccd?.includes(searchText)
       );
     }
-    
+
     if (filterUnitId) {
       filtered = filtered.filter(p => p.DonVi?.id === filterUnitId);
     }

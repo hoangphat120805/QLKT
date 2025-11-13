@@ -12,7 +12,9 @@ class AccountService {
       // Hỗ trợ lọc nhiều role (ví dụ: "MANAGER,USER")
       let roleFilter = {};
       if (role) {
-        const roles = String(role).split(',').map(r => r.trim());
+        const roles = String(role)
+          .split(',')
+          .map(r => r.trim());
         roleFilter = roles.length > 1 ? { role: { in: roles } } : { role: roles[0] };
       }
 
@@ -124,10 +126,16 @@ class AccountService {
               ho_ten: account.QuanNhan.ho_ten,
               cccd: account.QuanNhan.cccd,
               CoQuanDonVi: account.QuanNhan.CoQuanDonVi
-                ? { id: account.QuanNhan.CoQuanDonVi.id, ten_don_vi: account.QuanNhan.CoQuanDonVi.ten_don_vi }
+                ? {
+                    id: account.QuanNhan.CoQuanDonVi.id,
+                    ten_don_vi: account.QuanNhan.CoQuanDonVi.ten_don_vi,
+                  }
                 : null,
               DonViTrucThuoc: account.QuanNhan.DonViTrucThuoc
-                ? { id: account.QuanNhan.DonViTrucThuoc.id, ten_don_vi: account.QuanNhan.DonViTrucThuoc.ten_don_vi }
+                ? {
+                    id: account.QuanNhan.DonViTrucThuoc.id,
+                    ten_don_vi: account.QuanNhan.DonViTrucThuoc.ten_don_vi,
+                  }
                 : null,
               ChucVu: account.QuanNhan.ChucVu
                 ? {
@@ -291,7 +299,9 @@ class AccountService {
         role: newAccount.role,
         quan_nhan_id: newAccount.quan_nhan_id,
         ho_ten: newAccount.QuanNhan?.ho_ten || null,
-        don_vi: (newAccount.QuanNhan?.DonViTrucThuoc || newAccount.QuanNhan?.CoQuanDonVi)?.ten_don_vi || null,
+        don_vi:
+          (newAccount.QuanNhan?.DonViTrucThuoc || newAccount.QuanNhan?.CoQuanDonVi)?.ten_don_vi ||
+          null,
         chuc_vu: newAccount.QuanNhan?.ChucVu?.ten_chuc_vu || null,
       };
     } catch (error) {
@@ -340,7 +350,9 @@ class AccountService {
         role: updatedAccount.role,
         quan_nhan_id: updatedAccount.quan_nhan_id,
         ho_ten: updatedAccount.QuanNhan?.ho_ten || null,
-        don_vi: (updatedAccount.QuanNhan?.DonViTrucThuoc || updatedAccount.QuanNhan?.CoQuanDonVi)?.ten_don_vi || null,
+        don_vi:
+          (updatedAccount.QuanNhan?.DonViTrucThuoc || updatedAccount.QuanNhan?.CoQuanDonVi)
+            ?.ten_don_vi || null,
         chuc_vu: updatedAccount.QuanNhan?.ChucVu?.ten_chuc_vu || null,
       };
     } catch (error) {

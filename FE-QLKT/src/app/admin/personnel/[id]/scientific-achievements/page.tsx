@@ -117,7 +117,9 @@ export default function ScientificAchievementsPage() {
         : await apiClient.createScientificAchievement(personnelId, payload);
 
       if (res.success) {
-        message.success(editingAchievement ? 'Cập nhật thành tích thành công' : 'Thêm thành tích thành công');
+        message.success(
+          editingAchievement ? 'Cập nhật thành tích thành công' : 'Thêm thành tích thành công'
+        );
         handleCloseDialog();
         loadData();
       } else {
@@ -147,7 +149,6 @@ export default function ScientificAchievementsPage() {
       message.error('Có lỗi xảy ra khi xóa');
     }
   };
-
 
   const columns: ColumnsType<AchievementRecord> = [
     {
@@ -312,11 +313,7 @@ export default function ScientificAchievementsPage() {
             label="Mô tả"
             rules={[{ required: true, message: 'Vui lòng nhập mô tả' }]}
           >
-            <Input.TextArea
-              placeholder="Nhập mô tả chi tiết (nếu có)"
-              rows={4}
-              size="large"
-            />
+            <Input.TextArea placeholder="Nhập mô tả chi tiết (nếu có)" rows={4} size="large" />
           </Form.Item>
 
           <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>

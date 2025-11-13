@@ -12,7 +12,14 @@ class ProposalController {
       const { type = 'CA_NHAN_HANG_NAM' } = req.query;
 
       // Validate type
-      const validTypes = ['CA_NHAN_HANG_NAM', 'DON_VI_HANG_NAM', 'NIEN_HAN', 'CONG_HIEN', 'DOT_XUAT', 'NCKH'];
+      const validTypes = [
+        'CA_NHAN_HANG_NAM',
+        'DON_VI_HANG_NAM',
+        'NIEN_HAN',
+        'CONG_HIEN',
+        'DOT_XUAT',
+        'NCKH',
+      ];
       if (!validTypes.includes(type)) {
         return res.status(400).json({
           success: false,
@@ -23,12 +30,12 @@ class ProposalController {
       const buffer = await proposalService.exportTemplate(userId, type);
 
       const typeNames = {
-        'CA_NHAN_HANG_NAM': 'ca_nhan_hang_nam',
-        'DON_VI_HANG_NAM': 'don_vi_hang_nam',
-        'NIEN_HAN': 'nien_han',
-        'CONG_HIEN': 'cong_hien',
-        'DOT_XUAT': 'dot_xuat',
-        'NCKH': 'nckh',
+        CA_NHAN_HANG_NAM: 'ca_nhan_hang_nam',
+        DON_VI_HANG_NAM: 'don_vi_hang_nam',
+        NIEN_HAN: 'nien_han',
+        CONG_HIEN: 'cong_hien',
+        DOT_XUAT: 'dot_xuat',
+        NCKH: 'nckh',
       };
       const typeName = typeNames[type] || 'default';
       const fileName = `mau_de_xuat_${typeName}_${new Date().toISOString().slice(0, 10)}.xlsx`;
@@ -60,7 +67,14 @@ class ProposalController {
       const { so_quyet_dinh, type = 'CA_NHAN_HANG_NAM' } = req.body;
 
       // Validate type
-      const validTypes = ['CA_NHAN_HANG_NAM', 'DON_VI_HANG_NAM', 'NIEN_HAN', 'CONG_HIEN', 'DOT_XUAT', 'NCKH'];
+      const validTypes = [
+        'CA_NHAN_HANG_NAM',
+        'DON_VI_HANG_NAM',
+        'NIEN_HAN',
+        'CONG_HIEN',
+        'DOT_XUAT',
+        'NCKH',
+      ];
       if (!validTypes.includes(type)) {
         return res.status(400).json({
           success: false,
@@ -72,7 +86,8 @@ class ProposalController {
       if (userRole === 'MANAGER' && type === 'DOT_XUAT') {
         return res.status(403).json({
           success: false,
-          message: 'Manager không có quyền đề xuất khen thưởng đột xuất. Loại này chỉ do Admin quản lý.',
+          message:
+            'Manager không có quyền đề xuất khen thưởng đột xuất. Loại này chỉ do Admin quản lý.',
         });
       }
 

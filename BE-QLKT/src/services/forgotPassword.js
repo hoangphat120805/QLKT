@@ -1,8 +1,8 @@
-const nodemailer = require("nodemailer");
-const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt");
-const { User, Student } = require("../models");
-require("dotenv").config();
+const nodemailer = require('nodemailer');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+const { User, Student } = require('../models');
+require('dotenv').config();
 const {
   JWT_ACCESS_KEY,
   EMAIL_SERVICE,
@@ -12,29 +12,29 @@ const {
   SMTP_PORT,
   SMTP_SECURE,
   CLIENT_URL,
-} = require("../configs/index");
+} = require('../configs/index');
 
 // Tạo transporter dựa trên cấu hình
 const createTransporter = () => {
   // Nếu sử dụng SendGrid (ưu tiên cao nhất)
-  if (SMTP_HOST && SMTP_HOST.includes("sendgrid")) {
-    console.log("Using SendGrid SMTP");
+  if (SMTP_HOST && SMTP_HOST.includes('sendgrid')) {
+    console.log('Using SendGrid SMTP');
     return nodemailer.createTransport({
       host: SMTP_HOST,
       port: parseInt(SMTP_PORT) || 587,
-      secure: SMTP_SECURE === "true",
+      secure: SMTP_SECURE === 'true',
       auth: {
-        user: "apikey", // Luôn là "apikey" cho SendGrid
+        user: 'apikey', // Luôn là "apikey" cho SendGrid
         pass: EMAIL_PASS, // API Key của SendGrid
       },
     });
   }
 
   // Nếu sử dụng Gmail
-  if (EMAIL_SERVICE === "gmail") {
-    console.log("Using Gmail SMTP");
+  if (EMAIL_SERVICE === 'gmail') {
+    console.log('Using Gmail SMTP');
     return nodemailer.createTransport({
-      service: "gmail",
+      service: 'gmail',
       auth: {
         user: EMAIL_USER,
         pass: EMAIL_PASS,
@@ -44,11 +44,11 @@ const createTransporter = () => {
 
   // Nếu sử dụng SMTP khác
   if (SMTP_HOST) {
-    console.log("Using custom SMTP");
+    console.log('Using custom SMTP');
     return nodemailer.createTransport({
       host: SMTP_HOST,
       port: parseInt(SMTP_PORT) || 587,
-      secure: SMTP_SECURE === "true",
+      secure: SMTP_SECURE === 'true',
       auth: {
         user: EMAIL_USER,
         pass: EMAIL_PASS,
@@ -57,9 +57,9 @@ const createTransporter = () => {
   }
 
   // Fallback - dùng Gmail
-  console.log("Using fallback Gmail");
+  console.log('Using fallback Gmail');
   return nodemailer.createTransport({
-    service: "gmail",
+    service: 'gmail',
     auth: {
       user: EMAIL_USER,
       pass: EMAIL_PASS,
@@ -73,8 +73,8 @@ const sendEmail = async (to, subject, htmlContent) => {
   // Xác định email người gửi
   let fromEmail;
 
-  if (SMTP_HOST && SMTP_HOST.includes("sendgrid")) {
-    fromEmail = "chatgptplus.h5@gmail.com"; // Email đã verify trong SendGrid
+  if (SMTP_HOST && SMTP_HOST.includes('sendgrid')) {
+    fromEmail = 'chatgptplus.h5@gmail.com'; // Email đã verify trong SendGrid
   } else {
     fromEmail = EMAIL_USER; // Gmail hoặc email khác
   }
@@ -87,13 +87,13 @@ const sendEmail = async (to, subject, htmlContent) => {
   };
 
   try {
-    console.log("Sending email to:", to);
-    console.log("From:", fromEmail);
+    console.log('Sending email to:', to);
+    console.log('From:', fromEmail);
     const result = await transporter.sendMail(mailOptions);
-    console.log("Email sent successfully:", result.messageId);
+    console.log('Email sent successfully:', result.messageId);
     return true;
   } catch (err) {
-    console.error("Email error details:", err);
+    console.error('Email error details:', err);
     throw new Error(`Không gửi được email: ${err.message}`);
   }
 };
@@ -101,14 +101,13 @@ const sendEmail = async (to, subject, htmlContent) => {
 const forgotPassword = async (req, res) => {
   try {
     const student = await Student.findOne({ where: { email: req.body.email } });
-    if (!student)
-      return res.status(404).json("Email không tồn tại trong hệ thống!");
+    if (!student) return res.status(404).json('Email không tồn tại trong hệ thống!');
 
     const user = await User.findOne({ where: { studentId: student.id } });
-    if (!user) return res.status(404).json("User không tồn tại");
+    if (!user) return res.status(404).json('User không tồn tại');
 
     const token = jwt.sign({ id: user.id }, JWT_ACCESS_KEY, {
-      expiresIn: "15m",
+      expiresIn: '15m',
     });
 
     const htmlContent = `
@@ -116,13 +115,11 @@ const forgotPassword = async (req, res) => {
       <p>${CLIENT_URL}/reset-password/${token}</p>
     `;
 
-    await sendEmail(student.email, "Yêu cầu đặt lại mật khẩu", htmlContent);
-    return res.json("Đã gửi email đặt lại mật khẩu");
+    await sendEmail(student.email, 'Yêu cầu đặt lại mật khẩu', htmlContent);
+    return res.json('Đã gửi email đặt lại mật khẩu');
   } catch (err) {
-    console.error("Forgot password error:", err);
-    return res
-      .status(500)
-      .json(`Không gửi được email đặt lại mật khẩu: ${err.message}`);
+    console.error('Forgot password error:', err);
+    return res.status(500).json(`Không gửi được email đặt lại mật khẩu: ${err.message}`);
   }
 };
 
@@ -132,28 +129,28 @@ const resetPassword = async (req, res) => {
     const { newPassword, confirmPassword } = req.body;
 
     if (newPassword !== confirmPassword)
-      return res.status(400).json("Xác nhận mật khẩu không đúng!");
+      return res.status(400).json('Xác nhận mật khẩu không đúng!');
 
     let decoded = jwt.verify(token, JWT_ACCESS_KEY);
     const user = await User.findByPk(decoded.id);
 
     if (!user) {
-      return res.status(404).json("User không tồn tại");
+      return res.status(404).json('User không tồn tại');
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await user.update({ password: hashedPassword });
 
-    return res.json("Mật khẩu đã được thay đổi thành công");
+    return res.json('Mật khẩu đã được thay đổi thành công');
   } catch (err) {
-    console.error("Reset password error:", err);
-    if (err.name === "TokenExpiredError") {
-      return res.status(400).json("Token đã hết hạn, vui lòng yêu cầu lại");
+    console.error('Reset password error:', err);
+    if (err.name === 'TokenExpiredError') {
+      return res.status(400).json('Token đã hết hạn, vui lòng yêu cầu lại');
     }
-    if (err.name === "JsonWebTokenError") {
-      return res.status(400).json("Token không hợp lệ");
+    if (err.name === 'JsonWebTokenError') {
+      return res.status(400).json('Token không hợp lệ');
     }
-    return res.status(500).json("Có lỗi xảy ra khi đặt lại mật khẩu");
+    return res.status(500).json('Có lỗi xảy ra khi đặt lại mật khẩu');
   }
 };
 

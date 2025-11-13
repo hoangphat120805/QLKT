@@ -333,13 +333,13 @@ export default function ManagerProposalDetailPage() {
                       dataIndex: 'cccd',
                       key: 'cccd',
                       width: 150,
-                      render: (text) => <Text style={{ fontFamily: 'monospace' }}>{text}</Text>,
+                      render: text => <Text style={{ fontFamily: 'monospace' }}>{text}</Text>,
                     },
                     {
                       title: 'Họ tên',
                       dataIndex: 'ho_ten',
                       key: 'ho_ten',
-                      render: (text) => <Text strong>{text}</Text>,
+                      render: text => <Text strong>{text}</Text>,
                     },
                     {
                       title: 'Năm',
@@ -353,7 +353,7 @@ export default function ManagerProposalDetailPage() {
                       dataIndex: 'danh_hieu',
                       key: 'danh_hieu',
                       width: 120,
-                      render: (text) =>
+                      render: text =>
                         text ? <Tag color="blue">{text}</Tag> : <Text type="secondary">-</Text>,
                     },
                     {
@@ -362,7 +362,7 @@ export default function ManagerProposalDetailPage() {
                       key: 'nhan_bkbqp',
                       width: 80,
                       align: 'center',
-                      render: (value) =>
+                      render: value =>
                         value ? (
                           <CheckCircleOutlined style={{ color: '#52c41a', fontSize: 16 }} />
                         ) : (
@@ -374,7 +374,7 @@ export default function ManagerProposalDetailPage() {
                       dataIndex: 'so_quyet_dinh_bkbqp',
                       key: 'so_quyet_dinh_bkbqp',
                       width: 150,
-                      render: (text) => <Text type="secondary">{text || '-'}</Text>,
+                      render: text => <Text type="secondary">{text || '-'}</Text>,
                     },
                     {
                       title: 'CSTĐTQ',
@@ -382,7 +382,7 @@ export default function ManagerProposalDetailPage() {
                       key: 'nhan_cstdtq',
                       width: 80,
                       align: 'center',
-                      render: (value) =>
+                      render: value =>
                         value ? (
                           <CheckCircleOutlined style={{ color: '#1890ff', fontSize: 16 }} />
                         ) : (
@@ -394,7 +394,7 @@ export default function ManagerProposalDetailPage() {
                       dataIndex: 'so_quyet_dinh_cstdtq',
                       key: 'so_quyet_dinh_cstdtq',
                       width: 150,
-                      render: (text) => <Text type="secondary">{text || '-'}</Text>,
+                      render: text => <Text type="secondary">{text || '-'}</Text>,
                     },
                   ]}
                 />
@@ -427,13 +427,13 @@ export default function ManagerProposalDetailPage() {
                       dataIndex: 'cccd',
                       key: 'cccd',
                       width: 150,
-                      render: (text) => <Text style={{ fontFamily: 'monospace' }}>{text}</Text>,
+                      render: text => <Text style={{ fontFamily: 'monospace' }}>{text}</Text>,
                     },
                     {
                       title: 'Họ tên',
                       dataIndex: 'ho_ten',
                       key: 'ho_ten',
-                      render: (text) => <Text strong>{text}</Text>,
+                      render: text => <Text strong>{text}</Text>,
                     },
                     {
                       title: 'Năm',
@@ -447,9 +447,7 @@ export default function ManagerProposalDetailPage() {
                       dataIndex: 'loai',
                       key: 'loai',
                       width: 100,
-                      render: (text) => (
-                        <Tag color={text === 'NCKH' ? 'blue' : 'green'}>{text}</Tag>
-                      ),
+                      render: text => <Tag color={text === 'NCKH' ? 'blue' : 'green'}>{text}</Tag>,
                     },
                     {
                       title: 'Mô tả',
@@ -461,7 +459,7 @@ export default function ManagerProposalDetailPage() {
                       dataIndex: 'status',
                       key: 'status',
                       width: 120,
-                      render: (text) =>
+                      render: text =>
                         text === 'APPROVED' ? (
                           <Tag color="success">Đã duyệt</Tag>
                         ) : (

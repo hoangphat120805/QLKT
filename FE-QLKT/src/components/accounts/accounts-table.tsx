@@ -1,12 +1,24 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Button } from "@/components/ui/button"
-import { MoreHorizontal, Trash2 } from "lucide-react"
-import { apiClient } from "@/lib/api-client"
-import { useToast } from "@/hooks/use-toast"
+import { useState } from 'react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { MoreHorizontal, Trash2 } from 'lucide-react';
+import { apiClient } from '@/lib/api-client';
+import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,40 +27,40 @@ import {
   AlertDialogDescription,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+} from '@/components/ui/alert-dialog';
 
 interface AccountsTableProps {
-  accounts: any[]
-  onEdit?: (account: any) => void
-  onRefresh?: () => void
+  accounts: any[];
+  onEdit?: (account: any) => void;
+  onRefresh?: () => void;
 }
 
 export function AccountsTable({ accounts, onEdit, onRefresh }: AccountsTableProps) {
-  const [deleteId, setDeleteId] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-  const { toast } = useToast()
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
   const handleDelete = async () => {
-    if (!deleteId) return
+    if (!deleteId) return;
     try {
-      setLoading(true)
-      await apiClient.deleteAccount(deleteId)
+      setLoading(true);
+      await apiClient.deleteAccount(deleteId);
       toast({
-        title: "Thành công",
-        description: "Xóa tài khoản thành công",
-      })
-      onRefresh?.()
-      setDeleteId(null)
+        title: 'Thành công',
+        description: 'Xóa tài khoản thành công',
+      });
+      onRefresh?.();
+      setDeleteId(null);
     } catch (error) {
       toast({
-        title: "Lỗi",
-        description: "Có lỗi xảy ra khi xóa",
-        variant: "destructive",
-      })
+        title: 'Lỗi',
+        description: 'Có lỗi xảy ra khi xóa',
+        variant: 'destructive',
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <>
@@ -64,14 +76,16 @@ export function AccountsTable({ accounts, onEdit, onRefresh }: AccountsTableProp
             </TableRow>
           </TableHeader>
           <TableBody>
-            {accounts.map((account) => (
+            {accounts.map(account => (
               <TableRow key={account.id}>
                 <TableCell className="font-medium">{account.username}</TableCell>
                 <TableCell>{account.personnel_name}</TableCell>
                 <TableCell>
-                  <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">{account.role}</span>
+                  <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
+                    {account.role}
+                  </span>
                 </TableCell>
-                <TableCell>{new Date(account.created_at).toLocaleDateString("vi-VN")}</TableCell>
+                <TableCell>{new Date(account.created_at).toLocaleDateString('vi-VN')}</TableCell>
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -82,7 +96,10 @@ export function AccountsTable({ accounts, onEdit, onRefresh }: AccountsTableProp
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => onEdit?.(account)}>Sửa</DropdownMenuItem>
                       <DropdownMenuItem>Đặt lại mật khẩu</DropdownMenuItem>
-                      <DropdownMenuItem className="text-red-600" onClick={() => setDeleteId(account.id)}>
+                      <DropdownMenuItem
+                        className="text-red-600"
+                        onClick={() => setDeleteId(account.id)}
+                      >
                         <Trash2 className="mr-2 h-4 w-4" />
                         Xóa
                       </DropdownMenuItem>
@@ -104,11 +121,15 @@ export function AccountsTable({ accounts, onEdit, onRefresh }: AccountsTableProp
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogCancel>Hủy</AlertDialogCancel>
-          <AlertDialogAction onClick={handleDelete} disabled={loading} className="bg-red-600 hover:bg-red-700">
-            {loading ? "Đang xóa..." : "Xóa"}
+          <AlertDialogAction
+            onClick={handleDelete}
+            disabled={loading}
+            className="bg-red-600 hover:bg-red-700"
+          >
+            {loading ? 'Đang xóa...' : 'Xóa'}
           </AlertDialogAction>
         </AlertDialogContent>
       </AlertDialog>
     </>
-  )
+  );
 }

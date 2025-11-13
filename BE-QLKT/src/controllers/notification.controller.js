@@ -9,12 +9,7 @@ class NotificationController {
    */
   async getNotifications(req, res) {
     try {
-      const {
-        page = 1,
-        limit = 20,
-        isRead,
-        type,
-      } = req.query;
+      const { page = 1, limit = 20, isRead, type } = req.query;
       const currentUser = req.user;
 
       const skip = (page - 1) * limit;

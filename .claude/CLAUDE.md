@@ -3,6 +3,7 @@
 ## 📖 Tổng quan Dự án
 
 Hệ thống quản lý khen thưởng toàn diện cho Học viện Khoa học Quân sự, bao gồm:
+
 - **Frontend**: Next.js 14 (App Router), React 18, TypeScript, TailwindCSS, shadcn/ui
 - **Backend**: Node.js, Express, PostgreSQL, Prisma ORM
 - **Authentication**: JWT (Access Token + Refresh Token)
@@ -46,6 +47,7 @@ QLKT/
 ## 🔑 Phân quyền & Vai trò
 
 ### Vai trò Hệ thống
+
 1. **SUPER_ADMIN**: Quản trị toàn hệ thống
    - Quản lý tài khoản
    - Tất cả quyền của Admin
@@ -70,16 +72,18 @@ QLKT/
 ## 📊 Database Schema - 10 Bảng Chính
 
 ### 1. DonVi (Đơn vị)
+
 ```typescript
 {
-  id: number              // PK
-  ma_don_vi: string       // Unique: "K1", "K2"
-  ten_don_vi: string      // "Hệ 1", "Hệ 2"
-  so_luong: number        // Tổng quân số
+  id: number; // PK
+  ma_don_vi: string; // Unique: "K1", "K2"
+  ten_don_vi: string; // "Hệ 1", "Hệ 2"
+  so_luong: number; // Tổng quân số
 }
 ```
 
 ### 2. NhomCongHien (Nhóm cống hiến)
+
 ```typescript
 {
   id: number              // PK
@@ -89,6 +93,7 @@ QLKT/
 ```
 
 ### 3. ChucVu (Chức vụ)
+
 ```typescript
 {
   id: number              // PK
@@ -100,30 +105,34 @@ QLKT/
 ```
 
 ### 4. QuanNhan (Quân nhân)
+
 ```typescript
 {
-  id: number              // PK
-  cccd: string            // Unique - Khóa Import/Export
-  ho_ten: string
-  ngay_sinh: Date
-  ngay_nhap_ngu: Date     // Tính khen thưởng niên hạn
-  don_vi_id: number       // FK -> DonVi
-  chuc_vu_id: number      // FK -> ChucVu
+  id: number; // PK
+  cccd: string; // Unique - Khóa Import/Export
+  ho_ten: string;
+  ngay_sinh: Date;
+  ngay_nhap_ngu: Date; // Tính khen thưởng niên hạn
+  don_vi_id: number; // FK -> DonVi
+  chuc_vu_id: number; // FK -> ChucVu
 }
 ```
 
 ### 5. TaiKhoan (Tài khoản)
+
 ```typescript
 {
-  id: number              // PK
-  quan_nhan_id: number?   // FK -> QuanNhan (null cho SUPER_ADMIN)
-  username: string        // Unique
-  password_hash: string
-  role: 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'USER'
+  id: number; // PK
+  quan_nhan_id: number // FK -> QuanNhan (null cho SUPER_ADMIN)
+    ? username
+    : string; // Unique
+  password_hash: string;
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'USER';
 }
 ```
 
 ### 6. LichSuChucVu (Lịch sử chức vụ) - INPUT
+
 ```typescript
 {
   id: number              // PK
@@ -135,18 +144,20 @@ QLKT/
 ```
 
 ### 7. ThanhTichKhoaHoc (Thành tích khoa học) - INPUT
+
 ```typescript
 {
-  id: number              // PK
-  quan_nhan_id: number    // FK -> QuanNhan
-  nam: number
-  loai: 'NCKH' | 'SKKH'
-  mo_ta: string           // Tên đề tài
-  status: 'APPROVED' | 'PENDING'
+  id: number; // PK
+  quan_nhan_id: number; // FK -> QuanNhan
+  nam: number;
+  loai: 'NCKH' | 'SKKH';
+  mo_ta: string; // Tên đề tài
+  status: 'APPROVED' | 'PENDING';
 }
 ```
 
 ### 8. DanhHieuHangNam (Danh hiệu hằng năm) - INPUT & OUTPUT
+
 ```typescript
 {
   id: number              // PK
@@ -162,6 +173,7 @@ QLKT/
 ```
 
 ### 9. HoSoNienHan (Hồ sơ Niên hạn) - OUTPUT
+
 ```typescript
 {
   id: number              // PK
@@ -183,6 +195,7 @@ QLKT/
 ```
 
 ### 10. HoSoHangNam (Hồ sơ Hằng năm) - OUTPUT
+
 ```typescript
 {
   id: number              // PK
@@ -199,12 +212,14 @@ QLKT/
 ## 🔗 API Endpoints Chính
 
 ### Authentication
+
 - `POST /api/auth/login` - Đăng nhập
 - `POST /api/auth/refresh` - Refresh token
 - `POST /api/auth/logout` - Đăng xuất
 - `POST /api/auth/change-password` - Đổi mật khẩu
 
 ### Accounts (SUPER_ADMIN)
+
 - `GET /api/accounts` - Danh sách tài khoản
 - `POST /api/accounts` - Tạo tài khoản
 - `PUT /api/accounts/:id` - Cập nhật vai trò
@@ -212,24 +227,28 @@ QLKT/
 - `DELETE /api/accounts/:id` - Xóa tài khoản
 
 ### Units (ADMIN)
+
 - `GET /api/units` - Danh sách đơn vị
 - `POST /api/units` - Tạo đơn vị
 - `PUT /api/units/:id` - Cập nhật đơn vị
 - `DELETE /api/units/:id` - Xóa đơn vị
 
 ### Contribution Groups (ADMIN)
+
 - `GET /api/contribution-groups` - Danh sách nhóm cống hiến
 - `POST /api/contribution-groups` - Tạo nhóm
 - `PUT /api/contribution-groups/:id` - Cập nhật nhóm
 - `DELETE /api/contribution-groups/:id` - Xóa nhóm
 
 ### Positions (ADMIN, MANAGER)
+
 - `GET /api/positions?unit_id=...` - Danh sách chức vụ theo đơn vị
 - `POST /api/positions` - Tạo chức vụ
 - `PUT /api/positions/:id` - Cập nhật chức vụ
 - `DELETE /api/positions/:id` - Xóa chức vụ
 
 ### Personnel (ADMIN, MANAGER, USER)
+
 - `GET /api/personnel` - Danh sách quân nhân
 - `GET /api/personnel/:id` - Chi tiết quân nhân
 - `POST /api/personnel` - Thêm quân nhân
@@ -238,24 +257,28 @@ QLKT/
 - `GET /api/personnel/export` - Export Excel
 
 ### Annual Rewards (ADMIN, MANAGER, USER)
+
 - `GET /api/annual-rewards?personnel_id=...` - Lịch sử danh hiệu
 - `POST /api/annual-rewards` - Thêm danh hiệu
 - `PUT /api/annual-rewards/:id` - Cập nhật danh hiệu
 - `DELETE /api/annual-rewards/:id` - Xóa danh hiệu
 
 ### Scientific Achievements (ADMIN, MANAGER, USER)
+
 - `GET /api/scientific-achievements?personnel_id=...` - Lịch sử NCKH
 - `POST /api/scientific-achievements` - Thêm NCKH
 - `PUT /api/scientific-achievements/:id` - Cập nhật NCKH
 - `DELETE /api/scientific-achievements/:id` - Xóa NCKH
 
 ### Position History (ADMIN, MANAGER, USER)
+
 - `GET /api/position-history?personnel_id=...` - Lịch sử chức vụ
 - `POST /api/position-history` - Thêm lịch sử
 - `PUT /api/position-history/:id` - Cập nhật lịch sử
 - `DELETE /api/position-history/:id` - Xóa lịch sử
 
 ### Profiles (ADMIN, MANAGER, USER)
+
 - `GET /api/profiles/annual/:personnel_id` - Hồ sơ hằng năm
 - `GET /api/profiles/service/:personnel_id` - Hồ sơ niên hạn
 - `POST /api/profiles/recalculate/:personnel_id` - Tính toán lại
@@ -294,34 +317,42 @@ QLKT/
 ## 💡 Business Logic - "Bộ não" Tính toán
 
 ### Khen thưởng Niên hạn (Service Years)
+
 **Huân chương Chiến sỹ Vẻ vang:**
+
 - Hạng Ba: 10 năm
 - Hạng Nhì: 15 năm
 - Hạng Nhất: 20 năm
 
 **Huân chương Bảo vệ Tổ quốc (Cống hiến):**
 Tính từ LichSuChucVu dựa trên nhóm cống hiến:
+
 - Nhóm 5: 1x tháng
 - Nhóm 6: 1.2x tháng
 - Nhóm 7: 1.5x tháng
 - ...
 
 Điều kiện:
+
 - Hạng Ba: 180 tháng
 - Hạng Nhì: 240 tháng
 - Hạng Nhất: 300 tháng
 
 ### Khen thưởng Hằng năm (Annual)
+
 **Bằng khen BQP:**
+
 - Đủ 5 năm CSTDCS liên tục
 
 **CSTD Toàn quân:**
+
 - Đủ 10 năm CSTDCS liên tục
 - Có ít nhất 1 NCKH hoặc SKKH được duyệt
 
 ## 🛠️ Tech Stack Chi tiết
 
 ### Frontend
+
 - **Framework**: Next.js 14.2.4 (App Router)
 - **React**: 18
 - **TypeScript**: 5.9.3
@@ -335,6 +366,7 @@ Tính từ LichSuChucVu dựa trên nhóm cống hiến:
 - **Charts**: Chart.js
 
 ### Backend
+
 - **Runtime**: Node.js
 - **Framework**: Express
 - **Database**: PostgreSQL
@@ -348,6 +380,7 @@ Tính từ LichSuChucVu dựa trên nhóm cống hiến:
 ## 📝 Code Style & Conventions
 
 ### TypeScript/JavaScript
+
 - Use `const` over `let`, avoid `var`
 - Arrow functions for callbacks
 - Async/await instead of promise chains
@@ -355,12 +388,14 @@ Tính từ LichSuChucVu dựa trên nhóm cống hiến:
 - Destructuring where appropriate
 
 ### React
+
 - Functional components with hooks
 - Custom hooks for reusable logic
 - Proper error and loading states
 - Optimize with `useMemo` and `useCallback` when needed
 
 ### Naming Conventions
+
 - **Files**: kebab-case (`user-profile.tsx`)
 - **Components**: PascalCase (`UserProfile`)
 - **Functions**: camelCase (`getUserData`)
@@ -368,6 +403,7 @@ Tính từ LichSuChucVu dựa trên nhóm cống hiến:
 - **Types/Interfaces**: PascalCase (`UserData`)
 
 ### API Response Format
+
 ```typescript
 // Success
 {
@@ -397,6 +433,7 @@ Tính từ LichSuChucVu dựa trên nhóm cống hiến:
 ## 🚀 Development Workflow
 
 ### Setup
+
 ```bash
 # Frontend
 cd FE-QLKT
@@ -412,6 +449,7 @@ npm run dev
 ```
 
 ### Common Commands
+
 ```bash
 # Build
 npm run build
@@ -429,6 +467,7 @@ npx prisma migrate dev
 ## 📦 Key Files
 
 ### Frontend
+
 - `src/app/layout.tsx` - Root layout
 - `src/app/page.tsx` - Landing page
 - `src/lib/axios.ts` - Axios instance with interceptors
@@ -436,6 +475,7 @@ npx prisma migrate dev
 - `tailwind.config.ts` - Tailwind configuration
 
 ### Backend
+
 - `src/index.js` - Express server
 - `src/routes/` - API routes
 - `src/controllers/` - Request handlers

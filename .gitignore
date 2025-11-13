@@ -80,9 +80,5 @@ BE-QLKT/temp/
 !README.md
 !QLKT.md
 
-# Config files
-.prettierrc
-.prettierignore
-
 # Other files
 DOCS_TREE.txt

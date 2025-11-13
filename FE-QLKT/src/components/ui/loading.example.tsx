@@ -54,11 +54,7 @@ export function InlineLoadingExample() {
   return (
     <div>
       <button onClick={() => setSaving(true)}>
-        {saving ? (
-          <LoadingInline message="Đang lưu..." size="small" />
-        ) : (
-          'Lưu'
-        )}
+        {saving ? <LoadingInline message="Đang lưu..." size="small" /> : 'Lưu'}
       </button>
     </div>
   );
@@ -104,4 +100,3 @@ export function DynamicMessageExample() {
 // - fullScreen?: boolean - Hiển thị full screen với backdrop (mặc định: false)
 // - size?: 'small' | 'default' | 'large' - Kích thước spinner (mặc định: 'large')
 // - className?: string - Class CSS tùy chỉnh
-

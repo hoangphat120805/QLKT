@@ -1,8 +1,8 @@
-const { DataTypes } = require("sequelize");
-const sequelize = require("./database");
+const { DataTypes } = require('sequelize');
+const sequelize = require('./database');
 
 const DonViTrucThuoc = sequelize.define(
-  "DonViTrucThuoc",
+  'DonViTrucThuoc',
   {
     id: {
       type: DataTypes.UUID,
@@ -12,13 +12,13 @@ const DonViTrucThuoc = sequelize.define(
     co_quan_don_vi_id: {
       type: DataTypes.UUID,
       allowNull: false,
-      comment: "ID cơ quan đơn vị",
+      comment: 'ID cơ quan đơn vị',
       references: {
-        model: "co_quan_don_vi",
-        key: "id",
+        model: 'co_quan_don_vi',
+        key: 'id',
       },
-      onDelete: "CASCADE",
-      field: "co_quan_don_vi_id",
+      onDelete: 'CASCADE',
+      field: 'co_quan_don_vi_id',
     },
     ma_don_vi: {
       type: DataTypes.STRING(50),
@@ -36,16 +36,16 @@ const DonViTrucThuoc = sequelize.define(
     createdAt: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
-      field: "createdAt",
+      field: 'createdAt',
     },
     updatedAt: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
-      field: "updatedAt",
+      field: 'updatedAt',
     },
   },
   {
-    tableName: "don_vi_truc_thuoc",
+    tableName: 'don_vi_truc_thuoc',
     timestamps: true,
   }
 );

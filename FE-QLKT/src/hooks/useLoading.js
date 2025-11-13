@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback } from 'react';
 
 export const useLoading = (initialState = false) => {
   const [loading, setLoading] = useState(initialState);
@@ -11,7 +11,7 @@ export const useLoading = (initialState = false) => {
     setLoading(false);
   }, []);
 
-  const withLoading = useCallback(async (asyncFunction) => {
+  const withLoading = useCallback(async asyncFunction => {
     try {
       setLoading(true);
       const result = await asyncFunction();

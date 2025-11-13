@@ -219,10 +219,14 @@ export default function AccountEditPage() {
                 filterOption={(input, option) =>
                   (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
                 }
-                options={Array.isArray(personnel) ? personnel.map((p: any) => ({
-                  value: p.id,
-                  label: `${p.ho_ten} (${p.cccd})`,
-                })) : []}
+                options={
+                  Array.isArray(personnel)
+                    ? personnel.map((p: any) => ({
+                        value: p.id,
+                        label: `${p.ho_ten} (${p.cccd})`,
+                      }))
+                    : []
+                }
               />
             </Form.Item>
 

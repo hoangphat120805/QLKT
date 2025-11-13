@@ -5,6 +5,7 @@
 **QLKT** = Quản lý Khen thưởng (Awards Management System) for Vietnam Military Science Academy
 
 ### Stack
+
 - **Frontend**: Next.js 14 + React 18 + TypeScript + TailwindCSS + shadcn/ui
 - **Backend**: Node.js + Express + PostgreSQL + Prisma
 - **Auth**: JWT (Access + Refresh Token)
@@ -46,6 +47,7 @@ BE-QLKT/src/
 ## 🗄️ Core Database Tables
 
 ### Master Data
+
 1. **DonVi** (Units) - Departments/Faculties
 2. **NhomCongHien** (Contribution Groups) - For service calculation
 3. **ChucVu** (Positions) - Job positions in units
@@ -53,31 +55,37 @@ BE-QLKT/src/
 5. **TaiKhoan** (Accounts) - User accounts
 
 ### INPUT Data
+
 6. **LichSuChucVu** (Position History) - For service award calculation
 7. **ThanhTichKhoaHoc** (Scientific Achievements) - NCKH/SKKH records
 8. **DanhHieuHangNam** (Annual Titles) - CSTDCS/CSTT records
 
 ### OUTPUT Data
+
 9. **HoSoNienHan** (Service Profile) - Calculated service awards
 10. **HoSoHangNam** (Annual Profile) - Calculated annual awards
 
 ## 🔑 Key Concepts
 
 ### CCCD
+
 - **Primary key** for Import/Export operations
 - Unique identifier for each personnel
 
 ### ngay_nhap_ngu
+
 - Enlistment date
 - Used to calculate service years awards
 
 ### Award Types
 
 **Service Awards (Niên hạn):**
+
 - HCCSVV (Huân chương Chiến sỹ Vẻ vang): Hạng Ba (10y), Nhì (15y), Nhất (20y)
 - HCBVTQ (Huân chương Bảo vệ Tổ quốc): Based on contribution months
 
 **Annual Awards:**
+
 - CSTDCS (Chiến sỹ Thi đua Cơ sở)
 - CSTT (Chiến sỹ Tiên tiến)
 - BKBQP (Bằng khen BQP) - 5 consecutive CSTDCS
@@ -86,6 +94,7 @@ BE-QLKT/src/
 ## 🛣️ API Patterns
 
 ### Standard Response Format
+
 ```typescript
 // Success
 { success: true, data: {...}, message?: string }
@@ -95,12 +104,15 @@ BE-QLKT/src/
 ```
 
 ### Authentication
+
 All API calls (except auth endpoints) require:
+
 ```
 Authorization: Bearer <access_token>
 ```
 
 ### Common Query Parameters
+
 - `?page=1&limit=10` - Pagination
 - `?personnel_id=123` - Filter by personnel
 - `?unit_id=456` - Filter by unit
@@ -108,75 +120,81 @@ Authorization: Bearer <access_token>
 ## 🎨 Frontend Patterns
 
 ### File Organization
+
 - Pages: `app/[role]/[feature]/page.tsx`
 - Components: `components/[feature]/[ComponentName].tsx`
 - Hooks: `hooks/use[FeatureName].ts`
 
 ### Common Hooks
+
 ```typescript
-useAuth()           // Authentication state
-useToast()          // Toast notifications
-usePersonnel()      // Personnel data fetching
-useAnnualRewards()  // Annual rewards data
+useAuth(); // Authentication state
+useToast(); // Toast notifications
+usePersonnel(); // Personnel data fetching
+useAnnualRewards(); // Annual rewards data
 ```
 
 ### State Management
+
 - Local state: `useState`
 - Server state: Direct API calls with `useEffect`
 - Global state: Redux Toolkit (minimal usage)
 
 ### Component Patterns
+
 ```tsx
 // Typical page component structure
 export default function PageName() {
-  const [loading, setLoading] = useState(true)
-  const [data, setData] = useState(null)
-  const [error, setError] = useState(null)
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchData()
-  }, [])
+    fetchData();
+  }, []);
 
-  if (loading) return <LoadingSpinner />
-  if (error) return <ErrorMessage error={error} />
+  if (loading) return <LoadingSpinner />;
+  if (error) return <ErrorMessage error={error} />;
 
-  return <MainContent data={data} />
+  return <MainContent data={data} />;
 }
 ```
 
 ## 🔧 Backend Patterns
 
 ### Controller Pattern
+
 ```javascript
 exports.getAllPersonnel = async (req, res) => {
   try {
-    const { role, userId } = req.user
-    const data = await personnelService.getAll(role, userId)
-    res.json({ success: true, data })
+    const { role, userId } = req.user;
+    const data = await personnelService.getAll(role, userId);
+    res.json({ success: true, data });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message })
+    res.status(500).json({ success: false, error: error.message });
   }
-}
+};
 ```
 
 ### Service Layer
+
 ```javascript
 exports.getAll = async (role, userId) => {
   if (role === 'ADMIN') {
-    return await prisma.quanNhan.findMany()
+    return await prisma.quanNhan.findMany();
   }
   if (role === 'MANAGER') {
     const account = await prisma.taiKhoan.findUnique({
       where: { id: userId },
-      include: { quanNhan: true }
-    })
-    const unitId = account.quanNhan.don_vi_id
+      include: { quanNhan: true },
+    });
+    const unitId = account.quanNhan.don_vi_id;
     return await prisma.quanNhan.findMany({
-      where: { don_vi_id: unitId }
-    })
+      where: { don_vi_id: unitId },
+    });
   }
   // ... more logic
-}
+};
 ```
 
 ## 📋 Common Tasks
@@ -198,6 +216,7 @@ exports.getAll = async (role, userId) => {
 ### Import/Export Excel
 
 **Import Pattern:**
+
 ```javascript
 POST /api/personnel/import
 Content-Type: multipart/form-data
@@ -208,6 +227,7 @@ Body: { file: <excel_file> }
 ```
 
 **Export Pattern:**
+
 ```javascript
 GET /api/personnel/export
 Returns: Excel file download
@@ -216,25 +236,30 @@ Returns: Excel file download
 ## 🎯 Code Locations for Common Tasks
 
 ### Authentication
+
 - Frontend: `src/app/(auth)/login/page.tsx`
 - Backend: `src/controllers/authController.js`, `src/middlewares/auth.js`
 
 ### Personnel Management
+
 - Frontend: `src/app/admin/personnel/page.tsx`
 - Backend: `src/controllers/personnelController.js`, `src/services/personnelService.js`
 
 ### Awards Management
+
 - Annual: `src/app/admin/personnel/[id]/annual-rewards/page.tsx`
 - Scientific: `src/app/admin/personnel/[id]/scientific-achievements/page.tsx`
 - Position History: `src/app/admin/personnel/[id]/position-history/page.tsx`
 
 ### Profile Calculation ("Bộ não")
+
 - Backend: `src/services/profileService.js`
 - Logic: Calculates HoSoNienHan and HoSoHangNam based on INPUT data
 
 ## 🚨 Important Rules
 
 ### DO:
+
 - Use Prisma for all database operations (prevents SQL injection)
 - Validate all inputs with express-validator
 - Check user role in every protected route
@@ -243,6 +268,7 @@ Returns: Excel file download
 - Log errors for debugging
 
 ### DON'T:
+
 - Use raw SQL queries
 - Store passwords in plain text
 - Skip input validation
@@ -250,6 +276,7 @@ Returns: Excel file download
 - Modify OUTPUT tables (HoSoNienHan, HoSoHangNam) directly - use recalculate endpoint
 
 ### Security Checklist
+
 - [ ] JWT token in Authorization header
 - [ ] Role-based access control checked
 - [ ] Input validated and sanitized
@@ -259,6 +286,7 @@ Returns: Excel file download
 ## 🐛 Debugging Tips
 
 ### Frontend Issues
+
 ```bash
 # Check console for errors
 # Check Network tab for API calls
@@ -267,6 +295,7 @@ Returns: Excel file download
 ```
 
 ### Backend Issues
+
 ```bash
 # Check server logs
 # Use Prisma Studio: npx prisma studio
@@ -275,6 +304,7 @@ Returns: Excel file download
 ```
 
 ### Common Errors
+
 - **401 Unauthorized**: Token expired or invalid → use refresh token
 - **403 Forbidden**: Insufficient permissions → check role
 - **404 Not Found**: Check route path and parameters
@@ -283,6 +313,7 @@ Returns: Excel file download
 ## 📚 Quick Reference
 
 ### Environment Variables
+
 ```bash
 # Backend (.env)
 DATABASE_URL="postgresql://user:pass@localhost:5432/qlkt"
@@ -295,6 +326,7 @@ NEXT_PUBLIC_API_URL="http://localhost:5000/api"
 ```
 
 ### Useful Commands
+
 ```bash
 # Frontend
 npm run dev              # Start dev server
@@ -320,6 +352,7 @@ When asking Cursor AI for help:
 5. **Include context**: "For the awards calculation feature..."
 
 ### Good Prompts Examples
+
 - "Add a new API endpoint for MANAGER to view unit statistics"
 - "Create a frontend component to display annual rewards with edit/delete actions"
 - "Implement Excel export for position history following the existing personnel export pattern"
@@ -327,6 +360,7 @@ When asking Cursor AI for help:
 - "Fix the permission check in the annual rewards controller"
 
 ### Files to Reference Often
+
 - API docs: `QLKT.md`
 - Database schema: `prisma/schema.prisma`
 - Auth middleware: `src/middlewares/auth.js`

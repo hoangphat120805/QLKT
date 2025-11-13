@@ -191,16 +191,16 @@ export default function ProposalReviewPage() {
                 activeTab === 'pending'
                   ? 'Đề xuất đang chờ phê duyệt'
                   : activeTab === 'approved'
-                  ? 'Đề xuất đã được phê duyệt'
-                  : 'Đề xuất đã bị từ chối'
+                    ? 'Đề xuất đã được phê duyệt'
+                    : 'Đề xuất đã bị từ chối'
               }
               extra={
                 <Paragraph style={{ margin: 0, color: '#666' }}>
                   {activeTab === 'pending'
                     ? "Nhấn 'Xem và Duyệt' để kiểm tra và phê duyệt đề xuất"
                     : activeTab === 'approved'
-                    ? 'Danh sách các đề xuất đã được phê duyệt và import vào hệ thống'
-                    : 'Danh sách các đề xuất đã bị từ chối'}
+                      ? 'Danh sách các đề xuất đã được phê duyệt và import vào hệ thống'
+                      : 'Danh sách các đề xuất đã bị từ chối'}
                 </Paragraph>
               }
             >
@@ -219,8 +219,8 @@ export default function ProposalReviewPage() {
                         {activeTab === 'pending'
                           ? 'Chưa có đề xuất chờ phê duyệt'
                           : activeTab === 'approved'
-                          ? 'Chưa có đề xuất nào được phê duyệt'
-                          : 'Chưa có đề xuất nào bị từ chối'}
+                            ? 'Chưa có đề xuất nào được phê duyệt'
+                            : 'Chưa có đề xuất nào bị từ chối'}
                       </div>
                     </div>
                   }

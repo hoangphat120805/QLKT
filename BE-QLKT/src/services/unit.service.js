@@ -1,4 +1,4 @@
-const { prisma } = require("../models");
+const { prisma } = require('../models');
 
 class UnitService {
   /**
@@ -18,7 +18,7 @@ class UnitService {
             ChucVu: true,
           },
           orderBy: {
-            ma_don_vi: "asc",
+            ma_don_vi: 'asc',
           },
         });
 
@@ -31,7 +31,7 @@ class UnitService {
               ChucVu: true,
             },
             orderBy: {
-              ma_don_vi: "asc",
+              ma_don_vi: 'asc',
             },
           }),
           prisma.donViTrucThuoc.findMany({
@@ -40,7 +40,7 @@ class UnitService {
               ChucVu: true,
             },
             orderBy: {
-              ma_don_vi: "asc",
+              ma_don_vi: 'asc',
             },
           }),
         ]);
@@ -66,7 +66,7 @@ class UnitService {
       ]);
 
       if (existingCoQuanDonVi || existingDonViTrucThuoc) {
-        throw new Error("Mã đơn vị đã tồn tại");
+        throw new Error('Mã đơn vị đã tồn tại');
       }
 
       // Nếu có co_quan_don_vi_id, tạo đơn vị trực thuộc
@@ -77,7 +77,7 @@ class UnitService {
         });
 
         if (!parentUnit) {
-          throw new Error("Cơ quan đơn vị không tồn tại");
+          throw new Error('Cơ quan đơn vị không tồn tại');
         }
 
         // Tạo đơn vị trực thuộc
@@ -130,7 +130,7 @@ class UnitService {
       ]);
 
       if (!coQuanDonVi && !donViTrucThuoc) {
-        throw new Error("Đơn vị không tồn tại");
+        throw new Error('Đơn vị không tồn tại');
       }
 
       // Nếu là đơn vị trực thuộc
@@ -144,7 +144,7 @@ class UnitService {
           });
 
           if (!parentUnit) {
-            throw new Error("Cơ quan đơn vị không tồn tại");
+            throw new Error('Cơ quan đơn vị không tồn tại');
           }
 
           updateData.co_quan_don_vi_id = co_quan_don_vi_id;
@@ -226,16 +226,13 @@ class UnitService {
       ]);
 
       if (!coQuanDonVi && !donViTrucThuoc) {
-        throw new Error("Đơn vị không tồn tại");
+        throw new Error('Đơn vị không tồn tại');
       }
 
       // Nếu là cơ quan đơn vị
       if (coQuanDonVi) {
         // Kiểm tra có đơn vị trực thuộc không
-        if (
-          coQuanDonVi.DonViTrucThuoc &&
-          coQuanDonVi.DonViTrucThuoc.length > 0
-        ) {
+        if (coQuanDonVi.DonViTrucThuoc && coQuanDonVi.DonViTrucThuoc.length > 0) {
           throw new Error(
             `Không thể xóa cơ quan đơn vị vì còn ${coQuanDonVi.DonViTrucThuoc.length} đơn vị trực thuộc`
           );
@@ -247,9 +244,7 @@ class UnitService {
         });
 
         if (personnelCount > 0) {
-          throw new Error(
-            `Không thể xóa cơ quan đơn vị vì còn ${personnelCount} quân nhân`
-          );
+          throw new Error(`Không thể xóa cơ quan đơn vị vì còn ${personnelCount} quân nhân`);
         }
 
         // Kiểm tra có chức vụ không
@@ -258,9 +253,7 @@ class UnitService {
         });
 
         if (positionCount > 0) {
-          throw new Error(
-            `Không thể xóa cơ quan đơn vị vì còn ${positionCount} chức vụ`
-          );
+          throw new Error(`Không thể xóa cơ quan đơn vị vì còn ${positionCount} chức vụ`);
         }
 
         // Xóa cơ quan đơn vị
@@ -275,9 +268,7 @@ class UnitService {
         });
 
         if (personnelCount > 0) {
-          throw new Error(
-            `Không thể xóa đơn vị trực thuộc vì còn ${personnelCount} quân nhân`
-          );
+          throw new Error(`Không thể xóa đơn vị trực thuộc vì còn ${personnelCount} quân nhân`);
         }
 
         // Kiểm tra có chức vụ không
@@ -286,9 +277,7 @@ class UnitService {
         });
 
         if (positionCount > 0) {
-          throw new Error(
-            `Không thể xóa đơn vị trực thuộc vì còn ${positionCount} chức vụ`
-          );
+          throw new Error(`Không thể xóa đơn vị trực thuộc vì còn ${positionCount} chức vụ`);
         }
 
         // Xóa đơn vị trực thuộc
@@ -297,7 +286,7 @@ class UnitService {
         });
       }
 
-      return { message: "Xóa đơn vị thành công" };
+      return { message: 'Xóa đơn vị thành công' };
     } catch (error) {
       throw error;
     }
@@ -368,7 +357,7 @@ class UnitService {
       ]);
 
       if (!coQuanDonVi && !donViTrucThuoc) {
-        throw new Error("Đơn vị không tồn tại");
+        throw new Error('Đơn vị không tồn tại');
       }
 
       return coQuanDonVi || donViTrucThuoc;

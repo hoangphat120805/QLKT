@@ -13,9 +13,7 @@ export default function AuthLayout({ children }) {
       <div className="absolute inset-0 bg-black/40 dark:bg-black/60" />
 
       {/* Content */}
-      <div className="relative z-10">
-        {children}
-      </div>
+      <div className="relative z-10">{children}</div>
     </div>
   );
 }

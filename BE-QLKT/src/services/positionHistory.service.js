@@ -104,7 +104,12 @@ class PositionHistoryService {
         data: {
           chuc_vu_id: chuc_vu_id || history.chuc_vu_id,
           ngay_bat_dau: ngay_bat_dau ? new Date(ngay_bat_dau) : history.ngay_bat_dau,
-          ngay_ket_thuc: ngay_ket_thuc !== undefined ? (ngay_ket_thuc ? new Date(ngay_ket_thuc) : null) : history.ngay_ket_thuc,
+          ngay_ket_thuc:
+            ngay_ket_thuc !== undefined
+              ? ngay_ket_thuc
+                ? new Date(ngay_ket_thuc)
+                : null
+              : history.ngay_ket_thuc,
         },
         include: {
           ChucVu: {

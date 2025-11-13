@@ -65,10 +65,11 @@ export function AccountEditForm({ accountId }: AccountEditFormProps) {
           role: accountData.role,
         });
       } catch (error: any) {
-        const errorMessage = error?.response?.data?.message
-          || error?.response?.data?.error
-          || error?.message
-          || 'Không thể tải thông tin tài khoản';
+        const errorMessage =
+          error?.response?.data?.message ||
+          error?.response?.data?.error ||
+          error?.message ||
+          'Không thể tải thông tin tài khoản';
 
         toast({
           title: 'Lỗi',
@@ -122,10 +123,11 @@ export function AccountEditForm({ accountId }: AccountEditFormProps) {
         });
       }
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message
-        || error?.response?.data?.error
-        || error?.message
-        || 'Có lỗi xảy ra khi cập nhật tài khoản';
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        'Có lỗi xảy ra khi cập nhật tài khoản';
 
       toast({
         title: 'Lỗi',
@@ -155,10 +157,11 @@ export function AccountEditForm({ accountId }: AccountEditFormProps) {
         });
       }
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message
-        || error?.response?.data?.error
-        || error?.message
-        || 'Có lỗi xảy ra khi đặt lại mật khẩu';
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        'Có lỗi xảy ra khi đặt lại mật khẩu';
 
       toast({
         title: 'Lỗi',
@@ -224,7 +227,7 @@ export function AccountEditForm({ accountId }: AccountEditFormProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {getAvailableRoles().map((role) => (
+                        {getAvailableRoles().map(role => (
                           <SelectItem key={role.value} value={role.value}>
                             {role.label}
                           </SelectItem>

@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import axiosInstance from "@/utils/axiosInstance";
+import { useState, useEffect } from 'react';
+import axiosInstance from '@/utils/axiosInstance';
 
 /**
  * Custom hook to get studentId from userId
@@ -14,7 +14,7 @@ export const useStudentId = () => {
     const fetchStudentId = async () => {
       try {
         // Lấy thông tin user từ API
-        const userRes = await axiosInstance.get("/user/me");
+        const userRes = await axiosInstance.get('/user/me');
         const userId = userRes.data.id;
 
         // Use helper route to get studentId from userId
@@ -23,7 +23,7 @@ export const useStudentId = () => {
         setStudentId(res.data.id);
         setError(null);
       } catch (err) {
-        console.error("Error fetching studentId:", err);
+        console.error('Error fetching studentId:', err);
         setError(err);
         setStudentId(null);
       } finally {
@@ -41,12 +41,12 @@ export const useStudentId = () => {
  * Utility function to get studentId from userId
  * Use this for one-time conversions
  */
-export const getStudentIdFromUserId = async (userId) => {
+export const getStudentIdFromUserId = async userId => {
   try {
     const res = await axiosInstance.get(`/student/by-user/${userId}`);
     return res.data.id;
   } catch (error) {
-    console.error("Error getting studentId from userId:", error);
+    console.error('Error getting studentId from userId:', error);
     throw error;
   }
 };

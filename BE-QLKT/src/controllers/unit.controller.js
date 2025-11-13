@@ -1,4 +1,4 @@
-const unitService = require("../services/unit.service");
+const unitService = require('../services/unit.service');
 
 class UnitController {
   /**
@@ -8,19 +8,19 @@ class UnitController {
    */
   async getAllUnits(req, res) {
     try {
-      const includeHierarchy = req.query.hierarchy === "true";
+      const includeHierarchy = req.query.hierarchy === 'true';
       const result = await unitService.getAllUnits(includeHierarchy);
 
       return res.status(200).json({
         success: true,
-        message: "Lấy danh sách đơn vị thành công",
+        message: 'Lấy danh sách đơn vị thành công',
         data: result,
       });
     } catch (error) {
-      console.error("Get units error:", error);
+      console.error('Get units error:', error);
       return res.status(500).json({
         success: false,
-        message: error.message || "Lấy danh sách đơn vị thất bại",
+        message: error.message || 'Lấy danh sách đơn vị thất bại',
       });
     }
   }
@@ -37,7 +37,7 @@ class UnitController {
       if (!ma_don_vi || !ten_don_vi) {
         return res.status(400).json({
           success: false,
-          message: "Vui lòng nhập đầy đủ thông tin: ma_don_vi, ten_don_vi",
+          message: 'Vui lòng nhập đầy đủ thông tin: ma_don_vi, ten_don_vi',
         });
       }
 
@@ -49,14 +49,14 @@ class UnitController {
 
       return res.status(201).json({
         success: true,
-        message: "Tạo đơn vị thành công",
+        message: 'Tạo đơn vị thành công',
         data: result,
       });
     } catch (error) {
-      console.error("Create unit error:", error);
+      console.error('Create unit error:', error);
       return res.status(400).json({
         success: false,
-        message: error.message || "Tạo đơn vị thất bại",
+        message: error.message || 'Tạo đơn vị thất bại',
       });
     }
   }
@@ -73,7 +73,7 @@ class UnitController {
       if (!ten_don_vi && co_quan_don_vi_id === undefined) {
         return res.status(400).json({
           success: false,
-          message: "Vui lòng cung cấp thông tin cần cập nhật",
+          message: 'Vui lòng cung cấp thông tin cần cập nhật',
         });
       }
 
@@ -84,14 +84,14 @@ class UnitController {
 
       return res.status(200).json({
         success: true,
-        message: "Cập nhật đơn vị thành công",
+        message: 'Cập nhật đơn vị thành công',
         data: result,
       });
     } catch (error) {
-      console.error("Update unit error:", error);
+      console.error('Update unit error:', error);
       return res.status(400).json({
         success: false,
-        message: error.message || "Cập nhật đơn vị thất bại",
+        message: error.message || 'Cập nhật đơn vị thất bại',
       });
     }
   }
@@ -107,14 +107,14 @@ class UnitController {
 
       return res.status(200).json({
         success: true,
-        message: "Lấy thông tin đơn vị thành công",
+        message: 'Lấy thông tin đơn vị thành công',
         data: result,
       });
     } catch (error) {
-      console.error("Get unit by id error:", error);
+      console.error('Get unit by id error:', error);
       return res.status(404).json({
         success: false,
-        message: error.message || "Không tìm thấy đơn vị",
+        message: error.message || 'Không tìm thấy đơn vị',
       });
     }
   }
@@ -134,10 +134,10 @@ class UnitController {
         message: result.message,
       });
     } catch (error) {
-      console.error("Delete unit error:", error);
+      console.error('Delete unit error:', error);
       return res.status(400).json({
         success: false,
-        message: error.message || "Xóa đơn vị thất bại",
+        message: error.message || 'Xóa đơn vị thất bại',
       });
     }
   }

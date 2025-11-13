@@ -37,7 +37,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     () => ({
       theme,
       setTheme,
-      toggle
+      toggle,
     }),
     [theme]
   );

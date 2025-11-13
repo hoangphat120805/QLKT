@@ -1,8 +1,8 @@
-const { DataTypes } = require("sequelize");
-const sequelize = require("./database");
+const { DataTypes } = require('sequelize');
+const sequelize = require('./database');
 
 const CoQuanDonVi = sequelize.define(
-  "CoQuanDonVi",
+  'CoQuanDonVi',
   {
     id: {
       type: DataTypes.UUID,
@@ -25,16 +25,16 @@ const CoQuanDonVi = sequelize.define(
     createdAt: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
-      field: "createdAt",
+      field: 'createdAt',
     },
     updatedAt: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
-      field: "updatedAt",
+      field: 'updatedAt',
     },
   },
   {
-    tableName: "co_quan_don_vi",
+    tableName: 'co_quan_don_vi',
     timestamps: true,
   }
 );

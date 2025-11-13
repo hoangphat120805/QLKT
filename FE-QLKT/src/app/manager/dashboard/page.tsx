@@ -1,14 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {
-  Card,
-  Typography,
-  Button,
-  Breadcrumb,
-  ConfigProvider,
-  theme as antdTheme,
-} from 'antd';
+import { Card, Typography, Button, Breadcrumb, ConfigProvider, theme as antdTheme } from 'antd';
 import { Loading } from '@/components/ui/loading';
 import {
   TeamOutlined,
@@ -114,7 +107,8 @@ export default function ManagerDashboard() {
       value: stats.totalPersonnel,
       icon: TeamOutlined,
       iconColor: 'text-blue-600 dark:text-blue-400',
-      bgColor: 'bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20',
+      bgColor:
+        'bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20',
       link: '/manager/personnel',
     },
     {
@@ -122,7 +116,8 @@ export default function ManagerDashboard() {
       value: stats.totalCSTDCS,
       icon: FileTextOutlined,
       iconColor: 'text-green-600 dark:text-green-400',
-      bgColor: 'bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/20',
+      bgColor:
+        'bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/20',
       link: '#',
     },
     {
@@ -130,7 +125,8 @@ export default function ManagerDashboard() {
       value: stats.totalNCKH,
       icon: StarOutlined,
       iconColor: 'text-yellow-600 dark:text-yellow-400',
-      bgColor: 'bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/30 dark:to-yellow-800/20',
+      bgColor:
+        'bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/30 dark:to-yellow-800/20',
       link: '#',
     },
     {
@@ -138,7 +134,8 @@ export default function ManagerDashboard() {
       value: stats.totalAwards,
       icon: TrophyOutlined,
       iconColor: 'text-purple-600 dark:text-purple-400',
-      bgColor: 'bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/20',
+      bgColor:
+        'bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/20',
       link: '/manager/awards',
     },
   ];
@@ -152,7 +149,10 @@ export default function ManagerDashboard() {
       <div className="space-y-8 p-6 animate-in fade-in duration-500">
         {/* Breadcrumb */}
         <Breadcrumb
-          items={[{ title: <Link href="/manager/dashboard">Dashboard</Link> }, { title: 'Tổng quan' }]}
+          items={[
+            { title: <Link href="/manager/dashboard">Dashboard</Link> },
+            { title: 'Tổng quan' },
+          ]}
         />
 
         {/* Header */}
@@ -207,10 +207,7 @@ export default function ManagerDashboard() {
         )}
 
         {/* Quick Actions */}
-        <Card
-          title={<span className="text-lg font-semibold">Lối tắt</span>}
-          className="shadow-lg"
-        >
+        <Card title={<span className="text-lg font-semibold">Lối tắt</span>} className="shadow-lg">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Link href="/manager/personnel">
               <Button
@@ -304,9 +301,7 @@ export default function ManagerDashboard() {
                 <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                   Trạng thái hệ thống
                 </p>
-                <p
-                  className={`text-base font-medium text-green-600 dark:text-green-400`}
-                >
+                <p className={`text-base font-medium text-green-600 dark:text-green-400`}>
                   Hoạt động bình thường
                 </p>
               </div>

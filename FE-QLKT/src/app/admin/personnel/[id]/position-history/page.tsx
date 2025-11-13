@@ -334,9 +334,7 @@ export default function PositionHistoryPage() {
                   }
                   const ngayKetThuc = getFieldValue('ngay_ket_thuc');
                   if (ngayKetThuc && new Date(value) > new Date(ngayKetThuc)) {
-                    return Promise.reject(
-                      new Error('Ngày bắt đầu phải trước ngày kết thúc')
-                    );
+                    return Promise.reject(new Error('Ngày bắt đầu phải trước ngày kết thúc'));
                   }
                   return Promise.resolve();
                 },
@@ -358,9 +356,7 @@ export default function PositionHistoryPage() {
                   }
                   const ngayBatDau = getFieldValue('ngay_bat_dau');
                   if (ngayBatDau && new Date(value) < new Date(ngayBatDau)) {
-                    return Promise.reject(
-                      new Error('Ngày kết thúc phải sau ngày bắt đầu')
-                    );
+                    return Promise.reject(new Error('Ngày kết thúc phải sau ngày bắt đầu'));
                   }
                   return Promise.resolve();
                 },

@@ -131,8 +131,7 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
           } else {
             router.push(link);
           }
-        }
-        else {
+        } else {
           router.push(link);
         }
       } else if (role === 'MANAGER') {
@@ -488,71 +487,83 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
                     ? [
                         {
                           key: 'loading',
-                          label: <div className="text-center py-4 text-gray-400 bg-[#2d2d2d]">Đang tải...</div>,
+                          label: (
+                            <div className="text-center py-4 text-gray-400 bg-[#2d2d2d]">
+                              Đang tải...
+                            </div>
+                          ),
                         },
                       ]
                     : notifications.length === 0
-                    ? [
-                        {
-                          key: 'empty',
-                          label: (
-                            <div className="text-center py-4 text-gray-400 bg-[#2d2d2d]">
-                              Không có thông báo
-                            </div>
-                          ),
-                        },
-                      ]
-                    : [
-                        ...notifications.map(notif => ({
-                          key: `notification-${notif.id}`,
-                          label: (
-                            <div
-                              className={`max-w-xs cursor-pointer p-3 rounded-lg transition-all ${
-                                notif.is_read
-                                  ? 'bg-[#3d3d3d] dark:bg-[#3d3d3d] hover:bg-[#4a4a4a] dark:hover:bg-[#4a4a4a] opacity-75'
-                                  : 'bg-[#3d3d3d] dark:bg-[#3d3d3d] hover:bg-[#4a4a4a] dark:hover:bg-[#4a4a4a] border-l-4 border-blue-500 dark:border-blue-400 shadow-sm'
-                              }`}
-                              onClick={() => {
-                                handleMarkAsRead(notif.id, notif.is_read, notif.link);
-                              }}
-                            >
-                              <div className="flex items-start gap-2">
-                                {!notif.is_read && (
-                                  <div className="w-2.5 h-2.5 bg-blue-500 dark:bg-blue-400 rounded-full mt-1 flex-shrink-0 animate-pulse"></div>
-                                )}
-                                <div className="flex-1 min-w-0">
-                                  <p className={`font-bold text-sm mb-1 ${notif.is_read ? 'text-gray-300 dark:text-gray-300' : 'text-white dark:text-white'}`}>
-                                    {notif.title}
-                                  </p>
-                                  <p className={`text-xs mt-1 leading-relaxed ${notif.is_read ? 'text-gray-400 dark:text-gray-400' : 'text-gray-200 dark:text-gray-200'}`}>
-                                    {notif.message}
-                                  </p>
-                                  <p className={`text-xs mt-2 flex items-center gap-1.5 ${notif.is_read ? 'text-gray-500 dark:text-gray-500' : 'text-gray-400 dark:text-gray-400'}`}>
-                                    <span>{formatNotificationTime(notif.created_at)}</span>
-                                    {notif.is_read && (
-                                      <span className="text-[10px] font-medium text-gray-500 dark:text-gray-500">• Đã đọc</span>
-                                    )}
-                                  </p>
+                      ? [
+                          {
+                            key: 'empty',
+                            label: (
+                              <div className="text-center py-4 text-gray-400 bg-[#2d2d2d]">
+                                Không có thông báo
+                              </div>
+                            ),
+                          },
+                        ]
+                      : [
+                          ...notifications.map(notif => ({
+                            key: `notification-${notif.id}`,
+                            label: (
+                              <div
+                                className={`max-w-xs cursor-pointer p-3 rounded-lg transition-all ${
+                                  notif.is_read
+                                    ? 'bg-[#3d3d3d] dark:bg-[#3d3d3d] hover:bg-[#4a4a4a] dark:hover:bg-[#4a4a4a] opacity-75'
+                                    : 'bg-[#3d3d3d] dark:bg-[#3d3d3d] hover:bg-[#4a4a4a] dark:hover:bg-[#4a4a4a] border-l-4 border-blue-500 dark:border-blue-400 shadow-sm'
+                                }`}
+                                onClick={() => {
+                                  handleMarkAsRead(notif.id, notif.is_read, notif.link);
+                                }}
+                              >
+                                <div className="flex items-start gap-2">
+                                  {!notif.is_read && (
+                                    <div className="w-2.5 h-2.5 bg-blue-500 dark:bg-blue-400 rounded-full mt-1 flex-shrink-0 animate-pulse"></div>
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <p
+                                      className={`font-bold text-sm mb-1 ${notif.is_read ? 'text-gray-300 dark:text-gray-300' : 'text-white dark:text-white'}`}
+                                    >
+                                      {notif.title}
+                                    </p>
+                                    <p
+                                      className={`text-xs mt-1 leading-relaxed ${notif.is_read ? 'text-gray-400 dark:text-gray-400' : 'text-gray-200 dark:text-gray-200'}`}
+                                    >
+                                      {notif.message}
+                                    </p>
+                                    <p
+                                      className={`text-xs mt-2 flex items-center gap-1.5 ${notif.is_read ? 'text-gray-500 dark:text-gray-500' : 'text-gray-400 dark:text-gray-400'}`}
+                                    >
+                                      <span>{formatNotificationTime(notif.created_at)}</span>
+                                      {notif.is_read && (
+                                        <span className="text-[10px] font-medium text-gray-500 dark:text-gray-500">
+                                          • Đã đọc
+                                        </span>
+                                      )}
+                                    </p>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          ),
-                        })),
-                        {
-                          type: 'divider' as const,
-                        },
-                        {
-                          key: 'mark-all-read',
-                          label: (
-                            <div
-                              className="text-center text-blue-400 dark:text-blue-400 font-semibold text-sm py-3 cursor-pointer hover:text-blue-300 dark:hover:text-blue-300 transition-colors bg-[#2d2d2d] dark:bg-[#2d2d2d]"
-                              onClick={handleMarkAllAsRead}
-                            >
-                              Đánh dấu tất cả đã đọc
-                            </div>
-                          ),
-                        },
-                      ],
+                            ),
+                          })),
+                          {
+                            type: 'divider' as const,
+                          },
+                          {
+                            key: 'mark-all-read',
+                            label: (
+                              <div
+                                className="text-center text-blue-400 dark:text-blue-400 font-semibold text-sm py-3 cursor-pointer hover:text-blue-300 dark:hover:text-blue-300 transition-colors bg-[#2d2d2d] dark:bg-[#2d2d2d]"
+                                onClick={handleMarkAllAsRead}
+                              >
+                                Đánh dấu tất cả đã đọc
+                              </div>
+                            ),
+                          },
+                        ],
                 }}
                 placement="bottomRight"
                 trigger={['click']}

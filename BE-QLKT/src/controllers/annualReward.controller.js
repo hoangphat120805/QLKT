@@ -1,4 +1,4 @@
-const annualRewardService = require("../services/annualReward.service");
+const annualRewardService = require('../services/annualReward.service');
 const profileService = require('../services/profile.service');
 
 class AnnualRewardController {
@@ -9,7 +9,7 @@ class AnnualRewardController {
       if (!personnel_id) {
         return res.status(400).json({
           success: false,
-          message: "Tham số personnel_id là bắt buộc",
+          message: 'Tham số personnel_id là bắt buộc',
         });
       }
 
@@ -17,14 +17,14 @@ class AnnualRewardController {
 
       return res.status(200).json({
         success: true,
-        message: "Lấy danh sách danh hiệu thành công",
+        message: 'Lấy danh sách danh hiệu thành công',
         data: result,
       });
     } catch (error) {
-      console.error("Get annual rewards error:", error);
+      console.error('Get annual rewards error:', error);
       return res.status(500).json({
         success: false,
-        message: error.message || "Lấy danh sách danh hiệu thất bại",
+        message: error.message || 'Lấy danh sách danh hiệu thất bại',
       });
     }
   }
@@ -44,8 +44,7 @@ class AnnualRewardController {
       if (!personnel_id || !nam || !danh_hieu) {
         return res.status(400).json({
           success: false,
-          message:
-            "Vui lòng nhập đầy đủ thông tin: personnel_id, nam, danh_hieu",
+          message: 'Vui lòng nhập đầy đủ thông tin: personnel_id, nam, danh_hieu',
         });
       }
 
@@ -69,14 +68,14 @@ class AnnualRewardController {
 
       return res.status(201).json({
         success: true,
-        message: "Thêm danh hiệu thành công",
+        message: 'Thêm danh hiệu thành công',
         data: result,
       });
     } catch (error) {
-      console.error("Create annual reward error:", error);
+      console.error('Create annual reward error:', error);
       return res.status(400).json({
         success: false,
-        message: error.message || "Thêm danh hiệu thất bại",
+        message: error.message || 'Thêm danh hiệu thất bại',
       });
     }
   }
@@ -84,26 +83,17 @@ class AnnualRewardController {
   async updateAnnualReward(req, res) {
     try {
       const { id } = req.params;
-      const {
+      const { nam, danh_hieu, nhan_bkbqp, so_quyet_dinh_bkbqp, nhan_cstdtq, so_quyet_dinh_cstdtq } =
+        req.body;
+
+      const result = await annualRewardService.updateAnnualReward(parseInt(id), {
         nam,
         danh_hieu,
         nhan_bkbqp,
         so_quyet_dinh_bkbqp,
         nhan_cstdtq,
         so_quyet_dinh_cstdtq,
-      } = req.body;
-
-      const result = await annualRewardService.updateAnnualReward(
-        parseInt(id),
-        {
-          nam,
-          danh_hieu,
-          nhan_bkbqp,
-          so_quyet_dinh_bkbqp,
-          nhan_cstdtq,
-          so_quyet_dinh_cstdtq,
-        }
-      );
+      });
 
       // Tự động cập nhật lại hồ sơ sau khi cập nhật danh hiệu
       try {
@@ -115,14 +105,14 @@ class AnnualRewardController {
 
       return res.status(200).json({
         success: true,
-        message: "Cập nhật danh hiệu thành công",
+        message: 'Cập nhật danh hiệu thành công',
         data: result,
       });
     } catch (error) {
-      console.error("Update annual reward error:", error);
+      console.error('Update annual reward error:', error);
       return res.status(400).json({
         success: false,
-        message: error.message || "Cập nhật danh hiệu thất bại",
+        message: error.message || 'Cập nhật danh hiệu thất bại',
       });
     }
   }
@@ -148,10 +138,10 @@ class AnnualRewardController {
         message: result.message,
       });
     } catch (error) {
-      console.error("Delete annual reward error:", error);
+      console.error('Delete annual reward error:', error);
       return res.status(400).json({
         success: false,
-        message: error.message || "Xóa danh hiệu thất bại",
+        message: error.message || 'Xóa danh hiệu thất bại',
       });
     }
   }
@@ -174,22 +164,26 @@ class AnnualRewardController {
         } catch (e) {
           return res.status(400).json({
             success: false,
-            message: "personnel_ids phải là mảng hoặc chuỗi JSON hợp lệ",
+            message: 'personnel_ids phải là mảng hoặc chuỗi JSON hợp lệ',
           });
         }
       }
 
-      if (!parsedPersonnelIds || !Array.isArray(parsedPersonnelIds) || parsedPersonnelIds.length === 0) {
+      if (
+        !parsedPersonnelIds ||
+        !Array.isArray(parsedPersonnelIds) ||
+        parsedPersonnelIds.length === 0
+      ) {
         return res.status(400).json({
           success: false,
-          message: "Vui lòng chọn ít nhất một quân nhân (personnel_ids)",
+          message: 'Vui lòng chọn ít nhất một quân nhân (personnel_ids)',
         });
       }
 
       if (!nam || !danh_hieu) {
         return res.status(400).json({
           success: false,
-          message: "Vui lòng nhập đầy đủ thông tin: nam, danh_hieu",
+          message: 'Vui lòng nhập đầy đủ thông tin: nam, danh_hieu',
         });
       }
 
@@ -210,10 +204,10 @@ class AnnualRewardController {
         data: result,
       });
     } catch (error) {
-      console.error("Bulk create annual rewards error:", error);
+      console.error('Bulk create annual rewards error:', error);
       return res.status(400).json({
         success: false,
-        message: error.message || "Thêm danh hiệu đồng loạt thất bại",
+        message: error.message || 'Thêm danh hiệu đồng loạt thất bại',
       });
     }
   }
@@ -229,25 +223,22 @@ class AnnualRewardController {
       if (!req.file || !req.file.buffer) {
         return res.status(400).json({
           success: false,
-          message:
-            'Không tìm thấy file upload. Vui lòng gửi form-data field "file"',
+          message: 'Không tìm thấy file upload. Vui lòng gửi form-data field "file"',
         });
       }
 
-      const result = await annualRewardService.importFromExcelBuffer(
-        req.file.buffer
-      );
+      const result = await annualRewardService.importFromExcelBuffer(req.file.buffer);
 
       return res.status(200).json({
         success: true,
-        message: "Import danh hiệu hằng năm hoàn tất",
+        message: 'Import danh hiệu hằng năm hoàn tất',
         data: result,
       });
     } catch (error) {
-      console.error("Import annual rewards error:", error);
+      console.error('Import annual rewards error:', error);
       return res.status(400).json({
         success: false,
-        message: error.message || "Import danh hiệu hằng năm thất bại",
+        message: error.message || 'Import danh hiệu hằng năm thất bại',
       });
     }
   }

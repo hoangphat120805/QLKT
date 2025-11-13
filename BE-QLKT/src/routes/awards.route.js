@@ -36,7 +36,13 @@ router.get('/template', verifyToken, checkRole(['ADMIN']), proposalController.ge
  * @desc    Import khen thưởng từ file Excel
  * @access  ADMIN
  */
-router.post('/import', verifyToken, checkRole(['ADMIN']), upload.single('file'), proposalController.importAwards);
+router.post(
+  '/import',
+  verifyToken,
+  checkRole(['ADMIN']),
+  upload.single('file'),
+  proposalController.importAwards
+);
 
 /**
  * @route   GET /api/awards
@@ -50,6 +56,11 @@ router.get('/', verifyToken, checkRole(['ADMIN', 'MANAGER']), proposalController
  * @desc    Xuất file Excel tổng hợp khen thưởng (Admin: tất cả, Manager: đơn vị mình)
  * @access  ADMIN, MANAGER
  */
-router.get('/export', verifyToken, checkRole(['ADMIN', 'MANAGER']), proposalController.exportAllAwardsExcel);
+router.get(
+  '/export',
+  verifyToken,
+  checkRole(['ADMIN', 'MANAGER']),
+  proposalController.exportAllAwardsExcel
+);
 
 module.exports = router;

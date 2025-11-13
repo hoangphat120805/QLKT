@@ -130,14 +130,14 @@ export default function ProposalDetailPage() {
         const parsedDanhHieu = Array.isArray(danhHieuData)
           ? danhHieuData
           : danhHieuData && typeof danhHieuData === 'string'
-          ? JSON.parse(danhHieuData)
-          : [];
+            ? JSON.parse(danhHieuData)
+            : [];
 
         const parsedThanhTich = Array.isArray(thanhTichData)
           ? thanhTichData
           : thanhTichData && typeof thanhTichData === 'string'
-          ? JSON.parse(thanhTichData)
-          : [];
+            ? JSON.parse(thanhTichData)
+            : [];
 
         setEditedDanhHieu(parsedDanhHieu);
         setEditedThanhTich(parsedThanhTich);

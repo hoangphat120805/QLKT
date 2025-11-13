@@ -2,7 +2,18 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, Button, Typography, Space, Alert, Breadcrumb, Upload, message, Row, Col } from 'antd';
+import {
+  Card,
+  Button,
+  Typography,
+  Space,
+  Alert,
+  Breadcrumb,
+  Upload,
+  message,
+  Row,
+  Col,
+} from 'antd';
 import {
   UploadOutlined,
   FileExcelOutlined,
@@ -180,10 +191,7 @@ export default function PersonnelImportPage() {
                 showIcon
               />
             </Space>
-            <Paragraph
-              type="secondary"
-              style={{ fontSize: 13, marginTop: 16, marginBottom: 0 }}
-            >
+            <Paragraph type="secondary" style={{ fontSize: 13, marginTop: 16, marginBottom: 0 }}>
               Chọn file Excel chứa dữ liệu quân nhân để import
             </Paragraph>
           </Card>
@@ -227,10 +235,7 @@ export default function PersonnelImportPage() {
                 {loading ? 'Đang tải...' : 'Tải file mẫu'}
               </Button>
             </Space>
-            <Paragraph
-              type="secondary"
-              style={{ fontSize: 13, marginTop: 16, marginBottom: 0 }}
-            >
+            <Paragraph type="secondary" style={{ fontSize: 13, marginTop: 16, marginBottom: 0 }}>
               Tải file Excel mẫu để tham khảo định dạng
             </Paragraph>
           </Card>

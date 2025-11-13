@@ -157,7 +157,7 @@ class ProfileService {
     const foundYears = years.filter(year => nckhYears.includes(year));
     return {
       hasNCKH: foundYears.length > 0,
-      years: foundYears
+      years: foundYears,
     };
   }
 
@@ -173,7 +173,7 @@ class ProfileService {
     if (cstdcsLienTuc < 5) {
       return {
         duDieuKien: false,
-        goiY: `Hiện có ${cstdcsLienTuc} năm CSTĐCS liên tục. Cần ${5 - cstdcsLienTuc} năm CSTĐCS nữa để xét BKBQP.`
+        goiY: `Hiện có ${cstdcsLienTuc} năm CSTĐCS liên tục. Cần ${5 - cstdcsLienTuc} năm CSTĐCS nữa để xét BKBQP.`,
       };
     }
 
@@ -181,14 +181,14 @@ class ProfileService {
     if (cstdcsLienTuc >= 5) {
       return {
         duDieuKien: true,
-        goiY: 'Đã đủ điều kiện đề nghị xét Bằng khen Bộ Quốc phòng.'
+        goiY: 'Đã đủ điều kiện đề nghị xét Bằng khen Bộ Quốc phòng.',
       };
     }
 
     // Trường hợp mặc định: chưa đủ
     return {
       duDieuKien: false,
-      goiY: `Hiện có ${cstdcsLienTuc} năm CSTĐCS liên tục. Cần ${5 - cstdcsLienTuc} năm CSTĐCS nữa để xét BKBQP.`
+      goiY: `Hiện có ${cstdcsLienTuc} năm CSTĐCS liên tục. Cần ${5 - cstdcsLienTuc} năm CSTĐCS nữa để xét BKBQP.`,
     };
   }
 
@@ -205,7 +205,7 @@ class ProfileService {
     if (!bkbqpResult.duDieuKien) {
       return {
         duDieuKien: false,
-        goiY: ''
+        goiY: '',
       };
     }
 
@@ -213,7 +213,7 @@ class ProfileService {
     if (cstdcsLienTuc < 10) {
       return {
         duDieuKien: false,
-        goiY: `Đã đủ điều kiện BKBQP. Hiện có ${cstdcsLienTuc} năm CSTĐCS liên tục. Cần ${10 - cstdcsLienTuc} năm CSTĐCS nữa để xét CSTĐTQ.`
+        goiY: `Đã đủ điều kiện BKBQP. Hiện có ${cstdcsLienTuc} năm CSTĐCS liên tục. Cần ${10 - cstdcsLienTuc} năm CSTĐCS nữa để xét CSTĐTQ.`,
       };
     }
 
@@ -223,12 +223,12 @@ class ProfileService {
       if (nckhList.length > 0) {
         return {
           duDieuKien: true,
-          goiY: 'Đã đủ điều kiện đề nghị xét Chiến sĩ thi đua Toàn quân.'
+          goiY: 'Đã đủ điều kiện đề nghị xét Chiến sĩ thi đua Toàn quân.',
         };
       } else {
         return {
           duDieuKien: false,
-          goiY: `Đã có ${cstdcsLienTuc} năm CSTĐCS liên tục. Cần thêm ít nhất 1 NCKH/SKKH để đủ điều kiện xét CSTĐTQ.`
+          goiY: `Đã có ${cstdcsLienTuc} năm CSTĐCS liên tục. Cần thêm ít nhất 1 NCKH/SKKH để đủ điều kiện xét CSTĐTQ.`,
         };
       }
     }
@@ -236,7 +236,7 @@ class ProfileService {
     // Trường hợp mặc định
     return {
       duDieuKien: false,
-      goiY: ''
+      goiY: '',
     };
   }
 
@@ -258,7 +258,7 @@ class ProfileService {
       return {
         isSpecialCase: true,
         goiY: `Đã nhận Chiến sĩ thi đua Toàn quân (Năm ${latestReward.nam}). Bắt đầu chuỗi thành tích mới.`,
-        resetChain: true
+        resetChain: true,
       };
     }
 
@@ -267,7 +267,7 @@ class ProfileService {
       return {
         isSpecialCase: true,
         goiY: `Đã nhận Bằng khen Bộ Quốc phòng (Năm ${latestReward.nam}).`,
-        resetChain: false
+        resetChain: false,
       };
     }
 
@@ -276,7 +276,7 @@ class ProfileService {
       return {
         isSpecialCase: true,
         goiY: 'Chuỗi thành tích đã bị ngắt. Bắt đầu chuỗi mới.',
-        resetChain: true
+        resetChain: true,
       };
     }
 
@@ -315,7 +315,7 @@ class ProfileService {
       return {
         status: 'CHUA_DU',
         ngay: null,
-        goiY: `Chưa có ngày nhập ngũ. Không thể tính toán HCCSVV Hạng ${hangName}.`
+        goiY: `Chưa có ngày nhập ngũ. Không thể tính toán HCCSVV Hạng ${hangName}.`,
       };
     }
 
@@ -329,7 +329,7 @@ class ProfileService {
       return {
         status: 'DA_NHAN',
         ngay: eligibilityDate,
-        goiY: `Đã nhận HCCSVV Hạng ${hangName}.`
+        goiY: `Đã nhận HCCSVV Hạng ${hangName}.`,
       };
     }
 
@@ -338,7 +338,7 @@ class ProfileService {
       return {
         status: 'DU_DIEU_KIEN',
         ngay: eligibilityDate,
-        goiY: `Đủ điều kiện (${soNam} năm) xét HCCSVV Hạng ${hangName} trong năm nay. Ngày xét duyệt dự kiến: ${eligibilityDate.toLocaleDateString('vi-VN')}.`
+        goiY: `Đủ điều kiện (${soNam} năm) xét HCCSVV Hạng ${hangName} trong năm nay. Ngày xét duyệt dự kiến: ${eligibilityDate.toLocaleDateString('vi-VN')}.`,
       };
     }
 
@@ -347,7 +347,7 @@ class ProfileService {
       return {
         status: 'DU_DIEU_KIEN',
         ngay: eligibilityDate,
-        goiY: `Đã quá hạn xét HCCSVV Hạng ${hangName}. Ngày đủ điều kiện: ${eligibilityDate.toLocaleDateString('vi-VN')}. Chờ Admin cập nhật.`
+        goiY: `Đã quá hạn xét HCCSVV Hạng ${hangName}. Ngày đủ điều kiện: ${eligibilityDate.toLocaleDateString('vi-VN')}. Chờ Admin cập nhật.`,
       };
     }
 
@@ -357,7 +357,7 @@ class ProfileService {
       return {
         status: 'CHUA_DU',
         ngay: null,
-        goiY: `Chưa đủ điều kiện (${soNam} năm) xét HCCSVV Hạng ${hangName}. Dự kiến: ${eligibilityDate.toLocaleDateString('vi-VN')} (còn ${yearsLeft} năm).`
+        goiY: `Chưa đủ điều kiện (${soNam} năm) xét HCCSVV Hạng ${hangName}. Dự kiến: ${eligibilityDate.toLocaleDateString('vi-VN')} (còn ${yearsLeft} năm).`,
       };
     }
 
@@ -365,7 +365,7 @@ class ProfileService {
     return {
       status: 'CHUA_DU',
       ngay: null,
-      goiY: `Đang tính toán HCCSVV Hạng ${hangName}...`
+      goiY: `Đang tính toán HCCSVV Hạng ${hangName}...`,
     };
   }
 
@@ -433,7 +433,7 @@ class ProfileService {
     if (currentStatus === 'DA_NHAN') {
       return {
         status: 'DA_NHAN',
-        goiY: `Đã nhận HCBVTQ Hạng ${hangName}.`
+        goiY: `Đã nhận HCBVTQ Hạng ${hangName}.`,
       };
     }
 
@@ -441,7 +441,7 @@ class ProfileService {
     if (totalMonths >= requiredMonths) {
       return {
         status: 'DU_DIEU_KIEN',
-        goiY: `Đã đủ điều kiện (${requiredMonths} tháng) xét HCBVTQ Hạng ${hangName}. Tổng tháng cống hiến: ${totalMonths}. Chờ Admin cập nhật trạng thái.`
+        goiY: `Đã đủ điều kiện (${requiredMonths} tháng) xét HCBVTQ Hạng ${hangName}. Tổng tháng cống hiến: ${totalMonths}. Chờ Admin cập nhật trạng thái.`,
       };
     }
 
@@ -449,7 +449,7 @@ class ProfileService {
     const monthsLeft = requiredMonths - totalMonths;
     return {
       status: 'CHUA_DU',
-      goiY: `Cần thêm ${monthsLeft} tháng cống hiến để đủ điều kiện xét HCBVTQ Hạng ${hangName}. Hiện có: ${totalMonths}/${requiredMonths} tháng.`
+      goiY: `Cần thêm ${monthsLeft} tháng cống hiến để đủ điều kiện xét HCBVTQ Hạng ${hangName}. Hiện có: ${totalMonths}/${requiredMonths} tháng.`,
     };
   }
 
@@ -480,10 +480,10 @@ class ProfileService {
         where: { id: parseInt(personnelId) },
         include: {
           DanhHieuHangNam: {
-            orderBy: { nam: 'asc' } // Sắp xếp theo năm tăng dần
+            orderBy: { nam: 'asc' }, // Sắp xếp theo năm tăng dần
           },
           ThanhTichKhoaHoc: {
-            where: { status: 'APPROVED' } // Chỉ lấy NCKH/SKKH đã duyệt
+            where: { status: 'APPROVED' }, // Chỉ lấy NCKH/SKKH đã duyệt
           },
         },
       });
@@ -529,9 +529,7 @@ class ProfileService {
           const nam_2 = nam_cstdcs_lien_tuc[nam_cstdcs_lien_tuc.length - 1];
 
           // Kiểm tra có NCKH/SKKH trong 2 năm đó không
-          const hasNCKH = thanhTichList.some(
-            tt => tt.nam === nam_1 || tt.nam === nam_2
-          );
+          const hasNCKH = thanhTichList.some(tt => tt.nam === nam_1 || tt.nam === nam_2);
 
           if (hasNCKH) {
             du_dieu_kien_bkbqp = true;
@@ -585,7 +583,8 @@ class ProfileService {
           goi_y = `Đã có 3 năm CSTDCS liên tục (${nam_1}, ${nam_2}, ${nam_3}). Cần 1 NCKH/SKKH tại năm ${nam_1} hoặc ${nam_2} để đủ điều kiện CSTDTQ.`;
         }
       } else if (du_dieu_kien_bkbqp === true) {
-        goi_y = 'Đã đủ điều kiện BKBQP. Cần thêm 1 năm CSTDCS liên tục và các NCKH/SKKH để xét CSTDTQ.';
+        goi_y =
+          'Đã đủ điều kiện BKBQP. Cần thêm 1 năm CSTDCS liên tục và các NCKH/SKKH để xét CSTDTQ.';
       } else if (cstdcs_lien_tuc === 2) {
         // Đã có 2 năm CSTDCS
         const nam_1 = nam_cstdcs_lien_tuc[nam_cstdcs_lien_tuc.length - 2];
@@ -651,7 +650,7 @@ class ProfileService {
         where: { id: parseInt(personnelId) },
         include: {
           DanhHieuHangNam: {
-            orderBy: { nam: 'desc' }
+            orderBy: { nam: 'desc' },
           },
           ThanhTichKhoaHoc: {
             where: { status: 'APPROVED' },
@@ -674,19 +673,21 @@ class ProfileService {
 
       // Lấy hồ sơ hiện tại (nếu có) để giữ status đã được Admin cập nhật
       const existingAnnualProfile = await prisma.hoSoHangNam.findUnique({
-        where: { quan_nhan_id: parseInt(personnelId) }
+        where: { quan_nhan_id: parseInt(personnelId) },
       });
 
       const existingServiceProfile = await prisma.hoSoNienHan.findUnique({
-        where: { quan_nhan_id: parseInt(personnelId) }
+        where: { quan_nhan_id: parseInt(personnelId) },
       });
 
       // ==============================================
       // TÍNH TOÁN HỒ SƠ HẰNG NĂM
       // ==============================================
 
-      const cstdcsCount = personnel.DanhHieuHangNam.filter((dh) => dh.danh_hieu === 'CSTDCS').length;
-      const nckhCount = personnel.ThanhTichKhoaHoc.filter((tt) => ['NCKH', 'SKKH'].includes(tt.loai)).length;
+      const cstdcsCount = personnel.DanhHieuHangNam.filter(dh => dh.danh_hieu === 'CSTDCS').length;
+      const nckhCount = personnel.ThanhTichKhoaHoc.filter(tt =>
+        ['NCKH', 'SKKH'].includes(tt.loai)
+      ).length;
 
       // Xử lý trường hợp đặc biệt (Reset, đã nhận)
       const specialCase = this.handleSpecialCases(personnel.DanhHieuHangNam);
@@ -769,7 +770,7 @@ class ProfileService {
         hccsvvNhi = {
           status: 'CHUA_DU',
           ngay: null,
-          goiY: ''
+          goiY: '',
         };
       }
 
@@ -786,7 +787,7 @@ class ProfileService {
         hccsvvNhat = {
           status: 'CHUA_DU',
           ngay: null,
-          goiY: ''
+          goiY: '',
         };
       }
 
@@ -813,7 +814,7 @@ class ProfileService {
       } else {
         hcbvtqNhi = {
           status: 'CHUA_DU',
-          goiY: ''
+          goiY: '',
         };
       }
 
@@ -829,7 +830,7 @@ class ProfileService {
       } else {
         hcbvtqNhat = {
           status: 'CHUA_DU',
-          goiY: ''
+          goiY: '',
         };
       }
 
@@ -842,9 +843,10 @@ class ProfileService {
       if (hcbvtqNhi.goiY) goiYList.push(hcbvtqNhi.goiY);
       if (hcbvtqNhat.goiY) goiYList.push(hcbvtqNhat.goiY);
 
-      const finalGoiYNienHan = goiYList.length > 0
-        ? goiYList.join('\n')
-        : `Tổng tháng cống hiến: ${totalMonths}. Chưa đủ điều kiện xét huân chương.`;
+      const finalGoiYNienHan =
+        goiYList.length > 0
+          ? goiYList.join('\n')
+          : `Tổng tháng cống hiến: ${totalMonths}. Chưa đủ điều kiện xét huân chương.`;
 
       // Cập nhật hoặc tạo mới hồ sơ niên hạn
       await prisma.hoSoNienHan.upsert({
@@ -962,10 +964,16 @@ class ProfileService {
       if (updates.hccsvv_hang_ba_status && validStatuses.includes(updates.hccsvv_hang_ba_status)) {
         updateData.hccsvv_hang_ba_status = updates.hccsvv_hang_ba_status;
       }
-      if (updates.hccsvv_hang_nhi_status && validStatuses.includes(updates.hccsvv_hang_nhi_status)) {
+      if (
+        updates.hccsvv_hang_nhi_status &&
+        validStatuses.includes(updates.hccsvv_hang_nhi_status)
+      ) {
         updateData.hccsvv_hang_nhi_status = updates.hccsvv_hang_nhi_status;
       }
-      if (updates.hccsvv_hang_nhat_status && validStatuses.includes(updates.hccsvv_hang_nhat_status)) {
+      if (
+        updates.hccsvv_hang_nhat_status &&
+        validStatuses.includes(updates.hccsvv_hang_nhat_status)
+      ) {
         updateData.hccsvv_hang_nhat_status = updates.hccsvv_hang_nhat_status;
       }
 
@@ -973,10 +981,16 @@ class ProfileService {
       if (updates.hcbvtq_hang_ba_status && validStatuses.includes(updates.hcbvtq_hang_ba_status)) {
         updateData.hcbvtq_hang_ba_status = updates.hcbvtq_hang_ba_status;
       }
-      if (updates.hcbvtq_hang_nhi_status && validStatuses.includes(updates.hcbvtq_hang_nhi_status)) {
+      if (
+        updates.hcbvtq_hang_nhi_status &&
+        validStatuses.includes(updates.hcbvtq_hang_nhi_status)
+      ) {
         updateData.hcbvtq_hang_nhi_status = updates.hcbvtq_hang_nhi_status;
       }
-      if (updates.hcbvtq_hang_nhat_status && validStatuses.includes(updates.hcbvtq_hang_nhat_status)) {
+      if (
+        updates.hcbvtq_hang_nhat_status &&
+        validStatuses.includes(updates.hcbvtq_hang_nhat_status)
+      ) {
         updateData.hcbvtq_hang_nhat_status = updates.hcbvtq_hang_nhat_status;
       }
 

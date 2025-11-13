@@ -402,8 +402,8 @@ export default function UserProfilePage() {
                             serviceProfile.hccsvv_hang_ba_status === 'DA_NHAN'
                               ? 'green'
                               : serviceProfile.hccsvv_hang_ba_status === 'DU_DIEU_KIEN'
-                              ? 'orange'
-                              : 'default'
+                                ? 'orange'
+                                : 'default'
                           }
                           style={{
                             margin: 0,
@@ -418,10 +418,10 @@ export default function UserProfilePage() {
                           {serviceProfile.hccsvv_hang_ba_status === 'DA_NHAN'
                             ? 'Đã nhận'
                             : serviceProfile.hccsvv_hang_ba_status === 'DU_DIEU_KIEN'
-                            ? 'Đủ điều kiện'
-                            : serviceProfile.hccsvv_hang_ba_status === 'QUA_HAN'
-                            ? serviceProfile.hccsvv_hang_ba_goi_y || 'Chưa đủ điều kiện'
-                            : 'Chưa đủ điều kiện'}
+                              ? 'Đủ điều kiện'
+                              : serviceProfile.hccsvv_hang_ba_status === 'QUA_HAN'
+                                ? serviceProfile.hccsvv_hang_ba_goi_y || 'Chưa đủ điều kiện'
+                                : 'Chưa đủ điều kiện'}
                         </Tag>
                         {serviceProfile.hccsvv_hang_ba_ngay && (
                           <div className="text-xs text-gray-600 dark:text-gray-300">
@@ -445,8 +445,8 @@ export default function UserProfilePage() {
                             serviceProfile.hccsvv_hang_nhi_status === 'DA_NHAN'
                               ? 'green'
                               : serviceProfile.hccsvv_hang_nhi_status === 'DU_DIEU_KIEN'
-                              ? 'orange'
-                              : 'default'
+                                ? 'orange'
+                                : 'default'
                           }
                           style={{
                             margin: 0,
@@ -461,10 +461,10 @@ export default function UserProfilePage() {
                           {serviceProfile.hccsvv_hang_nhi_status === 'DA_NHAN'
                             ? 'Đã nhận'
                             : serviceProfile.hccsvv_hang_nhi_status === 'DU_DIEU_KIEN'
-                            ? 'Đủ điều kiện'
-                            : serviceProfile.hccsvv_hang_nhi_status === 'QUA_HAN'
-                            ? serviceProfile.hccsvv_hang_nhi_goi_y || 'Chưa đủ điều kiện'
-                            : 'Chưa đủ điều kiện'}
+                              ? 'Đủ điều kiện'
+                              : serviceProfile.hccsvv_hang_nhi_status === 'QUA_HAN'
+                                ? serviceProfile.hccsvv_hang_nhi_goi_y || 'Chưa đủ điều kiện'
+                                : 'Chưa đủ điều kiện'}
                         </Tag>
                         {serviceProfile.hccsvv_hang_nhi_ngay && (
                           <div className="text-xs text-gray-600 dark:text-gray-300">
@@ -488,8 +488,8 @@ export default function UserProfilePage() {
                             serviceProfile.hccsvv_hang_nhat_status === 'DA_NHAN'
                               ? 'green'
                               : serviceProfile.hccsvv_hang_nhat_status === 'DU_DIEU_KIEN'
-                              ? 'orange'
-                              : 'default'
+                                ? 'orange'
+                                : 'default'
                           }
                           style={{
                             margin: 0,
@@ -504,10 +504,10 @@ export default function UserProfilePage() {
                           {serviceProfile.hccsvv_hang_nhat_status === 'DA_NHAN'
                             ? 'Đã nhận'
                             : serviceProfile.hccsvv_hang_nhat_status === 'DU_DIEU_KIEN'
-                            ? 'Đủ điều kiện'
-                            : serviceProfile.hccsvv_hang_nhat_status === 'QUA_HAN'
-                            ? serviceProfile.hccsvv_hang_nhat_goi_y || 'Chưa đủ điều kiện'
-                            : 'Chưa đủ điều kiện'}
+                              ? 'Đủ điều kiện'
+                              : serviceProfile.hccsvv_hang_nhat_status === 'QUA_HAN'
+                                ? serviceProfile.hccsvv_hang_nhat_goi_y || 'Chưa đủ điều kiện'
+                                : 'Chưa đủ điều kiện'}
                         </Tag>
                         {serviceProfile.hccsvv_hang_nhat_ngay && (
                           <div className="text-xs text-gray-600 dark:text-gray-300">
@@ -548,8 +548,8 @@ export default function UserProfilePage() {
                           serviceProfile.hcbvtq_hang_ba_status === 'DA_NHAN'
                             ? 'green'
                             : serviceProfile.hcbvtq_hang_ba_status === 'DU_DIEU_KIEN'
-                            ? 'orange'
-                            : 'default'
+                              ? 'orange'
+                              : 'default'
                         }
                         style={{
                           margin: 0,
@@ -564,8 +564,8 @@ export default function UserProfilePage() {
                         {serviceProfile.hcbvtq_hang_ba_status === 'DA_NHAN'
                           ? 'Đã nhận'
                           : serviceProfile.hcbvtq_hang_ba_status === 'DU_DIEU_KIEN'
-                          ? 'Đủ điều kiện'
-                          : 'Chưa đủ điều kiện'}
+                            ? 'Đủ điều kiện'
+                            : 'Chưa đủ điều kiện'}
                       </Tag>
                     </div>
 
@@ -579,8 +579,8 @@ export default function UserProfilePage() {
                           serviceProfile.hcbvtq_hang_nhi_status === 'DA_NHAN'
                             ? 'green'
                             : serviceProfile.hcbvtq_hang_nhi_status === 'DU_DIEU_KIEN'
-                            ? 'orange'
-                            : 'default'
+                              ? 'orange'
+                              : 'default'
                         }
                         style={{
                           margin: 0,
@@ -595,8 +595,8 @@ export default function UserProfilePage() {
                         {serviceProfile.hcbvtq_hang_nhi_status === 'DA_NHAN'
                           ? 'Đã nhận'
                           : serviceProfile.hcbvtq_hang_nhi_status === 'DU_DIEU_KIEN'
-                          ? 'Đủ điều kiện'
-                          : 'Chưa đủ điều kiện'}
+                            ? 'Đủ điều kiện'
+                            : 'Chưa đủ điều kiện'}
                       </Tag>
                     </div>
 
@@ -610,8 +610,8 @@ export default function UserProfilePage() {
                           serviceProfile.hcbvtq_hang_nhat_status === 'DA_NHAN'
                             ? 'green'
                             : serviceProfile.hcbvtq_hang_nhat_status === 'DU_DIEU_KIEN'
-                            ? 'orange'
-                            : 'default'
+                              ? 'orange'
+                              : 'default'
                         }
                         style={{
                           margin: 0,
@@ -626,8 +626,8 @@ export default function UserProfilePage() {
                         {serviceProfile.hcbvtq_hang_nhat_status === 'DA_NHAN'
                           ? 'Đã nhận'
                           : serviceProfile.hcbvtq_hang_nhat_status === 'DU_DIEU_KIEN'
-                          ? 'Đủ điều kiện'
-                          : 'Chưa đủ điều kiện'}
+                            ? 'Đủ điều kiện'
+                            : 'Chưa đủ điều kiện'}
                       </Tag>
                     </div>
                   </div>

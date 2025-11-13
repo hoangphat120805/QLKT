@@ -1,4 +1,4 @@
-const { prisma } = require("../models");
+const { prisma } = require('../models');
 
 class PositionService {
   /**
@@ -16,7 +16,7 @@ class PositionService {
         ]);
 
         if (!coQuanDonVi && !donViTrucThuoc) {
-          throw new Error("Đơn vị không tồn tại");
+          throw new Error('Đơn vị không tồn tại');
         }
 
         // Thu thập tất cả ID đơn vị (cha + tất cả các cấp con)
@@ -28,16 +28,13 @@ class PositionService {
             where: { co_quan_don_vi_id: unitId },
             select: { id: true },
           });
-          childUnits.forEach((child) => unitIds.push(child.id));
+          childUnits.forEach(child => unitIds.push(child.id));
         }
 
         // Lấy tất cả chức vụ của các đơn vị này
         const positions = await prisma.chucVu.findMany({
           where: {
-            OR: [
-              { co_quan_don_vi_id: { in: unitIds } },
-              { don_vi_truc_thuoc_id: { in: unitIds } },
-            ],
+            OR: [{ co_quan_don_vi_id: { in: unitIds } }, { don_vi_truc_thuoc_id: { in: unitIds } }],
           },
           include: {
             CoQuanDonVi: true,
@@ -48,9 +45,9 @@ class PositionService {
             },
           },
           orderBy: [
-            { CoQuanDonVi: { ma_don_vi: "asc" } },
-            { DonViTrucThuoc: { ma_don_vi: "asc" } },
-            { id: "asc" },
+            { CoQuanDonVi: { ma_don_vi: 'asc' } },
+            { DonViTrucThuoc: { ma_don_vi: 'asc' } },
+            { id: 'asc' },
           ],
         });
 
@@ -59,10 +56,7 @@ class PositionService {
         // Lấy chức vụ của đơn vị cụ thể hoặc tất cả
         const whereClause = unitId
           ? {
-              OR: [
-                { co_quan_don_vi_id: unitId },
-                { don_vi_truc_thuoc_id: unitId },
-              ],
+              OR: [{ co_quan_don_vi_id: unitId }, { don_vi_truc_thuoc_id: unitId }],
             }
           : {};
 
@@ -77,9 +71,9 @@ class PositionService {
             },
           },
           orderBy: [
-            { CoQuanDonVi: { ma_don_vi: "asc" } },
-            { DonViTrucThuoc: { ma_don_vi: "asc" } },
-            { id: "asc" },
+            { CoQuanDonVi: { ma_don_vi: 'asc' } },
+            { DonViTrucThuoc: { ma_don_vi: 'asc' } },
+            { id: 'asc' },
           ],
         });
 
@@ -98,8 +92,7 @@ class PositionService {
       const { unit_id, ten_chuc_vu, is_manager, he_so_luong } = data;
 
       // Đảm bảo unit_id là string (UUID)
-      const unitIdString =
-        typeof unit_id === "string" ? unit_id : unit_id?.toString();
+      const unitIdString = typeof unit_id === 'string' ? unit_id : unit_id?.toString();
 
       // Kiểm tra đơn vị có tồn tại không (có thể là CoQuanDonVi hoặc DonViTrucThuoc)
       const [coQuanDonVi, donViTrucThuoc] = await Promise.all([
@@ -108,7 +101,7 @@ class PositionService {
       ]);
 
       if (!coQuanDonVi && !donViTrucThuoc) {
-        throw new Error("Đơn vị không tồn tại");
+        throw new Error('Đơn vị không tồn tại');
       }
 
       // Xác định đơn vị là cơ quan đơn vị hay đơn vị trực thuộc
@@ -128,7 +121,7 @@ class PositionService {
       });
 
       if (existingPosition) {
-        throw new Error("Tên chức vụ đã tồn tại trong đơn vị này");
+        throw new Error('Tên chức vụ đã tồn tại trong đơn vị này');
       }
 
       // Tạo chức vụ mới
@@ -177,7 +170,7 @@ class PositionService {
       });
 
       if (!position) {
-        throw new Error("Chức vụ không tồn tại");
+        throw new Error('Chức vụ không tồn tại');
       }
 
       // Cập nhật chức vụ
@@ -185,10 +178,8 @@ class PositionService {
         where: { id },
         data: {
           ten_chuc_vu: ten_chuc_vu || position.ten_chuc_vu,
-          is_manager:
-            is_manager !== undefined ? is_manager : position.is_manager,
-          he_so_luong:
-            he_so_luong !== undefined ? he_so_luong : position.he_so_luong,
+          is_manager: is_manager !== undefined ? is_manager : position.is_manager,
+          he_so_luong: he_so_luong !== undefined ? he_so_luong : position.he_so_luong,
         },
         include: {
           CoQuanDonVi: true,
@@ -217,7 +208,7 @@ class PositionService {
       });
 
       if (!position) {
-        throw new Error("Chức vụ không tồn tại");
+        throw new Error('Chức vụ không tồn tại');
       }
 
       // Kiểm tra có quân nhân nào đang giữ chức vụ này không
@@ -236,7 +227,7 @@ class PositionService {
         where: { id },
       });
 
-      return { message: "Xóa chức vụ thành công" };
+      return { message: 'Xóa chức vụ thành công' };
     } catch (error) {
       throw error;
     }

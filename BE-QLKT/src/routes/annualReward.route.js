@@ -1,21 +1,16 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
-const annualRewardController = require("../controllers/annualReward.controller");
-const {
-  verifyToken,
-  requireManager,
-  requireAuth,
-  requireAdmin,
-} = require("../middlewares/auth");
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const annualRewardController = require('../controllers/annualReward.controller');
+const { verifyToken, requireManager, requireAuth, requireAdmin } = require('../middlewares/auth');
 
 // Memory storage để xử lý file Excel từ buffer
 const upload = multer({ storage: multer.memoryStorage() });
 
 // Disk storage để lưu file PDF quyết định
-const uploadDir = path.join(__dirname, "../../uploads/decisions");
+const uploadDir = path.join(__dirname, '../../uploads/decisions');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -35,59 +30,39 @@ const pdfUpload = multer({
   storage: pdfStorage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
   fileFilter: (req, file, cb) => {
-    if (file.mimetype === "application/pdf") {
+    if (file.mimetype === 'application/pdf') {
       cb(null, true);
     } else {
-      cb(new Error("Chỉ chấp nhận file PDF"));
+      cb(new Error('Chỉ chấp nhận file PDF'));
     }
   },
 });
 
-router.get(
-  "/",
-  verifyToken,
-  requireAuth,
-  annualRewardController.getAnnualRewards
-);
-router.post(
-  "/",
-  verifyToken,
-  requireManager,
-  annualRewardController.createAnnualReward
-);
-router.put(
-  "/:id",
-  verifyToken,
-  requireManager,
-  annualRewardController.updateAnnualReward
-);
-router.delete(
-  "/:id",
-  verifyToken,
-  requireManager,
-  annualRewardController.deleteAnnualReward
-);
+router.get('/', verifyToken, requireAuth, annualRewardController.getAnnualRewards);
+router.post('/', verifyToken, requireManager, annualRewardController.createAnnualReward);
+router.put('/:id', verifyToken, requireManager, annualRewardController.updateAnnualReward);
+router.delete('/:id', verifyToken, requireManager, annualRewardController.deleteAnnualReward);
 
 // Thêm danh hiệu đồng loạt cho nhiều quân nhân (có thể kèm file PDF quyết định)
 router.post(
-  "/bulk",
+  '/bulk',
   verifyToken,
   requireAdmin,
-  pdfUpload.single("file_quyet_dinh"),
+  pdfUpload.single('file_quyet_dinh'),
   annualRewardController.bulkCreateAnnualRewards
 );
 
 // Import danh hiệu hằng năm từ Excel
 router.post(
-  "/import",
+  '/import',
   verifyToken,
   requireManager,
-  upload.single("file"),
+  upload.single('file'),
   annualRewardController.importAnnualRewards
 );
 
 // Serve file PDF quyết định
-router.get("/decision-files/:filename", verifyToken, (req, res) => {
+router.get('/decision-files/:filename', verifyToken, (req, res) => {
   try {
     const { filename } = req.params;
     const filePath = path.join(uploadDir, filename);
@@ -95,18 +70,18 @@ router.get("/decision-files/:filename", verifyToken, (req, res) => {
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({
         success: false,
-        message: "File không tồn tại",
+        message: 'File không tồn tại',
       });
     }
 
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `inline; filename="${filename}"`);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
     res.sendFile(filePath);
   } catch (error) {
-    console.error("Serve PDF error:", error);
+    console.error('Serve PDF error:', error);
     res.status(500).json({
       success: false,
-      message: "Không thể tải file",
+      message: 'Không thể tải file',
     });
   }
 });

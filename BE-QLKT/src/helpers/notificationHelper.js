@@ -233,7 +233,15 @@ class NotificationHelper {
   /**
    * Gửi thông báo hệ thống chung
    */
-  async sendSystemNotification(recipients, type, title, message, resource = null, resourceId = null, link = null) {
+  async sendSystemNotification(
+    recipients,
+    type,
+    title,
+    message,
+    resource = null,
+    resourceId = null,
+    link = null
+  ) {
     try {
       const notifications = recipients.map(recipient => ({
         nguoi_nhan_id: recipient.id,

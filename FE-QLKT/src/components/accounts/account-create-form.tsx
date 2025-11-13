@@ -59,7 +59,7 @@ export function AccountCreateForm() {
       if (unitsRes.success) {
         // Backend trả về mảng phẳng gồm cả cơ quan đơn vị và đơn vị trực thuộc
         const unitsData = unitsRes.data || [];
-        
+
         // Chuẩn hóa dữ liệu đơn vị
         const normalizedUnits = unitsData.map((unit: any) => {
           // Nếu có co_quan_don_vi_id thì là đơn vị trực thuộc
@@ -82,7 +82,7 @@ export function AccountCreateForm() {
             };
           }
         });
-        
+
         setUnits(normalizedUnits);
       }
 
@@ -110,11 +110,10 @@ export function AccountCreateForm() {
 
   // Lọc chức vụ theo đơn vị được chọn
   const filteredPositions = selectedDonViId
-    ? positions.filter((p) => {
+    ? positions.filter(p => {
         // Chức vụ có thể thuộc cơ quan đơn vị hoặc đơn vị trực thuộc
         return (
-          p.co_quan_don_vi_id === selectedDonViId ||
-          p.don_vi_truc_thuoc_id === selectedDonViId
+          p.co_quan_don_vi_id === selectedDonViId || p.don_vi_truc_thuoc_id === selectedDonViId
         );
       })
     : [];
@@ -172,10 +171,11 @@ export function AccountCreateForm() {
       }
     } catch (error: any) {
       // Hiển thị lỗi nếu có exception
-      const errorMessage = error?.response?.data?.message
-        || error?.response?.data?.error
-        || error?.message
-        || 'Có lỗi xảy ra khi tạo tài khoản';
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        'Có lỗi xảy ra khi tạo tài khoản';
 
       toast({
         title: 'Lỗi',
@@ -211,7 +211,7 @@ export function AccountCreateForm() {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {getAvailableRoles().map((role) => (
+                    {getAvailableRoles().map(role => (
                       <SelectItem key={role.value} value={role.value}>
                         {role.label}
                       </SelectItem>
@@ -288,7 +288,11 @@ export function AccountCreateForm() {
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                       disabled={loading}
                     >
-                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showConfirmPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
                     </button>
                   </div>
                 </FormControl>
@@ -308,25 +312,32 @@ export function AccountCreateForm() {
               name="don_vi_id"
               render={({ field }) => {
                 // Lọc đơn vị theo role
-                const availableUnits = selectedRole === 'MANAGER'
-                  ? units.filter((u) => u.type === 'co_quan_don_vi') // MANAGER chỉ chọn cơ quan đơn vị
-                  : units; // USER có thể chọn cả cơ quan đơn vị và đơn vị trực thuộc
+                const availableUnits =
+                  selectedRole === 'MANAGER'
+                    ? units.filter(u => u.type === 'co_quan_don_vi') // MANAGER chỉ chọn cơ quan đơn vị
+                    : units; // USER có thể chọn cả cơ quan đơn vị và đơn vị trực thuộc
 
                 return (
                   <FormItem>
-                    <FormLabel>{selectedRole === 'MANAGER' ? 'Cơ quan đơn vị' : 'Đơn vị'} *</FormLabel>
+                    <FormLabel>
+                      {selectedRole === 'MANAGER' ? 'Cơ quan đơn vị' : 'Đơn vị'} *
+                    </FormLabel>
                     <Select
-                      onValueChange={(value) => field.onChange(value)}
+                      onValueChange={value => field.onChange(value)}
                       value={field.value}
                       disabled={loading}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder={selectedRole === 'MANAGER' ? 'Chọn cơ quan đơn vị' : 'Chọn đơn vị'} />
+                          <SelectValue
+                            placeholder={
+                              selectedRole === 'MANAGER' ? 'Chọn cơ quan đơn vị' : 'Chọn đơn vị'
+                            }
+                          />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {availableUnits.map((unit) => (
+                        {availableUnits.map(unit => (
                           <SelectItem key={unit.id} value={unit.id}>
                             {unit.type === 'don_vi_truc_thuoc' && unit.CoQuanDonVi
                               ? `${unit.ten_don_vi} (${unit.CoQuanDonVi.ten_don_vi})`
@@ -348,7 +359,7 @@ export function AccountCreateForm() {
                 <FormItem>
                   <FormLabel>Chức vụ *</FormLabel>
                   <Select
-                    onValueChange={(value) => field.onChange(value)}
+                    onValueChange={value => field.onChange(value)}
                     value={field.value}
                     disabled={loading || !selectedDonViId}
                   >
@@ -356,16 +367,14 @@ export function AccountCreateForm() {
                       <SelectTrigger>
                         <SelectValue
                           placeholder={
-                            selectedDonViId
-                              ? "Chọn chức vụ"
-                              : "Vui lòng chọn đơn vị trước"
+                            selectedDonViId ? 'Chọn chức vụ' : 'Vui lòng chọn đơn vị trước'
                           }
                         />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       {filteredPositions.length > 0 ? (
-                        filteredPositions.map((position) => (
+                        filteredPositions.map(position => (
                           <SelectItem key={position.id} value={position.id}>
                             {position.ten_chuc_vu}
                           </SelectItem>

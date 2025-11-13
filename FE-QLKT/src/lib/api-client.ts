@@ -80,7 +80,8 @@ export const apiClient = {
       return { success: true, data: res.data?.data || res.data, message: res.data?.message };
     } catch (e: any) {
       console.error('API createAccount error:', e);
-      const errorMessage = e?.response?.data?.message || e?.message || 'Có lỗi xảy ra khi tạo tài khoản';
+      const errorMessage =
+        e?.response?.data?.message || e?.message || 'Có lỗi xảy ra khi tạo tài khoản';
       return { success: false, message: errorMessage };
     }
   },
@@ -213,7 +214,10 @@ export const apiClient = {
   },
 
   // Positions
-  async getPositions(params?: { unit_id?: number; include_children?: boolean }): Promise<ApiResponse> {
+  async getPositions(params?: {
+    unit_id?: number;
+    include_children?: boolean;
+  }): Promise<ApiResponse> {
     try {
       const res = await axiosInstance.get('/api/positions', { params });
       return { success: true, data: res.data?.data || res.data };

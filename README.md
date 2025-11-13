@@ -7,6 +7,7 @@
 ## 📖 Repository này chứa gì?
 
 Repository này chứa **tài liệu và cấu hình** cho dự án QLKT:
+
 - ✅ API Documentation ([QLKT.md](QLKT.md))
 - ✅ AI Assistant Configuration ([.claude/](.claude/), [.cursor/](.cursor/))
 - ✅ Coding Standards ([.cursorrules](.cursorrules))
@@ -17,6 +18,7 @@ Repository này chứa **tài liệu và cấu hình** cho dự án QLKT:
 ## 🚀 Tech Stack
 
 ### Frontend
+
 - **Framework**: Next.js 14.2.4 (App Router)
 - **UI Library**: React 18
 - **Language**: TypeScript 5.9.3
@@ -26,6 +28,7 @@ Repository này chứa **tài liệu và cấu hình** cho dự án QLKT:
 - **HTTP Client**: Axios
 
 ### Backend
+
 - **Runtime**: Node.js
 - **Framework**: Express.js
 - **Database**: PostgreSQL
@@ -78,10 +81,12 @@ QLKT/
 ## 🎭 Phân quyền Hệ thống
 
 ### 1. SUPER_ADMIN
+
 - Quản lý tài khoản hệ thống
 - Tất cả quyền của ADMIN
 
 ### 2. ADMIN
+
 - Quản lý đơn vị, chức vụ, nhóm cống hiến
 - Quản lý toàn bộ quân nhân
 - Import/Export dữ liệu Excel
@@ -89,12 +94,14 @@ QLKT/
 - Tính toán lại hồ sơ
 
 ### 3. MANAGER
+
 - Quản lý quân nhân trong đơn vị được phân công
 - Nhập/Sửa khen thưởng cho đơn vị
 - Xem hồ sơ gợi ý
 - Tạo báo cáo đơn vị
 
 ### 4. USER
+
 - Xem thông tin cá nhân
 - Xem lịch sử khen thưởng
 - Xem hồ sơ gợi ý của mình
@@ -102,6 +109,7 @@ QLKT/
 ## 🗄️ Database Schema
 
 ### Bảng Dữ liệu Chính (Master Data)
+
 1. **DonVi** - Đơn vị (Hệ, Phòng, Ban)
 2. **NhomCongHien** - Nhóm cống hiến
 3. **ChucVu** - Chức vụ
@@ -109,28 +117,33 @@ QLKT/
 5. **TaiKhoan** - Tài khoản
 
 ### Bảng Dữ liệu Đầu vào (INPUT)
+
 6. **LichSuChucVu** - Lịch sử chức vụ (tính cống hiến)
 7. **ThanhTichKhoaHoc** - Thành tích NCKH/SKKH
 8. **DanhHieuHangNam** - Danh hiệu hằng năm (CSTDCS/CSTT)
 
 ### Bảng Dữ liệu Đầu ra (OUTPUT)
+
 9. **HoSoNienHan** - Hồ sơ khen thưởng niên hạn
 10. **HoSoHangNam** - Hồ sơ khen thưởng hằng năm
 
 ## 🎯 Tính năng Chính
 
 ### 1. Quản lý Quân nhân
+
 - Thêm/Sửa/Xóa thông tin quân nhân
 - Import hàng loạt từ Excel
 - Export dữ liệu ra Excel
 - Quản lý theo đơn vị
 
 ### 2. Quản lý Khen thưởng
+
 - **Danh hiệu hằng năm**: CSTDCS, CSTT
 - **Thành tích khoa học**: NCKH, SKKH
 - **Lịch sử chức vụ**: Theo dõi cống hiến
 
 ### 3. Tính toán Tự động ("Bộ não")
+
 - **Khen thưởng Niên hạn**:
   - Huân chương Chiến sỹ Vẻ vang (10/15/20 năm)
   - Huân chương Bảo vệ Tổ quốc (dựa trên cống hiến)
@@ -139,11 +152,13 @@ QLKT/
   - CSTD Toàn quân (10 năm CSTDCS + NCKH/SKKH)
 
 ### 4. Hồ sơ Gợi ý
+
 - Gợi ý khen thưởng dựa trên dữ liệu hiện có
 - Hiển thị tiến độ đạt khen thưởng
 - Cảnh báo sắp đủ điều kiện
 
 ### 5. Báo cáo & Thống kê
+
 - Thống kê theo đơn vị
 - Báo cáo khen thưởng theo năm
 - Phân tích dữ liệu
@@ -151,11 +166,13 @@ QLKT/
 ## 🛠️ Sử dụng Documentation
 
 ### Cho Developers
+
 1. Đọc [QLKT.md](QLKT.md) để hiểu API endpoints
 2. Đọc [.claude/CLAUDE.md](.claude/CLAUDE.md) để hiểu toàn bộ kiến trúc
 3. Tham khảo [.cursorrules](.cursorrules) khi code
 
 ### Cho AI Assistants (Claude/Cursor)
+
 1. Import file `.claude/CLAUDE.md` vào context
 2. Tuân thủ coding standards trong `.cursorrules`
 3. Tham khảo API specs trong `QLKT.md`
@@ -163,11 +180,13 @@ QLKT/
 ### Setup Dự án (Nếu có source code)
 
 #### Yêu cầu Hệ thống
+
 - Node.js >= 18.x
 - PostgreSQL >= 14.x
 - npm hoặc yarn
 
 #### Backend Setup
+
 ```bash
 cd BE-QLKT
 npm install
@@ -177,6 +196,7 @@ npm run dev  # Port 5000
 ```
 
 #### Frontend Setup
+
 ```bash
 cd FE-QLKT
 npm install
@@ -186,6 +206,7 @@ npm run dev  # Port 3000
 ## 📝 Environment Variables
 
 ### Backend (.env)
+
 ```env
 DATABASE_URL="postgresql://user:password@localhost:5432/qlkt"
 JWT_SECRET="your-secret-key-here"
@@ -194,6 +215,7 @@ PORT=5000
 ```
 
 ### Frontend (.env.local)
+
 ```env
 NEXT_PUBLIC_API_URL="http://localhost:5000/api"
 ```
@@ -201,6 +223,7 @@ NEXT_PUBLIC_API_URL="http://localhost:5000/api"
 ## 🔧 Scripts Hữu ích
 
 ### Frontend
+
 ```bash
 npm run dev         # Chạy development server
 npm run build       # Build production
@@ -209,6 +232,7 @@ npm run lint        # Chạy ESLint
 ```
 
 ### Backend
+
 ```bash
 npm run dev              # Chạy development server
 npx prisma studio        # Mở Prisma Studio (GUI database)
@@ -220,13 +244,16 @@ npx prisma db push       # Push schema lên database
 ## 📚 Tài liệu
 
 ### Cho Developers
+
 - **[.claude/CLAUDE.md](.claude/CLAUDE.md)**: Tài liệu chi tiết đầy đủ về dự án
 - **[.cursor/CURSOR.md](.cursor/CURSOR.md)**: Hướng dẫn cho AI assistants (Cursor, Claude)
 - **[QLKT.md](QLKT.md)**: API documentation chi tiết
 - **[.cursorrules](.cursorrules)**: Code style & conventions
 
 ### Cho AI Assistants
+
 Khi làm việc với Claude hoặc Cursor, tham khảo:
+
 1. `.claude/CLAUDE.md` - Full project context
 2. `.cursor/CURSOR.md` - Quick reference guide
 3. `.cursorrules` - Coding standards

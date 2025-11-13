@@ -3,7 +3,14 @@
 
 import { useState } from 'react';
 import { Card, Button, Typography, Space, Alert, Breadcrumb, message } from 'antd';
-import { DownloadOutlined, FileExcelOutlined, CheckCircleOutlined, ExclamationCircleOutlined, LeftOutlined, HomeOutlined } from '@ant-design/icons';
+import {
+  DownloadOutlined,
+  FileExcelOutlined,
+  CheckCircleOutlined,
+  ExclamationCircleOutlined,
+  LeftOutlined,
+  HomeOutlined,
+} from '@ant-design/icons';
 import { apiClient } from '@/lib/api-client';
 import Link from 'next/link';
 
@@ -132,10 +139,7 @@ export default function PersonnelExportPage() {
               {loading ? 'Đang xuất...' : 'Xuất dữ liệu'}
             </Button>
           </Space>
-          <Paragraph
-            type="secondary"
-            style={{ fontSize: 13, marginTop: 16, marginBottom: 0 }}
-          >
+          <Paragraph type="secondary" style={{ fontSize: 13, marginTop: 16, marginBottom: 0 }}>
             Xuất tất cả dữ liệu quân nhân hiện có trong hệ thống
           </Paragraph>
         </Card>
@@ -176,10 +180,7 @@ export default function PersonnelExportPage() {
               {loading ? 'Đang tải...' : 'Tải file mẫu'}
             </Button>
           </Space>
-          <Paragraph
-            type="secondary"
-            style={{ fontSize: 13, marginTop: 16, marginBottom: 0 }}
-          >
+          <Paragraph type="secondary" style={{ fontSize: 13, marginTop: 16, marginBottom: 0 }}>
             Tải file Excel mẫu để import dữ liệu quân nhân
           </Paragraph>
         </Card>

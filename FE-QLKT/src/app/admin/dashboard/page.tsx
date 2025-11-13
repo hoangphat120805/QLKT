@@ -66,7 +66,8 @@ export default function AdminDashboard() {
       value: stats.totalPersonnel,
       icon: TeamOutlined,
       iconColor: 'text-blue-600 dark:text-blue-400',
-      bgColor: 'bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20',
+      bgColor:
+        'bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20',
       link: '/admin/personnel',
     },
     {
@@ -74,7 +75,8 @@ export default function AdminDashboard() {
       value: stats.totalUnits,
       icon: ApartmentOutlined,
       iconColor: 'text-green-600 dark:text-green-400',
-      bgColor: 'bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/20',
+      bgColor:
+        'bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/20',
       link: '/admin/units',
     },
     {
@@ -82,7 +84,8 @@ export default function AdminDashboard() {
       value: stats.totalPositions,
       icon: FileTextOutlined,
       iconColor: 'text-purple-600 dark:text-purple-400',
-      bgColor: 'bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/20',
+      bgColor:
+        'bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/20',
       link: '/admin/positions',
     },
     {
@@ -90,7 +93,8 @@ export default function AdminDashboard() {
       value: stats.pendingApprovals,
       icon: CheckCircleOutlined,
       iconColor: 'text-orange-600 dark:text-orange-400',
-      bgColor: 'bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/20',
+      bgColor:
+        'bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/20',
       link: '#',
     },
   ];
@@ -104,12 +108,18 @@ export default function AdminDashboard() {
       <div className="space-y-8 p-6 animate-in fade-in duration-500">
         {/* Breadcrumb */}
         <Breadcrumb
-          items={[{ title: <Link href="/admin/dashboard">Dashboard</Link> }, { title: 'Tổng quan' }]}
+          items={[
+            { title: <Link href="/admin/dashboard">Dashboard</Link> },
+            { title: 'Tổng quan' },
+          ]}
         />
 
         {/* Header */}
         <div className="mb-2">
-          <Title level={2} className="!mb-3 !text-4xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-purple-400">
+          <Title
+            level={2}
+            className="!mb-3 !text-4xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-purple-400"
+          >
             Dashboard Admin
           </Title>
           <p className={`text-lg ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -156,7 +166,10 @@ export default function AdminDashboard() {
         )}
 
         {/* Quick Actions */}
-        <Card title={<span className="text-lg font-semibold">Thao tác nhanh</span>} className="shadow-lg">
+        <Card
+          title={<span className="text-lg font-semibold">Thao tác nhanh</span>}
+          className="shadow-lg"
+        >
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Link href="/admin/personnel">
               <Button
@@ -201,13 +214,18 @@ export default function AdminDashboard() {
 
         {/* System Info */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card title={<span className="text-lg font-semibold">Thông tin hệ thống</span>} className="shadow-lg">
+          <Card
+            title={<span className="text-lg font-semibold">Thông tin hệ thống</span>}
+            className="shadow-lg"
+          >
             <div className="space-y-4">
               <div className={`p-3 rounded-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'}`}>
                 <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                   Vai trò
                 </p>
-                <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
+                <p
+                  className={`text-lg font-semibold ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}
+                >
                   Quản trị viên (Admin)
                 </p>
               </div>
@@ -222,13 +240,18 @@ export default function AdminDashboard() {
             </div>
           </Card>
 
-          <Card title={<span className="text-lg font-semibold">Hoạt động gần đây</span>} className="shadow-lg">
+          <Card
+            title={<span className="text-lg font-semibold">Hoạt động gần đây</span>}
+            className="shadow-lg"
+          >
             <div className="space-y-4">
               <div className={`p-3 rounded-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'}`}>
                 <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                   Thời gian truy cập
                 </p>
-                <p className={`text-base font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                <p
+                  className={`text-base font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
+                >
                   {new Date().toLocaleString('vi-VN')}
                 </p>
               </div>

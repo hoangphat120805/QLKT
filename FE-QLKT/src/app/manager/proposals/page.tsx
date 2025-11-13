@@ -37,7 +37,13 @@ interface Proposal {
   id: number;
   don_vi: string;
   nguoi_de_xuat: string;
-  loai_de_xuat: 'CA_NHAN_HANG_NAM' | 'DON_VI_HANG_NAM' | 'NIEN_HAN' | 'CONG_HIEN' | 'DOT_XUAT' | 'NCKH';
+  loai_de_xuat:
+    | 'CA_NHAN_HANG_NAM'
+    | 'DON_VI_HANG_NAM'
+    | 'NIEN_HAN'
+    | 'CONG_HIEN'
+    | 'DOT_XUAT'
+    | 'NCKH';
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   so_danh_hieu: number;
   so_thanh_tich: number;
@@ -141,11 +147,7 @@ export default function ManagerProposalsPage() {
     };
 
     const config = typeConfig[type as keyof typeof typeConfig];
-    return config ? (
-      <Tag color={config.color}>{config.text}</Tag>
-    ) : (
-      <Tag>{type}</Tag>
-    );
+    return config ? <Tag color={config.color}>{config.text}</Tag> : <Tag>{type}</Tag>;
   };
 
   const getStatusTag = (status: string) => {
@@ -382,10 +384,10 @@ export default function ManagerProposalsPage() {
                   activeTab === 'all'
                     ? 'Chưa có đề xuất nào'
                     : activeTab === 'pending'
-                    ? 'Không có đề xuất chờ duyệt'
-                    : activeTab === 'approved'
-                    ? 'Không có đề xuất đã duyệt'
-                    : 'Không có đề xuất bị từ chối'
+                      ? 'Không có đề xuất chờ duyệt'
+                      : activeTab === 'approved'
+                        ? 'Không có đề xuất đã duyệt'
+                        : 'Không có đề xuất bị từ chối'
                 }
               />
             ),

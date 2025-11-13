@@ -1,42 +1,42 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { Table, Button, Space, Tag, Popconfirm, message } from "antd"
-import type { ColumnsType } from 'antd/es/table'
-import { EditOutlined, DeleteOutlined } from "@ant-design/icons"
-import { apiClient } from "@/lib/api-client"
+import { useState } from 'react';
+import { Table, Button, Space, Tag, Popconfirm, message } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { apiClient } from '@/lib/api-client';
 
 interface PositionsTableProps {
-  positions: any[]
-  onEdit?: (position: any) => void
-  onRefresh?: () => void
+  positions: any[];
+  onEdit?: (position: any) => void;
+  onRefresh?: () => void;
 }
 
 export function PositionsTable({ positions, onEdit, onRefresh }: PositionsTableProps) {
-  const [loading, setLoading] = useState(false)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleDelete = async (id: string) => {
     try {
-      setLoading(true)
-      setDeletingId(id)
-      await apiClient.deletePosition(id)
-      message.success("Xóa chức vụ thành công")
-      onRefresh?.()
+      setLoading(true);
+      setDeletingId(id);
+      await apiClient.deletePosition(id);
+      message.success('Xóa chức vụ thành công');
+      onRefresh?.();
     } catch (error) {
-      message.error("Có lỗi xảy ra khi xóa")
+      message.error('Có lỗi xảy ra khi xóa');
     } finally {
-      setLoading(false)
-      setDeletingId(null)
+      setLoading(false);
+      setDeletingId(null);
     }
-  }
+  };
 
   const columns: ColumnsType<any> = [
     {
       title: 'Tên Chức vụ',
       dataIndex: 'ten_chuc_vu',
       key: 'ten_chuc_vu',
-      render: (text) => <strong>{text}</strong>,
+      render: text => <strong>{text}</strong>,
     },
     {
       title: 'Cơ quan đơn vị',
@@ -73,11 +73,7 @@ export function PositionsTable({ positions, onEdit, onRefresh }: PositionsTableP
         if (record.DonViTrucThuoc) {
           return null; // Ẩn cột này cho đơn vị trực thuộc
         }
-        return isManager ? (
-          <Tag color="green">Có</Tag>
-        ) : (
-          <Tag>Không</Tag>
-        );
+        return isManager ? <Tag color="green">Có</Tag> : <Tag>Không</Tag>;
       },
     },
     {
@@ -85,7 +81,7 @@ export function PositionsTable({ positions, onEdit, onRefresh }: PositionsTableP
       dataIndex: 'he_so_luong',
       key: 'he_so_luong',
       width: 150,
-      render: (value) => value ? parseFloat(value).toFixed(2) : '-',
+      render: value => (value ? parseFloat(value).toFixed(2) : '-'),
     },
     {
       title: 'Hành động',
@@ -94,11 +90,7 @@ export function PositionsTable({ positions, onEdit, onRefresh }: PositionsTableP
       align: 'right',
       render: (_, record) => (
         <Space size="small">
-          <Button
-            type="default"
-            icon={<EditOutlined />}
-            onClick={() => onEdit?.(record)}
-          >
+          <Button type="default" icon={<EditOutlined />} onClick={() => onEdit?.(record)}>
             Sửa
           </Button>
           <Popconfirm
@@ -121,7 +113,7 @@ export function PositionsTable({ positions, onEdit, onRefresh }: PositionsTableP
         </Space>
       ),
     },
-  ]
+  ];
 
   return (
     <Table
@@ -132,11 +124,11 @@ export function PositionsTable({ positions, onEdit, onRefresh }: PositionsTableP
       pagination={{
         pageSize: 10,
         showSizeChanger: true,
-        showTotal: (total) => `Tổng số ${total} chức vụ`,
+        showTotal: total => `Tổng số ${total} chức vụ`,
       }}
       locale={{
         emptyText: 'Không có dữ liệu',
       }}
     />
-  )
+  );
 }

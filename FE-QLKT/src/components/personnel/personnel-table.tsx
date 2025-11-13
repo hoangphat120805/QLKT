@@ -90,9 +90,15 @@ export function PersonnelTable({
                 <TableRow key={p.id}>
                   <TableCell className="font-medium text-center">{p.cccd}</TableCell>
                   <TableCell className="text-center">{p.ho_ten}</TableCell>
-                  <TableCell className="text-center">{p.DonVi?.ten_don_vi || p.ten_don_vi || '-'}</TableCell>
-                  <TableCell className="text-center">{p.ChucVu?.ten_chuc_vu || p.ten_chuc_vu || '-'}</TableCell>
-                  <TableCell className="text-center">{new Date(p.ngay_nhap_ngu).toLocaleDateString('vi-VN')}</TableCell>
+                  <TableCell className="text-center">
+                    {p.DonVi?.ten_don_vi || p.ten_don_vi || '-'}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {p.ChucVu?.ten_chuc_vu || p.ten_chuc_vu || '-'}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {new Date(p.ngay_nhap_ngu).toLocaleDateString('vi-VN')}
+                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex gap-2 justify-end">
                       {readOnly ? (

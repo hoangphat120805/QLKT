@@ -22,7 +22,12 @@ router.get('/service/:personnel_id', verifyToken, requireAuth, profileController
  * @desc    Tính toán lại hồ sơ cho 1 quân nhân
  * @access  Private - ADMIN, MANAGER
  */
-router.post('/recalculate/:personnel_id', verifyToken, requireManager, profileController.recalculateProfile);
+router.post(
+  '/recalculate/:personnel_id',
+  verifyToken,
+  requireManager,
+  profileController.recalculateProfile
+);
 
 /**
  * @route   POST /api/profiles/recalculate-all
@@ -43,6 +48,11 @@ router.get('/service', verifyToken, requireAdmin, profileController.getAllServic
  * @desc    Cập nhật trạng thái hồ sơ niên hạn (ADMIN duyệt huân chương)
  * @access  Private - ADMIN only
  */
-router.put('/service/:personnel_id', verifyToken, requireAdmin, profileController.updateServiceProfile);
+router.put(
+  '/service/:personnel_id',
+  verifyToken,
+  requireAdmin,
+  profileController.updateServiceProfile
+);
 
 module.exports = router;

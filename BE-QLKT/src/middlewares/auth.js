@@ -10,7 +10,7 @@ const verifyToken = (req, res, next) => {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({
       success: false,
-      message: 'Không tìm thấy token. Vui lòng đăng nhập.'
+      message: 'Không tìm thấy token. Vui lòng đăng nhập.',
     });
   }
 
@@ -24,12 +24,12 @@ const verifyToken = (req, res, next) => {
     if (err.name === 'TokenExpiredError') {
       return res.status(401).json({
         success: false,
-        message: 'Token đã hết hạn. Vui lòng đăng nhập lại.'
+        message: 'Token đã hết hạn. Vui lòng đăng nhập lại.',
       });
     }
     return res.status(401).json({
       success: false,
-      message: 'Token không hợp lệ.'
+      message: 'Token không hợp lệ.',
     });
   }
 };
@@ -41,14 +41,14 @@ const requireSuperAdmin = (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({
       success: false,
-      message: 'Vui lòng đăng nhập trước.'
+      message: 'Vui lòng đăng nhập trước.',
     });
   }
 
   if (req.user.role !== 'SUPER_ADMIN') {
     return res.status(403).json({
       success: false,
-      message: 'Chỉ SUPER_ADMIN mới có quyền thực hiện thao tác này.'
+      message: 'Chỉ SUPER_ADMIN mới có quyền thực hiện thao tác này.',
     });
   }
 
@@ -62,7 +62,7 @@ const requireAdmin = (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({
       success: false,
-      message: 'Vui lòng đăng nhập trước.'
+      message: 'Vui lòng đăng nhập trước.',
     });
   }
 
@@ -70,7 +70,7 @@ const requireAdmin = (req, res, next) => {
   if (!allowedRoles.includes(req.user.role)) {
     return res.status(403).json({
       success: false,
-      message: 'Chỉ ADMIN trở lên mới có quyền thực hiện thao tác này.'
+      message: 'Chỉ ADMIN trở lên mới có quyền thực hiện thao tác này.',
     });
   }
 
@@ -84,7 +84,7 @@ const requireManager = (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({
       success: false,
-      message: 'Vui lòng đăng nhập trước.'
+      message: 'Vui lòng đăng nhập trước.',
     });
   }
 
@@ -92,7 +92,7 @@ const requireManager = (req, res, next) => {
   if (!allowedRoles.includes(req.user.role)) {
     return res.status(403).json({
       success: false,
-      message: 'Chỉ MANAGER trở lên mới có quyền thực hiện thao tác này.'
+      message: 'Chỉ MANAGER trở lên mới có quyền thực hiện thao tác này.',
     });
   }
 
@@ -108,7 +108,7 @@ const requireAuth = verifyToken;
  * Middleware kiểm tra danh sách các vai trò được phép
  * @param {Array<string>} allowedRoles - Danh sách vai trò cho phép (VD: ['ADMIN', 'MANAGER'])
  */
-const checkRole = (allowedRoles) => {
+const checkRole = allowedRoles => {
   return (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({

@@ -8,8 +8,8 @@
  * @param {Object} user - User object
  * @returns {boolean}
  */
-export const isSuperAdmin = (user) => {
-  return user?.role === "SUPER_ADMIN";
+export const isSuperAdmin = user => {
+  return user?.role === 'SUPER_ADMIN';
 };
 
 /**
@@ -17,8 +17,8 @@ export const isSuperAdmin = (user) => {
  * @param {Object} user - User object
  * @returns {boolean}
  */
-export const isAdmin = (user) => {
-  return user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
+export const isAdmin = user => {
+  return user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
 };
 
 /**
@@ -26,8 +26,8 @@ export const isAdmin = (user) => {
  * @param {Object} user - User object
  * @returns {boolean}
  */
-export const isUser = (user) => {
-  return user?.role === "USER";
+export const isUser = user => {
+  return user?.role === 'USER';
 };
 
 /**
@@ -35,21 +35,21 @@ export const isUser = (user) => {
  * @param {Object} user - User object
  * @returns {string} - Redirect path
  */
-export const getRedirectPath = (user) => {
-  if (!user) return "/login";
+export const getRedirectPath = user => {
+  if (!user) return '/login';
 
   if (isSuperAdmin(user)) {
-    return "/supper_admin";
+    return '/supper_admin';
   } else if (isAdmin(user)) {
-    return "/admin";
+    return '/admin';
   } else if (isUser(user)) {
-    return "/users";
+    return '/users';
   } else {
     // Fallback for backward compatibility
     if (user.isAdmin === true) {
-      return "/admin";
+      return '/admin';
     } else {
-      return "/users";
+      return '/users';
     }
   }
 };
@@ -59,15 +59,15 @@ export const getRedirectPath = (user) => {
  * @param {Object} user - User object
  * @returns {string}
  */
-export const getRoleDisplayName = (user) => {
+export const getRoleDisplayName = user => {
   switch (user?.role) {
-    case "SUPER_ADMIN":
-      return "Super Admin";
-    case "ADMIN":
-      return "Admin";
-    case "USER":
-      return "Học viên";
+    case 'SUPER_ADMIN':
+      return 'Super Admin';
+    case 'ADMIN':
+      return 'Admin';
+    case 'USER':
+      return 'Học viên';
     default:
-      return user?.isAdmin ? "Admin" : "Học viên";
+      return user?.isAdmin ? 'Admin' : 'Học viên';
   }
 };

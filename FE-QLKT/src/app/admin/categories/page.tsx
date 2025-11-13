@@ -1,7 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Button, Breadcrumb, Card, Tabs, Select, Modal, Typography, message, ConfigProvider, theme as antdTheme, Space } from 'antd';
+import {
+  Button,
+  Breadcrumb,
+  Card,
+  Tabs,
+  Select,
+  Modal,
+  Typography,
+  message,
+  ConfigProvider,
+  theme as antdTheme,
+  Space,
+} from 'antd';
 import { PlusOutlined, HomeOutlined } from '@ant-design/icons';
 import { UnitForm } from '@/components/categories/unit-form';
 import { UnitsTable } from '@/components/categories/units-table';
@@ -65,7 +77,9 @@ export default function CategoriesPage() {
   };
 
   const filteredPositions =
-    selectedUnit === 'ALL' ? positions : positions.filter(p => p.don_vi_id?.toString() === selectedUnit);
+    selectedUnit === 'ALL'
+      ? positions
+      : positions.filter(p => p.don_vi_id?.toString() === selectedUnit);
 
   if (loading) {
     return (
@@ -167,7 +181,11 @@ export default function CategoriesPage() {
                   {/* Filters */}
                   <Card style={{ marginBottom: 24 }}>
                     <Space direction="vertical" style={{ width: '100%' }} size="middle">
-                      <Space wrap style={{ width: '100%', justifyContent: 'space-between' }} size="middle">
+                      <Space
+                        wrap
+                        style={{ width: '100%', justifyContent: 'space-between' }}
+                        size="middle"
+                      >
                         <div style={{ flex: 1, minWidth: 300 }}>
                           <Text type="secondary" style={{ marginBottom: 8, display: 'block' }}>
                             Đơn vị
@@ -222,12 +240,22 @@ export default function CategoriesPage() {
           width={800}
           style={{ maxHeight: '90vh' }}
           title={
-            dialogType === 'unit' ? (editingItem ? 'Sửa Đơn vị' : 'Thêm Cơ quan đơn vị mới') :
-            (editingItem ? 'Sửa Chức vụ' : 'Thêm Chức vụ mới')
+            dialogType === 'unit'
+              ? editingItem
+                ? 'Sửa Đơn vị'
+                : 'Thêm Cơ quan đơn vị mới'
+              : editingItem
+                ? 'Sửa Chức vụ'
+                : 'Thêm Chức vụ mới'
           }
         >
           {dialogType === 'unit' && (
-            <UnitForm unit={editingItem} units={units} onSuccess={loadData} onClose={handleCloseDialog} />
+            <UnitForm
+              unit={editingItem}
+              units={units}
+              onSuccess={loadData}
+              onClose={handleCloseDialog}
+            />
           )}
 
           {dialogType === 'position' && (

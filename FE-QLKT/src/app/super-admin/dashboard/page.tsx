@@ -11,7 +11,7 @@ import {
   BankOutlined,
   FileTextOutlined,
   RiseOutlined,
-  ArrowRightOutlined
+  ArrowRightOutlined,
 } from '@ant-design/icons';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
@@ -147,97 +147,162 @@ export default function SuperAdminDashboard() {
       }}
     >
       <div style={{ padding: '24px' }}>
-      {/* Breadcrumb */}
-      <Breadcrumb style={{ marginBottom: '24px' }}>
-        <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
-      </Breadcrumb>
+        {/* Breadcrumb */}
+        <Breadcrumb style={{ marginBottom: '24px' }}>
+          <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
+        </Breadcrumb>
 
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-        <div style={{ padding: '8px', backgroundColor: '#e0f2fe', borderRadius: '8px' }}>
-          <DashboardOutlined style={{ fontSize: '24px', color: '#0284c7' }} />
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+          <div style={{ padding: '8px', backgroundColor: '#e0f2fe', borderRadius: '8px' }}>
+            <DashboardOutlined style={{ fontSize: '24px', color: '#0284c7' }} />
+          </div>
+          <div>
+            <Title level={1} style={{ margin: 0 }}>
+              Bảng điều khiển
+            </Title>
+            <Text type="secondary" style={{ display: 'block', marginTop: '4px' }}>
+              Chào mừng đến với hệ thống quản lý - Super Admin
+            </Text>
+          </div>
         </div>
-        <div>
-          <Title level={1} style={{ margin: 0 }}>Bảng điều khiển</Title>
-          <Text type="secondary" style={{ display: 'block', marginTop: '4px' }}>
-            Chào mừng đến với hệ thống quản lý - Super Admin
-          </Text>
-        </div>
-      </div>
 
-      {/* Stats Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-        {statCards.map((stat, index) => {
-          const IconComponent = stat.icon;
-          const isNumber = typeof stat.value === 'number';
-          return (
-            <Link key={index} href={stat.link}>
-              <Card hoverable style={{ cursor: 'pointer' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                  <div>
-                    <Text type="secondary" style={{ fontSize: '14px', display: 'block', marginBottom: '4px' }}>
-                      {stat.title}
-                    </Text>
-                    <div style={{ fontSize: '28px', fontWeight: 'bold' }}>
-                      {loading && isNumber ? '...' : stat.value}
+        {/* Stats Cards */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '16px',
+            marginBottom: '24px',
+          }}
+        >
+          {statCards.map((stat, index) => {
+            const IconComponent = stat.icon;
+            const isNumber = typeof stat.value === 'number';
+            return (
+              <Link key={index} href={stat.link}>
+                <Card hoverable style={{ cursor: 'pointer' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: '16px',
+                    }}
+                  >
+                    <div>
+                      <Text
+                        type="secondary"
+                        style={{ fontSize: '14px', display: 'block', marginBottom: '4px' }}
+                      >
+                        {stat.title}
+                      </Text>
+                      <div style={{ fontSize: '28px', fontWeight: 'bold' }}>
+                        {loading && isNumber ? '...' : stat.value}
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        padding: '12px',
+                        backgroundColor: stat.bgColor,
+                        borderRadius: '8px',
+                      }}
+                    >
+                      <IconComponent style={{ fontSize: '24px', color: stat.iconColor }} />
                     </div>
                   </div>
-                  <div style={{ padding: '12px', backgroundColor: stat.bgColor, borderRadius: '8px' }}>
-                    <IconComponent style={{ fontSize: '24px', color: stat.iconColor }} />
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#6b7280', fontSize: '14px' }}>
-                  <ArrowRightOutlined style={{ fontSize: '16px' }} />
-                  <span>Truy cập</span>
-                </div>
-              </Card>
-            </Link>
-          );
-        })}
-      </div>
-
-      {/* Quick Actions */}
-      <div>
-        <Title level={2} style={{ marginBottom: '16px' }}>Thao tác nhanh</Title>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-          {quickActions.map((action, index) => {
-            const IconComponent = action.icon;
-            return (
-              <Link key={index} href={action.link}>
-                <Card hoverable style={{ cursor: 'pointer', height: '100%' }}>
-                  <div style={{ padding: '12px', backgroundColor: action.bgColor, borderRadius: '8px', width: 'fit-content', marginBottom: '16px' }}>
-                    <IconComponent style={{ fontSize: '24px', color: action.iconColor }} />
-                  </div>
-                  <Title level={4} style={{ marginBottom: '8px' }}>{action.title}</Title>
-                  <Text type="secondary" style={{ fontSize: '14px', display: 'block', marginBottom: '16px' }}>
-                    {action.description}
-                  </Text>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#0284c7', fontSize: '14px' }}>
-                    <span>Truy cập</span>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      color: '#6b7280',
+                      fontSize: '14px',
+                    }}
+                  >
                     <ArrowRightOutlined style={{ fontSize: '16px' }} />
+                    <span>Truy cập</span>
                   </div>
                 </Card>
               </Link>
             );
           })}
         </div>
-      </div>
 
-      {/* System Info */}
-      <Card>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '24px' }}>
-          <div style={{ padding: '8px', backgroundColor: '#dcfce7', borderRadius: '8px' }}>
-            <SettingOutlined style={{ fontSize: '20px', color: '#16a34a' }} />
-          </div>
-          <div>
-            <Title level={4} style={{ marginBottom: '8px' }}>Quyền quản trị Super Admin</Title>
-            <Text type="secondary" style={{ fontSize: '14px' }}>
-              Bạn có toàn quyền quản lý hệ thống, bao gồm tài khoản, quân nhân, đơn vị và xem nhật ký hoạt động.
-              Vui lòng sử dụng các quyền này một cách cẩn thận và có trách nhiệm.
-            </Text>
+        {/* Quick Actions */}
+        <div>
+          <Title level={2} style={{ marginBottom: '16px' }}>
+            Thao tác nhanh
+          </Title>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+              gap: '16px',
+              marginBottom: '24px',
+            }}
+          >
+            {quickActions.map((action, index) => {
+              const IconComponent = action.icon;
+              return (
+                <Link key={index} href={action.link}>
+                  <Card hoverable style={{ cursor: 'pointer', height: '100%' }}>
+                    <div
+                      style={{
+                        padding: '12px',
+                        backgroundColor: action.bgColor,
+                        borderRadius: '8px',
+                        width: 'fit-content',
+                        marginBottom: '16px',
+                      }}
+                    >
+                      <IconComponent style={{ fontSize: '24px', color: action.iconColor }} />
+                    </div>
+                    <Title level={4} style={{ marginBottom: '8px' }}>
+                      {action.title}
+                    </Title>
+                    <Text
+                      type="secondary"
+                      style={{ fontSize: '14px', display: 'block', marginBottom: '16px' }}
+                    >
+                      {action.description}
+                    </Text>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        color: '#0284c7',
+                        fontSize: '14px',
+                      }}
+                    >
+                      <span>Truy cập</span>
+                      <ArrowRightOutlined style={{ fontSize: '16px' }} />
+                    </div>
+                  </Card>
+                </Link>
+              );
+            })}
           </div>
         </div>
-      </Card>
+
+        {/* System Info */}
+        <Card>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '24px' }}>
+            <div style={{ padding: '8px', backgroundColor: '#dcfce7', borderRadius: '8px' }}>
+              <SettingOutlined style={{ fontSize: '20px', color: '#16a34a' }} />
+            </div>
+            <div>
+              <Title level={4} style={{ marginBottom: '8px' }}>
+                Quyền quản trị Super Admin
+              </Title>
+              <Text type="secondary" style={{ fontSize: '14px' }}>
+                Bạn có toàn quyền quản lý hệ thống, bao gồm tài khoản, quân nhân, đơn vị và xem nhật
+                ký hoạt động. Vui lòng sử dụng các quyền này một cách cẩn thận và có trách nhiệm.
+              </Text>
+            </div>
+          </div>
+        </Card>
       </div>
     </ConfigProvider>
   );

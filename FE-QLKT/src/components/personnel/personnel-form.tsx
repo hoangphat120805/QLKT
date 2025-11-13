@@ -94,10 +94,11 @@ export function PersonnelForm({
         }
       }
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message
-        || error?.response?.data?.error
-        || error?.message
-        || 'Có lỗi xảy ra';
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        'Có lỗi xảy ra';
 
       toast({
         title: 'Lỗi',

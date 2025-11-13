@@ -38,7 +38,10 @@ const { Title, Text } = Typography;
 export default function PersonnelPage() {
   const { theme } = useTheme();
   const [personnel, setPersonnel] = useState([]);
-  const [units, setUnits] = useState<{ coQuanDonVi: any[]; donViTrucThuocMap: Record<string, any[]> }>({ coQuanDonVi: [], donViTrucThuocMap: {} });
+  const [units, setUnits] = useState<{
+    coQuanDonVi: any[];
+    donViTrucThuocMap: Record<string, any[]>;
+  }>({ coQuanDonVi: [], donViTrucThuocMap: {} });
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCoQuanDonVi, setSelectedCoQuanDonVi] = useState<string | 'ALL'>('ALL');
@@ -63,7 +66,7 @@ export default function PersonnelPage() {
         // Xác định đơn vị từ CoQuanDonVi hoặc DonViTrucThuoc
         let donViName = '-';
         let donViDisplay = '-';
-        
+
         if (p.DonViTrucThuoc) {
           // Nếu thuộc đơn vị trực thuộc, hiển thị cả cơ quan đơn vị cha
           const donViTrucThuoc = p.DonViTrucThuoc;
@@ -79,7 +82,7 @@ export default function PersonnelPage() {
           donViName = p.CoQuanDonVi.ten_don_vi || '-';
           donViDisplay = donViName;
         }
-        
+
         return {
           ...p,
           don_vi_name: donViName,
@@ -97,12 +100,12 @@ export default function PersonnelPage() {
       });
 
       setPersonnel(personnelData);
-      
+
       // Tách thành 2 nhóm: Cơ quan đơn vị và Đơn vị trực thuộc
       const unitsData = unitsRes.data || [];
       const coQuanDonViList: any[] = [];
       const donViTrucThuocMap: Record<string, any[]> = {};
-      
+
       // Lần 1: Tạo map đơn vị trực thuộc theo parent ID
       unitsData.forEach((unit: any) => {
         if (unit.co_quan_don_vi_id || unit.CoQuanDonVi) {
@@ -119,7 +122,7 @@ export default function PersonnelPage() {
           });
         }
       });
-      
+
       // Lần 2: Tạo danh sách cơ quan đơn vị và gán đơn vị trực thuộc
       unitsData.forEach((unit: any) => {
         if (!unit.co_quan_don_vi_id && !unit.CoQuanDonVi) {
@@ -133,7 +136,7 @@ export default function PersonnelPage() {
           });
         }
       });
-      
+
       setUnits({ coQuanDonVi: coQuanDonViList, donViTrucThuocMap });
     } catch (error) {
       message.error('Không thể tải dữ liệu');
@@ -158,7 +161,7 @@ export default function PersonnelPage() {
   const filteredPersonnel = personnel.filter(p => {
     const matchesSearch =
       p.ho_ten?.toLowerCase().includes(searchTerm.toLowerCase()) || p.cccd?.includes(searchTerm);
-    
+
     // Filter theo cơ quan đơn vị
     let matchesCoQuanDonVi = true;
     if (selectedCoQuanDonVi && selectedCoQuanDonVi !== 'ALL') {
@@ -173,22 +176,25 @@ export default function PersonnelPage() {
       // Nếu có co_quan_don_vi_id từ relation
       else if (p.DonViTrucThuoc?.co_quan_don_vi_id === selectedCoQuanDonVi) {
         matchesCoQuanDonVi = true;
-      }
-      else {
+      } else {
         matchesCoQuanDonVi = false;
       }
     }
-    
+
     // Filter theo đơn vị trực thuộc
-    const matchesDonViTrucThuoc = !selectedDonViTrucThuoc || selectedDonViTrucThuoc === 'ALL' || p.don_vi_truc_thuoc_id === selectedDonViTrucThuoc;
-    
+    const matchesDonViTrucThuoc =
+      !selectedDonViTrucThuoc ||
+      selectedDonViTrucThuoc === 'ALL' ||
+      p.don_vi_truc_thuoc_id === selectedDonViTrucThuoc;
+
     return matchesSearch && matchesCoQuanDonVi && matchesDonViTrucThuoc;
   });
-  
+
   // Lấy danh sách đơn vị trực thuộc để hiển thị (filter theo cơ quan đơn vị đã chọn hoặc tất cả)
-  const availableDonViTrucThuoc = selectedCoQuanDonVi && selectedCoQuanDonVi !== 'ALL'
-    ? units.donViTrucThuocMap[selectedCoQuanDonVi] || []
-    : Object.values(units.donViTrucThuocMap).flat();
+  const availableDonViTrucThuoc =
+    selectedCoQuanDonVi && selectedCoQuanDonVi !== 'ALL'
+      ? units.donViTrucThuocMap[selectedCoQuanDonVi] || []
+      : Object.values(units.donViTrucThuocMap).flat();
 
   const columns = [
     {
@@ -212,11 +218,7 @@ export default function PersonnelPage() {
       render: (text, record) => {
         // Nếu là đơn vị trực thuộc, hiển thị với màu khác
         const isDonViTrucThuoc = !!record.DonViTrucThuoc;
-        return (
-          <Tag color={isDonViTrucThuoc ? 'cyan' : 'blue'}>
-            {text || '-'}
-          </Tag>
-        );
+        return <Tag color={isDonViTrucThuoc ? 'cyan' : 'blue'}>{text || '-'}</Tag>;
       },
     },
     {
@@ -357,7 +359,7 @@ export default function PersonnelPage() {
                 </Text>
                 <Select
                   value={selectedCoQuanDonVi}
-                  onChange={(value) => {
+                  onChange={value => {
                     setSelectedCoQuanDonVi(value || 'ALL');
                     setSelectedDonViTrucThuoc('ALL'); // Reset đơn vị trực thuộc khi đổi cơ quan đơn vị
                   }}
@@ -371,7 +373,10 @@ export default function PersonnelPage() {
                     const label = String(option?.label || option?.children || '');
                     const value = String(option?.value || '');
                     const searchText = input.toLowerCase();
-                    return label.toLowerCase().includes(searchText) || value.toLowerCase().includes(searchText);
+                    return (
+                      label.toLowerCase().includes(searchText) ||
+                      value.toLowerCase().includes(searchText)
+                    );
                   }}
                   suffixIcon={<FilterOutlined />}
                   allowClear
@@ -380,45 +385,52 @@ export default function PersonnelPage() {
                     Tất cả cơ quan đơn vị ({units.coQuanDonVi.length})
                   </Select.Option>
                   {units.coQuanDonVi.map((coQuanDonVi: any) => {
-                    const label = coQuanDonVi.ma_don_vi 
+                    const label = coQuanDonVi.ma_don_vi
                       ? `${coQuanDonVi.ten_don_vi} (${coQuanDonVi.ma_don_vi})`
                       : coQuanDonVi.ten_don_vi;
-                    
-                    const popoverContent = coQuanDonVi.donViTrucThuoc.length > 0 ? (
-                      <div style={{ maxWidth: '300px' }}>
-                        <div style={{ fontWeight: 'bold', marginBottom: 8, color: '#1890ff' }}>
-                          Đơn vị trực thuộc:
+
+                    const popoverContent =
+                      coQuanDonVi.donViTrucThuoc.length > 0 ? (
+                        <div style={{ maxWidth: '300px' }}>
+                          <div style={{ fontWeight: 'bold', marginBottom: 8, color: '#1890ff' }}>
+                            Đơn vị trực thuộc:
+                          </div>
+                          <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                            {coQuanDonVi.donViTrucThuoc.map((dv: any, index: number) => {
+                              const dvLabel = dv.ma_don_vi
+                                ? `${dv.ten_don_vi} (${dv.ma_don_vi})`
+                                : dv.ten_don_vi;
+                              return (
+                                <div
+                                  key={dv.id || index}
+                                  style={{
+                                    padding: '4px 0',
+                                    borderBottom:
+                                      index < coQuanDonVi.donViTrucThuoc.length - 1
+                                        ? '1px solid #f0f0f0'
+                                        : 'none',
+                                  }}
+                                >
+                                  • {dvLabel}
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
-                        <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                          {coQuanDonVi.donViTrucThuoc.map((dv: any, index: number) => {
-                            const dvLabel = dv.ma_don_vi 
-                              ? `${dv.ten_don_vi} (${dv.ma_don_vi})`
-                              : dv.ten_don_vi;
-                            return (
-                              <div 
-                                key={dv.id || index}
-                                style={{ 
-                                  padding: '4px 0',
-                                  borderBottom: index < coQuanDonVi.donViTrucThuoc.length - 1 ? '1px solid #f0f0f0' : 'none'
-                                }}
-                              >
-                                • {dvLabel}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ) : (
-                      <div style={{ color: '#999' }}>Không có đơn vị trực thuộc</div>
-                    );
-                    
+                      ) : (
+                        <div style={{ color: '#999' }}>Không có đơn vị trực thuộc</div>
+                      );
+
                     return (
-                      <Select.Option 
-                        key={coQuanDonVi.id}
-                        value={coQuanDonVi.id} 
-                        label={label}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                      <Select.Option key={coQuanDonVi.id} value={coQuanDonVi.id} label={label}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            width: '100%',
+                          }}
+                        >
                           <span>{label}</span>
                           {coQuanDonVi.donViTrucThuoc.length > 0 && (
                             <Popover
@@ -428,18 +440,18 @@ export default function PersonnelPage() {
                               overlayStyle={{ maxWidth: '350px' }}
                               overlayClassName="unit-popover"
                             >
-                              <span 
-                                style={{ 
+                              <span
+                                style={{
                                   cursor: 'pointer',
                                   fontSize: '12px',
                                   color: '#1890ff',
                                   marginLeft: '8px',
-                                  transition: 'all 0.2s'
+                                  transition: 'all 0.2s',
                                 }}
-                                onMouseEnter={(e) => {
+                                onMouseEnter={e => {
                                   e.currentTarget.style.transform = 'scale(1.1)';
                                 }}
-                                onMouseLeave={(e) => {
+                                onMouseLeave={e => {
                                   e.currentTarget.style.transform = 'scale(1)';
                                 }}
                               >
@@ -459,18 +471,25 @@ export default function PersonnelPage() {
                 </Text>
                 <Select
                   value={selectedDonViTrucThuoc}
-                  onChange={(value) => setSelectedDonViTrucThuoc(value || 'ALL')}
+                  onChange={value => setSelectedDonViTrucThuoc(value || 'ALL')}
                   onClear={() => setSelectedDonViTrucThuoc('ALL')}
                   style={{ width: '100%' }}
                   size="large"
                   showSearch
-                  placeholder={availableDonViTrucThuoc.length > 0 ? "Chọn hoặc tìm kiếm đơn vị trực thuộc..." : "Không có đơn vị trực thuộc"}
+                  placeholder={
+                    availableDonViTrucThuoc.length > 0
+                      ? 'Chọn hoặc tìm kiếm đơn vị trực thuộc...'
+                      : 'Không có đơn vị trực thuộc'
+                  }
                   optionFilterProp="label"
                   filterOption={(input, option: any) => {
                     const label = String(option?.label || option?.children || '');
                     const value = String(option?.value || '');
                     const searchText = input.toLowerCase();
-                    return label.toLowerCase().includes(searchText) || value.toLowerCase().includes(searchText);
+                    return (
+                      label.toLowerCase().includes(searchText) ||
+                      value.toLowerCase().includes(searchText)
+                    );
                   }}
                   suffixIcon={<FilterOutlined />}
                   allowClear
@@ -483,27 +502,31 @@ export default function PersonnelPage() {
                     const childLabel = donViTrucThuoc.ma_don_vi
                       ? `${donViTrucThuoc.ten_don_vi} (${donViTrucThuoc.ma_don_vi})`
                       : donViTrucThuoc.ten_don_vi;
-                    
+
                     // Nếu đã chọn cơ quan đơn vị thì không hiển thị tên cơ quan đơn vị nữa
                     // Chỉ hiển thị tên cơ quan đơn vị khi chưa chọn (hiển thị tất cả)
                     let displayLabel = childLabel;
                     let optionLabel = childLabel;
-                    
+
                     if (!selectedCoQuanDonVi || selectedCoQuanDonVi === 'ALL') {
                       // Chưa chọn cơ quan đơn vị, hiển thị kèm tên cơ quan đơn vị cha
-                      const parentUnit = units.coQuanDonVi.find((cqdv: any) => 
-                        units.donViTrucThuocMap[cqdv.id]?.some((dv: any) => dv.id === donViTrucThuoc.id)
+                      const parentUnit = units.coQuanDonVi.find((cqdv: any) =>
+                        units.donViTrucThuocMap[cqdv.id]?.some(
+                          (dv: any) => dv.id === donViTrucThuoc.id
+                        )
                       );
-                      const parentLabel = parentUnit 
-                        ? (parentUnit.ma_don_vi ? `${parentUnit.ten_don_vi} (${parentUnit.ma_don_vi})` : parentUnit.ten_don_vi)
+                      const parentLabel = parentUnit
+                        ? parentUnit.ma_don_vi
+                          ? `${parentUnit.ten_don_vi} (${parentUnit.ma_don_vi})`
+                          : parentUnit.ten_don_vi
                         : '';
-                      
+
                       if (parentLabel) {
                         displayLabel = `${childLabel} (${parentLabel})`;
                         optionLabel = `${parentLabel} > ${childLabel}`;
                       }
                     }
-                    
+
                     return (
                       <Select.Option
                         key={donViTrucThuoc.id}

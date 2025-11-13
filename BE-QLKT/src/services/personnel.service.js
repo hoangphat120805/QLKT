@@ -1,6 +1,6 @@
-const { prisma } = require("../models");
-const ExcelJS = require("exceljs");
-const bcrypt = require("bcryptjs");
+const { prisma } = require('../models');
+const ExcelJS = require('exceljs');
+const bcrypt = require('bcryptjs');
 
 class PersonnelService {
   /**
@@ -10,7 +10,7 @@ class PersonnelService {
    * @returns {string} - CCCD đã được format đúng
    */
   parseCCCD(value) {
-    if (!value) return "";
+    if (!value) return '';
 
     // Chuyển về string và trim
     let cccd = value.toString().trim();
@@ -18,7 +18,7 @@ class PersonnelService {
     // Nếu CCCD có độ dài < 12 (bị mất số 0 đầu), padding thêm số 0
     // CCCD Việt Nam chuẩn là 12 số
     if (/^\d+$/.test(cccd) && cccd.length < 12) {
-      cccd = cccd.padStart(12, "0");
+      cccd = cccd.padStart(12, '0');
     }
 
     return cccd;
@@ -35,7 +35,7 @@ class PersonnelService {
       let whereCondition = {};
 
       // Nếu là MANAGER, chỉ lấy quân nhân trong đơn vị của mình
-      if (userRole === "MANAGER" && userQuanNhanId) {
+      if (userRole === 'MANAGER' && userQuanNhanId) {
         const manager = await prisma.quanNhan.findUnique({
           where: { id: userQuanNhanId },
           select: { co_quan_don_vi_id: true, don_vi_truc_thuoc_id: true },
@@ -64,7 +64,7 @@ class PersonnelService {
             ChucVu: true,
           },
           orderBy: {
-            createdAt: "desc",
+            createdAt: 'desc',
           },
         }),
         prisma.quanNhan.count({ where: whereCondition }),
@@ -110,17 +110,17 @@ class PersonnelService {
       });
 
       if (!personnel) {
-        throw new Error("Quân nhân không tồn tại");
+        throw new Error('Quân nhân không tồn tại');
       }
 
       // Kiểm tra quyền truy cập
       // USER chỉ xem được thông tin của chính mình
-      if (userRole === "USER" && userQuanNhanId !== id) {
-        throw new Error("Bạn không có quyền xem thông tin này");
+      if (userRole === 'USER' && userQuanNhanId !== id) {
+        throw new Error('Bạn không có quyền xem thông tin này');
       }
 
       // MANAGER chỉ xem được quân nhân trong đơn vị của mình
-      if (userRole === "MANAGER" && userQuanNhanId) {
+      if (userRole === 'MANAGER' && userQuanNhanId) {
         const manager = await prisma.quanNhan.findUnique({
           where: { id: userQuanNhanId },
           select: { co_quan_don_vi_id: true, don_vi_truc_thuoc_id: true },
@@ -130,9 +130,7 @@ class PersonnelService {
           // MANAGER thuộc cơ quan đơn vị, chỉ xem được quân nhân trong cùng cơ quan đơn vị
           if (manager.co_quan_don_vi_id) {
             if (personnel.co_quan_don_vi_id !== manager.co_quan_don_vi_id) {
-              throw new Error(
-                "Bạn không có quyền xem thông tin quân nhân ngoài đơn vị"
-              );
+              throw new Error('Bạn không có quyền xem thông tin quân nhân ngoài đơn vị');
             }
           }
         }
@@ -149,7 +147,7 @@ class PersonnelService {
    */
   async createPersonnel(data) {
     try {
-      const { cccd, unit_id, position_id, role = "USER" } = data;
+      const { cccd, unit_id, position_id, role = 'USER' } = data;
 
       // Kiểm tra CCCD đã tồn tại chưa
       const existingPersonnel = await prisma.quanNhan.findUnique({
@@ -157,7 +155,7 @@ class PersonnelService {
       });
 
       if (existingPersonnel) {
-        throw new Error("CCCD đã tồn tại trong hệ thống");
+        throw new Error('CCCD đã tồn tại trong hệ thống');
       }
 
       // Kiểm tra đơn vị có tồn tại không (có thể là CoQuanDonVi hoặc DonViTrucThuoc)
@@ -167,7 +165,7 @@ class PersonnelService {
       ]);
 
       if (!coQuanDonVi && !donViTrucThuoc) {
-        throw new Error("Đơn vị không tồn tại");
+        throw new Error('Đơn vị không tồn tại');
       }
 
       // Kiểm tra chức vụ có tồn tại không
@@ -176,7 +174,7 @@ class PersonnelService {
       });
 
       if (!position) {
-        throw new Error("Chức vụ không tồn tại");
+        throw new Error('Chức vụ không tồn tại');
       }
 
       // Tạo username từ CCCD
@@ -188,7 +186,7 @@ class PersonnelService {
       });
 
       if (existingAccount) {
-        throw new Error("Username (CCCD) đã tồn tại trong hệ thống tài khoản");
+        throw new Error('Username (CCCD) đã tồn tại trong hệ thống tài khoản');
       }
 
       // Xác định loại đơn vị và set đúng foreign key
@@ -234,7 +232,7 @@ class PersonnelService {
       });
 
       // Tự động tạo tài khoản
-      const defaultPassword = "123456"; // Mật khẩu mặc định
+      const defaultPassword = '123456'; // Mật khẩu mặc định
       const hashedPassword = await bcrypt.hash(defaultPassword, 10);
 
       const account = await prisma.taiKhoan.create({
@@ -286,8 +284,7 @@ class PersonnelService {
    */
   async updatePersonnel(id, data, userRole, userQuanNhanId) {
     try {
-      const { unit_id, position_id, ho_ten, ngay_sinh, cccd, ngay_nhap_ngu } =
-        data;
+      const { unit_id, position_id, ho_ten, ngay_sinh, cccd, ngay_nhap_ngu } = data;
 
       // Kiểm tra quân nhân có tồn tại không
       const personnel = await prisma.quanNhan.findUnique({
@@ -295,24 +292,24 @@ class PersonnelService {
       });
 
       if (!personnel) {
-        throw new Error("Quân nhân không tồn tại");
+        throw new Error('Quân nhân không tồn tại');
       }
 
       // Kiểm tra quyền truy cập
       // USER chỉ sửa được thông tin của chính mình
-      if (userRole === "USER") {
+      if (userRole === 'USER') {
         if (userQuanNhanId !== id) {
-          throw new Error("Bạn không có quyền sửa thông tin của người khác");
+          throw new Error('Bạn không có quyền sửa thông tin của người khác');
         }
 
         // USER không được phép đổi unit_id và position_id
         if (unit_id || position_id) {
-          throw new Error("Bạn không có quyền thay đổi đơn vị hoặc chức vụ");
+          throw new Error('Bạn không có quyền thay đổi đơn vị hoặc chức vụ');
         }
       }
 
       // Kiểm tra quyền: MANAGER chỉ sửa được quân nhân trong đơn vị của mình
-      if (userRole === "MANAGER" && userQuanNhanId) {
+      if (userRole === 'MANAGER' && userQuanNhanId) {
         const manager = await prisma.quanNhan.findUnique({
           where: { id: userQuanNhanId },
           select: { co_quan_don_vi_id: true, don_vi_truc_thuoc_id: true },
@@ -322,9 +319,7 @@ class PersonnelService {
           // MANAGER thuộc cơ quan đơn vị, chỉ sửa được quân nhân trong cùng cơ quan đơn vị
           if (manager.co_quan_don_vi_id) {
             if (personnel.co_quan_don_vi_id !== manager.co_quan_don_vi_id) {
-              throw new Error(
-                "Bạn không có quyền sửa thông tin quân nhân ngoài đơn vị"
-              );
+              throw new Error('Bạn không có quyền sửa thông tin quân nhân ngoài đơn vị');
             }
           }
         }
@@ -337,13 +332,12 @@ class PersonnelService {
         });
 
         if (existingPersonnel) {
-          throw new Error("CCCD đã tồn tại trong hệ thống");
+          throw new Error('CCCD đã tồn tại trong hệ thống');
         }
       }
 
       // Kiểm tra đơn vị mới nếu có
-      const currentUnitId =
-        personnel.co_quan_don_vi_id || personnel.don_vi_truc_thuoc_id;
+      const currentUnitId = personnel.co_quan_don_vi_id || personnel.don_vi_truc_thuoc_id;
       if (unit_id && unit_id !== currentUnitId) {
         const [coQuanDonVi, donViTrucThuoc] = await Promise.all([
           prisma.coQuanDonVi.findUnique({ where: { id: unit_id } }),
@@ -351,7 +345,7 @@ class PersonnelService {
         ]);
 
         if (!coQuanDonVi && !donViTrucThuoc) {
-          throw new Error("Đơn vị không tồn tại");
+          throw new Error('Đơn vị không tồn tại');
         }
       }
 
@@ -362,7 +356,7 @@ class PersonnelService {
         });
 
         if (!position) {
-          throw new Error("Chức vụ không tồn tại");
+          throw new Error('Chức vụ không tồn tại');
         }
       }
 
@@ -371,9 +365,7 @@ class PersonnelService {
         ho_ten: ho_ten || personnel.ho_ten,
         ngay_sinh: ngay_sinh ? new Date(ngay_sinh) : personnel.ngay_sinh,
         cccd: cccd || personnel.cccd,
-        ngay_nhap_ngu: ngay_nhap_ngu
-          ? new Date(ngay_nhap_ngu)
-          : personnel.ngay_nhap_ngu,
+        ngay_nhap_ngu: ngay_nhap_ngu ? new Date(ngay_nhap_ngu) : personnel.ngay_nhap_ngu,
         chuc_vu_id: position_id || personnel.chuc_vu_id,
       };
 
@@ -499,11 +491,11 @@ class PersonnelService {
       });
 
       if (!personnel) {
-        throw new Error("Quân nhân không tồn tại");
+        throw new Error('Quân nhân không tồn tại');
       }
 
       // Kiểm tra quyền: MANAGER chỉ xóa được quân nhân trong đơn vị của mình
-      if (userRole === "MANAGER" && userQuanNhanId) {
+      if (userRole === 'MANAGER' && userQuanNhanId) {
         const manager = await prisma.quanNhan.findUnique({
           where: { id: userQuanNhanId },
           select: { co_quan_don_vi_id: true, don_vi_truc_thuoc_id: true },
@@ -513,15 +505,14 @@ class PersonnelService {
           // MANAGER thuộc cơ quan đơn vị, chỉ xóa được quân nhân trong cùng cơ quan đơn vị
           if (manager.co_quan_don_vi_id) {
             if (personnel.co_quan_don_vi_id !== manager.co_quan_don_vi_id) {
-              throw new Error("Bạn không có quyền xóa quân nhân ngoài đơn vị");
+              throw new Error('Bạn không có quyền xóa quân nhân ngoài đơn vị');
             }
           }
         }
       }
 
       // Lưu lại đơn vị để cập nhật số lượng sau khi xóa
-      const unitId =
-        personnel.co_quan_don_vi_id || personnel.don_vi_truc_thuoc_id;
+      const unitId = personnel.co_quan_don_vi_id || personnel.don_vi_truc_thuoc_id;
       const isCoQuanDonVi = !!personnel.co_quan_don_vi_id;
 
       // Xóa quân nhân
@@ -552,7 +543,7 @@ class PersonnelService {
         }
       }
 
-      return { message: "Xóa quân nhân thành công" };
+      return { message: 'Xóa quân nhân thành công' };
     } catch (error) {
       throw error;
     }
@@ -573,51 +564,45 @@ class PersonnelService {
           },
           ChucVu: true,
         },
-        orderBy: [
-          { co_quan_don_vi_id: "asc" },
-          { don_vi_truc_thuoc_id: "asc" },
-          { ho_ten: "asc" },
-        ],
+        orderBy: [{ co_quan_don_vi_id: 'asc' }, { don_vi_truc_thuoc_id: 'asc' }, { ho_ten: 'asc' }],
       });
 
       // Tạo workbook Excel
       const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet("QuanNhan");
+      const worksheet = workbook.addWorksheet('QuanNhan');
 
       worksheet.columns = [
-        { header: "CCCD", key: "cccd", width: 18 },
-        { header: "Họ tên", key: "ho_ten", width: 28 },
-        { header: "Ngày sinh (YYYY-MM-DD)", key: "ngay_sinh", width: 20 },
+        { header: 'CCCD', key: 'cccd', width: 18 },
+        { header: 'Họ tên', key: 'ho_ten', width: 28 },
+        { header: 'Ngày sinh (YYYY-MM-DD)', key: 'ngay_sinh', width: 20 },
         {
-          header: "Ngày nhập ngũ (YYYY-MM-DD)",
-          key: "ngay_nhap_ngu",
+          header: 'Ngày nhập ngũ (YYYY-MM-DD)',
+          key: 'ngay_nhap_ngu',
           width: 24,
         },
-        { header: "Mã đơn vị", key: "ma_don_vi", width: 14 },
-        { header: "Tên đơn vị", key: "ten_don_vi", width: 24 },
-        { header: "Tên chức vụ", key: "ten_chuc_vu", width: 22 },
-        { header: "Là chỉ huy (is_manager)", key: "is_manager", width: 16 },
-        { header: "Hệ số lương", key: "he_so_luong", width: 15 },
+        { header: 'Mã đơn vị', key: 'ma_don_vi', width: 14 },
+        { header: 'Tên đơn vị', key: 'ten_don_vi', width: 24 },
+        { header: 'Tên chức vụ', key: 'ten_chuc_vu', width: 22 },
+        { header: 'Là chỉ huy (is_manager)', key: 'is_manager', width: 16 },
+        { header: 'Hệ số lương', key: 'he_so_luong', width: 15 },
       ];
 
       // Format cột CCCD thành Text (để giữ số 0 đầu tiên)
-      worksheet.getColumn(1).numFmt = "@";
+      worksheet.getColumn(1).numFmt = '@';
 
-      personnel.forEach((p) => {
+      personnel.forEach(p => {
         worksheet.addRow({
           cccd: p.cccd,
           ho_ten: p.ho_ten,
-          ngay_sinh: p.ngay_sinh
-            ? new Date(p.ngay_sinh).toISOString().slice(0, 10)
-            : "",
+          ngay_sinh: p.ngay_sinh ? new Date(p.ngay_sinh).toISOString().slice(0, 10) : '',
           ngay_nhap_ngu: p.ngay_nhap_ngu
             ? new Date(p.ngay_nhap_ngu).toISOString().slice(0, 10)
-            : "",
-          ma_don_vi: (p.DonViTrucThuoc || p.CoQuanDonVi)?.ma_don_vi || "",
-          ten_don_vi: (p.DonViTrucThuoc || p.CoQuanDonVi)?.ten_don_vi || "",
-          ten_chuc_vu: p.ChucVu?.ten_chuc_vu || "",
-          is_manager: p.ChucVu?.is_manager ? "TRUE" : "FALSE",
-          he_so_luong: p.ChucVu?.he_so_luong || "",
+            : '',
+          ma_don_vi: (p.DonViTrucThuoc || p.CoQuanDonVi)?.ma_don_vi || '',
+          ten_don_vi: (p.DonViTrucThuoc || p.CoQuanDonVi)?.ten_don_vi || '',
+          ten_chuc_vu: p.ChucVu?.ten_chuc_vu || '',
+          is_manager: p.ChucVu?.is_manager ? 'TRUE' : 'FALSE',
+          he_so_luong: p.ChucVu?.he_so_luong || '',
         });
       });
 
@@ -634,17 +619,17 @@ class PersonnelService {
   async exportPersonnelSample() {
     try {
       const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet("Mẫu Quân nhân");
+      const worksheet = workbook.addWorksheet('Mẫu Quân nhân');
 
       // Định nghĩa các cột
       const columns = [
-        { header: "CCCD", key: "cccd", width: 15 },
-        { header: "Họ tên", key: "ho_ten", width: 25 },
-        { header: "Ngày sinh", key: "ngay_sinh", width: 15 },
-        { header: "Ngày nhập ngũ", key: "ngay_nhap_ngu", width: 15 },
-        { header: "Mã đơn vị", key: "ma_don_vi", width: 15 },
-        { header: "Tên chức vụ", key: "ten_chuc_vu", width: 20 },
-        { header: "Trạng thái", key: "trang_thai", width: 15 },
+        { header: 'CCCD', key: 'cccd', width: 15 },
+        { header: 'Họ tên', key: 'ho_ten', width: 25 },
+        { header: 'Ngày sinh', key: 'ngay_sinh', width: 15 },
+        { header: 'Ngày nhập ngũ', key: 'ngay_nhap_ngu', width: 15 },
+        { header: 'Mã đơn vị', key: 'ma_don_vi', width: 15 },
+        { header: 'Tên chức vụ', key: 'ten_chuc_vu', width: 20 },
+        { header: 'Trạng thái', key: 'trang_thai', width: 15 },
       ];
 
       worksheet.columns = columns;
@@ -652,54 +637,54 @@ class PersonnelService {
       // Style cho header
       worksheet.getRow(1).font = { bold: true };
       worksheet.getRow(1).fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FFE6F3FF" },
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFE6F3FF' },
       };
 
       // Format cột CCCD thành Text (để giữ số 0 đầu tiên)
-      worksheet.getColumn(1).numFmt = "@";
+      worksheet.getColumn(1).numFmt = '@';
 
       // Thêm dữ liệu mẫu
       const sampleData = [
         {
-          cccd: "123456789012",
-          ho_ten: "Nguyễn Văn A",
-          ngay_sinh: "1990-01-15",
-          ngay_nhap_ngu: "2010-03-01",
-          ma_don_vi: "DV001",
-          ten_chuc_vu: "Thiếu úy",
-          trang_thai: "ACTIVE",
+          cccd: '123456789012',
+          ho_ten: 'Nguyễn Văn A',
+          ngay_sinh: '1990-01-15',
+          ngay_nhap_ngu: '2010-03-01',
+          ma_don_vi: 'DV001',
+          ten_chuc_vu: 'Thiếu úy',
+          trang_thai: 'ACTIVE',
         },
         {
-          cccd: "123456789013",
-          ho_ten: "Trần Thị B",
-          ngay_sinh: "1992-05-20",
-          ngay_nhap_ngu: "2012-07-15",
-          ma_don_vi: "DV002",
-          ten_chuc_vu: "Trung úy",
-          trang_thai: "ACTIVE",
+          cccd: '123456789013',
+          ho_ten: 'Trần Thị B',
+          ngay_sinh: '1992-05-20',
+          ngay_nhap_ngu: '2012-07-15',
+          ma_don_vi: 'DV002',
+          ten_chuc_vu: 'Trung úy',
+          trang_thai: 'ACTIVE',
         },
       ];
 
-      sampleData.forEach((row) => {
+      sampleData.forEach(row => {
         worksheet.addRow(row);
       });
 
       // Thêm ghi chú
       worksheet.addRow([]);
-      worksheet.addRow(["Ghi chú:"]);
-      worksheet.addRow(["- Các cột có dấu * là bắt buộc"]);
-      worksheet.addRow(["- Mã đơn vị phải tồn tại trong hệ thống"]);
-      worksheet.addRow(["- Tên chức vụ phải tồn tại trong hệ thống"]);
-      worksheet.addRow(["- Ngày tháng định dạng: YYYY-MM-DD"]);
-      worksheet.addRow(["- Trạng thái: ACTIVE hoặc INACTIVE"]);
+      worksheet.addRow(['Ghi chú:']);
+      worksheet.addRow(['- Các cột có dấu * là bắt buộc']);
+      worksheet.addRow(['- Mã đơn vị phải tồn tại trong hệ thống']);
+      worksheet.addRow(['- Tên chức vụ phải tồn tại trong hệ thống']);
+      worksheet.addRow(['- Ngày tháng định dạng: YYYY-MM-DD']);
+      worksheet.addRow(['- Trạng thái: ACTIVE hoặc INACTIVE']);
 
       // Style cho ghi chú
       for (let i = sampleData.length + 3; i <= worksheet.rowCount; i++) {
         worksheet.getRow(i).font = {
           italic: true,
-          color: { argb: "FF666666" },
+          color: { argb: 'FF666666' },
         };
       }
 
@@ -721,20 +706,20 @@ class PersonnelService {
       const worksheet = workbook.worksheets[0];
 
       if (!worksheet) {
-        throw new Error("File Excel không hợp lệ");
+        throw new Error('File Excel không hợp lệ');
       }
 
       // Đọc header map
       const headerRow = worksheet.getRow(1);
       const headerMap = {};
       headerRow.eachCell((cell, colNumber) => {
-        const key = String(cell.value || "")
+        const key = String(cell.value || '')
           .trim()
           .toLowerCase();
         if (key) headerMap[key] = colNumber;
       });
 
-      const requiredHeaders = ["cccd", "họ tên", "mã đơn vị", "tên chức vụ"];
+      const requiredHeaders = ['cccd', 'họ tên', 'mã đơn vị', 'tên chức vụ'];
       for (const h of requiredHeaders) {
         if (!headerMap[h]) {
           throw new Error(`Thiếu cột bắt buộc: ${h}`);
@@ -748,26 +733,20 @@ class PersonnelService {
       // Duyệt các dòng dữ liệu
       for (let rowNumber = 2; rowNumber <= worksheet.rowCount; rowNumber++) {
         const row = worksheet.getRow(rowNumber);
-        const cccd = this.parseCCCD(row.getCell(headerMap["cccd"]).value);
-        const ho_ten = String(
-          row.getCell(headerMap["họ tên"]).value || ""
-        ).trim();
-        const ma_don_vi = String(
-          row.getCell(headerMap["mã đơn vị"]).value || ""
-        ).trim();
-        const ten_chuc_vu = String(
-          row.getCell(headerMap["tên chức vụ"]).value || ""
-        ).trim();
-        const ngay_sinhRaw = headerMap["ngày sinh"]
-          ? row.getCell(headerMap["ngày sinh"]).value
+        const cccd = this.parseCCCD(row.getCell(headerMap['cccd']).value);
+        const ho_ten = String(row.getCell(headerMap['họ tên']).value || '').trim();
+        const ma_don_vi = String(row.getCell(headerMap['mã đơn vị']).value || '').trim();
+        const ten_chuc_vu = String(row.getCell(headerMap['tên chức vụ']).value || '').trim();
+        const ngay_sinhRaw = headerMap['ngày sinh']
+          ? row.getCell(headerMap['ngày sinh']).value
           : null;
-        const ngay_nhap_nguRaw = headerMap["ngày nhập ngũ"]
-          ? row.getCell(headerMap["ngày nhập ngũ"]).value
+        const ngay_nhap_nguRaw = headerMap['ngày nhập ngũ']
+          ? row.getCell(headerMap['ngày nhập ngũ']).value
           : null;
 
         if (!cccd || !ho_ten || !ma_don_vi || !ten_chuc_vu) {
           if (!cccd && !ho_ten && !ma_don_vi && !ten_chuc_vu) continue; // dòng trống
-          errors.push({ row: rowNumber, error: "Thiếu dữ liệu bắt buộc" });
+          errors.push({ row: rowNumber, error: 'Thiếu dữ liệu bắt buộc' });
           continue;
         }
 
@@ -790,10 +769,7 @@ class PersonnelService {
         const position = await prisma.chucVu.findFirst({
           where: {
             ten_chuc_vu,
-            OR: [
-              { co_quan_don_vi_id: unit.id },
-              { don_vi_truc_thuoc_id: unit.id },
-            ],
+            OR: [{ co_quan_don_vi_id: unit.id }, { don_vi_truc_thuoc_id: unit.id }],
           },
         });
         if (!position) {
@@ -805,11 +781,10 @@ class PersonnelService {
         }
 
         // Chuẩn hóa ngày
-        const parseDate = (val) => {
+        const parseDate = val => {
           if (!val) return null;
           if (val instanceof Date) return val;
-          if (typeof val === "object" && val?.result)
-            return new Date(val.result);
+          if (typeof val === 'object' && val?.result) return new Date(val.result);
           const s = String(val).trim();
           if (!s) return null;
           const d = new Date(s);
@@ -870,8 +845,7 @@ class PersonnelService {
           created.push(newPersonnel.id);
         } else {
           // Kiểm tra nếu đổi đơn vị
-          const oldUnitId =
-            existing.co_quan_don_vi_id || existing.don_vi_truc_thuoc_id;
+          const oldUnitId = existing.co_quan_don_vi_id || existing.don_vi_truc_thuoc_id;
           const newUnitId = unit.id;
           const oldIsCoQuanDonVi = !!existing.co_quan_don_vi_id;
 

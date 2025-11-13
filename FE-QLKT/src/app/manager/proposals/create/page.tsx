@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 import {
   Card,
   Typography,
@@ -12,7 +12,7 @@ import {
   Radio,
   Alert,
   message as antMessage,
-} from "antd";
+} from 'antd';
 import {
   DownloadOutlined,
   UploadOutlined,
@@ -25,14 +25,20 @@ import {
   ClockCircleOutlined,
   HeartOutlined,
   ExperimentOutlined,
-} from "@ant-design/icons";
-import Link from "next/link";
-import type { UploadFile } from "antd/es/upload/interface";
-import { apiClient } from "@/lib/api-client";
+} from '@ant-design/icons';
+import Link from 'next/link';
+import type { UploadFile } from 'antd/es/upload/interface';
+import { apiClient } from '@/lib/api-client';
 
 const { Title, Paragraph, Text } = Typography;
 
-type ProposalType = 'CA_NHAN_HANG_NAM' | 'DON_VI_HANG_NAM' | 'NIEN_HAN' | 'CONG_HIEN' | 'DOT_XUAT' | 'NCKH';
+type ProposalType =
+  | 'CA_NHAN_HANG_NAM'
+  | 'DON_VI_HANG_NAM'
+  | 'NIEN_HAN'
+  | 'CONG_HIEN'
+  | 'DOT_XUAT'
+  | 'NCKH';
 
 export default function CreateProposalPage() {
   const [form] = Form.useForm();
@@ -59,7 +65,7 @@ export default function CreateProposalPage() {
       };
       const typeName = typeNames[proposalType];
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
+      const a = document.createElement('a');
       a.href = url;
       a.download = `mau_de_xuat_${typeName}_${new Date().toISOString().slice(0, 10)}.xlsx`;
       document.body.appendChild(a);
@@ -67,9 +73,9 @@ export default function CreateProposalPage() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
-      antMessage.success("Tải file mẫu thành công!");
+      antMessage.success('Tải file mẫu thành công!');
     } catch (error: any) {
-      antMessage.error(error.message || "Lỗi khi tải file mẫu");
+      antMessage.error(error.message || 'Lỗi khi tải file mẫu');
     } finally {
       setDownloading(false);
     }
@@ -79,7 +85,7 @@ export default function CreateProposalPage() {
   const handleSubmit = async () => {
     // Validation
     if (!fileExcel.length) {
-      antMessage.error("Vui lòng chọn file Excel đề xuất");
+      antMessage.error('Vui lòng chọn file Excel đề xuất');
       return;
     }
 
@@ -88,22 +94,22 @@ export default function CreateProposalPage() {
 
       // Tạo FormData
       const formData = new FormData();
-      formData.append("file_excel", fileExcel[0].originFileObj as File);
-      formData.append("type", proposalType);
+      formData.append('file_excel', fileExcel[0].originFileObj as File);
+      formData.append('type', proposalType);
 
       const result = await apiClient.submitProposal(formData);
 
       if (!result.success) {
-        throw new Error(result.message || "Gửi đề xuất thất bại");
+        throw new Error(result.message || 'Gửi đề xuất thất bại');
       }
 
-      antMessage.success("Gửi đề xuất thành công! Chờ Admin phê duyệt.");
+      antMessage.success('Gửi đề xuất thành công! Chờ Admin phê duyệt.');
 
       // Reset form
       form.resetFields();
       setFileExcel([]);
     } catch (error: any) {
-      antMessage.error(error.message || "Lỗi khi gửi đề xuất");
+      antMessage.error(error.message || 'Lỗi khi gửi đề xuất');
     } finally {
       setLoading(false);
     }
@@ -121,7 +127,11 @@ export default function CreateProposalPage() {
         style={{ marginBottom: 16 }}
         items={[
           {
-            title: <Link href="/manager/dashboard"><HomeOutlined /></Link>,
+            title: (
+              <Link href="/manager/dashboard">
+                <HomeOutlined />
+              </Link>
+            ),
           },
           {
             title: 'Tạo Phiếu Đề Xuất Khen Thưởng',
@@ -132,19 +142,14 @@ export default function CreateProposalPage() {
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
         <Title level={2}>Tạo Phiếu Đề Xuất Khen Thưởng</Title>
-        <Paragraph type="secondary">
-          Chọn loại khen thưởng và điền thông tin đề xuất
-        </Paragraph>
+        <Paragraph type="secondary">Chọn loại khen thưởng và điền thông tin đề xuất</Paragraph>
       </div>
 
       {/* Chọn loại đề xuất */}
-      <Card
-        style={{ marginBottom: 24 }}
-        title="Chọn loại đề xuất khen thưởng"
-      >
+      <Card style={{ marginBottom: 24 }} title="Chọn loại đề xuất khen thưởng">
         <Radio.Group
           value={proposalType}
-          onChange={(e) => {
+          onChange={e => {
             setProposalType(e.target.value);
             // Reset file và ẩn form khi đổi loại đề xuất
             setFileExcel([]);
@@ -154,11 +159,21 @@ export default function CreateProposalPage() {
           style={{ width: '100%' }}
         >
           <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-            <Radio.Button value="CA_NHAN_HANG_NAM" style={{ width: '100%', height: 'auto', padding: '16px' }}>
+            <Radio.Button
+              value="CA_NHAN_HANG_NAM"
+              style={{ width: '100%', height: 'auto', padding: '16px' }}
+            >
               <Space direction="vertical" size="small">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <TrophyOutlined style={{ fontSize: 20, color: proposalType === 'CA_NHAN_HANG_NAM' ? '#1890ff' : '#8c8c8c' }} />
-                  <Text strong style={{ fontSize: 16 }}>Cá nhân Hằng năm</Text>
+                  <TrophyOutlined
+                    style={{
+                      fontSize: 20,
+                      color: proposalType === 'CA_NHAN_HANG_NAM' ? '#1890ff' : '#8c8c8c',
+                    }}
+                  />
+                  <Text strong style={{ fontSize: 16 }}>
+                    Cá nhân Hằng năm
+                  </Text>
                 </div>
                 <Text type="secondary" style={{ fontSize: 13, display: 'block', marginLeft: 28 }}>
                   Danh hiệu CSTT-CS, CSTĐ-CS, BK-BQP, CSTĐ-TQ (4 loại)
@@ -166,11 +181,21 @@ export default function CreateProposalPage() {
               </Space>
             </Radio.Button>
 
-            <Radio.Button value="DON_VI_HANG_NAM" style={{ width: '100%', height: 'auto', padding: '16px' }}>
+            <Radio.Button
+              value="DON_VI_HANG_NAM"
+              style={{ width: '100%', height: 'auto', padding: '16px' }}
+            >
               <Space direction="vertical" size="small">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <TeamOutlined style={{ fontSize: 20, color: proposalType === 'DON_VI_HANG_NAM' ? '#1890ff' : '#8c8c8c' }} />
-                  <Text strong style={{ fontSize: 16 }}>Đơn vị Hằng năm</Text>
+                  <TeamOutlined
+                    style={{
+                      fontSize: 20,
+                      color: proposalType === 'DON_VI_HANG_NAM' ? '#1890ff' : '#8c8c8c',
+                    }}
+                  />
+                  <Text strong style={{ fontSize: 16 }}>
+                    Đơn vị Hằng năm
+                  </Text>
                 </div>
                 <Text type="secondary" style={{ fontSize: 13, display: 'block', marginLeft: 28 }}>
                   ĐVTT, ĐVQT, BK-BQP, BK-TTCP (4 loại)
@@ -178,11 +203,21 @@ export default function CreateProposalPage() {
               </Space>
             </Radio.Button>
 
-            <Radio.Button value="NIEN_HAN" style={{ width: '100%', height: 'auto', padding: '16px' }}>
+            <Radio.Button
+              value="NIEN_HAN"
+              style={{ width: '100%', height: 'auto', padding: '16px' }}
+            >
               <Space direction="vertical" size="small">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <ClockCircleOutlined style={{ fontSize: 20, color: proposalType === 'NIEN_HAN' ? '#1890ff' : '#8c8c8c' }} />
-                  <Text strong style={{ fontSize: 16 }}>Niên hạn</Text>
+                  <ClockCircleOutlined
+                    style={{
+                      fontSize: 20,
+                      color: proposalType === 'NIEN_HAN' ? '#1890ff' : '#8c8c8c',
+                    }}
+                  />
+                  <Text strong style={{ fontSize: 16 }}>
+                    Niên hạn
+                  </Text>
                 </div>
                 <Text type="secondary" style={{ fontSize: 13, display: 'block', marginLeft: 28 }}>
                   HCCSVV 3 hạng, HC Quân kỳ, Kỷ niệm chương (6 loại)
@@ -190,11 +225,21 @@ export default function CreateProposalPage() {
               </Space>
             </Radio.Button>
 
-            <Radio.Button value="CONG_HIEN" style={{ width: '100%', height: 'auto', padding: '16px' }}>
+            <Radio.Button
+              value="CONG_HIEN"
+              style={{ width: '100%', height: 'auto', padding: '16px' }}
+            >
               <Space direction="vertical" size="small">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <HeartOutlined style={{ fontSize: 20, color: proposalType === 'CONG_HIEN' ? '#1890ff' : '#8c8c8c' }} />
-                  <Text strong style={{ fontSize: 16 }}>Cống hiến</Text>
+                  <HeartOutlined
+                    style={{
+                      fontSize: 20,
+                      color: proposalType === 'CONG_HIEN' ? '#1890ff' : '#8c8c8c',
+                    }}
+                  />
+                  <Text strong style={{ fontSize: 16 }}>
+                    Cống hiến
+                  </Text>
                 </div>
                 <Text type="secondary" style={{ fontSize: 13, display: 'block', marginLeft: 28 }}>
                   HC BVTQ hạng Nhất, Nhì, Ba (3 loại)
@@ -205,8 +250,12 @@ export default function CreateProposalPage() {
             <Radio.Button value="NCKH" style={{ width: '100%', height: 'auto', padding: '16px' }}>
               <Space direction="vertical" size="small">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <ExperimentOutlined style={{ fontSize: 20, color: proposalType === 'NCKH' ? '#1890ff' : '#8c8c8c' }} />
-                  <Text strong style={{ fontSize: 16 }}>NCKH/SKKH</Text>
+                  <ExperimentOutlined
+                    style={{ fontSize: 20, color: proposalType === 'NCKH' ? '#1890ff' : '#8c8c8c' }}
+                  />
+                  <Text strong style={{ fontSize: 16 }}>
+                    NCKH/SKKH
+                  </Text>
                 </div>
                 <Text type="secondary" style={{ fontSize: 13, display: 'block', marginLeft: 28 }}>
                   Thành tích Nghiên cứu Khoa học và Sáng kiến Kinh nghiệm (2 loại)

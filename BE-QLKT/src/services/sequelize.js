@@ -1,8 +1,8 @@
-const { Sequelize } = require("sequelize");
-const { PG_HOST, DATABASE_URL } = require("../configs");
+const { Sequelize } = require('sequelize');
+const { PG_HOST, DATABASE_URL } = require('../configs');
 
 const sequelize = new Sequelize(DATABASE_URL, {
-  dialect: "postgres",
+  dialect: 'postgres',
   logging: false,
   dialectOptions: {
     ssl: {
@@ -15,9 +15,9 @@ const sequelize = new Sequelize(DATABASE_URL, {
 async function connectPostgreSQL() {
   try {
     await sequelize.authenticate();
-    console.log("Đã kết nối tới PostgreSQL");
+    console.log('Đã kết nối tới PostgreSQL');
   } catch (error) {
-    console.error("Lỗi kết nối PostgreSQL:", error?.message || error);
+    console.error('Lỗi kết nối PostgreSQL:', error?.message || error);
   }
 }
 

@@ -1,4 +1,4 @@
-const positionService = require("../services/position.service");
+const positionService = require('../services/position.service');
 
 class PositionController {
   /**
@@ -9,23 +9,20 @@ class PositionController {
   async getPositions(req, res) {
     try {
       const { unit_id, include_children } = req.query;
-      const includeChildren = include_children === "true";
+      const includeChildren = include_children === 'true';
 
-      const result = await positionService.getPositions(
-        unit_id,
-        includeChildren
-      );
+      const result = await positionService.getPositions(unit_id, includeChildren);
 
       return res.status(200).json({
         success: true,
-        message: "Lấy danh sách chức vụ thành công",
+        message: 'Lấy danh sách chức vụ thành công',
         data: result,
       });
     } catch (error) {
-      console.error("Get positions error:", error);
+      console.error('Get positions error:', error);
       return res.status(500).json({
         success: false,
-        message: error.message || "Lấy danh sách chức vụ thất bại",
+        message: error.message || 'Lấy danh sách chức vụ thất bại',
       });
     }
   }
@@ -42,7 +39,7 @@ class PositionController {
       if (!unit_id || !ten_chuc_vu) {
         return res.status(400).json({
           success: false,
-          message: "Vui lòng nhập đầy đủ thông tin: unit_id, ten_chuc_vu",
+          message: 'Vui lòng nhập đầy đủ thông tin: unit_id, ten_chuc_vu',
         });
       }
 
@@ -55,14 +52,14 @@ class PositionController {
 
       return res.status(201).json({
         success: true,
-        message: "Tạo chức vụ thành công",
+        message: 'Tạo chức vụ thành công',
         data: result,
       });
     } catch (error) {
-      console.error("Create position error:", error);
+      console.error('Create position error:', error);
       return res.status(400).json({
         success: false,
-        message: error.message || "Tạo chức vụ thất bại",
+        message: error.message || 'Tạo chức vụ thất bại',
       });
     }
   }
@@ -84,14 +81,14 @@ class PositionController {
 
       return res.status(200).json({
         success: true,
-        message: "Cập nhật chức vụ thành công",
+        message: 'Cập nhật chức vụ thành công',
         data: result,
       });
     } catch (error) {
-      console.error("Update position error:", error);
+      console.error('Update position error:', error);
       return res.status(400).json({
         success: false,
-        message: error.message || "Cập nhật chức vụ thất bại",
+        message: error.message || 'Cập nhật chức vụ thất bại',
       });
     }
   }
@@ -111,10 +108,10 @@ class PositionController {
         message: result.message,
       });
     } catch (error) {
-      console.error("Delete position error:", error);
+      console.error('Delete position error:', error);
       return res.status(400).json({
         success: false,
-        message: error.message || "Xóa chức vụ thất bại",
+        message: error.message || 'Xóa chức vụ thất bại',
       });
     }
   }

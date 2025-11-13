@@ -176,9 +176,7 @@ export default function UserProfilePage() {
       dataIndex: 'loai',
       key: 'loai',
       width: 100,
-      render: (text: string) => (
-        <Tag color={text === 'NCKH' ? 'purple' : 'orange'}>{text}</Tag>
-      ),
+      render: (text: string) => <Tag color={text === 'NCKH' ? 'purple' : 'orange'}>{text}</Tag>,
     },
     {
       title: 'Mô tả',
@@ -225,13 +223,13 @@ export default function UserProfilePage() {
       title: 'Ngày bắt đầu',
       dataIndex: 'ngay_bat_dau',
       key: 'ngay_bat_dau',
-      render: (date: string) => date ? new Date(date).toLocaleDateString('vi-VN') : 'N/A',
+      render: (date: string) => (date ? new Date(date).toLocaleDateString('vi-VN') : 'N/A'),
     },
     {
       title: 'Ngày kết thúc',
       dataIndex: 'ngay_ket_thuc',
       key: 'ngay_ket_thuc',
-      render: (date: string) => date ? new Date(date).toLocaleDateString('vi-VN') : 'Hiện tại',
+      render: (date: string) => (date ? new Date(date).toLocaleDateString('vi-VN') : 'Hiện tại'),
     },
     {
       title: 'Thời gian',
@@ -269,9 +267,7 @@ export default function UserProfilePage() {
         <Title level={2}>
           <UserOutlined /> Lịch sử chi tiết
         </Title>
-        <Text type="secondary">
-          Xem lịch sử danh hiệu, thành tích khoa học và chức vụ của bạn
-        </Text>
+        <Text type="secondary">Xem lịch sử danh hiệu, thành tích khoa học và chức vụ của bạn</Text>
       </div>
 
       {/* Tabs */}
@@ -296,7 +292,7 @@ export default function UserProfilePage() {
               rowKey="id"
               pagination={{
                 pageSize: 10,
-                showTotal: (total) => `Tổng ${total} bản ghi`,
+                showTotal: total => `Tổng ${total} bản ghi`,
               }}
               scroll={{ x: 1000 }}
               bordered
@@ -332,7 +328,7 @@ export default function UserProfilePage() {
               rowKey="id"
               pagination={{
                 pageSize: 10,
-                showTotal: (total) => `Tổng ${total} bản ghi`,
+                showTotal: total => `Tổng ${total} bản ghi`,
               }}
               scroll={{ x: 800 }}
               bordered
@@ -368,7 +364,7 @@ export default function UserProfilePage() {
               rowKey="id"
               pagination={{
                 pageSize: 10,
-                showTotal: (total) => `Tổng ${total} bản ghi`,
+                showTotal: total => `Tổng ${total} bản ghi`,
               }}
               scroll={{ x: 900 }}
               bordered
@@ -386,14 +382,7 @@ export default function UserProfilePage() {
           </TabPane>
 
           {/* Tab 4: Hồ sơ Niên hạn */}
-          <TabPane
-            tab={
-              <Space>
-                🎖️ Hồ sơ Niên hạn
-              </Space>
-            }
-            key="4"
-          >
+          <TabPane tab={<Space>🎖️ Hồ sơ Niên hạn</Space>} key="4">
             {serviceProfile ? (
               <div className="space-y-6 w-full">
                 {/* Huân chương Chiến sỹ Vẻ vang */}
@@ -413,8 +402,8 @@ export default function UserProfilePage() {
                             serviceProfile.hccsvv_hang_ba_status === 'DA_NHAN'
                               ? 'green'
                               : serviceProfile.hccsvv_hang_ba_status === 'DU_DIEU_KIEN'
-                              ? 'orange'
-                              : 'default'
+                                ? 'orange'
+                                : 'default'
                           }
                           style={{
                             margin: 0,
@@ -429,13 +418,15 @@ export default function UserProfilePage() {
                           {serviceProfile.hccsvv_hang_ba_status === 'DA_NHAN'
                             ? 'Đã nhận'
                             : serviceProfile.hccsvv_hang_ba_status === 'DU_DIEU_KIEN'
-                            ? 'Đủ điều kiện'
-                            : 'Chưa đủ điều kiện'}
+                              ? 'Đủ điều kiện'
+                              : 'Chưa đủ điều kiện'}
                         </Tag>
                         {serviceProfile.hccsvv_hang_ba_ngay && (
                           <div className="text-xs text-gray-500 dark:text-gray-400">
                             Ngày:{' '}
-                            {new Date(serviceProfile.hccsvv_hang_ba_ngay).toLocaleDateString('vi-VN')}
+                            {new Date(serviceProfile.hccsvv_hang_ba_ngay).toLocaleDateString(
+                              'vi-VN'
+                            )}
                           </div>
                         )}
                       </div>
@@ -452,8 +443,8 @@ export default function UserProfilePage() {
                             serviceProfile.hccsvv_hang_nhi_status === 'DA_NHAN'
                               ? 'green'
                               : serviceProfile.hccsvv_hang_nhi_status === 'DU_DIEU_KIEN'
-                              ? 'orange'
-                              : 'default'
+                                ? 'orange'
+                                : 'default'
                           }
                           style={{
                             margin: 0,
@@ -468,13 +459,15 @@ export default function UserProfilePage() {
                           {serviceProfile.hccsvv_hang_nhi_status === 'DA_NHAN'
                             ? 'Đã nhận'
                             : serviceProfile.hccsvv_hang_nhi_status === 'DU_DIEU_KIEN'
-                            ? 'Đủ điều kiện'
-                            : 'Chưa đủ điều kiện'}
+                              ? 'Đủ điều kiện'
+                              : 'Chưa đủ điều kiện'}
                         </Tag>
                         {serviceProfile.hccsvv_hang_nhi_ngay && (
                           <div className="text-xs text-gray-500 dark:text-gray-400">
                             Ngày:{' '}
-                            {new Date(serviceProfile.hccsvv_hang_nhi_ngay).toLocaleDateString('vi-VN')}
+                            {new Date(serviceProfile.hccsvv_hang_nhi_ngay).toLocaleDateString(
+                              'vi-VN'
+                            )}
                           </div>
                         )}
                       </div>
@@ -491,8 +484,8 @@ export default function UserProfilePage() {
                             serviceProfile.hccsvv_hang_nhat_status === 'DA_NHAN'
                               ? 'green'
                               : serviceProfile.hccsvv_hang_nhat_status === 'DU_DIEU_KIEN'
-                              ? 'orange'
-                              : 'default'
+                                ? 'orange'
+                                : 'default'
                           }
                           style={{
                             margin: 0,
@@ -507,13 +500,15 @@ export default function UserProfilePage() {
                           {serviceProfile.hccsvv_hang_nhat_status === 'DA_NHAN'
                             ? 'Đã nhận'
                             : serviceProfile.hccsvv_hang_nhat_status === 'DU_DIEU_KIEN'
-                            ? 'Đủ điều kiện'
-                            : 'Chưa đủ điều kiện'}
+                              ? 'Đủ điều kiện'
+                              : 'Chưa đủ điều kiện'}
                         </Tag>
                         {serviceProfile.hccsvv_hang_nhat_ngay && (
                           <div className="text-xs text-gray-500 dark:text-gray-400">
                             Ngày:{' '}
-                            {new Date(serviceProfile.hccsvv_hang_nhat_ngay).toLocaleDateString('vi-VN')}
+                            {new Date(serviceProfile.hccsvv_hang_nhat_ngay).toLocaleDateString(
+                              'vi-VN'
+                            )}
                           </div>
                         )}
                       </div>
@@ -547,8 +542,8 @@ export default function UserProfilePage() {
                           serviceProfile.hcbvtq_hang_ba_status === 'DA_NHAN'
                             ? 'green'
                             : serviceProfile.hcbvtq_hang_ba_status === 'DU_DIEU_KIEN'
-                            ? 'orange'
-                            : 'default'
+                              ? 'orange'
+                              : 'default'
                         }
                         style={{
                           margin: 0,
@@ -563,8 +558,8 @@ export default function UserProfilePage() {
                         {serviceProfile.hcbvtq_hang_ba_status === 'DA_NHAN'
                           ? 'Đã nhận'
                           : serviceProfile.hcbvtq_hang_ba_status === 'DU_DIEU_KIEN'
-                          ? 'Đủ điều kiện'
-                          : 'Chưa đủ điều kiện'}
+                            ? 'Đủ điều kiện'
+                            : 'Chưa đủ điều kiện'}
                       </Tag>
                     </div>
 
@@ -578,8 +573,8 @@ export default function UserProfilePage() {
                           serviceProfile.hcbvtq_hang_nhi_status === 'DA_NHAN'
                             ? 'green'
                             : serviceProfile.hcbvtq_hang_nhi_status === 'DU_DIEU_KIEN'
-                            ? 'orange'
-                            : 'default'
+                              ? 'orange'
+                              : 'default'
                         }
                         style={{
                           margin: 0,
@@ -594,8 +589,8 @@ export default function UserProfilePage() {
                         {serviceProfile.hcbvtq_hang_nhi_status === 'DA_NHAN'
                           ? 'Đã nhận'
                           : serviceProfile.hcbvtq_hang_nhi_status === 'DU_DIEU_KIEN'
-                          ? 'Đủ điều kiện'
-                          : 'Chưa đủ điều kiện'}
+                            ? 'Đủ điều kiện'
+                            : 'Chưa đủ điều kiện'}
                       </Tag>
                     </div>
 
@@ -609,8 +604,8 @@ export default function UserProfilePage() {
                           serviceProfile.hcbvtq_hang_nhat_status === 'DA_NHAN'
                             ? 'green'
                             : serviceProfile.hcbvtq_hang_nhat_status === 'DU_DIEU_KIEN'
-                            ? 'orange'
-                            : 'default'
+                              ? 'orange'
+                              : 'default'
                         }
                         style={{
                           margin: 0,
@@ -625,8 +620,8 @@ export default function UserProfilePage() {
                         {serviceProfile.hcbvtq_hang_nhat_status === 'DA_NHAN'
                           ? 'Đã nhận'
                           : serviceProfile.hcbvtq_hang_nhat_status === 'DU_DIEU_KIEN'
-                          ? 'Đủ điều kiện'
-                          : 'Chưa đủ điều kiện'}
+                            ? 'Đủ điều kiện'
+                            : 'Chưa đủ điều kiện'}
                       </Tag>
                     </div>
                   </div>
@@ -655,14 +650,7 @@ export default function UserProfilePage() {
           </TabPane>
 
           {/* Tab 5: Hồ sơ Hằng năm */}
-          <TabPane
-            tab={
-              <Space>
-                🏅 Hồ sơ Hằng năm
-              </Space>
-            }
-            key="5"
-          >
+          <TabPane tab={<Space>🏅 Hồ sơ Hằng năm</Space>} key="5">
             {annualProfile ? (
               <div className="space-y-6 w-full">
                 {/* Thống kê */}
@@ -677,7 +665,8 @@ export default function UserProfilePage() {
                         Tổng CSTDCS
                       </div>
                       <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                        {annualProfile.tong_cstdcs || 0} <span className="text-base font-normal">năm</span>
+                        {annualProfile.tong_cstdcs || 0}{' '}
+                        <span className="text-base font-normal">năm</span>
                       </div>
                     </div>
 
@@ -687,7 +676,8 @@ export default function UserProfilePage() {
                         CSTDCS liên tục
                       </div>
                       <div className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">
-                        {annualProfile.cstdcs_lien_tuc || 0} <span className="text-base font-normal">năm</span>
+                        {annualProfile.cstdcs_lien_tuc || 0}{' '}
+                        <span className="text-base font-normal">năm</span>
                       </div>
                     </div>
 
@@ -697,7 +687,8 @@ export default function UserProfilePage() {
                         Tổng NCKH/SKKH
                       </div>
                       <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                        {annualProfile.tong_nckh || 0} <span className="text-base font-normal">công trình</span>
+                        {annualProfile.tong_nckh || 0}{' '}
+                        <span className="text-base font-normal">công trình</span>
                       </div>
                     </div>
                   </div>

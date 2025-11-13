@@ -78,87 +78,104 @@ export default function ManagerSystemLogsPage() {
       }}
     >
       <div style={{ padding: '24px' }}>
-      {/* Breadcrumb */}
-      <Breadcrumb style={{ marginBottom: '24px' }}>
-        <Breadcrumb.Item>
-          <Link href="/manager/dashboard">
-            <DashboardOutlined />
-          </Link>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item>Nhật ký hệ thống</Breadcrumb.Item>
-      </Breadcrumb>
+        {/* Breadcrumb */}
+        <Breadcrumb style={{ marginBottom: '24px' }}>
+          <Breadcrumb.Item>
+            <Link href="/manager/dashboard">
+              <DashboardOutlined />
+            </Link>
+          </Breadcrumb.Item>
+          <Breadcrumb.Item>Nhật ký hệ thống</Breadcrumb.Item>
+        </Breadcrumb>
 
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-        <div style={{ padding: '8px', backgroundColor: '#e0f2fe', borderRadius: '8px' }}>
-          <FundOutlined style={{ fontSize: '24px', color: '#0284c7' }} />
-        </div>
-        <div>
-          <Title level={1} style={{ margin: 0 }}>Nhật ký Hệ thống</Title>
-          <Text type="secondary" style={{ display: 'block', marginTop: '4px' }}>
-            Xem lịch sử hoạt động và thay đổi trong hệ thống
-          </Text>
-        </div>
-      </div>
-
-      {/* Filter Section */}
-      <LogsFilter onFilterChange={setFilters} />
-
-      {/* Stats Card */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-        <Card>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px' }}>
-            <div style={{ padding: '8px', backgroundColor: '#dcfce7', borderRadius: '8px' }}>
-              <FileTextOutlined style={{ fontSize: '20px', color: '#16a34a' }} />
-            </div>
-            <div>
-              <Text type="secondary" style={{ fontSize: '14px' }}>Tổng nhật ký</Text>
-              <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{logs.length}</div>
-            </div>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+          <div style={{ padding: '8px', backgroundColor: '#e0f2fe', borderRadius: '8px' }}>
+            <FundOutlined style={{ fontSize: '24px', color: '#0284c7' }} />
           </div>
-        </Card>
+          <div>
+            <Title level={1} style={{ margin: 0 }}>
+              Nhật ký Hệ thống
+            </Title>
+            <Text type="secondary" style={{ display: 'block', marginTop: '4px' }}>
+              Xem lịch sử hoạt động và thay đổi trong hệ thống
+            </Text>
+          </div>
+        </div>
 
-        <Card>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px' }}>
-            <div style={{ padding: '8px', backgroundColor: '#e0f2fe', borderRadius: '8px' }}>
-              <FundOutlined style={{ fontSize: '20px', color: '#0284c7' }} />
-            </div>
-            <div>
-              <Text type="secondary" style={{ fontSize: '14px' }}>Hành động tạo</Text>
-              <div style={{ fontSize: '24px', fontWeight: 'bold' }}>
-                {logs.filter(l => l.action?.includes('CREATE')).length}
+        {/* Filter Section */}
+        <LogsFilter onFilterChange={setFilters} />
+
+        {/* Stats Card */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+            gap: '16px',
+            marginBottom: '24px',
+          }}
+        >
+          <Card>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px' }}>
+              <div style={{ padding: '8px', backgroundColor: '#dcfce7', borderRadius: '8px' }}>
+                <FileTextOutlined style={{ fontSize: '20px', color: '#16a34a' }} />
+              </div>
+              <div>
+                <Text type="secondary" style={{ fontSize: '14px' }}>
+                  Tổng nhật ký
+                </Text>
+                <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{logs.length}</div>
               </div>
             </div>
-          </div>
-        </Card>
+          </Card>
 
-        <Card>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px' }}>
-            <div style={{ padding: '8px', backgroundColor: '#fee2e2', borderRadius: '8px' }}>
-              <FundOutlined style={{ fontSize: '20px', color: '#dc2626' }} />
-            </div>
-            <div>
-              <Text type="secondary" style={{ fontSize: '14px' }}>Hành động xóa</Text>
-              <div style={{ fontSize: '24px', fontWeight: 'bold' }}>
-                {logs.filter(l => l.action?.includes('DELETE')).length}
+          <Card>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px' }}>
+              <div style={{ padding: '8px', backgroundColor: '#e0f2fe', borderRadius: '8px' }}>
+                <FundOutlined style={{ fontSize: '20px', color: '#0284c7' }} />
+              </div>
+              <div>
+                <Text type="secondary" style={{ fontSize: '14px' }}>
+                  Hành động tạo
+                </Text>
+                <div style={{ fontSize: '24px', fontWeight: 'bold' }}>
+                  {logs.filter(l => l.action?.includes('CREATE')).length}
+                </div>
               </div>
             </div>
+          </Card>
+
+          <Card>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px' }}>
+              <div style={{ padding: '8px', backgroundColor: '#fee2e2', borderRadius: '8px' }}>
+                <FundOutlined style={{ fontSize: '20px', color: '#dc2626' }} />
+              </div>
+              <div>
+                <Text type="secondary" style={{ fontSize: '14px' }}>
+                  Hành động xóa
+                </Text>
+                <div style={{ fontSize: '24px', fontWeight: 'bold' }}>
+                  {logs.filter(l => l.action?.includes('DELETE')).length}
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* Logs Table Card */}
+        <Card>
+          <div style={{ padding: '16px' }}>
+            <Title level={4} style={{ margin: 0 }}>
+              Danh sách nhật ký
+            </Title>
+            <Text type="secondary" style={{ fontSize: '14px', display: 'block', marginTop: '4px' }}>
+              Tất cả hoạt động và thay đổi trong hệ thống
+            </Text>
+          </div>
+          <div style={{ padding: 0 }}>
+            <LogsTable logs={logs} loading={loading} />
           </div>
         </Card>
-      </div>
-
-      {/* Logs Table Card */}
-      <Card>
-        <div style={{ padding: '16px' }}>
-          <Title level={4} style={{ margin: 0 }}>Danh sách nhật ký</Title>
-          <Text type="secondary" style={{ fontSize: '14px', display: 'block', marginTop: '4px' }}>
-            Tất cả hoạt động và thay đổi trong hệ thống
-          </Text>
-        </div>
-        <div style={{ padding: 0 }}>
-          <LogsTable logs={logs} loading={loading} />
-        </div>
-      </Card>
       </div>
     </ConfigProvider>
   );

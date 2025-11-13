@@ -1,51 +1,71 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import type { z } from "zod"
-import { Button } from "@/components/ui/button"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { accountFormSchema } from "@/lib/schemas"
-import { apiClient } from "@/lib/api-client"
-import { useToast } from "@/hooks/use-toast"
-import { Check, ChevronsUpDown } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import type { z } from 'zod';
+import { Button } from '@/components/ui/button';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { accountFormSchema } from '@/lib/schemas';
+import { apiClient } from '@/lib/api-client';
+import { useToast } from '@/hooks/use-toast';
+import { Check, ChevronsUpDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-type AccountFormValues = z.infer<typeof accountFormSchema>
+type AccountFormValues = z.infer<typeof accountFormSchema>;
 
 interface AccountFormProps {
-  account?: any
-  personnel?: any[]
-  onSuccess?: () => void
-  onClose?: () => void
+  account?: any;
+  personnel?: any[];
+  onSuccess?: () => void;
+  onClose?: () => void;
 }
 
 export function AccountForm({ account, personnel = [], onSuccess, onClose }: AccountFormProps) {
-  const [loading, setLoading] = useState(false)
-  const [open, setOpen] = useState(false)
-  const [currentUserRole, setCurrentUserRole] = useState<string>('')
-  const { toast } = useToast()
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [currentUserRole, setCurrentUserRole] = useState<string>('');
+  const { toast } = useToast();
 
   useEffect(() => {
     // Lấy role của user hiện tại từ localStorage
-    const role = localStorage.getItem('role')
-    setCurrentUserRole(role || '')
-  }, [])
+    const role = localStorage.getItem('role');
+    setCurrentUserRole(role || '');
+  }, []);
 
   const form = useForm<AccountFormValues>({
     resolver: zodResolver(accountFormSchema),
     defaultValues: {
-      username: account?.username || "",
-      password: "",
-      role: account?.role || "USER",
-      personnel_id: account?.personnel_id || "",
+      username: account?.username || '',
+      password: '',
+      role: account?.role || 'USER',
+      personnel_id: account?.personnel_id || '',
     },
-  })
+  });
 
   // Lấy danh sách role có thể tạo/chỉnh sửa dựa trên role hiện tại
   const getAvailableRoles = () => {
@@ -55,44 +75,44 @@ export function AccountForm({ account, personnel = [], onSuccess, onClose }: Acc
         { value: 'ADMIN', label: 'Admin' },
         { value: 'MANAGER', label: 'Quản lý' },
         { value: 'USER', label: 'Người dùng' },
-      ]
+      ];
     } else if (currentUserRole === 'ADMIN') {
       // ADMIN chỉ được tạo/chỉnh sửa MANAGER và USER
       return [
         { value: 'MANAGER', label: 'Quản lý' },
         { value: 'USER', label: 'Người dùng' },
-      ]
+      ];
     }
     // Mặc định chỉ có USER
-    return [{ value: 'USER', label: 'Người dùng' }]
-  }
+    return [{ value: 'USER', label: 'Người dùng' }];
+  };
 
   async function onSubmit(values: AccountFormValues) {
     try {
-      setLoading(true)
+      setLoading(true);
       if (account?.id) {
-        await apiClient.updateAccount(account.id, values)
+        await apiClient.updateAccount(account.id, values);
         toast({
-          title: "Thành công",
-          description: "Cập nhật tài khoản thành công",
-        })
+          title: 'Thành công',
+          description: 'Cập nhật tài khoản thành công',
+        });
       } else {
-        await apiClient.createAccount(values)
+        await apiClient.createAccount(values);
         toast({
-          title: "Thành công",
-          description: "Tạo tài khoản thành công",
-        })
+          title: 'Thành công',
+          description: 'Tạo tài khoản thành công',
+        });
       }
-      onSuccess?.()
-      onClose?.()
+      onSuccess?.();
+      onClose?.();
     } catch (error) {
       toast({
-        title: "Lỗi",
-        description: "Có lỗi xảy ra",
-        variant: "destructive",
-      })
+        title: 'Lỗi',
+        description: 'Có lỗi xảy ra',
+        variant: 'destructive',
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
@@ -141,9 +161,14 @@ export function AccountForm({ account, personnel = [], onSuccess, onClose }: Acc
                     <Button
                       variant="outline"
                       role="combobox"
-                      className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
+                      className={cn(
+                        'w-full justify-between',
+                        !field.value && 'text-muted-foreground'
+                      )}
                     >
-                      {field.value ? personnel.find((p) => p.id === field.value)?.ho_ten : "Chọn quân nhân..."}
+                      {field.value
+                        ? personnel.find(p => p.id === field.value)?.ho_ten
+                        : 'Chọn quân nhân...'}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </FormControl>
@@ -154,16 +179,21 @@ export function AccountForm({ account, personnel = [], onSuccess, onClose }: Acc
                     <CommandEmpty>Không tìm thấy quân nhân</CommandEmpty>
                     <CommandList>
                       <CommandGroup>
-                        {personnel.map((p) => (
+                        {personnel.map(p => (
                           <CommandItem
                             value={p.id}
                             key={p.id}
                             onSelect={() => {
-                              form.setValue("personnel_id", p.id)
-                              setOpen(false)
+                              form.setValue('personnel_id', p.id);
+                              setOpen(false);
                             }}
                           >
-                            <Check className={cn("mr-2 h-4 w-4", field.value === p.id ? "opacity-100" : "opacity-0")} />
+                            <Check
+                              className={cn(
+                                'mr-2 h-4 w-4',
+                                field.value === p.id ? 'opacity-100' : 'opacity-0'
+                              )}
+                            />
                             {p.ho_ten}
                           </CommandItem>
                         ))}
@@ -190,7 +220,7 @@ export function AccountForm({ account, personnel = [], onSuccess, onClose }: Acc
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {getAvailableRoles().map((role) => (
+                  {getAvailableRoles().map(role => (
                     <SelectItem key={role.value} value={role.value}>
                       {role.label}
                     </SelectItem>
@@ -207,10 +237,10 @@ export function AccountForm({ account, personnel = [], onSuccess, onClose }: Acc
             Hủy
           </Button>
           <Button type="submit" disabled={loading}>
-            {loading ? "Đang xử lý..." : account ? "Cập nhật" : "Tạo mới"}
+            {loading ? 'Đang xử lý...' : account ? 'Cập nhật' : 'Tạo mới'}
           </Button>
         </div>
       </form>
     </Form>
-  )
+  );
 }

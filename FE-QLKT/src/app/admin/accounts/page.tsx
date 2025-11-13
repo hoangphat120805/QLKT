@@ -130,9 +130,7 @@ export default function AdminAccountsPage() {
       render: (record: any) => {
         if (record.QuanNhan) {
           return (
-            <Link href={`/admin/personnel/${record.QuanNhan.id}`}>
-              {record.QuanNhan.ho_ten}
-            </Link>
+            <Link href={`/admin/personnel/${record.QuanNhan.id}`}>{record.QuanNhan.ho_ten}</Link>
           );
         }
         return <span className="text-gray-400">Chưa liên kết</span>;
@@ -235,7 +233,7 @@ export default function AdminAccountsPage() {
             pagination={{
               pageSize: 20,
               showSizeChanger: true,
-              showTotal: (total) => `Tổng ${total} tài khoản`,
+              showTotal: total => `Tổng ${total} tài khoản`,
             }}
           />
         </Card>

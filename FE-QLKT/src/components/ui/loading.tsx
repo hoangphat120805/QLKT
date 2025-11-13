@@ -12,7 +12,12 @@ interface LoadingProps {
   className?: string;
 }
 
-export function Loading({ message = 'Đang tải...', fullScreen = false, size = 'large', className = '' }: LoadingProps) {
+export function Loading({
+  message = 'Đang tải...',
+  fullScreen = false,
+  size = 'large',
+  className = '',
+}: LoadingProps) {
   const { theme } = useTheme();
 
   const content = (
@@ -27,7 +32,9 @@ export function Loading({ message = 'Đang tải...', fullScreen = false, size =
         )}
       </div>
       {message && (
-        <p className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+        <p
+          className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}
+        >
           {message}
         </p>
       )}
@@ -42,22 +49,24 @@ export function Loading({ message = 'Đang tải...', fullScreen = false, size =
     );
   }
 
-  return (
-    <div className="flex items-center justify-center py-12">
-      {content}
-    </div>
-  );
+  return <div className="flex items-center justify-center py-12">{content}</div>;
 }
 
 // Component sử dụng Ant Design Spin (tùy chọn)
-export function LoadingSpin({ message = 'Đang tải...', fullScreen = false, size = 'large' }: LoadingProps) {
+export function LoadingSpin({
+  message = 'Đang tải...',
+  fullScreen = false,
+  size = 'large',
+}: LoadingProps) {
   const { theme } = useTheme();
 
   const spin = (
     <div className="flex flex-col items-center justify-center gap-4">
       <Spin size={size} />
       {message && (
-        <p className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+        <p
+          className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}
+        >
           {message}
         </p>
       )}
@@ -72,15 +81,17 @@ export function LoadingSpin({ message = 'Đang tải...', fullScreen = false, si
     );
   }
 
-  return (
-    <div className="flex items-center justify-center py-12">
-      {spin}
-    </div>
-  );
+  return <div className="flex items-center justify-center py-12">{spin}</div>;
 }
 
 // Component inline nhỏ cho các phần tử nhỏ
-export function LoadingInline({ message, size = 'small' }: { message?: string; size?: 'small' | 'default' }) {
+export function LoadingInline({
+  message,
+  size = 'small',
+}: {
+  message?: string;
+  size?: 'small' | 'default';
+}) {
   const { theme } = useTheme();
 
   return (
@@ -98,4 +109,3 @@ export function LoadingInline({ message, size = 'small' }: { message?: string; s
     </div>
   );
 }
-
