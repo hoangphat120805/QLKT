@@ -168,14 +168,14 @@ class ProposalController {
       const userRole = req.user.role;
 
       // Validate id
-      if (!id || isNaN(parseInt(id))) {
+      if (!id) {
         return res.status(400).json({
           success: false,
           message: 'ID đề xuất không hợp lệ',
         });
       }
 
-      const result = await proposalService.getProposalById(parseInt(id), userId, userRole);
+      const result = await proposalService.getProposalById(id, userId, userRole);
 
       return res.status(200).json({
         success: true,
@@ -226,7 +226,7 @@ class ProposalController {
       const ghiChu = req.body.ghi_chu || null;
 
       // Validate id
-      if (!id || isNaN(parseInt(id))) {
+      if (!id) {
         return res.status(400).json({
           success: false,
           message: 'ID đề xuất không hợp lệ',
@@ -234,7 +234,7 @@ class ProposalController {
       }
 
       const result = await proposalService.approveProposal(
-        parseInt(id),
+        id,
         editedData,
         adminId,
         decisions,
@@ -298,7 +298,7 @@ class ProposalController {
       const rejectReason = ghi_chu || ly_do;
 
       // Validate
-      if (!id || isNaN(parseInt(id))) {
+      if (!id) {
         return res.status(400).json({
           success: false,
           message: 'ID đề xuất không hợp lệ',
@@ -312,7 +312,7 @@ class ProposalController {
         });
       }
 
-      const result = await proposalService.rejectProposal(parseInt(id), rejectReason, adminId);
+      const result = await proposalService.rejectProposal(id, rejectReason, adminId);
 
       // Gửi thông báo cho người gửi đề xuất
       try {
@@ -347,14 +347,14 @@ class ProposalController {
     try {
       const { id } = req.params;
 
-      if (!id || isNaN(parseInt(id))) {
+      if (!id) {
         return res.status(400).json({
           success: false,
           message: 'ID đề xuất không hợp lệ',
         });
       }
 
-      const buffer = await proposalService.downloadProposalExcel(parseInt(id));
+      const buffer = await proposalService.downloadProposalExcel(id);
 
       const fileName = `de_xuat_${id}_${new Date().toISOString().slice(0, 10)}.xlsx`;
       res.setHeader(
@@ -546,14 +546,14 @@ class ProposalController {
       const userRole = req.user.role;
 
       // Validate id
-      if (!id || isNaN(parseInt(id))) {
+      if (!id) {
         return res.status(400).json({
           success: false,
           message: 'ID đề xuất không hợp lệ',
         });
       }
 
-      const result = await proposalService.deleteProposal(parseInt(id), userId, userRole);
+      const result = await proposalService.deleteProposal(id, userId, userRole);
 
       // Ghi log hệ thống
       try {
@@ -567,10 +567,10 @@ class ProposalController {
             actor_role: userRole,
             action: 'DELETE',
             resource: 'proposals',
-            resource_id: parseInt(id),
+            resource_id: id,
             description: `Xóa đề xuất khen thưởng ID ${id} - Đơn vị: ${result.proposal.don_vi}`,
             payload: {
-              proposal_id: parseInt(id),
+              proposal_id: id,
               don_vi: result.proposal.don_vi,
               status: result.proposal.status,
             },

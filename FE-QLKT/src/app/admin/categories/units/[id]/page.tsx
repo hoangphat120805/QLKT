@@ -10,7 +10,6 @@ import {
   Modal,
   Typography,
   message,
-  Tag,
   Descriptions,
   ConfigProvider,
   theme as antdTheme,
@@ -101,7 +100,39 @@ export default function UnitDetailPage() {
 
   // Xử lý dữ liệu từ 2 bảng khác nhau
   const childUnits = unit.DonViTrucThuoc || [];
-  const positions = unit.ChucVu || [];
+  const currentUnitFallback = {
+    id: unit.id,
+    ten_don_vi: unit.ten_don_vi,
+  };
+
+  const currentUnitPositions = (unit.ChucVu || []).map((pos: any) => ({
+    ...pos,
+    CoQuanDonVi: pos.CoQuanDonVi || currentUnitFallback,
+  }));
+
+  const childUnitPositions = childUnits.flatMap((child: any) => {
+    const childFallback = {
+      id: child.id,
+      ten_don_vi: child.ten_don_vi,
+      CoQuanDonVi: child.CoQuanDonVi || currentUnitFallback,
+    };
+
+    return (child.ChucVu || []).map((pos: any) => ({
+      ...pos,
+      DonViTrucThuoc: pos.DonViTrucThuoc || {
+        id: childFallback.id,
+        ten_don_vi: childFallback.ten_don_vi,
+        CoQuanDonVi: childFallback.CoQuanDonVi,
+      },
+      CoQuanDonVi: pos.CoQuanDonVi ||
+        childFallback.CoQuanDonVi || {
+          id: currentUnitFallback.id,
+          ten_don_vi: currentUnitFallback.ten_don_vi,
+        },
+    }));
+  });
+
+  const positions = [...currentUnitPositions, ...childUnitPositions];
   // Kiểm tra xem đơn vị có phải là đơn vị trực thuộc không (có co_quan_don_vi_id)
   const isDonViTrucThuoc = !!unit.co_quan_don_vi_id;
 
@@ -202,7 +233,7 @@ export default function UnitDetailPage() {
                       </Descriptions.Item>
                     )}
                     <Descriptions.Item label="Số chức vụ" span={1}>
-                      <Tag color="cyan">{positions.length}</Tag>
+                      {positions.length}
                     </Descriptions.Item>
                   </Descriptions>
                 </Card>
@@ -240,6 +271,9 @@ export default function UnitDetailPage() {
                               units={childUnits}
                               onEdit={u => handleOpenDialog('unit', u)}
                               onRefresh={loadUnitDetail}
+                              showChildCount={false}
+                              showPositionCount
+                              showPositionList
                             />
                           ) : (
                             <div style={{ padding: '48px', textAlign: 'center' }}>
@@ -300,16 +334,52 @@ export default function UnitDetailPage() {
           open={dialogOpen}
           onCancel={handleCloseDialog}
           footer={null}
-          width={800}
+          width={600}
+          centered
+          destroyOnClose
           title={
-            dialogType === 'unit'
-              ? editingItem?.id
-                ? 'Sửa đơn vị'
-                : 'Thêm Đơn vị trực thuộc'
-              : editingItem?.id
-                ? 'Sửa chức vụ'
-                : 'Thêm Chức vụ mới'
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '8px',
+                  background:
+                    dialogType === 'unit'
+                      ? 'linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%)'
+                      : 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {dialogType === 'unit' ? (
+                  <PlusOutlined style={{ fontSize: '18px', color: '#fff' }} />
+                ) : (
+                  <EditOutlined style={{ fontSize: '18px', color: '#fff' }} />
+                )}
+              </div>
+              <span style={{ fontSize: '18px', fontWeight: 600 }}>
+                {dialogType === 'unit'
+                  ? editingItem?.id
+                    ? 'Chỉnh sửa Đơn vị'
+                    : 'Thêm Đơn vị trực thuộc'
+                  : editingItem?.id
+                  ? 'Chỉnh sửa Chức vụ'
+                  : 'Thêm Chức vụ mới'}
+              </span>
+            </div>
           }
+          styles={{
+            header: {
+              paddingBottom: '16px',
+              marginBottom: '24px',
+              borderBottom: '1px solid #f0f0f0',
+            },
+            body: {
+              paddingTop: '24px',
+            },
+          }}
         >
           {dialogType === 'unit' && (
             <UnitForm

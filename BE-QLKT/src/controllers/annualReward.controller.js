@@ -60,7 +60,7 @@ class AnnualRewardController {
 
       // Tự động cập nhật lại hồ sơ sau khi thêm danh hiệu
       try {
-        await profileService.recalculateProfile(parseInt(personnel_id));
+        await profileService.recalculateProfile(personnel_id);
         console.log(`✅ Auto-recalculated profile for personnel ${personnel_id}`);
       } catch (recalcError) {
         console.error(`⚠️ Failed to auto-recalculate profile:`, recalcError.message);
@@ -86,7 +86,7 @@ class AnnualRewardController {
       const { nam, danh_hieu, nhan_bkbqp, so_quyet_dinh_bkbqp, nhan_cstdtq, so_quyet_dinh_cstdtq } =
         req.body;
 
-      const result = await annualRewardService.updateAnnualReward(parseInt(id), {
+      const result = await annualRewardService.updateAnnualReward(id, {
         nam,
         danh_hieu,
         nhan_bkbqp,
@@ -121,7 +121,7 @@ class AnnualRewardController {
     try {
       const { id } = req.params;
 
-      const result = await annualRewardService.deleteAnnualReward(parseInt(id));
+      const result = await annualRewardService.deleteAnnualReward(id);
 
       // Tự động cập nhật lại hồ sơ sau khi xóa danh hiệu
       if (result.personnelId) {

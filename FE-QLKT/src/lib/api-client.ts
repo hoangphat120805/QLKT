@@ -71,7 +71,8 @@ export const apiClient = {
     username: string;
     password: string;
     role: string;
-    don_vi_id?: string;
+    co_quan_don_vi_id?: string;
+    don_vi_truc_thuoc_id?: string;
     chuc_vu_id?: string;
     personnel_id?: string;
   }): Promise<ApiResponse> {
@@ -207,6 +208,15 @@ export const apiClient = {
   async deleteUnit(id: string): Promise<ApiResponse> {
     try {
       const res = await axiosInstance.delete(`/api/units/${id}`);
+      return { success: true, data: res.data?.data || res.data };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async getSubUnits(params?: { co_quan_don_vi_id?: string }): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.get('/api/sub-units', { params });
       return { success: true, data: res.data?.data || res.data };
     } catch (e: any) {
       return { success: false, message: e?.response?.data?.message || e.message };

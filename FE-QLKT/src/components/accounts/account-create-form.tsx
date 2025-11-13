@@ -35,7 +35,8 @@ export function AccountCreateForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState<string>('');
-  const [units, setUnits] = useState<any[]>([]);
+  const [coQuanDonViList, setCoQuanDonViList] = useState<any[]>([]); // Danh sách Cơ quan đơn vị
+  const [donViTrucThuocList, setDonViTrucThuocList] = useState<any[]>([]); // Danh sách Đơn vị trực thuộc (tất cả)
   const [positions, setPositions] = useState<any[]>([]);
   const router = useRouter();
   const { toast } = useToast();
@@ -60,30 +61,32 @@ export function AccountCreateForm() {
         // Backend trả về mảng phẳng gồm cả cơ quan đơn vị và đơn vị trực thuộc
         const unitsData = unitsRes.data || [];
 
-        // Chuẩn hóa dữ liệu đơn vị
-        const normalizedUnits = unitsData.map((unit: any) => {
+        // Phân loại đơn vị
+        const coQuanDonVi: any[] = [];
+        const donViTrucThuoc: any[] = [];
+
+        unitsData.forEach((unit: any) => {
           // Nếu có co_quan_don_vi_id thì là đơn vị trực thuộc
           if (unit.co_quan_don_vi_id || unit.CoQuanDonVi) {
-            return {
+            donViTrucThuoc.push({
               id: unit.id,
               ten_don_vi: unit.ten_don_vi,
               ma_don_vi: unit.ma_don_vi,
-              type: 'don_vi_truc_thuoc',
+              co_quan_don_vi_id: unit.co_quan_don_vi_id,
               CoQuanDonVi: unit.CoQuanDonVi || null,
-            };
+            });
           } else {
             // Không có co_quan_don_vi_id thì là cơ quan đơn vị
-            return {
+            coQuanDonVi.push({
               id: unit.id,
               ten_don_vi: unit.ten_don_vi,
               ma_don_vi: unit.ma_don_vi,
-              type: 'co_quan_don_vi',
-              CoQuanDonVi: null,
-            };
+            });
           }
         });
 
-        setUnits(normalizedUnits);
+        setCoQuanDonViList(coQuanDonVi);
+        setDonViTrucThuocList(donViTrucThuoc);
       }
 
       if (positionsRes.success) {
@@ -104,26 +107,45 @@ export function AccountCreateForm() {
     },
   });
 
-  // Watch role và don_vi_id để filter chức vụ
+  // Watch các fields để filter và validate
   const selectedRole = form.watch('role');
-  const selectedDonViId = form.watch('don_vi_id');
+  const selectedCoQuanDonViId = form.watch('co_quan_don_vi_id');
+  const selectedDonViTrucThuocId = form.watch('don_vi_truc_thuoc_id');
+
+  // Filter đơn vị trực thuộc theo cơ quan đơn vị đã chọn
+  const filteredDonViTrucThuoc =
+    selectedRole === 'USER' && selectedCoQuanDonViId
+      ? donViTrucThuocList.filter(dv => dv.co_quan_don_vi_id === selectedCoQuanDonViId)
+      : [];
 
   // Lọc chức vụ theo đơn vị được chọn
-  const filteredPositions = selectedDonViId
-    ? positions.filter(p => {
-        // Chức vụ có thể thuộc cơ quan đơn vị hoặc đơn vị trực thuộc
-        return (
-          p.co_quan_don_vi_id === selectedDonViId || p.don_vi_truc_thuoc_id === selectedDonViId
-        );
-      })
-    : [];
+  const filteredPositions = (() => {
+    if (selectedRole === 'MANAGER' && selectedCoQuanDonViId) {
+      // MANAGER: Lọc chức vụ thuộc Cơ quan đơn vị (không bao gồm chức vụ của đơn vị trực thuộc)
+      return positions.filter(p => p.co_quan_don_vi_id === selectedCoQuanDonViId);
+    } else if (selectedRole === 'USER' && selectedDonViTrucThuocId) {
+      // USER: Lọc chức vụ thuộc Đơn vị trực thuộc
+      return positions.filter(p => p.don_vi_truc_thuoc_id === selectedDonViTrucThuocId);
+    }
+    return [];
+  })();
 
-  // Reset chức vụ khi đổi đơn vị
+  // Reset chức vụ và đơn vị trực thuộc khi đổi cơ quan đơn vị
   useEffect(() => {
-    if (selectedDonViId !== undefined) {
+    if (selectedCoQuanDonViId !== undefined) {
+      form.setValue('chuc_vu_id', undefined);
+      if (selectedRole === 'USER') {
+        form.setValue('don_vi_truc_thuoc_id', undefined);
+      }
+    }
+  }, [selectedCoQuanDonViId, selectedRole, form]);
+
+  // Reset chức vụ khi đổi đơn vị trực thuộc (USER)
+  useEffect(() => {
+    if (selectedRole === 'USER' && selectedDonViTrucThuocId !== undefined) {
       form.setValue('chuc_vu_id', undefined);
     }
-  }, [selectedDonViId, form]);
+  }, [selectedDonViTrucThuocId, selectedRole, form]);
 
   // Lấy danh sách role có thể tạo dựa trên role hiện tại
   const getAvailableRoles = () => {
@@ -143,6 +165,61 @@ export function AccountCreateForm() {
     }
     // Mặc định chỉ có USER
     return [{ value: 'USER', label: 'Người dùng' }];
+  };
+
+  // Kiểm tra xem có thể submit form không
+  const canSubmit = () => {
+    if (selectedRole === 'MANAGER') {
+      // MANAGER: Cần có co_quan_don_vi_id và chuc_vu_id
+      return (
+        coQuanDonViList.length > 0 &&
+        selectedCoQuanDonViId !== undefined &&
+        filteredPositions.length > 0
+      );
+    } else if (selectedRole === 'USER') {
+      // USER: Cần có co_quan_don_vi_id, don_vi_truc_thuoc_id và chuc_vu_id
+      return (
+        coQuanDonViList.length > 0 &&
+        selectedCoQuanDonViId !== undefined &&
+        filteredDonViTrucThuoc.length > 0 &&
+        selectedDonViTrucThuocId !== undefined &&
+        filteredPositions.length > 0
+      );
+    }
+    // SUPER_ADMIN và ADMIN không cần đơn vị
+    return true;
+  };
+
+  // Tooltip cho button submit
+  const getSubmitButtonTooltip = () => {
+    if (selectedRole === 'MANAGER') {
+      if (coQuanDonViList.length === 0) {
+        return 'Không có cơ quan đơn vị nào. Vui lòng tạo cơ quan đơn vị trước.';
+      }
+      if (!selectedCoQuanDonViId) {
+        return 'Vui lòng chọn Cơ quan đơn vị cho tài khoản MANAGER.';
+      }
+      if (filteredPositions.length === 0) {
+        return 'Cơ quan đơn vị này chưa có chức vụ nào. Vui lòng tạo chức vụ trước.';
+      }
+    } else if (selectedRole === 'USER') {
+      if (coQuanDonViList.length === 0) {
+        return 'Không có cơ quan đơn vị nào. Vui lòng tạo cơ quan đơn vị trước.';
+      }
+      if (!selectedCoQuanDonViId) {
+        return 'Vui lòng chọn Cơ quan đơn vị cho tài khoản USER.';
+      }
+      if (filteredDonViTrucThuoc.length === 0) {
+        return 'Cơ quan đơn vị này chưa có đơn vị trực thuộc. Vui lòng tạo đơn vị trực thuộc trước.';
+      }
+      if (!selectedDonViTrucThuocId) {
+        return 'Vui lòng chọn Đơn vị trực thuộc cho tài khoản USER.';
+      }
+      if (filteredPositions.length === 0) {
+        return 'Đơn vị trực thuộc này chưa có chức vụ nào. Vui lòng tạo chức vụ trước.';
+      }
+    }
+    return '';
   };
 
   async function onSubmit(values: AccountCreateValues) {
@@ -232,6 +309,11 @@ export function AccountCreateForm() {
                 <FormControl>
                   <Input placeholder="Nhập tên đăng nhập" {...field} disabled={loading} />
                 </FormControl>
+                {(selectedRole === 'MANAGER' || selectedRole === 'USER') && (
+                  <p className="text-sm text-muted-foreground">
+                    Khuyến nghị: Sử dụng số CCCD của quân nhân làm tên đăng nhập
+                  </p>
+                )}
                 <FormMessage />
               </FormItem>
             )}
@@ -262,6 +344,11 @@ export function AccountCreateForm() {
                     </button>
                   </div>
                 </FormControl>
+                {(selectedRole === 'MANAGER' || selectedRole === 'USER') && (
+                  <p className="text-sm text-muted-foreground">
+                    Mật khẩu tạm thời này sẽ được yêu cầu thay đổi khi đăng nhập lần đầu
+                  </p>
+                )}
                 <FormMessage />
               </FormItem>
             )}
@@ -307,88 +394,144 @@ export function AccountCreateForm() {
           <div className="space-y-4 border-t pt-4">
             <h3 className="text-lg font-semibold">Thông tin đơn vị và chức vụ</h3>
 
+            {/* Cơ quan đơn vị - Cho cả MANAGER và USER */}
             <FormField
               control={form.control}
-              name="don_vi_id"
-              render={({ field }) => {
-                // Lọc đơn vị theo role
-                const availableUnits =
-                  selectedRole === 'MANAGER'
-                    ? units.filter(u => u.type === 'co_quan_don_vi') // MANAGER chỉ chọn cơ quan đơn vị
-                    : units; // USER có thể chọn cả cơ quan đơn vị và đơn vị trực thuộc
-
-                return (
-                  <FormItem>
-                    <FormLabel>
-                      {selectedRole === 'MANAGER' ? 'Cơ quan đơn vị' : 'Đơn vị'} *
-                    </FormLabel>
-                    <Select
-                      onValueChange={value => field.onChange(value)}
-                      value={field.value}
-                      disabled={loading}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue
-                            placeholder={
-                              selectedRole === 'MANAGER' ? 'Chọn cơ quan đơn vị' : 'Chọn đơn vị'
-                            }
-                          />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {availableUnits.map(unit => (
-                          <SelectItem key={unit.id} value={unit.id}>
-                            {unit.type === 'don_vi_truc_thuoc' && unit.CoQuanDonVi
-                              ? `${unit.ten_don_vi} (${unit.CoQuanDonVi.ten_don_vi})`
-                              : unit.ten_don_vi}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                );
-              }}
-            />
-
-            <FormField
-              control={form.control}
-              name="chuc_vu_id"
+              name="co_quan_don_vi_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Chức vụ *</FormLabel>
+                  <FormLabel>Cơ quan đơn vị *</FormLabel>
                   <Select
                     onValueChange={value => field.onChange(value)}
                     value={field.value}
-                    disabled={loading || !selectedDonViId}
+                    disabled={loading || coQuanDonViList.length === 0}
                   >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue
                           placeholder={
-                            selectedDonViId ? 'Chọn chức vụ' : 'Vui lòng chọn đơn vị trước'
+                            coQuanDonViList.length === 0
+                              ? 'Không có cơ quan đơn vị nào'
+                              : 'Chọn cơ quan đơn vị'
                           }
                         />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {filteredPositions.length > 0 ? (
-                        filteredPositions.map(position => (
-                          <SelectItem key={position.id} value={position.id}>
-                            {position.ten_chuc_vu}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value="no-data" disabled>
-                          Không có chức vụ nào
+                      {coQuanDonViList.map(unit => (
+                        <SelectItem key={unit.id} value={unit.id}>
+                          {unit.ten_don_vi}
                         </SelectItem>
-                      )}
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
+                  {coQuanDonViList.length === 0 && (
+                    <p className="text-sm text-destructive mt-1">
+                      Không có cơ quan đơn vị nào. Vui lòng tạo cơ quan đơn vị trước.
+                    </p>
+                  )}
                 </FormItem>
               )}
+            />
+
+            {/* Đơn vị trực thuộc - Chỉ cho USER */}
+            {selectedRole === 'USER' && (
+              <FormField
+                control={form.control}
+                name="don_vi_truc_thuoc_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Đơn vị trực thuộc *</FormLabel>
+                    <Select
+                      onValueChange={value => field.onChange(value)}
+                      value={field.value}
+                      disabled={
+                        loading || !selectedCoQuanDonViId || filteredDonViTrucThuoc.length === 0
+                      }
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue
+                            placeholder={
+                              !selectedCoQuanDonViId
+                                ? 'Vui lòng chọn cơ quan đơn vị trước'
+                                : filteredDonViTrucThuoc.length === 0
+                                ? 'Không có đơn vị trực thuộc nào'
+                                : 'Chọn đơn vị trực thuộc'
+                            }
+                          />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {filteredDonViTrucThuoc.map(unit => (
+                          <SelectItem key={unit.id} value={unit.id}>
+                            {unit.ten_don_vi}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    {selectedCoQuanDonViId && filteredDonViTrucThuoc.length === 0 && (
+                      <p className="text-sm text-destructive mt-1">
+                        Cơ quan đơn vị này chưa có đơn vị trực thuộc. Vui lòng tạo đơn vị trực thuộc
+                        trước.
+                      </p>
+                    )}
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {/* Chức vụ */}
+            <FormField
+              control={form.control}
+              name="chuc_vu_id"
+              render={({ field }) => {
+                const canSelectPosition =
+                  (selectedRole === 'MANAGER' && selectedCoQuanDonViId) ||
+                  (selectedRole === 'USER' && selectedDonViTrucThuocId);
+
+                return (
+                  <FormItem>
+                    <FormLabel>Chức vụ *</FormLabel>
+                    <Select
+                      onValueChange={value => field.onChange(value)}
+                      value={field.value}
+                      disabled={loading || !canSelectPosition || filteredPositions.length === 0}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue
+                            placeholder={
+                              !canSelectPosition
+                                ? selectedRole === 'MANAGER'
+                                  ? 'Vui lòng chọn cơ quan đơn vị trước'
+                                  : 'Vui lòng chọn đơn vị trực thuộc trước'
+                                : filteredPositions.length === 0
+                                ? 'Không có chức vụ nào'
+                                : 'Chọn chức vụ'
+                            }
+                          />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {filteredPositions.map(position => (
+                          <SelectItem key={position.id} value={position.id}>
+                            {position.ten_chuc_vu}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    {canSelectPosition && filteredPositions.length === 0 && (
+                      <p className="text-sm text-destructive mt-1">
+                        Đơn vị này chưa có chức vụ nào. Vui lòng tạo chức vụ trước.
+                      </p>
+                    )}
+                  </FormItem>
+                );
+              }}
             />
           </div>
         )}
@@ -397,7 +540,12 @@ export function AccountCreateForm() {
           <Button type="button" variant="default" onClick={() => router.back()} disabled={loading}>
             Hủy
           </Button>
-          <Button type="submit" variant="outline" disabled={loading}>
+          <Button
+            type="submit"
+            variant="outline"
+            disabled={loading || !canSubmit()}
+            title={getSubmitButtonTooltip()}
+          >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {loading ? 'Đang tạo...' : 'Tạo tài khoản'}
           </Button>

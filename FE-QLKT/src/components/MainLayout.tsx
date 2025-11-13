@@ -212,6 +212,11 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
       return [
         ...baseItems,
         {
+          key: 'accounts',
+          icon: <UserOutlined />,
+          label: <Link href="/admin/accounts">Quản lý Tài khoản</Link>,
+        },
+        {
           key: 'personnel',
           icon: <TeamOutlined />,
           label: <Link href="/admin/personnel">Quản lý Quân nhân</Link>,

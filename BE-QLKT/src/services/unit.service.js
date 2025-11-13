@@ -53,6 +53,33 @@ class UnitService {
   }
 
   /**
+   * Lấy tất cả đơn vị trực thuộc
+   * @param {string} coQuanDonViId - UUID cơ quan đơn vị (optional)
+   */
+  async getAllSubUnits(coQuanDonViId) {
+    try {
+      const whereClause = coQuanDonViId
+        ? { co_quan_don_vi_id: coQuanDonViId }
+        : {};
+
+      const donViTrucThuoc = await prisma.donViTrucThuoc.findMany({
+        where: whereClause,
+        include: {
+          CoQuanDonVi: true,
+          ChucVu: true,
+        },
+        orderBy: {
+          ma_don_vi: 'asc',
+        },
+      });
+
+      return donViTrucThuoc;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
    * Tạo đơn vị mới (có thể là cơ quan đơn vị hoặc đơn vị trực thuộc)
    */
   async createUnit(data) {

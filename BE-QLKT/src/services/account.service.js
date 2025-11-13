@@ -156,7 +156,15 @@ class AccountService {
    */
   async createAccount(data) {
     try {
-      const { personnel_id, username, password, role, don_vi_id, chuc_vu_id } = data;
+      const {
+        personnel_id,
+        username,
+        password,
+        role,
+        co_quan_don_vi_id,
+        don_vi_truc_thuoc_id,
+        chuc_vu_id,
+      } = data;
 
       // Kiểm tra username đã tồn tại chưa
       const existingAccount = await prisma.taiKhoan.findUnique({
@@ -191,42 +199,76 @@ class AccountService {
 
       // Tự động tạo QuanNhan cho MANAGER/USER
       if ((role === 'MANAGER' || role === 'USER') && !personnel_id) {
-        if (!don_vi_id || !chuc_vu_id) {
-          throw new Error('Vui lòng cung cấp đơn vị và chức vụ');
+        // ==================== VALIDATION THEO ROLE ====================
+        if (role === 'MANAGER') {
+          // MANAGER: Bắt buộc có co_quan_don_vi_id, KHÔNG có don_vi_truc_thuoc_id
+          if (!co_quan_don_vi_id) {
+            throw new Error(
+              'Tài khoản MANAGER phải có thông tin Cơ quan đơn vị. Vui lòng chọn Cơ quan đơn vị.'
+            );
+          }
+          if (don_vi_truc_thuoc_id) {
+            throw new Error(
+              'Tài khoản MANAGER chỉ được chọn Cơ quan đơn vị, không được chọn Đơn vị trực thuộc.'
+            );
+          }
+        } else if (role === 'USER') {
+          // USER: Bắt buộc có CẢ HAI co_quan_don_vi_id VÀ don_vi_truc_thuoc_id
+          if (!co_quan_don_vi_id || !don_vi_truc_thuoc_id) {
+            throw new Error(
+              'Tài khoản USER phải có đầy đủ thông tin Cơ quan đơn vị và Đơn vị trực thuộc. Vui lòng chọn cả hai.'
+            );
+          }
         }
 
-        // Kiểm tra đơn vị và chức vụ có tồn tại không
-        const [coQuanDonVi, donViTrucThuoc, chucVu] = await Promise.all([
-          prisma.coQuanDonVi.findUnique({ where: { id: don_vi_id } }),
-          prisma.donViTrucThuoc.findUnique({ where: { id: don_vi_id } }),
-          prisma.chucVu.findUnique({ where: { id: chuc_vu_id } }),
-        ]);
-
-        if (!coQuanDonVi && !donViTrucThuoc) {
-          throw new Error('Đơn vị không tồn tại');
+        // Kiểm tra chuc_vu_id
+        if (!chuc_vu_id) {
+          throw new Error('Vui lòng chọn chức vụ');
         }
 
+        // ==================== VALIDATION DATABASE ====================
+        // Kiểm tra cơ quan đơn vị có tồn tại không
+        if (co_quan_don_vi_id) {
+          const coQuanDonVi = await prisma.coQuanDonVi.findUnique({
+            where: { id: co_quan_don_vi_id },
+          });
+          if (!coQuanDonVi) {
+            throw new Error('Cơ quan đơn vị không tồn tại');
+          }
+        }
+
+        // Kiểm tra đơn vị trực thuộc có tồn tại và thuộc đúng cơ quan đơn vị không
+        if (don_vi_truc_thuoc_id) {
+          const donViTrucThuoc = await prisma.donViTrucThuoc.findUnique({
+            where: { id: don_vi_truc_thuoc_id },
+          });
+          if (!donViTrucThuoc) {
+            throw new Error('Đơn vị trực thuộc không tồn tại');
+          }
+          // Validate đơn vị trực thuộc phải thuộc cơ quan đơn vị đã chọn
+          if (co_quan_don_vi_id && donViTrucThuoc.co_quan_don_vi_id !== co_quan_don_vi_id) {
+            throw new Error('Đơn vị trực thuộc không thuộc cơ quan đơn vị đã chọn');
+          }
+        }
+
+        // Kiểm tra chức vụ có tồn tại không
+        const chucVu = await prisma.chucVu.findUnique({
+          where: { id: chuc_vu_id },
+        });
         if (!chucVu) {
           throw new Error('Chức vụ không tồn tại');
         }
 
-        // Xác định loại đơn vị và set đúng foreign key
-        const isCoQuanDonVi = !!coQuanDonVi;
+        // ==================== TẠO QUÂN NHÂN ====================
         const personnelData = {
           cccd: null, // CCCD có thể null, người dùng sẽ cập nhật sau
           ho_ten: username, // Dùng username làm họ tên mặc định
           chuc_vu_id,
           ngay_sinh: null,
           ngay_nhap_ngu: null,
+          co_quan_don_vi_id: co_quan_don_vi_id || null,
+          don_vi_truc_thuoc_id: don_vi_truc_thuoc_id || null,
         };
-
-        if (isCoQuanDonVi) {
-          personnelData.co_quan_don_vi_id = don_vi_id;
-          personnelData.don_vi_truc_thuoc_id = null;
-        } else {
-          personnelData.co_quan_don_vi_id = null;
-          personnelData.don_vi_truc_thuoc_id = don_vi_id;
-        }
 
         // Tạo QuanNhan mới với thông tin tối thiểu
         const newPersonnel = await prisma.quanNhan.create({
@@ -245,19 +287,23 @@ class AccountService {
           },
         });
 
-        // Cập nhật số lượng quân nhân trong đơn vị
-        if (isCoQuanDonVi) {
+        // ==================== CẬP NHẬT SỐ LƯỢNG QUÂN NHÂN ====================
+        // Cập nhật số lượng cho Cơ quan đơn vị (nếu có)
+        if (co_quan_don_vi_id) {
           await prisma.coQuanDonVi.update({
-            where: { id: don_vi_id },
+            where: { id: co_quan_don_vi_id },
             data: {
               so_luong: {
                 increment: 1,
               },
             },
           });
-        } else {
+        }
+
+        // Cập nhật số lượng cho Đơn vị trực thuộc (nếu có)
+        if (don_vi_truc_thuoc_id) {
           await prisma.donViTrucThuoc.update({
-            where: { id: don_vi_id },
+            where: { id: don_vi_truc_thuoc_id },
             data: {
               so_luong: {
                 increment: 1,

@@ -127,7 +127,9 @@ class PositionService {
       // Tạo chức vụ mới
       const createData = {
         ten_chuc_vu,
-        is_manager: is_manager || false,
+        // Nếu là đơn vị trực thuộc thì KHÔNG có chỉ huy, luôn là false
+        // Chỉ cơ quan đơn vị mới có chỉ huy
+        is_manager: isCoQuanDonVi ? (is_manager || false) : false,
         he_so_luong: he_so_luong || null,
       };
 
@@ -173,12 +175,19 @@ class PositionService {
         throw new Error('Chức vụ không tồn tại');
       }
 
+      // Xác định chức vụ thuộc đơn vị trực thuộc hay cơ quan đơn vị
+      const isDonViTrucThuoc = !!position.don_vi_truc_thuoc_id;
+
       // Cập nhật chức vụ
       const updatedPosition = await prisma.chucVu.update({
         where: { id },
         data: {
           ten_chuc_vu: ten_chuc_vu || position.ten_chuc_vu,
-          is_manager: is_manager !== undefined ? is_manager : position.is_manager,
+          // Nếu là đơn vị trực thuộc thì KHÔNG cho phép is_manager = true
+          // Chỉ cơ quan đơn vị mới có chỉ huy
+          is_manager: isDonViTrucThuoc
+            ? false
+            : (is_manager !== undefined ? is_manager : position.is_manager),
           he_so_luong: he_so_luong !== undefined ? he_so_luong : position.he_so_luong,
         },
         include: {

@@ -20,7 +20,7 @@ const corsOptions = {
       'https://fe-student-manager.vercel.app',
       'https://fe-qlhv-ahnzq9nap-tran-ducs-projects-6b0bdbb3.vercel.app', // Domain mới của Vercel
       'http://localhost:3000',
-      'http://localhost:3002',
+      'http://localhost:3001',
     ];
 
     if (allowedOrigins.indexOf(origin) !== -1) {

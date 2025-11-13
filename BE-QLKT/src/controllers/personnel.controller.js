@@ -39,7 +39,7 @@ class PersonnelController {
       const userQuanNhanId = req.user.quan_nhan_id;
 
       // Validate id parameter
-      if (!id || isNaN(parseInt(id))) {
+      if (!id) {
         return res.status(400).json({
           success: false,
           message: 'ID quân nhân không hợp lệ',
@@ -47,7 +47,7 @@ class PersonnelController {
       }
 
       const result = await personnelService.getPersonnelById(
-        parseInt(id),
+        id,
         userRole,
         userQuanNhanId
       );
@@ -122,27 +122,49 @@ class PersonnelController {
         position_id,
         don_vi_id,
         chuc_vu_id,
+        co_quan_don_vi_id,
+        don_vi_truc_thuoc_id,
         ho_ten,
         ngay_sinh,
         cccd,
         ngay_nhap_ngu,
+        ngay_xuat_ngu,
+        que_quan_2_cap,
+        que_quan_3_cap,
+        tru_quan,
+        cho_o_hien_nay,
+        ngay_vao_dang,
+        ngay_vao_dang_chinh_thuc,
+        so_the_dang_vien,
+        so_dien_thoai,
       } = req.body;
       const userRole = req.user.role;
       const userQuanNhanId = req.user.quan_nhan_id;
 
-      // Hỗ trợ cả 2 format: unit_id/position_id hoặc don_vi_id/chuc_vu_id
-      const finalUnitId = don_vi_id || unit_id;
+      // Hỗ trợ cả 2 format: unit_id/position_id hoặc don_vi_id/chuc_vu_id hoặc co_quan_don_vi_id/don_vi_truc_thuoc_id
+      const finalCoQuanDonViId = co_quan_don_vi_id || don_vi_id || unit_id;
+      const finalDonViTrucThuocId = don_vi_truc_thuoc_id;
       const finalPositionId = chuc_vu_id || position_id;
 
       const result = await personnelService.updatePersonnel(
-        parseInt(id),
+        id,
         {
-          unit_id: finalUnitId,
+          co_quan_don_vi_id: finalCoQuanDonViId,
+          don_vi_truc_thuoc_id: finalDonViTrucThuocId,
           position_id: finalPositionId,
           ho_ten,
           ngay_sinh,
           cccd,
           ngay_nhap_ngu,
+          ngay_xuat_ngu,
+          que_quan_2_cap,
+          que_quan_3_cap,
+          tru_quan,
+          cho_o_hien_nay,
+          ngay_vao_dang,
+          ngay_vao_dang_chinh_thuc,
+          so_the_dang_vien,
+          so_dien_thoai,
         },
         userRole,
         userQuanNhanId
@@ -150,7 +172,7 @@ class PersonnelController {
 
       // Tự động cập nhật lại hồ sơ sau khi update
       try {
-        await profileService.recalculateProfile(parseInt(id));
+        await profileService.recalculateProfile(id);
         console.log(`✅ Auto-recalculated profile for personnel ${id}`);
       } catch (recalcError) {
         console.error(
@@ -185,14 +207,14 @@ class PersonnelController {
       const userQuanNhanId = req.user.quan_nhan_id;
 
       // Validate id parameter
-      if (!id || isNaN(parseInt(id))) {
+      if (!id) {
         return res.status(400).json({
           success: false,
           message: 'ID quân nhân không hợp lệ',
         });
       }
 
-      const result = await personnelService.deletePersonnel(parseInt(id), userRole, userQuanNhanId);
+      const result = await personnelService.deletePersonnel(id, userRole, userQuanNhanId);
 
       return res.status(200).json({
         success: true,

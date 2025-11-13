@@ -284,7 +284,25 @@ class PersonnelService {
    */
   async updatePersonnel(id, data, userRole, userQuanNhanId) {
     try {
-      const { unit_id, position_id, ho_ten, ngay_sinh, cccd, ngay_nhap_ngu } = data;
+      const {
+        unit_id,
+        position_id,
+        co_quan_don_vi_id,
+        don_vi_truc_thuoc_id,
+        ho_ten,
+        ngay_sinh,
+        cccd,
+        ngay_nhap_ngu,
+        ngay_xuat_ngu,
+        que_quan_2_cap,
+        que_quan_3_cap,
+        tru_quan,
+        cho_o_hien_nay,
+        ngay_vao_dang,
+        ngay_vao_dang_chinh_thuc,
+        so_the_dang_vien,
+        so_dien_thoai,
+      } = data;
 
       // Kiểm tra quân nhân có tồn tại không
       const personnel = await prisma.quanNhan.findUnique({
@@ -362,15 +380,29 @@ class PersonnelService {
 
       // Chuẩn bị data update
       const updateData = {
-        ho_ten: ho_ten || personnel.ho_ten,
-        ngay_sinh: ngay_sinh ? new Date(ngay_sinh) : personnel.ngay_sinh,
-        cccd: cccd || personnel.cccd,
-        ngay_nhap_ngu: ngay_nhap_ngu ? new Date(ngay_nhap_ngu) : personnel.ngay_nhap_ngu,
+        ho_ten: ho_ten !== undefined ? ho_ten : personnel.ho_ten,
+        ngay_sinh: ngay_sinh !== undefined ? (ngay_sinh ? new Date(ngay_sinh) : null) : personnel.ngay_sinh,
+        cccd: cccd !== undefined ? cccd : personnel.cccd,
+        ngay_nhap_ngu: ngay_nhap_ngu !== undefined ? (ngay_nhap_ngu ? new Date(ngay_nhap_ngu) : null) : personnel.ngay_nhap_ngu,
+        ngay_xuat_ngu: ngay_xuat_ngu !== undefined ? (ngay_xuat_ngu ? new Date(ngay_xuat_ngu) : null) : personnel.ngay_xuat_ngu,
+        que_quan_2_cap: que_quan_2_cap !== undefined ? que_quan_2_cap : personnel.que_quan_2_cap,
+        que_quan_3_cap: que_quan_3_cap !== undefined ? que_quan_3_cap : personnel.que_quan_3_cap,
+        tru_quan: tru_quan !== undefined ? tru_quan : personnel.tru_quan,
+        cho_o_hien_nay: cho_o_hien_nay !== undefined ? cho_o_hien_nay : personnel.cho_o_hien_nay,
+        ngay_vao_dang: ngay_vao_dang !== undefined ? (ngay_vao_dang ? new Date(ngay_vao_dang) : null) : personnel.ngay_vao_dang,
+        ngay_vao_dang_chinh_thuc: ngay_vao_dang_chinh_thuc !== undefined ? (ngay_vao_dang_chinh_thuc ? new Date(ngay_vao_dang_chinh_thuc) : null) : personnel.ngay_vao_dang_chinh_thuc,
+        so_the_dang_vien: so_the_dang_vien !== undefined ? so_the_dang_vien : personnel.so_the_dang_vien,
+        so_dien_thoai: so_dien_thoai !== undefined ? so_dien_thoai : personnel.so_dien_thoai,
         chuc_vu_id: position_id || personnel.chuc_vu_id,
       };
 
-      // Xử lý đơn vị: nếu có unit_id mới, xác định loại và set đúng foreign key
-      if (unit_id && unit_id !== currentUnitId) {
+      // Xử lý đơn vị: ưu tiên co_quan_don_vi_id và don_vi_truc_thuoc_id từ frontend
+      if (co_quan_don_vi_id !== undefined || don_vi_truc_thuoc_id !== undefined) {
+        // Frontend gửi explicit co_quan_don_vi_id và don_vi_truc_thuoc_id
+        updateData.co_quan_don_vi_id = co_quan_don_vi_id !== undefined ? co_quan_don_vi_id : personnel.co_quan_don_vi_id;
+        updateData.don_vi_truc_thuoc_id = don_vi_truc_thuoc_id !== undefined ? don_vi_truc_thuoc_id : personnel.don_vi_truc_thuoc_id;
+      } else if (unit_id && unit_id !== currentUnitId) {
+        // Legacy: xử lý unit_id (tự động phát hiện loại đơn vị)
         const [coQuanDonVi, donViTrucThuoc] = await Promise.all([
           prisma.coQuanDonVi.findUnique({ where: { id: unit_id } }),
           prisma.donViTrucThuoc.findUnique({ where: { id: unit_id } }),

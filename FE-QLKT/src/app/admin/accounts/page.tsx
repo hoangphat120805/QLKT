@@ -42,9 +42,10 @@ export default function AdminAccountsPage() {
   const loadAccounts = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.getAccounts();
+      const response = await apiClient.getAccounts({});
       if (response.success) {
-        setAccounts(response.data || []);
+        // Backend returns { accounts: [], pagination: {} }
+        setAccounts(response.data?.accounts || []);
       } else {
         message.error(response.message || 'Không thể tải danh sách tài khoản');
       }
@@ -86,9 +87,7 @@ export default function AdminAccountsPage() {
       cancelText: 'Hủy',
       onOk: async () => {
         try {
-          const response = await apiClient.resetPassword({
-            account_id: account.id,
-          });
+          const response = await apiClient.resetAccountPassword(account.id);
           if (response.success) {
             message.success('Reset mật khẩu thành công');
           } else {
@@ -128,10 +127,8 @@ export default function AdminAccountsPage() {
       title: 'Quân nhân',
       key: 'quan_nhan',
       render: (record: any) => {
-        if (record.QuanNhan) {
-          return (
-            <Link href={`/admin/personnel/${record.QuanNhan.id}`}>{record.QuanNhan.ho_ten}</Link>
-          );
+        if (record.quan_nhan_id) {
+          return <Link href={`/admin/personnel/${record.quan_nhan_id}`}>{record.ho_ten}</Link>;
         }
         return <span className="text-gray-400">Chưa liên kết</span>;
       },
@@ -139,22 +136,12 @@ export default function AdminAccountsPage() {
     {
       title: 'Đơn vị',
       key: 'don_vi',
-      render: (record: any) => {
-        if (record.QuanNhan?.DonVi) {
-          return record.QuanNhan.DonVi.ten_don_vi;
-        }
-        return <span className="text-gray-400">-</span>;
-      },
+      render: (record: any) => record.don_vi || <span className="text-gray-400">-</span>,
     },
     {
       title: 'Chức vụ',
       key: 'chuc_vu',
-      render: (record: any) => {
-        if (record.QuanNhan?.ChucVu) {
-          return record.QuanNhan.ChucVu.ten_chuc_vu;
-        }
-        return <span className="text-gray-400">-</span>;
-      },
+      render: (record: any) => record.chuc_vu || <span className="text-gray-400">-</span>,
     },
     {
       title: 'Thao tác',

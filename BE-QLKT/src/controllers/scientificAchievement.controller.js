@@ -50,7 +50,7 @@ class ScientificAchievementController {
 
       // Tự động cập nhật lại hồ sơ sau khi thêm thành tích
       try {
-        await profileService.recalculateProfile(parseInt(personnel_id));
+        await profileService.recalculateProfile(personnel_id);
         console.log(`✅ Auto-recalculated profile for personnel ${personnel_id}`);
       } catch (recalcError) {
         console.error(`⚠️ Failed to auto-recalculate profile:`, recalcError.message);
@@ -75,7 +75,7 @@ class ScientificAchievementController {
       const { id } = req.params;
       const { nam, loai, mo_ta, status } = req.body;
 
-      const result = await scientificAchievementService.updateAchievement(parseInt(id), {
+      const result = await scientificAchievementService.updateAchievement(id, {
         nam,
         loai,
         mo_ta,
@@ -108,7 +108,7 @@ class ScientificAchievementController {
     try {
       const { id } = req.params;
 
-      const result = await scientificAchievementService.deleteAchievement(parseInt(id));
+      const result = await scientificAchievementService.deleteAchievement(id);
 
       // Tự động cập nhật lại hồ sơ sau khi xóa thành tích
       if (result.personnelId) {

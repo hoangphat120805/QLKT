@@ -1193,7 +1193,7 @@ class ProposalService {
     try {
       // Lấy thông tin đề xuất
       const proposal = await prisma.bangDeXuat.findUnique({
-        where: { id: parseInt(proposalId) },
+        where: { id: proposalId },
         include: {
           DonVi: true,
           NguoiDeXuat: {
@@ -1390,7 +1390,7 @@ class ProposalService {
       }
 
       await prisma.bangDeXuat.update({
-        where: { id: parseInt(proposalId) },
+        where: { id: proposalId },
         data: updateData,
       });
 
@@ -1472,7 +1472,7 @@ class ProposalService {
     try {
       // Lấy thông tin đề xuất
       const proposal = await prisma.bangDeXuat.findUnique({
-        where: { id: parseInt(proposalId) },
+        where: { id: proposalId },
         include: {
           DonVi: true,
           NguoiDeXuat: {
@@ -1495,7 +1495,7 @@ class ProposalService {
 
       // Cập nhật trạng thái
       await prisma.bangDeXuat.update({
-        where: { id: parseInt(proposalId) },
+        where: { id: proposalId },
         data: {
           status: 'REJECTED',
           nguoi_duyet_id: adminId,
@@ -1527,7 +1527,7 @@ class ProposalService {
   async downloadProposalExcel(proposalId) {
     try {
       const proposal = await prisma.bangDeXuat.findUnique({
-        where: { id: parseInt(proposalId) },
+        where: { id: proposalId },
         include: {
           DonVi: true,
           NguoiDeXuat: {
@@ -2071,7 +2071,7 @@ class ProposalService {
   async deleteProposal(proposalId, userId, userRole) {
     try {
       const proposal = await prisma.bangDeXuat.findUnique({
-        where: { id: parseInt(proposalId) },
+        where: { id: proposalId },
         include: {
           DonVi: true,
           NguoiDeXuat: {
@@ -2113,7 +2113,7 @@ class ProposalService {
 
       // Xóa proposal
       await prisma.bangDeXuat.delete({
-        where: { id: parseInt(proposalId) },
+        where: { id: proposalId },
       });
 
       return {

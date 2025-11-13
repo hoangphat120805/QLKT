@@ -157,14 +157,49 @@ export default function ManagerPersonnelPage() {
     }
   };
 
-  const filteredPersonnel = personnel.filter(p => {
-    const matchesPosition = !selectedPosition || p.chuc_vu_id === parseInt(selectedPosition);
-    return matchesPosition;
-  });
+  const filteredPersonnel = personnel
+    .filter(p => {
+      const matchesPosition = !selectedPosition || p.chuc_vu_id === parseInt(selectedPosition);
+      return matchesPosition;
+    })
+    .sort((a, b) => {
+      // Những người không có đơn vị trực thuộc (chỉ huy) lên đầu
+      const aIsManager = !a.don_vi_truc_thuoc_id;
+      const bIsManager = !b.don_vi_truc_thuoc_id;
+
+      if (aIsManager && !bIsManager) return -1;
+      if (!aIsManager && bIsManager) return 1;
+
+      // Nếu cùng loại thì giữ nguyên thứ tự
+      return 0;
+    });
 
   const totalPersonnel = pagination.total;
   const activePersonnel = personnel.filter(p => p.trang_thai === 'ACTIVE').length;
   const uniquePositions = new Set(personnel.map(p => p.chuc_vu?.ten_chuc_vu)).size;
+
+  // Filter positions để hiển thị tất cả chức vụ thuộc cơ quan đơn vị của manager
+  const filteredPositions = positions.filter(pos => {
+    if (!managerUnitId) return false;
+
+    // 1. Chức vụ thuộc trực tiếp cơ quan đơn vị (co_quan_don_vi_id = managerUnitId)
+    if (pos.co_quan_don_vi_id === managerUnitId) {
+      return true;
+    }
+
+    // 2. Chức vụ thuộc đơn vị trực thuộc của cơ quan đơn vị
+    // Sử dụng DonViTrucThuoc relation có sẵn trong position
+    if (pos.don_vi_truc_thuoc_id && pos.DonViTrucThuoc) {
+      // Kiểm tra co_quan_don_vi_id từ DonViTrucThuoc relation
+      const coQuanIdFromRelation = pos.DonViTrucThuoc.co_quan_don_vi_id ||
+                                   pos.DonViTrucThuoc.CoQuanDonVi?.id;
+      if (coQuanIdFromRelation === managerUnitId) {
+        return true;
+      }
+    }
+
+    return false;
+  });
 
   if (loading && personnel.length === 0 && managerUnitId !== null) {
     return (
@@ -287,8 +322,8 @@ export default function ManagerPersonnelPage() {
               style={{ width: 256 }}
               placeholder="Lọc theo Chức vụ"
             >
-              <Option value="">Tất cả chức vụ</Option>
-              {positions.map(position => (
+              <Option value="">Tất cả chức vụ ({filteredPositions.length})</Option>
+              {filteredPositions.map(position => (
                 <Option key={position.id} value={position.id.toString()}>
                   {position.ten_chuc_vu}
                 </Option>
@@ -312,6 +347,7 @@ export default function ManagerPersonnelPage() {
               onEdit={handleOpenDialog}
               onRefresh={loadData}
               readOnly={false}
+              viewLinkPrefix="/manager/personnel"
             />
           </Card>
         )}

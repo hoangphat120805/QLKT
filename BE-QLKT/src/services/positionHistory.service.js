@@ -8,7 +8,7 @@ class PositionHistoryService {
       }
 
       const personnel = await prisma.quanNhan.findUnique({
-        where: { id: parseInt(personnelId) },
+        where: { id: personnelId },
       });
 
       if (!personnel) {
@@ -16,7 +16,7 @@ class PositionHistoryService {
       }
 
       const history = await prisma.lichSuChucVu.findMany({
-        where: { quan_nhan_id: parseInt(personnelId) },
+        where: { quan_nhan_id: personnelId },
         include: {
           ChucVu: {
             include: {

@@ -111,7 +111,7 @@ class NotificationController {
       // Kiểm tra thông báo có tồn tại và thuộc về user hiện tại
       const notification = await prisma.thongBao.findFirst({
         where: {
-          id: parseInt(id),
+          id: id,
           nguoi_nhan_id: currentUser.id,
         },
       });
@@ -124,7 +124,7 @@ class NotificationController {
       }
 
       const updatedNotification = await prisma.thongBao.update({
-        where: { id: parseInt(id) },
+        where: { id: id },
         data: {
           is_read: true,
           read_at: new Date(),
@@ -190,7 +190,7 @@ class NotificationController {
       // Kiểm tra thông báo có tồn tại và thuộc về user hiện tại
       const notification = await prisma.thongBao.findFirst({
         where: {
-          id: parseInt(id),
+          id: id,
           nguoi_nhan_id: currentUser.id,
         },
       });
@@ -203,7 +203,7 @@ class NotificationController {
       }
 
       await prisma.thongBao.delete({
-        where: { id: parseInt(id) },
+        where: { id: id },
       });
 
       return res.status(200).json({

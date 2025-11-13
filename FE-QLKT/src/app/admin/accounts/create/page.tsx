@@ -51,8 +51,8 @@ export default function AdminCreateAccountPage() {
         <Alert
           type="info"
           showIcon
-          message="Tạo tài khoản trực tiếp"
-          description="Tạo tài khoản MANAGER hoặc USER với username và password tùy chỉnh. Tài khoản sẽ được liên kết với đơn vị và chức vụ được chọn."
+          message="Hướng dẫn tạo tài khoản"
+          description="Thiết lập tài khoản đăng nhập cho quân nhân. Hệ thống sẽ tự động tạo hồ sơ quân nhân mới và liên kết với đơn vị, chức vụ được chọn. Khuyến nghị sử dụng số CCCD làm tên đăng nhập."
         />
 
         <Card bordered className="shadow-sm">

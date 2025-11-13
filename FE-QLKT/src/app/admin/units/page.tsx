@@ -253,16 +253,41 @@ export default function UnitsPage() {
 
         <Modal
           title={
-            <span style={{ fontSize: '18px', fontWeight: 600 }}>
-              <ApartmentOutlined style={{ marginRight: '8px', color: '#0284c7' }} />
-              {editingUnit ? 'Sửa Đơn vị' : 'Thêm Đơn vị mới'}
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '8px',
+                  background: 'linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <ApartmentOutlined style={{ fontSize: '18px', color: '#fff' }} />
+              </div>
+              <span style={{ fontSize: '18px', fontWeight: 600 }}>
+                {editingUnit ? 'Chỉnh sửa Đơn vị' : 'Thêm Đơn vị mới'}
+              </span>
+            </div>
           }
           open={dialogOpen}
           onCancel={handleCloseDialog}
           footer={null}
-          width={800}
+          width={600}
+          centered
           destroyOnClose
+          styles={{
+            header: {
+              paddingBottom: '16px',
+              marginBottom: '24px',
+              borderBottom: '1px solid #f0f0f0',
+            },
+            body: {
+              paddingTop: '24px',
+            },
+          }}
         >
           <UnitForm unit={editingUnit} onSuccess={loadData} onClose={handleCloseDialog} />
         </Modal>

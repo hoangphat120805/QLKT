@@ -13,7 +13,7 @@ class AnnualRewardService {
 
       // Kiểm tra quân nhân có tồn tại không
       const personnel = await prisma.quanNhan.findUnique({
-        where: { id: parseInt(personnelId) },
+        where: { id: personnelId },
       });
 
       if (!personnel) {
@@ -21,7 +21,7 @@ class AnnualRewardService {
       }
 
       const rewards = await prisma.danhHieuHangNam.findMany({
-        where: { quan_nhan_id: parseInt(personnelId) },
+        where: { quan_nhan_id: personnelId },
         orderBy: {
           nam: 'desc',
         },
@@ -311,7 +311,7 @@ class AnnualRewardService {
         try {
           // Kiểm tra quân nhân có tồn tại không
           const personnel = await prisma.quanNhan.findUnique({
-            where: { id: parseInt(personnelId) },
+            where: { id: personnelId },
           });
 
           if (!personnel) {
@@ -325,7 +325,7 @@ class AnnualRewardService {
           // Kiểm tra đã có danh hiệu cho năm này chưa
           const existingReward = await prisma.danhHieuHangNam.findFirst({
             where: {
-              quan_nhan_id: parseInt(personnelId),
+              quan_nhan_id: personnelId,
               nam: parseInt(nam),
             },
           });
@@ -343,7 +343,7 @@ class AnnualRewardService {
 
           const newReward = await prisma.danhHieuHangNam.create({
             data: {
-              quan_nhan_id: parseInt(personnelId),
+              quan_nhan_id: personnelId,
               nam: parseInt(nam),
               danh_hieu: finalDanhHieu,
               so_quyet_dinh: so_quyet_dinh || null,
@@ -359,7 +359,7 @@ class AnnualRewardService {
 
           // Tự động cập nhật lại hồ sơ
           try {
-            await profileService.recalculateProfile(parseInt(personnelId));
+            await profileService.recalculateProfile(personnelId);
           } catch (recalcError) {
             console.error(
               `⚠️ Failed to auto-recalculate profile for personnel ${personnelId}:`,

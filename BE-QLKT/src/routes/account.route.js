@@ -73,7 +73,7 @@ router.post(
     action: 'RESET_PASSWORD',
     resource: 'accounts',
     getDescription: req => createDescription.resetPassword(req.body),
-    getResourceId: req => (req.body.account_id ? parseInt(req.body.account_id) : null),
+    getResourceId: req => req.body.account_id || null,
   }),
   accountController.resetPassword
 );

@@ -97,6 +97,30 @@ class UnitController {
   }
 
   /**
+   * GET /api/sub-units
+   * Lấy tất cả đơn vị trực thuộc
+   * Query params: ?co_quan_don_vi_id=xxx để lọc theo cơ quan đơn vị
+   */
+  async getAllSubUnits(req, res) {
+    try {
+      const { co_quan_don_vi_id } = req.query;
+      const result = await unitService.getAllSubUnits(co_quan_don_vi_id);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Lấy danh sách đơn vị trực thuộc thành công',
+        data: result,
+      });
+    } catch (error) {
+      console.error('Get sub units error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Lấy danh sách đơn vị trực thuộc thất bại',
+      });
+    }
+  }
+
+  /**
    * GET /api/units/:id
    * Lấy chi tiết đơn vị với cấu trúc cây
    */

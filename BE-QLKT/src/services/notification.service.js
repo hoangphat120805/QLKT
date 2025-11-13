@@ -26,7 +26,7 @@ class NotificationService {
           title,
           message,
           resource,
-          tai_nguyen_id: resource_id ? parseInt(resource_id) : null,
+          tai_nguyen_id: resource_id || null,
           link,
           nhat_ky_he_thong_id: system_log_id,
         },

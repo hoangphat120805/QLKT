@@ -17,21 +17,27 @@ export function PositionForm({ position, units = [], onSuccess, onClose }: Posit
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
 
+  // Xác định xem đơn vị có phải là đơn vị trực thuộc không
+  const isDonViTrucThuoc = units.length === 1 && !!units[0].co_quan_don_vi_id;
+
   useEffect(() => {
     if (position) {
       form.setFieldsValue({
         don_vi_id: position.don_vi_id?.toString() || undefined,
         ten_chuc_vu: position.ten_chuc_vu || '',
-        is_manager: position.is_manager || false,
+        // Nếu là đơn vị trực thuộc thì luôn set is_manager = false
+        is_manager: isDonViTrucThuoc ? false : (position.is_manager || false),
         he_so_luong: position.he_so_luong || undefined,
       });
     } else if (units.length === 1) {
       // Nếu chỉ có 1 đơn vị (đang tạo từ trang chi tiết), tự động set don_vi_id
       form.setFieldsValue({
         don_vi_id: units[0].id?.toString(),
+        // Đơn vị trực thuộc mặc định is_manager = false
+        is_manager: false,
       });
     }
-  }, [position, units, form]);
+  }, [position, units, form, isDonViTrucThuoc]);
 
   async function onSubmit(values: any) {
     try {
@@ -46,15 +52,12 @@ export function PositionForm({ position, units = [], onSuccess, onClose }: Posit
       // Prepare payload
       const payload: any = {
         ten_chuc_vu: values.ten_chuc_vu,
-        // Chỉ set is_manager nếu không phải đơn vị trực thuộc hoặc đang sửa
-        is_manager:
-          units.length === 1 && units[0].co_quan_don_vi_id && !position?.id
-            ? false
-            : values.is_manager || false,
+        // Nếu là đơn vị trực thuộc thì luôn is_manager = false, không có chỉ huy
+        is_manager: isDonViTrucThuoc ? false : (values.is_manager || false),
       };
 
       // Add optional fields
-      if (values.he_so_luong) {
+      if (values.he_so_luong !== undefined && values.he_so_luong !== null && values.he_so_luong !== '') {
         payload.he_so_luong = parseFloat(values.he_so_luong);
       }
 
@@ -153,16 +156,25 @@ export function PositionForm({ position, units = [], onSuccess, onClose }: Posit
       )}
 
       <Form.Item label="Hệ số lương" name="he_so_luong">
-        <Input type="number" placeholder="Nhập hệ số lương" step="0.01" />
+        <Input type="number" placeholder="Nhập hệ số lương (VD: 2.5)" step="0.01" min="0" />
       </Form.Item>
 
-      {/* Chỉ hiển thị checkbox "Là Chỉ huy?" khi tạo chức vụ cho cơ quan đơn vị (không có co_quan_don_vi_id) */}
-      {/* Đơn vị trực thuộc không có checkbox này */}
-      {(!position?.id && units.length === 1 && !units[0].co_quan_don_vi_id) || position?.id ? (
+      {/* Chỉ hiển thị checkbox "Là Chỉ huy?" cho CƠ QUAN ĐƠN VỊ */}
+      {/* Đơn vị trực thuộc KHÔNG có chỉ huy, luôn là false */}
+      {!isDonViTrucThuoc && (
         <Form.Item name="is_manager" valuePropName="checked">
           <Checkbox>Là Chỉ huy?</Checkbox>
         </Form.Item>
-      ) : null}
+      )}
+
+      {/* Hiển thị thông báo nếu là đơn vị trực thuộc */}
+      {isDonViTrucThuoc && (
+        <Form.Item>
+          <Text type="secondary" style={{ fontSize: '13px' }}>
+            ℹ️ Đơn vị trực thuộc không có chức vụ chỉ huy. Chỉ cơ quan đơn vị mới có chỉ huy.
+          </Text>
+        </Form.Item>
+      )}
 
       <Form.Item style={{ marginBottom: 0, marginTop: '24px' }}>
         <Space style={{ display: 'flex', justifyContent: 'flex-end' }}>

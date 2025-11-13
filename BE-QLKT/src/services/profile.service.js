@@ -7,7 +7,7 @@ class ProfileService {
   async getAnnualProfile(personnelId) {
     try {
       const personnel = await prisma.quanNhan.findUnique({
-        where: { id: parseInt(personnelId) },
+        where: { id: personnelId },
       });
 
       if (!personnel) {
@@ -15,7 +15,7 @@ class ProfileService {
       }
 
       let profile = await prisma.hoSoHangNam.findUnique({
-        where: { quan_nhan_id: parseInt(personnelId) },
+        where: { quan_nhan_id: personnelId },
         include: {
           QuanNhan: {
             include: {
@@ -30,7 +30,7 @@ class ProfileService {
       if (!profile) {
         profile = await prisma.hoSoHangNam.create({
           data: {
-            quan_nhan_id: parseInt(personnelId),
+            quan_nhan_id: personnelId,
             tong_cstdcs: 0,
             tong_nckh: 0,
             cstdcs_lien_tuc: 0,
@@ -61,7 +61,7 @@ class ProfileService {
   async getServiceProfile(personnelId) {
     try {
       const personnel = await prisma.quanNhan.findUnique({
-        where: { id: parseInt(personnelId) },
+        where: { id: personnelId },
       });
 
       if (!personnel) {
@@ -69,7 +69,7 @@ class ProfileService {
       }
 
       let profile = await prisma.hoSoNienHan.findUnique({
-        where: { quan_nhan_id: parseInt(personnelId) },
+        where: { quan_nhan_id: personnelId },
         include: {
           QuanNhan: {
             include: {
@@ -84,7 +84,7 @@ class ProfileService {
       if (!profile) {
         profile = await prisma.hoSoNienHan.create({
           data: {
-            quan_nhan_id: parseInt(personnelId),
+            quan_nhan_id: personnelId,
             hccsvv_hang_ba_status: 'CHUA_DU',
             hccsvv_hang_nhi_status: 'CHUA_DU',
             hccsvv_hang_nhat_status: 'CHUA_DU',
@@ -477,7 +477,7 @@ class ProfileService {
       // BƯỚC 1: Thu thập Toàn bộ Dữ liệu Lịch sử (Input)
       // ==============================================
       const personnel = await prisma.quanNhan.findUnique({
-        where: { id: parseInt(personnelId) },
+        where: { id: personnelId },
         include: {
           DanhHieuHangNam: {
             orderBy: { nam: 'asc' }, // Sắp xếp theo năm tăng dần
@@ -609,7 +609,7 @@ class ProfileService {
       // BƯỚC 5: Cập nhật Kết quả (Output)
       // ==============================================
       const hoSoHangNam = await prisma.hoSoHangNam.upsert({
-        where: { quan_nhan_id: parseInt(personnelId) },
+        where: { quan_nhan_id: personnelId },
         update: {
           tong_cstdcs: tong_cstdcs,
           tong_nckh: tong_nckh,
@@ -619,7 +619,7 @@ class ProfileService {
           goi_y: goi_y,
         },
         create: {
-          quan_nhan_id: parseInt(personnelId),
+          quan_nhan_id: personnelId,
           tong_cstdcs: tong_cstdcs,
           tong_nckh: tong_nckh,
           cstdcs_lien_tuc: cstdcs_lien_tuc,
@@ -647,7 +647,7 @@ class ProfileService {
     try {
       // Load tất cả dữ liệu cần thiết
       const personnel = await prisma.quanNhan.findUnique({
-        where: { id: parseInt(personnelId) },
+        where: { id: personnelId },
         include: {
           DanhHieuHangNam: {
             orderBy: { nam: 'desc' },
@@ -673,11 +673,11 @@ class ProfileService {
 
       // Lấy hồ sơ hiện tại (nếu có) để giữ status đã được Admin cập nhật
       const existingAnnualProfile = await prisma.hoSoHangNam.findUnique({
-        where: { quan_nhan_id: parseInt(personnelId) },
+        where: { quan_nhan_id: personnelId },
       });
 
       const existingServiceProfile = await prisma.hoSoNienHan.findUnique({
-        where: { quan_nhan_id: parseInt(personnelId) },
+        where: { quan_nhan_id: personnelId },
       });
 
       // ==============================================
@@ -724,7 +724,7 @@ class ProfileService {
 
       // Cập nhật hoặc tạo mới hồ sơ hằng năm
       await prisma.hoSoHangNam.upsert({
-        where: { quan_nhan_id: parseInt(personnelId) },
+        where: { quan_nhan_id: personnelId },
         update: {
           tong_cstdcs: cstdcsCount,
           tong_nckh: nckhCount,
@@ -734,7 +734,7 @@ class ProfileService {
           goi_y: finalGoiYHangNam,
         },
         create: {
-          quan_nhan_id: parseInt(personnelId),
+          quan_nhan_id: personnelId,
           tong_cstdcs: cstdcsCount,
           tong_nckh: nckhCount,
           cstdcs_lien_tuc: cstdcsLienTuc,
@@ -850,7 +850,7 @@ class ProfileService {
 
       // Cập nhật hoặc tạo mới hồ sơ niên hạn
       await prisma.hoSoNienHan.upsert({
-        where: { quan_nhan_id: parseInt(personnelId) },
+        where: { quan_nhan_id: personnelId },
         update: {
           hccsvv_hang_ba_status: hccsvvBa.status,
           hccsvv_hang_ba_ngay: hccsvvBa.ngay,
@@ -865,7 +865,7 @@ class ProfileService {
           goi_y: finalGoiYNienHan,
         },
         create: {
-          quan_nhan_id: parseInt(personnelId),
+          quan_nhan_id: personnelId,
           hccsvv_hang_ba_status: hccsvvBa.status,
           hccsvv_hang_ba_ngay: hccsvvBa.ngay,
           hccsvv_hang_nhi_status: hccsvvNhi.status,
@@ -949,7 +949,7 @@ class ProfileService {
   async updateServiceProfile(personnelId, updates) {
     try {
       const profile = await prisma.hoSoNienHan.findUnique({
-        where: { quan_nhan_id: parseInt(personnelId) },
+        where: { quan_nhan_id: personnelId },
       });
 
       if (!profile) {
@@ -995,7 +995,7 @@ class ProfileService {
       }
 
       const updatedProfile = await prisma.hoSoNienHan.update({
-        where: { quan_nhan_id: parseInt(personnelId) },
+        where: { quan_nhan_id: personnelId },
         data: updateData,
       });
 

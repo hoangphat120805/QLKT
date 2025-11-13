@@ -68,7 +68,15 @@ class AccountController {
    */
   async createAccount(req, res) {
     try {
-      const { personnel_id, username, password, role, don_vi_id, chuc_vu_id } = req.body;
+      const {
+        personnel_id,
+        username,
+        password,
+        role,
+        co_quan_don_vi_id,
+        don_vi_truc_thuoc_id,
+        chuc_vu_id,
+      } = req.body;
       const userRole = req.user?.role;
 
       // Validate input
@@ -100,12 +108,31 @@ class AccountController {
         }
       }
 
-      // Đối với MANAGER và USER, bắt buộc phải có don_vi_id và chuc_vu_id
-      if ((role === 'MANAGER' || role === 'USER') && (!don_vi_id || !chuc_vu_id)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Vui lòng chọn đơn vị và chức vụ cho tài khoản MANAGER/USER',
-        });
+      // Validation theo role
+      if (role === 'MANAGER') {
+        // MANAGER: Bắt buộc có co_quan_don_vi_id và chuc_vu_id, KHÔNG có don_vi_truc_thuoc_id
+        if (!co_quan_don_vi_id || !chuc_vu_id) {
+          return res.status(400).json({
+            success: false,
+            message: 'Vui lòng chọn Cơ quan đơn vị và Chức vụ cho tài khoản MANAGER',
+          });
+        }
+        if (don_vi_truc_thuoc_id) {
+          return res.status(400).json({
+            success: false,
+            message:
+              'Tài khoản MANAGER chỉ được chọn Cơ quan đơn vị, không được chọn Đơn vị trực thuộc',
+          });
+        }
+      } else if (role === 'USER') {
+        // USER: Bắt buộc có CẢ HAI co_quan_don_vi_id VÀ don_vi_truc_thuoc_id VÀ chuc_vu_id
+        if (!co_quan_don_vi_id || !don_vi_truc_thuoc_id || !chuc_vu_id) {
+          return res.status(400).json({
+            success: false,
+            message:
+              'Vui lòng chọn đầy đủ Cơ quan đơn vị, Đơn vị trực thuộc và Chức vụ cho tài khoản USER',
+          });
+        }
       }
 
       const result = await accountService.createAccount({
@@ -113,8 +140,9 @@ class AccountController {
         username,
         password,
         role,
-        don_vi_id: don_vi_id || undefined, // Giữ nguyên UUID string
-        chuc_vu_id: chuc_vu_id || undefined, // Giữ nguyên UUID string
+        co_quan_don_vi_id: co_quan_don_vi_id || undefined, // UUID string
+        don_vi_truc_thuoc_id: don_vi_truc_thuoc_id || undefined, // UUID string
+        chuc_vu_id: chuc_vu_id || undefined, // UUID string
       });
 
       return res.status(201).json({
@@ -161,7 +189,7 @@ class AccountController {
         }
 
         // Kiểm tra xem tài khoản hiện tại có phải là MANAGER hoặc USER không
-        const existingAccount = await accountService.getAccountById(parseInt(id));
+        const existingAccount = await accountService.getAccountById(id);
         if (!['MANAGER', 'USER'].includes(existingAccount.role)) {
           return res.status(403).json({
             success: false,
@@ -178,7 +206,7 @@ class AccountController {
         }
       }
 
-      const result = await accountService.updateAccount(parseInt(id), { role });
+      const result = await accountService.updateAccount(id, { role });
 
       return res.status(200).json({
         success: true,
@@ -209,7 +237,7 @@ class AccountController {
         });
       }
 
-      const result = await accountService.resetPassword(parseInt(account_id));
+      const result = await accountService.resetPassword(account_id);
 
       return res.status(200).json({
         success: true,
@@ -232,7 +260,7 @@ class AccountController {
     try {
       const { id } = req.params;
 
-      const result = await accountService.deleteAccount(parseInt(id));
+      const result = await accountService.deleteAccount(id);
 
       return res.status(200).json({
         success: true,

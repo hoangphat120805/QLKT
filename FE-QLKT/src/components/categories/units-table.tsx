@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Table, Button, Space, Popconfirm, message, Tag } from 'antd';
+import { Table, Button, Space, Popconfirm, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
@@ -11,9 +11,19 @@ interface UnitsTableProps {
   units: any[];
   onEdit?: (unit: any) => void;
   onRefresh?: () => void;
+  showChildCount?: boolean;
+  showPositionCount?: boolean;
+  showPositionList?: boolean;
 }
 
-export function UnitsTable({ units, onEdit, onRefresh }: UnitsTableProps) {
+export function UnitsTable({
+  units,
+  onEdit,
+  onRefresh,
+  showChildCount = true,
+  showPositionCount = false,
+  showPositionList = false,
+}: UnitsTableProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -33,7 +43,7 @@ export function UnitsTable({ units, onEdit, onRefresh }: UnitsTableProps) {
     }
   };
 
-  const columns: ColumnsType<any> = [
+  const baseColumns: ColumnsType<any> = [
     {
       title: 'Mã Đơn vị',
       dataIndex: 'ma_don_vi',
@@ -58,14 +68,51 @@ export function UnitsTable({ units, onEdit, onRefresh }: UnitsTableProps) {
       align: 'center',
       render: val => val ?? 0,
     },
-    {
+  ];
+
+  const dynamicColumns: ColumnsType<any> = [];
+
+  if (showChildCount) {
+    dynamicColumns.push({
       title: 'Đơn vị trực thuộc',
       dataIndex: 'DonViTrucThuoc',
       key: 'children',
       width: 150,
       align: 'center',
       render: children => children?.length ?? 0,
-    },
+    });
+  }
+
+  if (showPositionCount) {
+    dynamicColumns.push({
+      title: 'Số chức vụ',
+      dataIndex: 'ChucVu',
+      key: 'positions',
+      width: 150,
+      align: 'center',
+      render: positions => positions?.length ?? 0,
+    });
+  }
+
+  if (showPositionList) {
+    dynamicColumns.push({
+      title: 'Danh sách chức vụ',
+      dataIndex: 'ChucVu',
+      key: 'positionNames',
+      align: 'left',
+      render: positions =>
+        positions && positions.length > 0
+          ? positions
+              .map((pos: any) => pos.ten_chuc_vu)
+              .filter(Boolean)
+              .join(', ')
+          : 'Chưa có chức vụ',
+    });
+  }
+
+  const columns: ColumnsType<any> = [
+    ...baseColumns,
+    ...dynamicColumns,
     {
       title: 'Hành động',
       key: 'action',

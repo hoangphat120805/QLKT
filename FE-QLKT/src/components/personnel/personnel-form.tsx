@@ -29,7 +29,8 @@ type PersonnelFormValues = z.infer<typeof personnelFormSchema>;
 
 interface PersonnelFormProps {
   personnel?: any;
-  units?: any[];
+  coQuanDonViList?: any[];
+  donViTrucThuocList?: any[];
   positions?: any[];
   onSuccess?: (data?: any) => void;
   onClose?: () => void;
@@ -38,7 +39,8 @@ interface PersonnelFormProps {
 
 export function PersonnelForm({
   personnel,
-  units = [],
+  coQuanDonViList = [],
+  donViTrucThuocList = [],
   positions = [],
   onSuccess,
   onClose,
@@ -52,7 +54,8 @@ export function PersonnelForm({
     defaultValues: {
       cccd: personnel?.cccd || '',
       ho_ten: personnel?.ho_ten || '',
-      don_vi_id: personnel?.don_vi_id?.toString() || '',
+      co_quan_don_vi_id: personnel?.co_quan_don_vi_id?.toString() || '',
+      don_vi_truc_thuoc_id: personnel?.don_vi_truc_thuoc_id?.toString() || '',
       chuc_vu_id: personnel?.chuc_vu_id?.toString() || '',
       ngay_nhap_ngu: personnel?.ngay_nhap_ngu || '',
       ngay_sinh: personnel?.ngay_sinh || '',
@@ -157,20 +160,61 @@ export function PersonnelForm({
 
         <FormField
           control={form.control}
-          name="don_vi_id"
+          name="co_quan_don_vi_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Đơn vị</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value} disabled={readOnly}>
+              <FormLabel>Cơ quan đơn vị</FormLabel>
+              <Select
+                onValueChange={value => {
+                  field.onChange(value);
+                  // Clear don_vi_truc_thuoc_id khi chọn cơ quan đơn vị
+                  form.setValue('don_vi_truc_thuoc_id', '');
+                }}
+                value={field.value}
+                disabled={readOnly}
+              >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Chọn đơn vị" />
+                    <SelectValue placeholder="Chọn cơ quan đơn vị" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {units.map(unit => (
+                  {coQuanDonViList.map(unit => (
                     <SelectItem key={unit.id} value={unit.id.toString()}>
-                      {unit.ten_don_vi}
+                      {unit.ten_don_vi} ({unit.ma_don_vi})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="don_vi_truc_thuoc_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Đơn vị trực thuộc</FormLabel>
+              <Select
+                onValueChange={value => {
+                  field.onChange(value);
+                  // Clear co_quan_don_vi_id khi chọn đơn vị trực thuộc
+                  form.setValue('co_quan_don_vi_id', '');
+                }}
+                value={field.value}
+                disabled={readOnly}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn đơn vị trực thuộc" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {donViTrucThuocList.map(unit => (
+                    <SelectItem key={unit.id} value={unit.id.toString()}>
+                      {unit.ten_don_vi} ({unit.ma_don_vi})
                     </SelectItem>
                   ))}
                 </SelectContent>

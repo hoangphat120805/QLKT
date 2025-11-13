@@ -81,7 +81,7 @@ export function PositionsTable({ positions, onEdit, onRefresh }: PositionsTableP
       dataIndex: 'he_so_luong',
       key: 'he_so_luong',
       width: 150,
-      render: value => (value ? parseFloat(value).toFixed(2) : '-'),
+      render: value => parseFloat(value || 0).toFixed(2),
     },
     {
       title: 'Hành động',

@@ -29,6 +29,11 @@ router.use('/api/accounts', accountRoute);
 router.use('/api/units', unitRoute);
 router.use('/api/positions', positionRoute);
 
+// 3.0.1 Sub-units (Đơn vị trực thuộc)
+const unitController = require('../controllers/unit.controller');
+const { verifyToken, requireAdmin } = require('../middlewares/auth');
+router.get('/api/sub-units', verifyToken, requireAdmin, unitController.getAllSubUnits);
+
 // 3.1 Categories (alias routes for frontend compatibility)
 router.use('/api/categories', categoriesRoute);
 

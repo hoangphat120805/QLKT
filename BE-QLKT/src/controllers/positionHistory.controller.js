@@ -49,7 +49,7 @@ class PositionHistoryController {
 
       // Tự động cập nhật lại hồ sơ sau khi thêm lịch sử chức vụ
       try {
-        await profileService.recalculateProfile(parseInt(personnel_id));
+        await profileService.recalculateProfile(personnel_id);
         console.log(`✅ Auto-recalculated profile for personnel ${personnel_id}`);
       } catch (recalcError) {
         console.error(`⚠️ Failed to auto-recalculate profile:`, recalcError.message);
@@ -74,7 +74,7 @@ class PositionHistoryController {
       const { id } = req.params;
       const { chuc_vu_id, ngay_bat_dau, ngay_ket_thuc } = req.body;
 
-      const result = await positionHistoryService.updatePositionHistory(parseInt(id), {
+      const result = await positionHistoryService.updatePositionHistory(id, {
         chuc_vu_id,
         ngay_bat_dau,
         ngay_ket_thuc,
@@ -106,7 +106,7 @@ class PositionHistoryController {
     try {
       const { id } = req.params;
 
-      const result = await positionHistoryService.deletePositionHistory(parseInt(id));
+      const result = await positionHistoryService.deletePositionHistory(id);
 
       // Tự động cập nhật lại hồ sơ sau khi xóa lịch sử chức vụ
       if (result.personnelId) {
