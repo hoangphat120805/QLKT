@@ -8,10 +8,10 @@
 
 Repository này chứa **tài liệu và cấu hình** cho dự án QLKT:
 
-- ✅ API Documentation ([QLKT.md](QLKT.md))
-- ✅ AI Assistant Configuration ([.claude/](.claude/), [.cursor/](.cursor/))
-- ✅ Coding Standards ([.cursorrules](.cursorrules))
-- ✅ Project Setup Guide
+- ✅ **Tài liệu Tổng hợp** ([DOCUMENTATION.md](DOCUMENTATION.md)) - Tất cả thông tin về dự án
+- ✅ **API Documentation** ([QLKT.md](QLKT.md)) - Chi tiết các API endpoints
+- ✅ **AI Assistant Guides** ([.claude/CLAUDE.md](.claude/CLAUDE.md), [.cursor/CURSOR.md](.cursor/CURSOR.md))
+- ✅ **Coding Standards** ([.cursorrules](.cursorrules))
 
 > **Lưu ý**: Source code không được public trên GitHub. Repository này chỉ phục vụ mục đích documentation và configuration.
 
@@ -70,11 +70,12 @@ QLKT/
 │   └── prisma/                 # Prisma schema & migrations
 │
 ├── .claude/                    # Claude AI documentation
-│   └── CLAUDE.md               # Full project documentation
+│   └── CLAUDE.md               # Full project documentation for Claude
 ├── .cursor/                    # Cursor AI documentation
-│   └── CURSOR.md               # AI assistant guide
+│   └── CURSOR.md               # Quick reference guide for Cursor
 ├── .cursorrules                # Cursor editor rules
-├── QLKT.md                     # API documentation
+├── DOCUMENTATION.md            # Tài liệu tổng hợp (tất cả thông tin)
+├── QLKT.md                     # API documentation chi tiết
 └── README.md                   # This file
 ```
 
@@ -167,15 +168,15 @@ QLKT/
 
 ### Cho Developers
 
-1. Đọc [QLKT.md](QLKT.md) để hiểu API endpoints
-2. Đọc [.claude/CLAUDE.md](.claude/CLAUDE.md) để hiểu toàn bộ kiến trúc
-3. Tham khảo [.cursorrules](.cursorrules) khi code
+1. **Bắt đầu từ**: [DOCUMENTATION.md](DOCUMENTATION.md) - Tài liệu tổng hợp đầy đủ
+2. **API Reference**: [QLKT.md](QLKT.md) - Chi tiết các API endpoints
+3. **Code Style**: [.cursorrules](.cursorrules) - Coding standards và conventions
 
 ### Cho AI Assistants (Claude/Cursor)
 
-1. Import file `.claude/CLAUDE.md` vào context
-2. Tuân thủ coding standards trong `.cursorrules`
-3. Tham khảo API specs trong `QLKT.md`
+1. **Claude AI**: Import `.claude/CLAUDE.md` vào context
+2. **Cursor AI**: Tham khảo `.cursor/CURSOR.md` cho quick reference
+3. **Chung**: Tuân thủ coding standards trong `.cursorrules`
 
 ### Setup Dự án (Nếu có source code)
 
@@ -245,18 +246,15 @@ npx prisma db push       # Push schema lên database
 
 ### Cho Developers
 
-- **[.claude/CLAUDE.md](.claude/CLAUDE.md)**: Tài liệu chi tiết đầy đủ về dự án
-- **[.cursor/CURSOR.md](.cursor/CURSOR.md)**: Hướng dẫn cho AI assistants (Cursor, Claude)
+- **[DOCUMENTATION.md](DOCUMENTATION.md)**: ⭐ Tài liệu tổng hợp đầy đủ về dự án (BẮT ĐẦU TỪ ĐÂY)
 - **[QLKT.md](QLKT.md)**: API documentation chi tiết
 - **[.cursorrules](.cursorrules)**: Code style & conventions
 
 ### Cho AI Assistants
 
-Khi làm việc với Claude hoặc Cursor, tham khảo:
-
-1. `.claude/CLAUDE.md` - Full project context
-2. `.cursor/CURSOR.md` - Quick reference guide
-3. `.cursorrules` - Coding standards
+- **[.claude/CLAUDE.md](.claude/CLAUDE.md)**: Full project documentation cho Claude AI
+- **[.cursor/CURSOR.md](.cursor/CURSOR.md)**: Quick reference guide cho Cursor AI
+- **[.cursorrules](.cursorrules)**: Coding standards (chung cho cả hai)
 
 ## 🔐 Authentication Flow
 
