@@ -7,8 +7,9 @@ This is **QLKT** (Quản lý Khen thưởng) - Awards Management System for Viet
 - **Auth**: JWT (Access Token + Refresh Token)
 
 ## Quick Reference
-- Full documentation: `.claude/CLAUDE.md`
-- AI assistant guide: `.cursor/CURSOR.md`
+- Full documentation: `DOCUMENTATION.md`
+- Claude AI guide: `.claude/CLAUDE.md`
+- Cursor AI guide: `.cursor/CURSOR.md`
 - API documentation: `QLKT.md`
 
 ## Code Style & Formatting
@@ -69,9 +70,11 @@ Always check user roles for protected routes:
 ### Database Operations
 - Use Prisma for ALL database operations
 - NEVER use raw SQL queries
+- All IDs use `cuid()` - String VarChar(30) (no dashes)
 - INPUT tables: LichSuChucVu, ThanhTichKhoaHoc, DanhHieuHangNam
 - OUTPUT tables: HoSoNienHan, HoSoHangNam (don't modify directly, use recalculate endpoint)
 - CCCD is the primary key for Import/Export operations
+- Notification types defined in `BE-QLKT/src/constants/notificationTypes.js`
 
 ### API Response Format
 Always use consistent response format:

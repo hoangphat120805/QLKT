@@ -10,7 +10,7 @@ datasource db {
 
 // 1. Bảng Cơ quan đơn vị
 model CoQuanDonVi {
-  id         String   @id @default(uuid()) @db.Uuid
+  id         String   @id @default(cuid()) @db.VarChar(30)
   ma_don_vi  String   @unique @db.VarChar(50)
   ten_don_vi String   @db.VarChar(255)
   so_luong   Int      @default(0)
@@ -29,8 +29,8 @@ model CoQuanDonVi {
 
 // 2. Bảng Đơn vị trực thuộc
 model DonViTrucThuoc {
-  id                String   @id @default(uuid()) @db.Uuid
-  co_quan_don_vi_id String   @db.Uuid // ID cơ quan đơn vị
+  id                String   @id @default(cuid()) @db.VarChar(30)
+  co_quan_don_vi_id String   @db.VarChar(30) // ID cơ quan đơn vị
   ma_don_vi         String   @unique @db.VarChar(50)
   ten_don_vi        String   @db.VarChar(255)
   so_luong          Int      @default(0)
@@ -49,9 +49,9 @@ model DonViTrucThuoc {
 
 // 3. Bảng Chức vụ
 model ChucVu {
-  id                   String   @id @default(uuid()) @db.Uuid
-  co_quan_don_vi_id     String?  @db.Uuid // ID cơ quan đơn vị (nullable)
-  don_vi_truc_thuoc_id  String?  @db.Uuid // ID đơn vị trực thuộc (nullable)
+  id                   String   @id @default(cuid()) @db.VarChar(30)
+  co_quan_don_vi_id     String?  @db.VarChar(30) // ID cơ quan đơn vị (nullable)
+  don_vi_truc_thuoc_id  String?  @db.VarChar(30) // ID đơn vị trực thuộc (nullable)
   ten_chuc_vu           String   @db.VarChar(255)
   is_manager             Boolean  @default(false)
   he_so_luong           Decimal? @db.Decimal(10, 2) // Hệ số lương
@@ -71,7 +71,7 @@ model ChucVu {
 
 // 4. Bảng Quân nhân
 model QuanNhan {
-  id                       String    @id @default(uuid()) @db.Uuid
+  id                       String    @id @default(cuid()) @db.VarChar(30)
   cccd                     String?   @unique @db.VarChar(20)
   ho_ten                   String    @db.VarChar(255)
   ngay_sinh                DateTime? @db.Date
@@ -86,9 +86,9 @@ model QuanNhan {
   ngay_vao_dang_chinh_thuc DateTime? @db.Date // Ngày vào Đảng chính thức
   so_the_dang_vien         String?   @db.VarChar(50) // Số thẻ Đảng viên
   so_dien_thoai            String?   @db.VarChar(20) // Số điện thoại
-  co_quan_don_vi_id        String?   @db.Uuid // ID cơ quan đơn vị (nullable)
-  don_vi_truc_thuoc_id     String?   @db.Uuid // ID đơn vị trực thuộc (nullable)
-  chuc_vu_id               String    @db.Uuid
+  co_quan_don_vi_id        String?   @db.VarChar(30) // ID cơ quan đơn vị (nullable)
+  don_vi_truc_thuoc_id     String?   @db.VarChar(30) // ID đơn vị trực thuộc (nullable)
+  chuc_vu_id               String    @db.VarChar(30)
   createdAt                DateTime  @default(now()) @db.Timestamptz(6)
   updatedAt                DateTime  @updatedAt @db.Timestamptz(6)
 
@@ -108,8 +108,8 @@ model QuanNhan {
 
 // 5. Bảng Tài khoản
 model TaiKhoan {
-  id            String   @id @default(uuid()) @db.Uuid
-  quan_nhan_id  String?  @unique @db.Uuid
+  id            String   @id @default(cuid()) @db.VarChar(30)
+  quan_nhan_id  String?  @unique @db.VarChar(30)
   username      String   @unique @db.VarChar(100)
   password_hash String   @db.VarChar(255)
   role          String   @db.VarChar(20) // SUPER_ADMIN, ADMIN, MANAGER, USER
@@ -131,9 +131,9 @@ model TaiKhoan {
 
 // 6. Bảng Lịch sử chức vụ (INPUT - để tính cống hiến)
 model LichSuChucVu {
-  id            String    @id @default(uuid()) @db.Uuid
-  quan_nhan_id  String    @db.Uuid
-  chuc_vu_id    String    @db.Uuid
+  id            String    @id @default(cuid()) @db.VarChar(30)
+  quan_nhan_id  String    @db.VarChar(30)
+  chuc_vu_id    String    @db.VarChar(30)
   ngay_bat_dau  DateTime  @db.Date
   ngay_ket_thuc DateTime? @db.Date
   createdAt     DateTime  @default(now()) @db.Timestamptz(6)
@@ -148,8 +148,8 @@ model LichSuChucVu {
 
 // 7. Bảng Thành tích khoa học (INPUT)
 model ThanhTichKhoaHoc {
-  id           String   @id @default(uuid()) @db.Uuid
-  quan_nhan_id String   @db.Uuid
+  id           String   @id @default(cuid()) @db.VarChar(30)
+  quan_nhan_id String   @db.VarChar(30)
   nam          Int
   loai         String   @db.VarChar(10) // NCKH, SKKH
   mo_ta        String   @db.VarChar(500)
@@ -165,8 +165,8 @@ model ThanhTichKhoaHoc {
 
 // 8. Bảng Danh hiệu hằng năm (INPUT + OUTPUT)
 model DanhHieuHangNam {
-  id                     String   @id @default(uuid()) @db.Uuid
-  quan_nhan_id           String   @db.Uuid
+  id                     String   @id @default(cuid()) @db.VarChar(30)
+  quan_nhan_id           String   @db.VarChar(30)
   nam                    Int
   danh_hieu              String?  @db.VarChar(20) // CSTDCS, CSTT (null = không đạt)
   so_quyet_dinh          String?  @db.VarChar(100) // Số quyết định danh hiệu
@@ -189,8 +189,8 @@ model DanhHieuHangNam {
 
 // 9. Bảng Hồ sơ Niên hạn (OUTPUT)
 model HoSoNienHan {
-  id           String @id @default(uuid()) @db.Uuid
-  quan_nhan_id String @unique @db.Uuid
+  id           String @id @default(cuid()) @db.VarChar(30)
+  quan_nhan_id String @unique @db.VarChar(30)
 
   // Huân chương Chiến sĩ vẻ vang (HCCSVV)
   hccsvv_hang_ba_status   String    @default("CHUA_DU") @db.VarChar(20) // CHUA_DU, DU_DIEU_KIEN, DA_NHAN
@@ -218,8 +218,8 @@ model HoSoNienHan {
 
 // 10. Bảng Hồ sơ Hằng năm (OUTPUT)
 model HoSoHangNam {
-  id                  String   @id @default(uuid()) @db.Uuid
-  quan_nhan_id        String   @unique @db.Uuid
+  id                  String   @id @default(cuid()) @db.VarChar(30)
+  quan_nhan_id        String   @unique @db.VarChar(30)
   tong_cstdcs         Int      @default(0)
   tong_nckh           Int      @default(0)
   cstdcs_lien_tuc     Int      @default(0)
@@ -237,12 +237,12 @@ model HoSoHangNam {
 
 // 11. Bảng Nhật ký hệ thống
 model SystemLog {
-  id                String   @id @default(uuid()) @db.Uuid
-  nguoi_thuc_hien_id String   @db.Uuid // ID của người thực hiện hành động
+  id                String   @id @default(cuid()) @db.VarChar(30)
+  nguoi_thuc_hien_id String   @db.VarChar(30) // ID của người thực hiện hành động
   actor_role        String   @db.VarChar(20) // SUPER_ADMIN, ADMIN, MANAGER, USER
   action            String   @db.VarChar(50) // CREATE, UPDATE, DELETE, LOGIN, LOGOUT, etc.
   resource          String   @db.VarChar(50) // accounts, personnel, positions, etc.
-  tai_nguyen_id     Int?     @db.Integer // ID của tài nguyên bị tác động (để tương thích với dữ liệu cũ)
+  tai_nguyen_id     String?  @db.VarChar(30) // ID của tài nguyên bị tác động
   description       String   @db.VarChar(500) // Mô tả hành động
   payload           Json? // Dữ liệu chi tiết (before/after values)
   ip_address        String?  @db.VarChar(45) // IPv4/IPv6
@@ -262,16 +262,16 @@ model SystemLog {
 // 12. Bảng Thông báo (Notifications)
 model ThongBao {
   id                 Int       @id @default(autoincrement()) @db.Integer
-  nguoi_nhan_id      String?   @db.Uuid // ID người nhận thông báo
+  nguoi_nhan_id      String?   @db.VarChar(30) // ID người nhận thông báo
   recipient_role     String    @db.VarChar(20) // SUPER_ADMIN, ADMIN, MANAGER, USER
   type               String    @db.VarChar(50) // NEW_PERSONNEL, APPROVAL_PENDING, ACHIEVEMENT_SUBMITTED, etc.
   title              String    @db.VarChar(255) // Tiêu đề thông báo
   message            String    @db.VarChar(500) // Nội dung thông báo
   resource           String?   @db.VarChar(50) // personnel, achievements, proposals, etc.
-  tai_nguyen_id      Int?      @db.Integer // ID của tài nguyên liên quan (để tương thích với dữ liệu cũ)
+  tai_nguyen_id      String?   @db.VarChar(30) // ID của tài nguyên liên quan
   link               String?   @db.VarChar(255) // URL để navigate đến
   is_read            Boolean   @default(false) // Đã đọc chưa
-  nhat_ky_he_thong_id String?   @db.Uuid // ID của system log liên quan (nếu có)
+  nhat_ky_he_thong_id String?   @db.VarChar(30) // ID của system log liên quan (nếu có)
   created_at         DateTime  @default(now()) @db.Timestamptz(6)
   read_at            DateTime? @db.Timestamptz(6) // Thời gian đọc
 
@@ -298,6 +298,8 @@ model BangDeXuat {
   data_thanh_tich      Json? // Dữ liệu thành tích (JSON array) - cho HANG_NAM
   data_nien_han        Json? // Dữ liệu niên hạn (JSON array) - cho NIEN_HAN
   files_attached       Json?     // Array các file đính kèm: [{ filename, originalName, size, uploadedAt }]
+  so_quyet_dinh_goc    String?   @db.VarChar(100) // Số quyết định gốc (Admin nhập khi duyệt)
+  ten_file_pdf         String?   @db.VarChar(255) // Tên file PDF (Admin upload khi duyệt)
   ghi_chu              String?   @db.Text // Ghi chú từ Manager hoặc Admin
   rejection_reason     String?   @db.Text // Lý do từ chối (nếu status = REJECTED)
   nguoi_duyet_id       String?   @db.Uuid // ID tài khoản Admin phê duyệt
@@ -316,9 +318,9 @@ model BangDeXuat {
 
 // 13. Bảng Theo dõi Khen thưởng Đơn vị
 model TheoDoiKhenThuongDonVi {
-  id                        String    @id @default(uuid()) @db.Uuid
-  co_quan_don_vi_id         String?   @db.Uuid // ID cơ quan đơn vị được khen thưởng (nullable)
-  don_vi_truc_thuoc_id      String?   @db.Uuid // ID đơn vị trực thuộc được khen thưởng (nullable)
+  id                        String    @id @default(cuid()) @db.VarChar(30)
+  co_quan_don_vi_id         String?   @db.VarChar(30) // ID cơ quan đơn vị được khen thưởng (nullable)
+  don_vi_truc_thuoc_id      String?   @db.VarChar(30) // ID đơn vị trực thuộc được khen thưởng (nullable)
   nam                       Int // Năm khen thưởng (chỉ hằng năm)
   so_quyet_dinh             String?   @db.VarChar(100) // Số quyết định khen thưởng (nếu đã có)
   ten_file_pdf              String?   @db.VarChar(255) // Tên file PDF quyết định (nếu có)
@@ -331,8 +333,8 @@ model TheoDoiKhenThuongDonVi {
   goi_y                     String?   @db.Text // Gợi ý nếu đủ điều kiện nhưng chưa nhận
   // Quy trình phê duyệt: Manager đề xuất, Admin duyệt
   status                    String    @default("PENDING") @db.VarChar(20) // PENDING, APPROVED, REJECTED
-  nguoi_tao_id              String    @db.Uuid // ID người tạo (Admin phê duyệt)
-  nguoi_duyet_id            String?   @db.Uuid // ID Admin duyệt
+  nguoi_tao_id              String    @db.VarChar(30) // ID người tạo (Admin phê duyệt)
+  nguoi_duyet_id            String?   @db.VarChar(30) // ID Admin duyệt
   ngay_duyet                DateTime? @db.Timestamptz(6)
   ghi_chu                   String?   @db.Text // Ghi chú bổ sung
   createdAt                 DateTime  @default(now()) @db.Timestamptz(6)
