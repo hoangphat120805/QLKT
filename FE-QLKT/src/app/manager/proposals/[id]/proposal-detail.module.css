@@ -63,12 +63,3 @@
   flex-shrink: 0;
 }
 
-/* Table hover styles for dark mode - giảm độ chói */
-:global(.dark) :global(.ant-table-tbody > tr:hover > td) {
-  background-color: #374151 !important;
-}
-
-:global(.dark) :global(.ant-table-tbody > tr:hover) {
-  background-color: #374151 !important;
-}
-
