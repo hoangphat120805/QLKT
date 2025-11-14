@@ -15,6 +15,8 @@ import {
   Divider,
   Table,
   Tabs,
+  ConfigProvider,
+  theme as antdTheme,
 } from 'antd';
 import {
   HomeOutlined,
@@ -27,10 +29,14 @@ import {
   FilePdfOutlined,
   TrophyOutlined,
   BookOutlined,
+  FileOutlined,
 } from '@ant-design/icons';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
+import axiosInstance from '@/utils/axiosInstance';
+import { useTheme } from '@/components/theme-provider';
+import styles from './proposal-detail.module.css';
 
 const { Title, Text } = Typography;
 
@@ -52,10 +58,26 @@ interface ThanhTichItem {
   loai: string;
   mo_ta: string;
   status: string;
+  so_quyet_dinh?: string | null;
+}
+
+interface AttachedFile {
+  filename: string;
+  originalName: string;
+  size: number;
+  uploadedAt: string;
 }
 
 interface ProposalDetail {
   id: number;
+  loai_de_xuat:
+    | 'CA_NHAN_HANG_NAM'
+    | 'DON_VI_HANG_NAM'
+    | 'NIEN_HAN'
+    | 'CONG_HIEN'
+    | 'DOT_XUAT'
+    | 'NCKH';
+  nam: number;
   don_vi: {
     id: number;
     ma_don_vi: string;
@@ -69,6 +91,7 @@ interface ProposalDetail {
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   data_danh_hieu: DanhHieuItem[];
   data_thanh_tich: ThanhTichItem[];
+  files_attached: AttachedFile[];
   nguoi_duyet: any;
   ngay_duyet: string | null;
   ghi_chu: string | null;
@@ -79,6 +102,7 @@ interface ProposalDetail {
 export default function ManagerProposalDetailPage() {
   const router = useRouter();
   const params = useParams();
+  const { theme: currentTheme } = useTheme();
   const proposalId = params?.id as string;
   const [proposal, setProposal] = useState<ProposalDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -132,6 +156,18 @@ export default function ManagerProposalDetailPage() {
     }
   };
 
+  const getProposalTypeLabel = (type: string) => {
+    const typeConfig: Record<string, string> = {
+      CA_NHAN_HANG_NAM: 'Cá nhân Hằng năm',
+      DON_VI_HANG_NAM: 'Đơn vị Hằng năm',
+      NIEN_HAN: 'Niên hạn',
+      CONG_HIEN: 'Cống hiến',
+      DOT_XUAT: 'Đột xuất',
+      NCKH: 'ĐTKH/SKKH',
+    };
+    return typeConfig[type] || type;
+  };
+
   const getStatusTag = (status: string) => {
     const statusConfig = {
       PENDING: {
@@ -176,328 +212,398 @@ export default function ManagerProposalDetailPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Breadcrumb */}
-      <Breadcrumb>
-        <Breadcrumb.Item>
-          <Link href="/manager/dashboard">
-            <HomeOutlined />
-          </Link>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item>
-          <Link href="/manager/proposals">Đề xuất khen thưởng</Link>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item>Chi tiết #{proposal.id}</Breadcrumb.Item>
-      </Breadcrumb>
-
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/manager/proposals">
-            <Button icon={<ArrowLeftOutlined />}>Quay lại</Button>
-          </Link>
-          <Title level={2} className="!mb-0">
-            Chi tiết Đề xuất #{proposal.id}
-          </Title>
-        </div>
-        <Button
-          type="primary"
-          icon={<DownloadOutlined />}
-          onClick={handleDownloadExcel}
-          loading={downloading}
-          size="large"
-        >
-          Tải file Excel
-        </Button>
-      </div>
-
-      {/* Status Alert */}
-      {proposal.status === 'REJECTED' && proposal.ghi_chu && (
-        <Alert
-          message="Đề xuất bị từ chối"
-          description={
-            <div>
-              <Text strong>Lý do từ chối: </Text>
-              <Text>{proposal.ghi_chu}</Text>
-              <br />
-              <br />
-              <Text type="secondary">
-                💡 Bạn có thể tải file Excel về, chỉnh sửa theo lý do từ chối, sau đó tạo đề xuất
-                mới.
-              </Text>
-            </div>
-          }
-          type="error"
-          showIcon
-          icon={<CloseCircleOutlined />}
-        />
-      )}
-
-      {proposal.status === 'APPROVED' && (
-        <Alert
-          message="Đề xuất đã được phê duyệt"
-          description={
-            <div>
-              <Text>Dữ liệu đã được nhập vào hệ thống và cập nhật hồ sơ quân nhân.</Text>
-              {proposal.ghi_chu && (
-                <>
-                  <br />
-                  <br />
-                  <Text strong>Ghi chú từ Admin: </Text>
-                  <Text>{proposal.ghi_chu}</Text>
-                </>
-              )}
-            </div>
-          }
-          type="success"
-          showIcon
-          icon={<CheckCircleOutlined />}
-        />
-      )}
-
-      {proposal.status === 'PENDING' && (
-        <Alert
-          message="Đề xuất đang chờ duyệt"
-          description="Đề xuất của bạn đang chờ Admin xem xét và phê duyệt."
-          type="info"
-          showIcon
-          icon={<ClockCircleOutlined />}
-        />
-      )}
-
-      {/* Proposal Info */}
-      <Card title="Thông tin đề xuất" className="shadow-sm">
-        <Descriptions bordered column={2}>
-          <Descriptions.Item label="ID">#{proposal.id}</Descriptions.Item>
-          <Descriptions.Item label="Trạng thái">{getStatusTag(proposal.status)}</Descriptions.Item>
-          <Descriptions.Item label="Đơn vị">
-            {proposal.don_vi.ten_don_vi} ({proposal.don_vi.ma_don_vi})
-          </Descriptions.Item>
-          <Descriptions.Item label="Người đề xuất">
-            {proposal.nguoi_de_xuat.ho_ten || proposal.nguoi_de_xuat.username}
-          </Descriptions.Item>
-          <Descriptions.Item label="Ngày gửi">
-            {format(new Date(proposal.createdAt), 'dd/MM/yyyy HH:mm')}
-          </Descriptions.Item>
-          <Descriptions.Item label="Cập nhật lần cuối">
-            {format(new Date(proposal.updatedAt), 'dd/MM/yyyy HH:mm')}
-          </Descriptions.Item>
-          <Descriptions.Item label="Số danh hiệu">
-            <Tag color="blue">{proposal.data_danh_hieu?.length || 0}</Tag>
-          </Descriptions.Item>
-          <Descriptions.Item label="Số thành tích">
-            <Tag color="cyan">{proposal.data_thanh_tich?.length || 0}</Tag>
-          </Descriptions.Item>
-          {proposal.nguoi_duyet && (
-            <Descriptions.Item label="Người duyệt">
-              {proposal.nguoi_duyet.ho_ten || proposal.nguoi_duyet.username}
-            </Descriptions.Item>
-          )}
-          {proposal.ngay_duyet && (
-            <Descriptions.Item label="Ngày duyệt">
-              {format(new Date(proposal.ngay_duyet), 'dd/MM/yyyy HH:mm')}
-            </Descriptions.Item>
-          )}
-        </Descriptions>
-      </Card>
-
-      {/* Data Tables */}
-      <Card className="shadow-sm">
-        <Tabs
-          defaultActiveKey="danh_hieu"
-          items={[
-            {
-              key: 'danh_hieu',
-              label: (
-                <span>
-                  <TrophyOutlined style={{ marginRight: 8 }} />
-                  Danh Hiệu ({proposal.data_danh_hieu?.length || 0})
-                </span>
-              ),
-              children: (
-                <Table
-                  dataSource={proposal.data_danh_hieu || []}
-                  rowKey={(_, index) => `dh_${index}`}
-                  pagination={false}
-                  scroll={{ x: 1000 }}
-                  columns={[
-                    {
-                      title: 'STT',
-                      key: 'index',
-                      width: 60,
-                      align: 'center',
-                      render: (_, __, index) => index + 1,
-                    },
-                    {
-                      title: 'CCCD',
-                      dataIndex: 'cccd',
-                      key: 'cccd',
-                      width: 150,
-                      render: text => <Text style={{ fontFamily: 'monospace' }}>{text}</Text>,
-                    },
-                    {
-                      title: 'Họ tên',
-                      dataIndex: 'ho_ten',
-                      key: 'ho_ten',
-                      render: text => <Text strong>{text}</Text>,
-                    },
-                    {
-                      title: 'Năm',
-                      dataIndex: 'nam',
-                      key: 'nam',
-                      width: 80,
-                      align: 'center',
-                    },
-                    {
-                      title: 'Danh hiệu',
-                      dataIndex: 'danh_hieu',
-                      key: 'danh_hieu',
-                      width: 120,
-                      render: text =>
-                        text ? <Tag color="blue">{text}</Tag> : <Text type="secondary">-</Text>,
-                    },
-                    {
-                      title: 'BKBQP',
-                      dataIndex: 'nhan_bkbqp',
-                      key: 'nhan_bkbqp',
-                      width: 80,
-                      align: 'center',
-                      render: value =>
-                        value ? (
-                          <CheckCircleOutlined style={{ color: '#52c41a', fontSize: 16 }} />
-                        ) : (
-                          <Text type="secondary">-</Text>
-                        ),
-                    },
-                    {
-                      title: 'Số QĐ BKBQP',
-                      dataIndex: 'so_quyet_dinh_bkbqp',
-                      key: 'so_quyet_dinh_bkbqp',
-                      width: 150,
-                      render: text => <Text type="secondary">{text || '-'}</Text>,
-                    },
-                    {
-                      title: 'CSTĐTQ',
-                      dataIndex: 'nhan_cstdtq',
-                      key: 'nhan_cstdtq',
-                      width: 80,
-                      align: 'center',
-                      render: value =>
-                        value ? (
-                          <CheckCircleOutlined style={{ color: '#1890ff', fontSize: 16 }} />
-                        ) : (
-                          <Text type="secondary">-</Text>
-                        ),
-                    },
-                    {
-                      title: 'Số QĐ CSTĐTQ',
-                      dataIndex: 'so_quyet_dinh_cstdtq',
-                      key: 'so_quyet_dinh_cstdtq',
-                      width: 150,
-                      render: text => <Text type="secondary">{text || '-'}</Text>,
-                    },
-                  ]}
-                />
-              ),
-            },
-            {
-              key: 'thanh_tich',
-              label: (
-                <span>
-                  <BookOutlined style={{ marginRight: 8 }} />
-                  Thành Tích ({proposal.data_thanh_tich?.length || 0})
-                </span>
-              ),
-              children: (
-                <Table
-                  dataSource={proposal.data_thanh_tich || []}
-                  rowKey={(_, index) => `tt_${index}`}
-                  pagination={false}
-                  scroll={{ x: 800 }}
-                  columns={[
-                    {
-                      title: 'STT',
-                      key: 'index',
-                      width: 60,
-                      align: 'center',
-                      render: (_, __, index) => index + 1,
-                    },
-                    {
-                      title: 'CCCD',
-                      dataIndex: 'cccd',
-                      key: 'cccd',
-                      width: 150,
-                      render: text => <Text style={{ fontFamily: 'monospace' }}>{text}</Text>,
-                    },
-                    {
-                      title: 'Họ tên',
-                      dataIndex: 'ho_ten',
-                      key: 'ho_ten',
-                      render: text => <Text strong>{text}</Text>,
-                    },
-                    {
-                      title: 'Năm',
-                      dataIndex: 'nam',
-                      key: 'nam',
-                      width: 80,
-                      align: 'center',
-                    },
-                    {
-                      title: 'Loại',
-                      dataIndex: 'loai',
-                      key: 'loai',
-                      width: 100,
-                      render: text => <Tag color={text === 'NCKH' ? 'blue' : 'green'}>{text}</Tag>,
-                    },
-                    {
-                      title: 'Mô tả',
-                      dataIndex: 'mo_ta',
-                      key: 'mo_ta',
-                    },
-                    {
-                      title: 'Trạng thái',
-                      dataIndex: 'status',
-                      key: 'status',
-                      width: 120,
-                      render: text =>
-                        text === 'APPROVED' ? (
-                          <Tag color="success">Đã duyệt</Tag>
-                        ) : (
-                          <Tag color="warning">Chờ duyệt</Tag>
-                        ),
-                    },
-                  ]}
-                />
-              ),
-            },
-          ]}
-        />
-      </Card>
-
-      {/* Action Buttons */}
-      {proposal.status === 'REJECTED' && (
-        <Card className="shadow-sm bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200">
-          <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-            <Title level={4} className="!mb-0">
-              Hướng dẫn sửa đề xuất
-            </Title>
-            <Text>
-              1. Nhấn nút "Tải file Excel" ở trên để tải file về
-              <br />
-              2. Mở file và chỉnh sửa theo lý do từ chối
-              <br />
-              3. Lưu file sau khi đã sửa
-              <br />
-              4. Tạo đề xuất mới với file đã chỉnh sửa
-            </Text>
-            <Link href="/manager/proposals/create">
-              <Button type="primary" size="large">
-                Tạo đề xuất mới
-              </Button>
+    <ConfigProvider
+      theme={{
+        algorithm: currentTheme === 'dark' ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+        token: {
+          colorBgContainer: currentTheme === 'dark' ? '#1f2937' : '#ffffff',
+          colorText: currentTheme === 'dark' ? '#f3f4f6' : '#111827',
+          colorBorder: currentTheme === 'dark' ? '#4b5563' : '#d1d5db',
+        },
+        components: {
+          Table: {
+            rowHoverBg: currentTheme === 'dark' ? '#374151' : '#f9fafb',
+            colorBgContainer: currentTheme === 'dark' ? '#111827' : '#ffffff',
+            colorText: currentTheme === 'dark' ? '#f3f4f6' : '#111827',
+            colorTextHeading: currentTheme === 'dark' ? '#f9fafb' : '#111827',
+            colorBorderSecondary: currentTheme === 'dark' ? '#374151' : '#e5e7eb',
+          },
+        },
+      }}
+    >
+      <div className="space-y-6 p-6">
+        {/* Breadcrumb */}
+        <Breadcrumb>
+          <Breadcrumb.Item>
+            <Link href="/manager/dashboard">
+              <HomeOutlined />
             </Link>
-          </Space>
+          </Breadcrumb.Item>
+          <Breadcrumb.Item>
+            <Link href="/manager/proposals">Đề xuất khen thưởng</Link>
+          </Breadcrumb.Item>
+          <Breadcrumb.Item>Chi tiết</Breadcrumb.Item>
+        </Breadcrumb>
+
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link href="/manager/proposals">
+              <Button icon={<ArrowLeftOutlined />}>Quay lại</Button>
+            </Link>
+            <Title level={2} className="!mb-0">
+              Chi tiết đề xuất {getProposalTypeLabel(proposal.loai_de_xuat)}
+            </Title>
+          </div>
+          <Button
+            type="primary"
+            icon={<DownloadOutlined />}
+            onClick={handleDownloadExcel}
+            loading={downloading}
+            size="large"
+          >
+            Tải file Excel
+          </Button>
+        </div>
+
+        {/* Status Alert */}
+        {proposal.status === 'REJECTED' && proposal.ghi_chu && (
+          <Alert
+            message="Đề xuất bị từ chối"
+            description={
+              <div>
+                <Text strong>Lý do từ chối: </Text>
+                <Text>{proposal.ghi_chu}</Text>
+                <br />
+                <br />
+                <Text type="secondary">
+                  💡 Bạn có thể tải file Excel về, chỉnh sửa theo lý do từ chối, sau đó tạo đề xuất
+                  mới.
+                </Text>
+              </div>
+            }
+            type="error"
+            showIcon
+            icon={<CloseCircleOutlined />}
+          />
+        )}
+
+        {proposal.status === 'APPROVED' && (
+          <Alert
+            message="Đề xuất đã được phê duyệt"
+            description={
+              <div>
+                <Text>Dữ liệu đã được nhập vào hệ thống và cập nhật hồ sơ quân nhân.</Text>
+                {proposal.ghi_chu && (
+                  <>
+                    <br />
+                    <br />
+                    <Text strong>Ghi chú từ Admin: </Text>
+                    <Text>{proposal.ghi_chu}</Text>
+                  </>
+                )}
+              </div>
+            }
+            type="success"
+            showIcon
+            icon={<CheckCircleOutlined />}
+          />
+        )}
+
+        {proposal.status === 'PENDING' && (
+          <Alert
+            message="Đề xuất đang chờ duyệt"
+            description="Đề xuất của bạn đang chờ Admin xem xét và phê duyệt."
+            type="info"
+            showIcon
+            icon={<ClockCircleOutlined />}
+          />
+        )}
+
+        {/* Proposal Info */}
+        <Card title="Thông tin đề xuất" className="shadow-sm">
+          <Descriptions bordered column={2}>
+            <Descriptions.Item label="Loại đề xuất" span={2}>
+              <Tag color="blue" style={{ fontSize: 14, padding: '4px 12px' }}>
+                {getProposalTypeLabel(proposal.loai_de_xuat)}
+              </Tag>
+            </Descriptions.Item>
+            <Descriptions.Item label="Năm đề xuất">
+              <Text strong style={{ fontSize: 16 }}>
+                {proposal.nam}
+              </Text>
+            </Descriptions.Item>
+            <Descriptions.Item label="Trạng thái">
+              {getStatusTag(proposal.status)}
+            </Descriptions.Item>
+            <Descriptions.Item label="Đơn vị">
+              {proposal.don_vi.ten_don_vi} ({proposal.don_vi.ma_don_vi})
+            </Descriptions.Item>
+            <Descriptions.Item label="Người đề xuất">
+              {proposal.nguoi_de_xuat.ho_ten || proposal.nguoi_de_xuat.username}
+            </Descriptions.Item>
+            <Descriptions.Item label="Ngày gửi">
+              {format(new Date(proposal.createdAt), 'dd/MM/yyyy HH:mm')}
+            </Descriptions.Item>
+            <Descriptions.Item label="Số lượng" span={2}>
+              {proposal.loai_de_xuat === 'NCKH' ? (
+                <Tag color="magenta">{proposal.data_thanh_tich?.length || 0} đề tài/sáng kiến</Tag>
+              ) : (
+                <Tag color="blue">{proposal.data_danh_hieu?.length || 0} cán bộ</Tag>
+              )}
+            </Descriptions.Item>
+            {proposal.nguoi_duyet && (
+              <Descriptions.Item label="Người duyệt">
+                {proposal.nguoi_duyet.ho_ten || proposal.nguoi_duyet.username}
+              </Descriptions.Item>
+            )}
+            {proposal.ngay_duyet && (
+              <Descriptions.Item label="Ngày duyệt">
+                {format(new Date(proposal.ngay_duyet), 'dd/MM/yyyy HH:mm')}
+              </Descriptions.Item>
+            )}
+          </Descriptions>
         </Card>
-      )}
-    </div>
+
+        {/* Attached Files */}
+        {proposal.files_attached && proposal.files_attached.length > 0 && (
+          <Card title="File đính kèm" className="shadow-sm">
+            <Space direction="vertical" style={{ width: '100%' }} size="middle">
+              {proposal.files_attached.map((file, index) => (
+                <div
+                  key={index}
+                  className={`${styles.fileItem} ${
+                    currentTheme === 'dark' ? styles.fileItemDark : styles.fileItemLight
+                  }`}
+                >
+                  <div className={styles.fileContent}>
+                    <div className={styles.fileHeader}>
+                      <FilePdfOutlined
+                        className={
+                          currentTheme === 'dark' ? styles.fileIconDark : styles.fileIconLight
+                        }
+                      />
+                      <Text
+                        strong
+                        className={`break-all ${
+                          currentTheme === 'dark' ? styles.fileNameDark : styles.fileNameLight
+                        }`}
+                      >
+                        {file.originalName}
+                      </Text>
+                    </div>
+                    <Text
+                      type="secondary"
+                      className={`text-xs ${
+                        currentTheme === 'dark' ? styles.fileInfoDark : styles.fileInfoLight
+                      }`}
+                    >
+                      Kích thước: {(file.size / 1024).toFixed(2)} KB • Ngày tải lên:{' '}
+                      {format(new Date(file.uploadedAt), 'dd/MM/yyyy HH:mm')}
+                    </Text>
+                  </div>
+                  <Button
+                    type="primary"
+                    icon={<DownloadOutlined />}
+                    onClick={async () => {
+                      try {
+                        // Sử dụng axiosInstance để tự động gửi token authentication
+                        const response = await axiosInstance.get(
+                          `/api/proposals/uploads/${file.filename}`,
+                          {
+                            responseType: 'blob', // Nhận file dưới dạng blob
+                          }
+                        );
+
+                        const blob = response.data;
+
+                        // Create download link with original filename
+                        const downloadUrl = window.URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = downloadUrl;
+                        link.download = file.originalName; // Sử dụng tên file gốc
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(downloadUrl);
+
+                        message.success('Tải file thành công');
+                      } catch (error) {
+                        message.error('Lỗi khi tải file');
+                        console.error('Download error:', error);
+                      }
+                    }}
+                    className={styles.downloadButton}
+                  >
+                    Tải xuống
+                  </Button>
+                </div>
+              ))}
+            </Space>
+          </Card>
+        )}
+
+        {/* Data Tables */}
+        <Card className="shadow-sm">
+          <Tabs
+            defaultActiveKey="danh_hieu"
+            items={[
+              {
+                key: 'danh_hieu',
+                label: (
+                  <span>
+                    <TrophyOutlined style={{ marginRight: 8 }} />
+                    Danh Hiệu ({proposal.data_danh_hieu?.length || 0})
+                  </span>
+                ),
+                children: (
+                  <Table
+                    dataSource={proposal.data_danh_hieu || []}
+                    rowKey={(_, index) => `dh_${index}`}
+                    pagination={false}
+                    scroll={{ x: 900 }}
+                    columns={[
+                      {
+                        title: 'STT',
+                        key: 'index',
+                        width: 60,
+                        align: 'center',
+                        render: (_, __, index) => index + 1,
+                      },
+                      {
+                        title: 'CCCD',
+                        dataIndex: 'cccd',
+                        key: 'cccd',
+                        width: 140,
+                        render: text => <Text code>{text || '-'}</Text>,
+                      },
+                      {
+                        title: 'Họ và tên',
+                        dataIndex: 'ho_ten',
+                        key: 'ho_ten',
+                        width: 200,
+                        render: text => <Text strong>{text || '-'}</Text>,
+                      },
+                      {
+                        title: 'Năm',
+                        dataIndex: 'nam',
+                        key: 'nam',
+                        width: 100,
+                        align: 'center',
+                      },
+                      {
+                        title: 'Danh hiệu đề xuất',
+                        dataIndex: 'danh_hieu',
+                        key: 'danh_hieu',
+                        width: 180,
+                        render: text =>
+                          text ? <Tag color="green">{text}</Tag> : <Text type="secondary">-</Text>,
+                      },
+                    ]}
+                  />
+                ),
+              },
+              {
+                key: 'thanh_tich',
+                label: (
+                  <span>
+                    <BookOutlined style={{ marginRight: 8 }} />
+                    Thành Tích ({proposal.data_thanh_tich?.length || 0})
+                  </span>
+                ),
+                children: (
+                  <Table
+                    dataSource={proposal.data_thanh_tich || []}
+                    rowKey={(_, index) => `tt_${index}`}
+                    pagination={false}
+                    scroll={{ x: 1200 }}
+                    columns={[
+                      {
+                        title: 'STT',
+                        key: 'index',
+                        width: 60,
+                        align: 'center',
+                        render: (_, __, index) => index + 1,
+                      },
+                      {
+                        title: 'CCCD',
+                        dataIndex: 'cccd',
+                        key: 'cccd',
+                        width: 160,
+                        render: text => <Text code>{text || '-'}</Text>,
+                      },
+                      {
+                        title: 'Họ tên',
+                        dataIndex: 'ho_ten',
+                        key: 'ho_ten',
+                        width: 150,
+                        render: text => <Text strong>{text || '-'}</Text>,
+                      },
+                      {
+                        title: 'Năm',
+                        dataIndex: 'nam',
+                        key: 'nam',
+                        width: 100,
+                        align: 'center',
+                      },
+                      {
+                        title: 'Loại',
+                        dataIndex: 'loai',
+                        key: 'loai',
+                        width: 150,
+                        render: text => (
+                          <Tag color={text === 'NCKH' ? 'blue' : 'green'}>
+                            {text === 'NCKH' ? 'Đề tài khoa học' : 'Sáng kiến khoa học'}
+                          </Tag>
+                        ),
+                      },
+                      {
+                        title: 'Mô tả',
+                        dataIndex: 'mo_ta',
+                        key: 'mo_ta',
+                        width: 300,
+                        render: text => <Text>{text || '-'}</Text>,
+                      },
+                      {
+                        title: 'Số quyết định',
+                        dataIndex: 'so_quyet_dinh',
+                        key: 'so_quyet_dinh',
+                        width: 180,
+                        render: text => <Text>{text || '-'}</Text>,
+                      },
+                    ]}
+                  />
+                ),
+              },
+            ]}
+          />
+        </Card>
+
+        {/* Action Buttons */}
+        {proposal.status === 'REJECTED' && (
+          <Card className="shadow-sm bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200">
+            <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+              <Title level={4} className="!mb-0">
+                Hướng dẫn sửa đề xuất
+              </Title>
+              <Text>
+                1. Nhấn nút "Tải file Excel" ở trên để tải file về
+                <br />
+                2. Mở file và chỉnh sửa theo lý do từ chối
+                <br />
+                3. Lưu file sau khi đã sửa
+                <br />
+                4. Tạo đề xuất mới với file đã chỉnh sửa
+              </Text>
+              <Link href="/manager/proposals/create">
+                <Button type="primary" size="large">
+                  Tạo đề xuất mới
+                </Button>
+              </Link>
+            </Space>
+          </Card>
+        )}
+      </div>
+    </ConfigProvider>
   );
 }

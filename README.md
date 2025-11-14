@@ -119,7 +119,7 @@ QLKT/
 ### Bảng Dữ liệu Đầu vào (INPUT)
 
 6. **LichSuChucVu** - Lịch sử chức vụ (tính cống hiến)
-7. **ThanhTichKhoaHoc** - Thành tích NCKH/SKKH
+7. **ThanhTichKhoaHoc** - Thành tích ĐTKH/SKKH
 8. **DanhHieuHangNam** - Danh hiệu hằng năm (CSTDCS/CSTT)
 
 ### Bảng Dữ liệu Đầu ra (OUTPUT)
@@ -149,7 +149,7 @@ QLKT/
   - Huân chương Bảo vệ Tổ quốc (dựa trên cống hiến)
 - **Khen thưởng Hằng năm**:
   - Bằng khen BQP (5 năm CSTDCS liên tục)
-  - CSTD Toàn quân (10 năm CSTDCS + NCKH/SKKH)
+  - CSTD Toàn quân (10 năm CSTDCS + ĐTKH/SKKH)
 
 ### 4. Hồ sơ Gợi ý
 

@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Input, Checkbox, Select } from 'antd';
+import { useTheme } from '@/components/theme-provider';
 
 interface EditableCellProps {
   value: any;
@@ -18,8 +19,14 @@ export function EditableCell({
   editable = true,
   options = [],
 }: EditableCellProps) {
+  const { theme: currentTheme } = useTheme();
   const [isEditing, setIsEditing] = useState(false);
   const [currentValue, setCurrentValue] = useState(value);
+
+  // Sync currentValue với value prop khi value thay đổi
+  useEffect(() => {
+    setCurrentValue(value);
+  }, [value]);
 
   const handleBlur = () => {
     setIsEditing(false);
@@ -44,9 +51,25 @@ export function EditableCell({
     }
     if (type === 'select') {
       const option = options.find(opt => opt.value === value);
-      return <span style={{ color: '#666' }}>{option?.label || value || '-'}</span>;
+      return (
+        <span
+          style={{
+            color: currentTheme === 'dark' ? '#9ca3af' : '#666',
+          }}
+        >
+          {option?.label || value || '-'}
+        </span>
+      );
     }
-    return <span style={{ color: '#666' }}>{value || '-'}</span>;
+    return (
+      <span
+        style={{
+          color: currentTheme === 'dark' ? '#9ca3af' : '#666',
+        }}
+      >
+        {value || '-'}
+      </span>
+    );
   }
 
   if (type === 'checkbox') {
@@ -87,10 +110,16 @@ export function EditableCell({
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         autoFocus
-        size="small"
+        style={{
+          minWidth: type === 'number' ? '100px' : '150px',
+          width: '100%',
+        }}
       />
     );
   }
+
+  const hoverBgColor = currentTheme === 'dark' ? '#374151' : '#f5f5f5';
+  const placeholderColor = currentTheme === 'dark' ? '#6b7280' : '#bfbfbf';
 
   return (
     <div
@@ -104,10 +133,12 @@ export function EditableCell({
         borderRadius: '4px',
         transition: 'background-color 0.2s',
       }}
-      onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f5f5f5')}
+      onMouseEnter={e => (e.currentTarget.style.backgroundColor = hoverBgColor)}
       onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
     >
-      {currentValue || <span style={{ color: '#bfbfbf', fontStyle: 'italic' }}>Nhấn để sửa</span>}
+      {currentValue || (
+        <span style={{ color: placeholderColor, fontStyle: 'italic' }}>Nhấn để sửa</span>
+      )}
     </div>
   );
 }

@@ -77,11 +77,11 @@ export default function ProposalReviewPage() {
 
   const columns = [
     {
-      title: 'ID',
-      dataIndex: 'id',
-      key: 'id',
-      width: 80,
-      render: (id: number) => `#${id}`,
+      title: 'STT',
+      key: 'stt',
+      width: 60,
+      align: 'center' as const,
+      render: (_: any, __: any, index: number) => index + 1,
     },
     {
       title: 'Đơn vị',

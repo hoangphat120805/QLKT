@@ -287,28 +287,29 @@ model ThongBao {
 
 // 12. Bảng Đề xuất Khen thưởng (Proposals)
 model BangDeXuat {
-  id                String    @id @default(uuid()) @db.Uuid
-  co_quan_don_vi_id String?   @db.Uuid // ID cơ quan đơn vị của Manager nộp đề xuất (nullable)
-  don_vi_truc_thuoc_id String? @db.Uuid // ID đơn vị trực thuộc của Manager nộp đề xuất (nullable)
-  nguoi_de_xuat_id  String    @db.Uuid // ID tài khoản người đề xuất
-  loai_de_xuat      String    @default("HANG_NAM") @db.VarChar(20) // HANG_NAM, NIEN_HAN
-  status            String    @default("PENDING") @db.VarChar(20) // PENDING, APPROVED, REJECTED
-  data_danh_hieu    Json? // Dữ liệu danh hiệu (JSON array) - cho HANG_NAM
-  data_thanh_tich   Json? // Dữ liệu thành tích (JSON array) - cho HANG_NAM
-  data_nien_han     Json? // Dữ liệu niên hạn (JSON array) - cho NIEN_HAN
-  so_quyet_dinh_goc String?   @db.VarChar(100) // Số quyết định gốc (Admin nhập khi duyệt)
-  ten_file_pdf      String?   @db.VarChar(255) // Tên file PDF (Admin upload khi duyệt)
-  ghi_chu           String?   @db.Text // Ghi chú từ Manager hoặc Admin
-  nguoi_duyet_id    String?   @db.Uuid // ID tài khoản Admin phê duyệt
-  ngay_duyet        DateTime? @db.Timestamptz(6) // Ngày phê duyệt
-  createdAt         DateTime  @default(now()) @db.Timestamptz(6)
-  updatedAt         DateTime  @updatedAt @db.Timestamptz(6)
+  id                   String    @id @default(uuid()) @db.Uuid
+  co_quan_don_vi_id    String?   @db.Uuid // ID cơ quan đơn vị của Manager nộp đề xuất (nullable)
+  don_vi_truc_thuoc_id String?   @db.Uuid // ID đơn vị trực thuộc của Manager nộp đề xuất (nullable)
+  nguoi_de_xuat_id     String    @db.Uuid // ID tài khoản người đề xuất
+  loai_de_xuat         String    @default("HANG_NAM") @db.VarChar(20) // HANG_NAM, NIEN_HAN
+  nam                  Int       @default(2025) // Năm đề xuất
+  status               String    @default("PENDING") @db.VarChar(20) // PENDING, APPROVED, REJECTED
+  data_danh_hieu       Json? // Dữ liệu danh hiệu (JSON array) - cho HANG_NAM
+  data_thanh_tich      Json? // Dữ liệu thành tích (JSON array) - cho HANG_NAM
+  data_nien_han        Json? // Dữ liệu niên hạn (JSON array) - cho NIEN_HAN
+  files_attached       Json?     // Array các file đính kèm: [{ filename, originalName, size, uploadedAt }]
+  ghi_chu              String?   @db.Text // Ghi chú từ Manager hoặc Admin
+  rejection_reason     String?   @db.Text // Lý do từ chối (nếu status = REJECTED)
+  nguoi_duyet_id       String?   @db.Uuid // ID tài khoản Admin phê duyệt
+  ngay_duyet           DateTime? @db.Timestamptz(6) // Ngày phê duyệt
+  createdAt            DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt            DateTime  @updatedAt @db.Timestamptz(6)
 
   // Relations
-  CoQuanDonVi   CoQuanDonVi?   @relation(fields: [co_quan_don_vi_id], references: [id], onDelete: Cascade)
+  CoQuanDonVi    CoQuanDonVi?    @relation(fields: [co_quan_don_vi_id], references: [id], onDelete: Cascade)
   DonViTrucThuoc DonViTrucThuoc? @relation(fields: [don_vi_truc_thuoc_id], references: [id], onDelete: Cascade)
-  NguoiDeXuat   TaiKhoan       @relation("NguoiDeXuat", fields: [nguoi_de_xuat_id], references: [id], onDelete: Cascade)
-  NguoiDuyet    TaiKhoan?      @relation("NguoiDuyet", fields: [nguoi_duyet_id], references: [id], onDelete: SetNull)
+  NguoiDeXuat    TaiKhoan        @relation("NguoiDeXuat", fields: [nguoi_de_xuat_id], references: [id], onDelete: Cascade)
+  NguoiDuyet     TaiKhoan?       @relation("NguoiDuyet", fields: [nguoi_duyet_id], references: [id], onDelete: SetNull)
 
   @@map("bang_de_xuat")
 }
@@ -348,6 +349,25 @@ model TheoDoiKhenThuongDonVi {
   @@index([co_quan_don_vi_id, nam])
   @@index([don_vi_truc_thuoc_id, nam])
   @@map("theo_doi_khen_thuong_don_vi")
+}
+
+// 14. Bảng Quyết định Khen thưởng
+model QuyetDinhKhenThuong {
+  id               String   @id @default(uuid()) @db.Uuid
+  so_quyet_dinh    String   @unique @db.VarChar(100) // Số quyết định (unique)
+  nam              Int // Năm quyết định
+  ngay_ky          DateTime @db.Date // Ngày ký quyết định
+  nguoi_ky         String   @db.VarChar(255) // Người ký (Tên + Chức vụ)
+  file_path        String?  @db.VarChar(500) // Đường dẫn file PDF/Word
+  loai_khen_thuong String?  @db.VarChar(50) // CA_NHAN_HANG_NAM, DON_VI_HANG_NAM, NIEN_HAN, CONG_HIEN, DOT_XUAT, NCKH
+  ghi_chu          String?  @db.Text // Ghi chú
+  createdAt        DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt        DateTime @updatedAt @db.Timestamptz(6)
+
+  @@index([so_quyet_dinh])
+  @@index([nam])
+  @@index([loai_khen_thuong])
+  @@map("quyet_dinh_khen_thuong")
 }
 
 generator erd {

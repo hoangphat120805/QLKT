@@ -14,6 +14,7 @@ const systemLogsRoute = require('./systemLogs.route');
 const categoriesRoute = require('./categories.route');
 const personnelNestedRoute = require('./personnelNested.route');
 const proposalRoute = require('./proposal.route');
+const decisionRoute = require('./decision.route');
 const awardsRoute = require('./awards.route');
 const notificationRoute = require('./notification.route');
 const unitAnnualAwardRoute = require('./unitAnnualAward.routes');
@@ -48,6 +49,9 @@ router.use('/api/position-history', positionHistoryRoute);
 
 // 5.1. Proposal Management (Workflow: Đề xuất & Phê duyệt)
 router.use('/api/proposals', proposalRoute);
+
+// 5.1.1. Decision Management (Quản lý quyết định khen thưởng)
+router.use('/api/decisions', decisionRoute);
 
 // 5.2. Awards Management (Quản lý khen thưởng tổng hợp)
 router.use('/api/awards', awardsRoute);

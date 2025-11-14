@@ -1,0 +1,429 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import {
+  Card,
+  Table,
+  Tabs,
+  Button,
+  Tag,
+  Space,
+  Typography,
+  Breadcrumb,
+  Input,
+  Select,
+  message,
+} from 'antd';
+import {
+  EyeOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  ClockCircleOutlined,
+  HomeOutlined,
+  SearchOutlined,
+  FilterOutlined,
+} from '@ant-design/icons';
+import type { ColumnsType } from 'antd/es/table';
+import Link from 'next/link';
+import axiosInstance from '@/utils/axiosInstance';
+import dayjs from 'dayjs';
+import ProposalDetailModal from './components/ProposalDetailModal';
+import RejectModal from './components/RejectModal';
+import ApproveModal from './components/ApproveModal';
+
+const { Title, Text } = Typography;
+
+interface Proposal {
+  id: string;
+  loai_de_xuat: string;
+  nam: number;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  createdAt: string;
+  ngay_duyet?: string;
+  rejection_reason?: string;
+  NguoiDeXuat?: {
+    QuanNhan?: {
+      ho_ten: string;
+    };
+    username: string;
+  };
+  CoQuanDonVi?: {
+    ten_don_vi: string;
+  };
+  DonViTrucThuoc?: {
+    ten_don_vi: string;
+  };
+  data_danh_hieu?: any[];
+  selected_personnel?: string[];
+}
+
+export default function AdminProposalsPage() {
+  const [loading, setLoading] = useState(false);
+  const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [activeTab, setActiveTab] = useState<'PENDING' | 'APPROVED' | 'REJECTED'>('PENDING');
+  const [searchText, setSearchText] = useState('');
+  const [yearFilter, setYearFilter] = useState<number | 'ALL'>('ALL');
+  const [typeFilter, setTypeFilter] = useState<string>('ALL');
+
+  // Modal states
+  const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [rejectModalVisible, setRejectModalVisible] = useState(false);
+  const [approveModalVisible, setApproveModalVisible] = useState(false);
+  const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
+
+  useEffect(() => {
+    fetchProposals();
+  }, [activeTab]);
+
+  const fetchProposals = async () => {
+    try {
+      setLoading(true);
+      const response = await axiosInstance.get('/api/proposals', {
+        params: {
+          status: activeTab,
+          page: 1,
+          limit: 100,
+        },
+      });
+
+      if (response.data.success) {
+        setProposals(response.data.data || []);
+      }
+    } catch (error: any) {
+      console.error('Error fetching proposals:', error);
+      message.error('Lỗi khi tải danh sách đề xuất');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Proposal type labels
+  const proposalTypeLabels: Record<string, { label: string; color: string }> = {
+    CA_NHAN_HANG_NAM: { label: 'Cá nhân HN', color: 'blue' },
+    DON_VI_HANG_NAM: { label: 'Đơn vị HN', color: 'cyan' },
+    NIEN_HAN: { label: 'Niên hạn', color: 'purple' },
+    CONG_HIEN: { label: 'Cống hiến', color: 'magenta' },
+    DOT_XUAT: { label: 'Đột xuất', color: 'orange' },
+    NCKH: { label: 'ĐTKH/SKKH', color: 'green' },
+  };
+
+  // Filter proposals
+  const filteredProposals = proposals.filter(p => {
+    const matchesSearch =
+      searchText === '' ||
+      p.NguoiDeXuat?.QuanNhan?.ho_ten?.toLowerCase().includes(searchText.toLowerCase()) ||
+      p.NguoiDeXuat?.username.toLowerCase().includes(searchText.toLowerCase());
+
+    const matchesYear = yearFilter === 'ALL' || p.nam === yearFilter;
+    const matchesType = typeFilter === 'ALL' || p.loai_de_xuat === typeFilter;
+
+    return matchesSearch && matchesYear && matchesType;
+  });
+
+  // Handle view detail
+  const handleViewDetail = (proposal: Proposal) => {
+    setSelectedProposal(proposal);
+    setDetailModalVisible(true);
+  };
+
+  // Handle reject
+  const handleReject = (proposal: Proposal) => {
+    setSelectedProposal(proposal);
+    setRejectModalVisible(true);
+  };
+
+  // Handle approve
+  const handleApprove = (proposal: Proposal) => {
+    setSelectedProposal(proposal);
+    setApproveModalVisible(true);
+  };
+
+  // After reject/approve success
+  const handleActionSuccess = () => {
+    setDetailModalVisible(false);
+    setRejectModalVisible(false);
+    setApproveModalVisible(false);
+    setSelectedProposal(null);
+    fetchProposals();
+  };
+
+  const columns: ColumnsType<Proposal> = [
+    {
+      title: 'STT',
+      key: 'index',
+      width: 60,
+      align: 'center',
+      render: (_, __, index) => index + 1,
+    },
+    {
+      title: 'Loại khen thưởng',
+      dataIndex: 'loai_de_xuat',
+      key: 'loai_de_xuat',
+      width: 140,
+      render: (type: string) => {
+        const config = proposalTypeLabels[type] || { label: type, color: 'default' };
+        return <Tag color={config.color}>{config.label}</Tag>;
+      },
+    },
+    {
+      title: 'Người đề xuất',
+      key: 'nguoi_de_xuat',
+      width: 180,
+      render: (_, record) => (
+        <Text strong>
+          {record.NguoiDeXuat?.QuanNhan?.ho_ten || record.NguoiDeXuat?.username || '-'}
+        </Text>
+      ),
+    },
+    {
+      title: 'Đơn vị',
+      key: 'don_vi',
+      width: 160,
+      render: (_, record) => (
+        <Tag color="blue">
+          {record.DonViTrucThuoc?.ten_don_vi || record.CoQuanDonVi?.ten_don_vi || '-'}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Năm',
+      dataIndex: 'nam',
+      key: 'nam',
+      width: 80,
+      align: 'center',
+    },
+    {
+      title: 'Số cán bộ',
+      key: 'so_can_bo',
+      width: 100,
+      align: 'center',
+      render: (_, record) => {
+        const count = record.selected_personnel?.length || record.data_danh_hieu?.length || 0;
+        return <Tag color="cyan">{count}</Tag>;
+      },
+    },
+    {
+      title: 'Ngày tạo',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      width: 120,
+      render: (date: string) => dayjs(date).format('DD/MM/YYYY'),
+    },
+    {
+      title: 'Trạng thái',
+      dataIndex: 'status',
+      key: 'status',
+      width: 120,
+      align: 'center',
+      render: (status: string) => {
+        const statusConfig = {
+          PENDING: { icon: <ClockCircleOutlined />, color: 'warning', text: 'Đang chờ' },
+          APPROVED: { icon: <CheckCircleOutlined />, color: 'success', text: 'Đã duyệt' },
+          REJECTED: { icon: <CloseCircleOutlined />, color: 'error', text: 'Từ chối' },
+        };
+        const config = statusConfig[status as keyof typeof statusConfig];
+        return (
+          <Tag icon={config.icon} color={config.color}>
+            {config.text}
+          </Tag>
+        );
+      },
+    },
+    {
+      title: 'Thao tác',
+      key: 'action',
+      width: 200,
+      align: 'center',
+      fixed: 'right',
+      render: (_, record) => (
+        <Space size="small">
+          <Button
+            type="link"
+            size="small"
+            icon={<EyeOutlined />}
+            onClick={() => handleViewDetail(record)}
+          >
+            Xem
+          </Button>
+          {record.status === 'PENDING' && (
+            <>
+              <Button
+                type="link"
+                size="small"
+                danger
+                icon={<CloseCircleOutlined />}
+                onClick={() => handleReject(record)}
+              >
+                Từ chối
+              </Button>
+              <Button
+                type="link"
+                size="small"
+                icon={<CheckCircleOutlined />}
+                onClick={() => handleApprove(record)}
+                style={{ color: '#52c41a' }}
+              >
+                Phê duyệt
+              </Button>
+            </>
+          )}
+        </Space>
+      ),
+    },
+  ];
+
+  // Get unique years
+  const years = Array.from(new Set(proposals.map(p => p.nam))).sort((a, b) => b - a);
+
+  const tabItems = [
+    {
+      key: 'PENDING',
+      label: (
+        <span>
+          <ClockCircleOutlined /> Đang chờ ({proposals.filter(p => p.status === 'PENDING').length})
+        </span>
+      ),
+    },
+    {
+      key: 'APPROVED',
+      label: (
+        <span>
+          <CheckCircleOutlined /> Đã phê duyệt (
+          {proposals.filter(p => p.status === 'APPROVED').length})
+        </span>
+      ),
+    },
+    {
+      key: 'REJECTED',
+      label: (
+        <span>
+          <CloseCircleOutlined /> Từ chối ({proposals.filter(p => p.status === 'REJECTED').length})
+        </span>
+      ),
+    },
+  ];
+
+  return (
+    <div style={{ padding: '24px' }}>
+      {/* Breadcrumb */}
+      <Breadcrumb
+        style={{ marginBottom: 16 }}
+        items={[
+          {
+            title: (
+              <Link href="/admin/dashboard">
+                <HomeOutlined />
+              </Link>
+            ),
+          },
+          {
+            title: 'Quản lý Đề xuất Khen thưởng',
+          },
+        ]}
+      />
+
+      {/* Header */}
+      <div style={{ marginBottom: 24 }}>
+        <Title level={2}>Quản lý Đề xuất Khen thưởng</Title>
+        <Text type="secondary">Xem, phê duyệt hoặc từ chối các đề xuất khen thưởng</Text>
+      </div>
+
+      <Card>
+        {/* Filters */}
+        <Space style={{ marginBottom: 16 }} size="middle" wrap>
+          <Input
+            placeholder="Tìm theo người đề xuất"
+            prefix={<SearchOutlined />}
+            value={searchText}
+            onChange={e => setSearchText(e.target.value)}
+            style={{ width: 250 }}
+            allowClear
+          />
+          <Select
+            value={yearFilter}
+            onChange={setYearFilter}
+            style={{ width: 150 }}
+            placeholder="Lọc theo năm"
+          >
+            <Select.Option value="ALL">Tất cả năm</Select.Option>
+            {years.map(year => (
+              <Select.Option key={year} value={year}>
+                Năm {year}
+              </Select.Option>
+            ))}
+          </Select>
+          <Select
+            value={typeFilter}
+            onChange={setTypeFilter}
+            style={{ width: 180 }}
+            placeholder="Lọc theo loại"
+          >
+            <Select.Option value="ALL">Tất cả loại</Select.Option>
+            {Object.entries(proposalTypeLabels).map(([key, config]) => (
+              <Select.Option key={key} value={key}>
+                {config.label}
+              </Select.Option>
+            ))}
+          </Select>
+        </Space>
+
+        {/* Tabs */}
+        <Tabs
+          activeKey={activeTab}
+          onChange={key => setActiveTab(key as any)}
+          items={tabItems}
+          style={{ marginBottom: 16 }}
+        />
+
+        {/* Table */}
+        <Table
+          columns={columns}
+          dataSource={filteredProposals}
+          rowKey="id"
+          loading={loading}
+          pagination={{
+            pageSize: 20,
+            showSizeChanger: true,
+            showTotal: total => `Tổng số ${total} đề xuất`,
+          }}
+          bordered
+          scroll={{ x: 1400 }}
+          locale={{
+            emptyText: 'Không có đề xuất nào',
+          }}
+        />
+      </Card>
+
+      {/* Modals */}
+      {selectedProposal && (
+        <>
+          <ProposalDetailModal
+            visible={detailModalVisible}
+            proposal={selectedProposal}
+            onClose={() => setDetailModalVisible(false)}
+            onReject={() => {
+              setDetailModalVisible(false);
+              handleReject(selectedProposal);
+            }}
+            onApprove={() => {
+              setDetailModalVisible(false);
+              handleApprove(selectedProposal);
+            }}
+          />
+          <RejectModal
+            visible={rejectModalVisible}
+            proposal={selectedProposal}
+            onClose={() => setRejectModalVisible(false)}
+            onSuccess={handleActionSuccess}
+          />
+          <ApproveModal
+            visible={approveModalVisible}
+            proposal={selectedProposal}
+            onClose={() => setApproveModalVisible(false)}
+            onSuccess={handleActionSuccess}
+          />
+        </>
+      )}
+    </div>
+  );
+}

@@ -35,8 +35,6 @@ const { Title, Text } = Typography;
 
 interface Proposal {
   id: number;
-  don_vi: string;
-  nguoi_de_xuat: string;
   loai_de_xuat:
     | 'CA_NHAN_HANG_NAM'
     | 'DON_VI_HANG_NAM'
@@ -44,6 +42,9 @@ interface Proposal {
     | 'CONG_HIEN'
     | 'DOT_XUAT'
     | 'NCKH';
+  nam: number;
+  don_vi: string;
+  nguoi_de_xuat: string;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   so_danh_hieu: number;
   so_thanh_tich: number;
@@ -143,7 +144,7 @@ export default function ManagerProposalsPage() {
       NIEN_HAN: { color: 'cyan', text: 'Niên hạn' },
       CONG_HIEN: { color: 'geekblue', text: 'Cống hiến' },
       DOT_XUAT: { color: 'orange', text: 'Đột xuất' },
-      NCKH: { color: 'magenta', text: 'NCKH/SKKH' },
+      NCKH: { color: 'magenta', text: 'ĐTKH/SKKH' },
     };
 
     const config = typeConfig[type as keyof typeof typeConfig];
@@ -167,82 +168,69 @@ export default function ManagerProposalsPage() {
 
   const columns = [
     {
-      title: 'ID',
-      dataIndex: 'id',
-      key: 'id',
-      width: 70,
-      render: (id: number) => <Text strong>#{id}</Text>,
+      title: 'STT',
+      key: 'stt',
+      width: 60,
+      align: 'center' as const,
+      render: (_: any, __: any, index: number) => <Text strong>{index + 1}</Text>,
     },
     {
       title: 'Ngày gửi',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      width: 120,
+      width: 140,
       render: (date: string) => format(new Date(date), 'dd/MM/yyyy HH:mm'),
     },
     {
       title: 'Loại đề xuất',
       dataIndex: 'loai_de_xuat',
       key: 'loai_de_xuat',
-      width: 150,
+      width: 180,
       render: (type: string) => getProposalTypeTag(type),
     },
     {
-      title: 'Đơn vị',
-      dataIndex: 'don_vi',
-      key: 'don_vi',
-      width: 130,
+      title: 'Năm',
+      dataIndex: 'nam',
+      key: 'nam',
+      width: 80,
+      align: 'center' as const,
+      render: (nam: number) => <Text strong>{nam}</Text>,
     },
     {
-      title: 'Danh hiệu',
-      dataIndex: 'so_danh_hieu',
-      key: 'so_danh_hieu',
+      title: 'Số lượng',
+      key: 'so_luong',
       align: 'center' as const,
-      width: 100,
-      render: (count: number) => <Badge count={count} showZero color="blue" />,
-    },
-    {
-      title: 'Thành tích',
-      dataIndex: 'so_thanh_tich',
-      key: 'so_thanh_tich',
-      align: 'center' as const,
-      width: 100,
-      render: (count: number) => <Badge count={count} showZero color="cyan" />,
+      width: 120,
+      render: (_: any, record: Proposal) => {
+        if (record.loai_de_xuat === 'NCKH') {
+          // NCKH: hiển thị số thành tích khoa học
+          return (
+            <Tooltip title="Số đề tài/sáng kiến khoa học">
+              <Badge count={record.so_thanh_tich} showZero color="magenta" />
+            </Tooltip>
+          );
+        } else {
+          // Các loại khác: hiển thị số cán bộ (danh hiệu)
+          return (
+            <Tooltip title="Số cán bộ">
+              <Badge count={record.so_danh_hieu} showZero color="blue" />
+            </Tooltip>
+          );
+        }
+      },
     },
     {
       title: 'Trạng thái',
       dataIndex: 'status',
       key: 'status',
-      width: 120,
+      width: 130,
       render: (status: string) => getStatusTag(status),
-    },
-    {
-      title: 'Ghi chú',
-      key: 'note',
-      width: 200,
-      render: (_: any, record: Proposal) => {
-        if (record.status === 'REJECTED' && record.ly_do) {
-          return (
-            <Tooltip title={record.ly_do}>
-              <Text type="danger" ellipsis style={{ maxWidth: 200 }}>
-                {record.ly_do}
-              </Text>
-            </Tooltip>
-          );
-        }
-        if (record.status === 'APPROVED' && record.ngay_duyet) {
-          return (
-            <Text type="secondary">Duyệt: {format(new Date(record.ngay_duyet), 'dd/MM/yyyy')}</Text>
-          );
-        }
-        return <Text type="secondary">-</Text>;
-      },
     },
     {
       title: 'Hành động',
       key: 'action',
       align: 'right' as const,
-      width: 250,
+      width: 260,
       render: (_: any, record: Proposal) => (
         <Space>
           <Tooltip title="Tải file Excel">
@@ -384,10 +372,10 @@ export default function ManagerProposalsPage() {
                   activeTab === 'all'
                     ? 'Chưa có đề xuất nào'
                     : activeTab === 'pending'
-                      ? 'Không có đề xuất chờ duyệt'
-                      : activeTab === 'approved'
-                        ? 'Không có đề xuất đã duyệt'
-                        : 'Không có đề xuất bị từ chối'
+                    ? 'Không có đề xuất chờ duyệt'
+                    : activeTab === 'approved'
+                    ? 'Không có đề xuất đã duyệt'
+                    : 'Không có đề xuất bị từ chối'
                 }
               />
             ),

@@ -90,8 +90,8 @@ Hệ thống sử dụng cơ chế JWT (JSON Web Token) với Access Token (th�
 
 | Method   | Endpoint                            | Chức năng chi tiết                              | Request Body / Params                                                                         | Vai trò              |
 | :------- | :---------------------------------- | :---------------------------------------------- | :-------------------------------------------------------------------------------------------- | :------------------- |
-| `GET`    | `/api/scientific-achievements`      | Lấy nhật ký NCKH/SKKH của 1 quân nhân.          | `?personnel_id={id}` (Bắt buộc)                                                               | ADMIN, MANAGER, USER |
-| `POST`   | `/api/scientific-achievements`      | Thêm 1 NCKH/SKKH.                               | `{ "personnel_id": "...", "nam": 2024, "loai": "NCKH", "mo_ta": "...", "status": "PENDING" }` | ADMIN, MANAGER       |
+| `GET`    | `/api/scientific-achievements`      | Lấy nhật ký ĐTKH/SKKH của 1 quân nhân.          | `?personnel_id={id}` (Bắt buộc)                                                               | ADMIN, MANAGER, USER |
+| `POST`   | `/api/scientific-achievements`      | Thêm 1 ĐTKH/SKKH.                               | `{ "personnel_id": "...", "nam": 2024, "loai": "NCKH", "mo_ta": "...", "status": "PENDING" }` | ADMIN, MANAGER       |
 | `PUT`    | `/api/scientific-achievements/{id}` | Sửa thông tin NCKH (ví dụ: sửa mo_ta hoặc nam). | `{ "nam": 2024, "loai": "NCKH", "mo_ta": "...", "status": "APPROVED" }`                       | ADMIN, MANAGER       |
 | `DELETE` | `/api/scientific-achievements/{id}` | Xóa một bản ghi NCKH (nhập thừa, nhập sai).     | `Params: {id}`                                                                                | ADMIN, MANAGER       |
 
@@ -274,7 +274,7 @@ Hệ thống sử dụng cơ chế JWT (JSON Web Token) với Access Token (th�
 | `id`                  | Serial       | PK                           | Mã tự động tăng.                                              |
 | `quan_nhan_id`        | Integer      | FK (tới QuanNhan.id), Unique | Liên kết 1-1 với Quân nhân.                                   |
 | `tong_cstdcs`         | Integer      |                              | Tổng số CSTDCS đã đạt.                                        |
-| `tong_nckh`           | Integer      |                              | Tổng số NCKH/SKKH đã APPROVED.                                |
+| `tong_nckh`           | Integer      |                              | Tổng số ĐTKH/SKKH đã APPROVED.                                |
 | `cstdcs_lien_tuc`     | Integer      |                              | Số năm CSTDCS _liên tục_ hiện tại.                            |
 | `du_dieu_kien_bkbqp`  | Boolean      |                              | true nếu đủ điều kiện Bằng khen BQP.                          |
 | `du_dieu_kien_cstdtq` | Boolean      |                              | true nếu đủ điều kiện CSTD Toàn quân.                         |

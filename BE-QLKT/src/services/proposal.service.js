@@ -494,7 +494,7 @@ class ProposalService {
         { header: 'CCCD (Bắt buộc)', key: 'cccd', width: 15 },
         { header: 'Họ và Tên', key: 'ho_ten', width: 30 },
         { header: 'Năm (Bắt buộc)', key: 'nam', width: 12 },
-        { header: 'Loại (NCKH/SKKH)', key: 'loai', width: 18 },
+        { header: 'Loại (ĐTKH/SKKH)', key: 'loai', width: 18 },
         { header: 'Mô tả (Bắt buộc)', key: 'mo_ta', width: 40 },
         { header: 'Trạng thái (APPROVED/PENDING)', key: 'status', width: 25 },
       ];
@@ -657,15 +657,23 @@ class ProposalService {
   }
 
   /**
-   * Đọc file Excel đề xuất, lưu PDF, và lưu vào CSDL
-   * @param {Buffer} excelBuffer - Buffer của file Excel upload
-   * @param {Object} pdfFile - File PDF upload (multer file object)
+   * Lưu đề xuất khen thưởng với nhiều file đính kèm
+   * @param {Array} titleData - Dữ liệu danh hiệu/thành tích từ frontend
+   * @param {Array} attachedFiles - Array các file đính kèm (multer file objects)
    * @param {string} soQuyetDinh - Số quyết định gốc
-   * @param {number} userId - ID của tài khoản Manager
-   * @param {string} type - Loại đề xuất: 'HANG_NAM' hoặc 'NIEN_HAN'
+   * @param {string} userId - ID của tài khoản Manager
+   * @param {string} type - Loại đề xuất
+   * @param {number} nam - Năm đề xuất
    * @returns {Promise<Object>} - Kết quả lưu đề xuất
    */
-  async submitProposal(excelBuffer, pdfFile, soQuyetDinh, userId, type = 'HANG_NAM') {
+  async submitProposal(
+    titleData,
+    attachedFiles,
+    soQuyetDinh,
+    userId,
+    type = 'CA_NHAN_HANG_NAM',
+    nam
+  ) {
     try {
       // Lấy thông tin user và đơn vị
       const user = await prisma.taiKhoan.findUnique({
@@ -691,223 +699,133 @@ class ProposalService {
       const donViId = user.QuanNhan.co_quan_don_vi_id || user.QuanNhan.don_vi_truc_thuoc_id;
 
       // ============================================
-      // LƯU FILE PDF VÀO SERVER
+      // LƯU NHIỀU FILE ĐÍNH KÈM VÀO SERVER
       // ============================================
-      let savedPdfFilename = null;
+      const filesInfo = [];
 
-      if (pdfFile && pdfFile.buffer) {
+      if (attachedFiles && attachedFiles.length > 0) {
         // Đảm bảo uuid đã được load (nếu chưa thì load ngay)
         if (!uuidv4) {
           const uuidModule = await import('uuid');
           uuidv4 = uuidModule.v4;
         }
 
-        // Tạo tên file unique: timestamp_uuid_originalname
-        const timestamp = Date.now();
-        const uniqueId = uuidv4().slice(0, 8);
-        const fileExtension = path.extname(pdfFile.originalname);
-        const baseFilename = path.basename(pdfFile.originalname, fileExtension);
-        savedPdfFilename = `${timestamp}_${uniqueId}_${baseFilename}${fileExtension}`;
-
         // Đường dẫn lưu file
         const storagePath = path.join(__dirname, '../../storage/proposals');
-        const filePath = path.join(storagePath, savedPdfFilename);
-
-        // Đảm bảo thư mục tồn tại
         await fs.mkdir(storagePath, { recursive: true });
 
-        // Lưu file
-        await fs.writeFile(filePath, pdfFile.buffer);
-      }
+        // Loop qua từng file và lưu
+        for (const file of attachedFiles) {
+          if (file && file.buffer) {
+            // Tạo tên file unique: timestamp_uuid_originalname
+            const timestamp = Date.now();
+            const uniqueId = uuidv4().slice(0, 8);
+            const fileExtension = path.extname(file.originalname);
+            const baseFilename = path.basename(file.originalname, fileExtension);
+            const savedFilename = `${timestamp}_${uniqueId}_${baseFilename}${fileExtension}`;
 
-      // ============================================
-      // ĐỌC FILE EXCEL
-      // ============================================
-      const workbook = new ExcelJS.Workbook();
-      await workbook.xlsx.load(excelBuffer);
+            // Lưu file
+            const filePath = path.join(storagePath, savedFilename);
+            await fs.writeFile(filePath, file.buffer);
 
-      let danhHieuData = [];
-      let thanhTichData = [];
-      let nienHanData = [];
-
-      if (type === 'HANG_NAM') {
-        // Parse danh hiệu hàng năm
-        const sheetDanhHieu = workbook.getWorksheet(SHEET_NAMES.DANH_HIEU_HANG_NAM);
-        if (!sheetDanhHieu) {
-          throw new Error(
-            `Không tìm thấy sheet "${SHEET_NAMES.DANH_HIEU_HANG_NAM}" trong file Excel`
-          );
-        }
-        danhHieuData = this.parseDanhHieuSheet(sheetDanhHieu);
-
-        // Parse thành tích khoa học
-        const sheetThanhTich = workbook.getWorksheet(SHEET_NAMES.THANH_TICH_KHOA_HOC);
-        if (!sheetThanhTich) {
-          throw new Error(
-            `Không tìm thấy sheet "${SHEET_NAMES.THANH_TICH_KHOA_HOC}" trong file Excel`
-          );
-        }
-        thanhTichData = this.parseThanhTichSheet(sheetThanhTich);
-      } else if (type === 'NIEN_HAN') {
-        const sheetNienHan = workbook.getWorksheet(SHEET_NAMES.NIEN_HAN);
-        if (!sheetNienHan) {
-          throw new Error('Không tìm thấy sheet "NienHan" trong file Excel');
-        }
-
-        sheetNienHan.eachRow((row, rowNumber) => {
-          // Bỏ qua header (row 1) và row mẫu (row 2)
-          if (rowNumber <= 2) return;
-
-          const cccd = this.parseCCCD(row.getCell(1).value);
-          const ho_ten = row.getCell(2).value?.toString().trim();
-
-          // Bỏ qua row trống
-          if (!cccd) return;
-
-          const hccsvv_hang_ba = row.getCell(3).value?.toString().toUpperCase() === 'X';
-          const hccsvv_hang_nhi = row.getCell(4).value?.toString().toUpperCase() === 'X';
-          const hccsvv_hang_nhat = row.getCell(5).value?.toString().toUpperCase() === 'X';
-          const hcbvtq_hang_ba = row.getCell(6).value?.toString().toUpperCase() === 'X';
-          const hcbvtq_hang_nhi = row.getCell(7).value?.toString().toUpperCase() === 'X';
-          const hcbvtq_hang_nhat = row.getCell(8).value?.toString().toUpperCase() === 'X';
-
-          nienHanData.push({
-            cccd,
-            ho_ten,
-            hccsvv_hang_ba,
-            hccsvv_hang_nhi,
-            hccsvv_hang_nhat,
-            hcbvtq_hang_ba,
-            hcbvtq_hang_nhi,
-            hcbvtq_hang_nhat,
-          });
-        });
-      }
-
-      // ============================================
-      // VALIDATION LOGIC NGHIỆP VỤ
-      // ============================================
-      const warnings = [];
-
-      if (type === 'HANG_NAM') {
-        for (const item of danhHieuData) {
-          try {
-            const quanNhan = await prisma.quanNhan.findUnique({
-              where: { cccd: item.cccd },
-              include: {
-                DanhHieuHangNam: {
-                  orderBy: { nam: 'asc' },
-                },
-                ThanhTichKhoaHoc: {
-                  where: { status: 'APPROVED' },
-                },
-              },
+            // Thêm thông tin file vào array
+            filesInfo.push({
+              filename: savedFilename,
+              originalName: file.originalname,
+              size: file.size,
+              uploadedAt: new Date().toISOString(),
             });
-
-            if (quanNhan) {
-              // Tính số năm CSTDCS liên tục
-              const cstdcsLienTuc = this.calculateContinuousCSTDCS(
-                quanNhan.DanhHieuHangNam,
-                item.nam
-              );
-              const nckhCount = quanNhan.ThanhTichKhoaHoc.length;
-
-              // Kiểm tra BKBQP
-              if (item.nhan_bkbqp && cstdcsLienTuc < 5) {
-                warnings.push({
-                  cccd: item.cccd,
-                  ho_ten: item.ho_ten,
-                  nam: item.nam,
-                  warning: `Đề xuất BKBQP nhưng chỉ có ${cstdcsLienTuc}/5 năm CSTDCS liên tục. Thiếu ${
-                    5 - cstdcsLienTuc
-                  } năm.`,
-                });
-              }
-
-              // Kiểm tra CSTDTQ
-              if (item.nhan_cstdtq) {
-                if (cstdcsLienTuc < 10) {
-                  warnings.push({
-                    cccd: item.cccd,
-                    ho_ten: item.ho_ten,
-                    nam: item.nam,
-                    warning: `Đề xuất CSTDTQ nhưng chỉ có ${cstdcsLienTuc}/10 năm CSTDCS liên tục. Thiếu ${
-                      10 - cstdcsLienTuc
-                    } năm.`,
-                  });
-                } else if (nckhCount === 0) {
-                  warnings.push({
-                    cccd: item.cccd,
-                    ho_ten: item.ho_ten,
-                    nam: item.nam,
-                    warning: `Đề xuất CSTDTQ nhưng chưa có NCKH/SKKH được duyệt.`,
-                  });
-                }
-              }
-            }
-          } catch (err) {
-            console.error(`Warning validation error for CCCD ${item.cccd}:`, err.message);
           }
         }
       }
 
       // ============================================
-      // VALIDATION: Kiểm tra dữ liệu sau khi parse
+      // XỬ LÝ DỮ LIỆU TỪ FRONTEND
       // ============================================
-      if (type === 'HANG_NAM') {
-        // Chỉ cảnh báo nếu cả hai đều rỗng, không throw error
-        // Vì có thể Manager chỉ muốn submit danh hiệu hoặc chỉ thành tích
-        if (danhHieuData.length === 0 && thanhTichData.length === 0) {
-          console.warn(
-            '[submitProposal] WARNING: Không có dữ liệu nào được parse từ Excel. Cả danh hiệu và thành tích đều rỗng.'
-          );
-          // Vẫn cho phép submit, nhưng sẽ có warning trong ghi_chu
-        } else {
-          if (danhHieuData.length === 0) {
-            console.warn(
-              '[submitProposal] WARNING: Không có dữ liệu danh hiệu nào được parse từ Excel'
-            );
-          }
-          if (thanhTichData.length === 0) {
-            console.warn(
-              '[submitProposal] WARNING: Không có dữ liệu thành tích nào được parse từ Excel'
-            );
-          }
-        }
-      } else if (type === 'NIEN_HAN') {
-        if (nienHanData.length === 0) {
-          throw new Error(
-            'File Excel không có dữ liệu hợp lệ. Vui lòng kiểm tra:\n' +
-              '- Sheet "NienHan" có dữ liệu từ row 3 trở đi\n' +
-              '- Đảm bảo cột CCCD đã được điền đầy đủ'
-          );
-        }
+      if (!titleData || !Array.isArray(titleData)) {
+        throw new Error('Dữ liệu đề xuất không hợp lệ');
+      }
+
+      // Fetch thông tin quân nhân để lấy CCCD, họ tên, năm
+      const personnelIds = titleData.map(item => item.personnel_id);
+      const personnelList = await prisma.quanNhan.findMany({
+        where: {
+          id: {
+            in: personnelIds,
+          },
+        },
+        select: {
+          id: true,
+          cccd: true,
+          ho_ten: true,
+        },
+      });
+
+      // Tạo map để lookup nhanh
+      const personnelMap = {};
+      personnelList.forEach(p => {
+        personnelMap[p.id] = p;
+      });
+
+      // Format titleData theo type và enrich với thông tin quân nhân
+      let dataDanhHieu = null;
+      let dataThanhTich = null;
+      let dataNienHan = null;
+
+      if (type === 'NCKH') {
+        // NCKH: titleData = [{ personnel_id, loai: 'NCKH'|'SKKH', mo_ta }]
+        dataThanhTich = titleData.map(item => {
+          const personnel = personnelMap[item.personnel_id];
+          return {
+            personnel_id: item.personnel_id,
+            cccd: personnel?.cccd || '',
+            ho_ten: personnel?.ho_ten || '',
+            nam: nam,
+            loai: item.loai,
+            mo_ta: item.mo_ta,
+          };
+        });
+      } else if (type === 'CA_NHAN_HANG_NAM' || type === 'HANG_NAM') {
+        // Standard: titleData = [{ personnel_id, danh_hieu }]
+        dataDanhHieu = titleData.map(item => {
+          const personnel = personnelMap[item.personnel_id];
+          return {
+            personnel_id: item.personnel_id,
+            cccd: personnel?.cccd || '',
+            ho_ten: personnel?.ho_ten || '',
+            nam: nam,
+            danh_hieu: item.danh_hieu,
+          };
+        });
+      } else {
+        // Các loại khác: NIEN_HAN, CONG_HIEN, DOT_XUAT
+        dataDanhHieu = titleData.map(item => {
+          const personnel = personnelMap[item.personnel_id];
+          return {
+            personnel_id: item.personnel_id,
+            cccd: personnel?.cccd || '',
+            ho_ten: personnel?.ho_ten || '',
+            nam: nam,
+            danh_hieu: item.danh_hieu,
+          };
+        });
       }
 
       // ============================================
       // LƯU VÀO CSDL
       // ============================================
-      // Đảm bảo dữ liệu là array hợp lệ (không phải null/undefined)
-      const dataDanhHieu = type === 'HANG_NAM' && Array.isArray(danhHieuData) ? danhHieuData : null;
-      const dataThanhTich =
-        type === 'HANG_NAM' && Array.isArray(thanhTichData) ? thanhTichData : null;
-      const dataNienHan = type === 'NIEN_HAN' && Array.isArray(nienHanData) ? nienHanData : null;
-
       // Xác định loại đơn vị và set đúng foreign key
       const isCoQuanDonVi = !!user.QuanNhan.co_quan_don_vi_id;
       const proposalData = {
         nguoi_de_xuat_id: userId,
         loai_de_xuat: type,
+        nam: parseInt(nam) || new Date().getFullYear(),
         status: 'PENDING',
         data_danh_hieu: dataDanhHieu,
         data_thanh_tich: dataThanhTich,
         data_nien_han: dataNienHan,
-        so_quyet_dinh_goc: soQuyetDinh || null,
-        ten_file_pdf: savedPdfFilename,
-        ghi_chu:
-          warnings.length > 0
-            ? `⚠️ Có ${warnings.length} cảnh báo về điều kiện khen thưởng. Vui lòng kiểm tra kỹ.`
-            : null,
+        files_attached: filesInfo.length > 0 ? filesInfo : null,
+        ghi_chu: null,
       };
 
       if (isCoQuanDonVi) {
@@ -936,22 +854,16 @@ class ProposalService {
       });
 
       return {
-        message:
-          warnings.length > 0
-            ? `Đã gửi đề xuất thành công nhưng có ${warnings.length} cảnh báo về điều kiện khen thưởng.`
-            : 'Đã gửi đề xuất khen thưởng thành công',
+        message: 'Đã gửi đề xuất khen thưởng thành công',
         proposal: {
           id: proposal.id,
           loai_de_xuat: proposal.loai_de_xuat,
           don_vi: (proposal.DonViTrucThuoc || proposal.CoQuanDonVi)?.ten_don_vi || '-',
-          nguoi_de_xuat: proposal.NguoiDeXuat.QuanNhan.ho_ten,
+          nguoi_de_xuat: proposal.NguoiDeXuat.QuanNhan?.ho_ten || proposal.NguoiDeXuat.username,
           status: proposal.status,
-          so_danh_hieu: danhHieuData.length,
-          so_thanh_tich: thanhTichData.length,
-          so_nien_han: nienHanData.length,
+          so_personnel: titleData.length,
           createdAt: proposal.createdAt,
         },
-        warnings: warnings.length > 0 ? warnings : null,
       };
     } catch (error) {
       console.error('Submit proposal error:', error);
@@ -1034,6 +946,8 @@ class ProposalService {
       return {
         proposals: proposals.map(p => ({
           id: p.id,
+          loai_de_xuat: p.loai_de_xuat,
+          nam: p.nam,
           don_vi: (p.DonViTrucThuoc || p.CoQuanDonVi)?.ten_don_vi || '-',
           nguoi_de_xuat: p.NguoiDeXuat.QuanNhan?.ho_ten || p.NguoiDeXuat.username,
           status: p.status,
@@ -1126,20 +1040,77 @@ class ProposalService {
       }
 
       // Đảm bảo data_danh_hieu và data_thanh_tich luôn là array
-      const dataDanhHieu = Array.isArray(proposal.data_danh_hieu)
+      let dataDanhHieu = Array.isArray(proposal.data_danh_hieu)
         ? proposal.data_danh_hieu
         : proposal.data_danh_hieu
-          ? [proposal.data_danh_hieu]
-          : [];
+        ? [proposal.data_danh_hieu]
+        : [];
 
-      const dataThanhTich = Array.isArray(proposal.data_thanh_tich)
+      let dataThanhTich = Array.isArray(proposal.data_thanh_tich)
         ? proposal.data_thanh_tich
         : proposal.data_thanh_tich
-          ? [proposal.data_thanh_tich]
-          : [];
+        ? [proposal.data_thanh_tich]
+        : [];
+
+      // Enrich thông tin quân nhân nếu thiếu cccd hoặc ho_ten (dữ liệu cũ)
+      const allPersonnelIds = [
+        ...dataDanhHieu.map(d => d.personnel_id).filter(Boolean),
+        ...dataThanhTich.map(d => d.personnel_id).filter(Boolean),
+      ];
+
+      if (allPersonnelIds.length > 0) {
+        // Fetch thông tin quân nhân
+        const personnelList = await prisma.quanNhan.findMany({
+          where: {
+            id: {
+              in: allPersonnelIds,
+            },
+          },
+          select: {
+            id: true,
+            cccd: true,
+            ho_ten: true,
+          },
+        });
+
+        const personnelMap = {};
+        personnelList.forEach(p => {
+          personnelMap[p.id] = p;
+        });
+
+        // Enrich dataDanhHieu nếu thiếu thông tin
+        dataDanhHieu = dataDanhHieu.map(item => {
+          if (!item.cccd || !item.ho_ten) {
+            const personnel = personnelMap[item.personnel_id];
+            return {
+              ...item,
+              cccd: item.cccd || personnel?.cccd || '',
+              ho_ten: item.ho_ten || personnel?.ho_ten || '',
+              nam: item.nam || proposal.createdAt?.getFullYear() || new Date().getFullYear(),
+            };
+          }
+          return item;
+        });
+
+        // Enrich dataThanhTich nếu thiếu thông tin
+        dataThanhTich = dataThanhTich.map(item => {
+          if (!item.cccd || !item.ho_ten) {
+            const personnel = personnelMap[item.personnel_id];
+            return {
+              ...item,
+              cccd: item.cccd || personnel?.cccd || '',
+              ho_ten: item.ho_ten || personnel?.ho_ten || '',
+              nam: item.nam || proposal.createdAt?.getFullYear() || new Date().getFullYear(),
+            };
+          }
+          return item;
+        });
+      }
 
       return {
         id: proposal.id,
+        loai_de_xuat: proposal.loai_de_xuat,
+        nam: proposal.nam,
         don_vi: {
           id: (proposal.DonViTrucThuoc || proposal.CoQuanDonVi)?.id || null,
           ma_don_vi: (proposal.DonViTrucThuoc || proposal.CoQuanDonVi)?.ma_don_vi || '',
@@ -1153,6 +1124,7 @@ class ProposalService {
         status: proposal.status,
         data_danh_hieu: dataDanhHieu,
         data_thanh_tich: dataThanhTich,
+        files_attached: proposal.files_attached || [],
         ghi_chu: proposal.ghi_chu,
         nguoi_duyet: proposal.NguoiDuyet
           ? {
@@ -1164,7 +1136,6 @@ class ProposalService {
         ngay_duyet: proposal.ngay_duyet,
         createdAt: proposal.createdAt,
         updatedAt: proposal.updatedAt,
-        ten_file_pdf: proposal.ten_file_pdf,
       };
     } catch (error) {
       console.error('Get proposal by id error:', error);
@@ -1500,7 +1471,7 @@ class ProposalService {
           status: 'REJECTED',
           nguoi_duyet_id: adminId,
           ngay_duyet: new Date(),
-          ghi_chu: lyDo,
+          rejection_reason: lyDo,
         },
       });
 
@@ -1971,7 +1942,7 @@ class ProposalService {
               );
             } else if (nckhCount === 0) {
               importWarnings.push(
-                `CCCD ${award.cccd}: Đề xuất CSTDTQ nhưng chưa có NCKH/SKKH được duyệt.`
+                `CCCD ${award.cccd}: Đề xuất CSTDTQ nhưng chưa có ĐTKH/SKKH được duyệt.`
               );
             }
           }

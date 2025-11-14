@@ -248,7 +248,7 @@ export default function ManagerAwardsPage() {
       render: text => <Text type="secondary">{text || '-'}</Text>,
     },
     {
-      title: 'NCKH/SKKH',
+      title: 'ĐTKH/SKKH',
       dataIndex: 'thanh_tich_khoa_hoc',
       key: 'thanh_tich_khoa_hoc',
       width: 120,

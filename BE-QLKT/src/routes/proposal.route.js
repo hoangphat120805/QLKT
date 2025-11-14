@@ -10,17 +10,19 @@ const upload = multer({
     fileSize: 10 * 1024 * 1024, // Giới hạn 10MB
   },
   fileFilter: (req, file, cb) => {
-    // Chấp nhận file Excel và PDF
+    // Chấp nhận file Excel, PDF, và Word
     const allowedMimeTypes = [
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
       'application/vnd.ms-excel', // .xls
       'application/pdf', // .pdf
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+      'application/msword', // .doc
     ];
 
     if (allowedMimeTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Chỉ chấp nhận file Excel (.xlsx, .xls) hoặc PDF (.pdf)'));
+      cb(new Error('Chỉ chấp nhận file Excel (.xlsx, .xls), PDF (.pdf), hoặc Word (.doc, .docx)'));
     }
   },
 });
@@ -43,7 +45,7 @@ router.get(
 
 /**
  * @route   POST /api/proposals
- * @desc    Nộp file đề xuất khen thưởng (Excel + PDF)
+ * @desc    Nộp đề xuất khen thưởng với nhiều file đính kèm không giới hạn
  * @access  MANAGER, ADMIN
  */
 router.post(
@@ -51,8 +53,7 @@ router.post(
   verifyToken,
   checkRole(['MANAGER', 'ADMIN']),
   upload.fields([
-    { name: 'file_excel', maxCount: 1 },
-    { name: 'file_pdf', maxCount: 1 },
+    { name: 'attached_files' }, // Không giới hạn số lượng file
   ]),
   proposalController.submitProposal
 );

@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import {
   Card,
   Button,
-  Badge,
   Table,
   Tabs,
   Alert,
@@ -13,34 +12,27 @@ import {
   Breadcrumb,
   Space,
   Spin,
-  Divider,
   Empty,
   Modal,
-  Form,
   Input,
-  Upload,
   Tag,
-  message as antdMessage,
+  message,
 } from 'antd';
 import {
   HomeOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
-  FileTextOutlined,
   TrophyOutlined,
   BookOutlined,
   LoadingOutlined,
   ArrowLeftOutlined,
-  ExportOutlined,
   WarningOutlined,
-  UploadOutlined,
-  FilePdfOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons';
 import { EditableCell } from '@/components/EditableCell';
+import DecisionModal from '@/components/DecisionModal';
 import { format } from 'date-fns';
-import type { UploadFile } from 'antd/es/upload/interface';
 import { apiClient } from '@/lib/api-client';
-import { BASE_URL } from '@/configs';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -62,6 +54,7 @@ interface ThanhTichItem {
   loai: string;
   mo_ta: string;
   status: string;
+  so_quyet_dinh?: string;
 }
 
 interface ProposalDetail {
@@ -82,7 +75,6 @@ interface ProposalDetail {
   ghi_chu: string | null;
   nguoi_duyet: any;
   ngay_duyet: string | null;
-  ten_file_pdf?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -97,15 +89,21 @@ export default function ProposalDetailPage() {
   const [editedThanhTich, setEditedThanhTich] = useState<ThanhTichItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [approving, setApproving] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-
-  // Decision and PDF states
-  const [form] = Form.useForm();
-  const [fileListCSTT, setFileListCSTT] = useState<UploadFile[]>([]);
-  const [fileListCSTDCS, setFileListCSTDCS] = useState<UploadFile[]>([]);
-  const [fileListBKBQP, setFileListBKBQP] = useState<UploadFile[]>([]);
-  const [fileListCSTDTQ, setFileListCSTDTQ] = useState<UploadFile[]>([]);
   const [rejecting, setRejecting] = useState(false);
+  const [messageAlert, setMessageAlert] = useState<{ type: 'success' | 'error'; text: string } | null>(
+    null
+  );
+
+  // Selection states for Danh Hieu
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+
+  // Selection states for Thanh Tich
+  const [selectedThanhTichKeys, setSelectedThanhTichKeys] = useState<React.Key[]>([]);
+
+  const [decisionModalVisible, setDecisionModalVisible] = useState(false);
+  const [decisionModalType, setDecisionModalType] = useState<'danh_hieu' | 'thanh_tich'>('danh_hieu');
+
+  // Reject modal
   const [rejectModalVisible, setRejectModalVisible] = useState(false);
   const [ghiChu, setGhiChu] = useState('');
 
@@ -122,11 +120,9 @@ export default function ProposalDetailPage() {
 
       if (res.success && res.data) {
         setProposal(res.data);
-        // Backend đã đảm bảo trả về array, nhưng vẫn kiểm tra để an toàn
         const danhHieuData = res.data.data_danh_hieu;
         const thanhTichData = res.data.data_thanh_tich;
 
-        // Đảm bảo luôn là array
         const parsedDanhHieu = Array.isArray(danhHieuData)
           ? danhHieuData
           : danhHieuData && typeof danhHieuData === 'string'
@@ -142,10 +138,10 @@ export default function ProposalDetailPage() {
         setEditedDanhHieu(parsedDanhHieu);
         setEditedThanhTich(parsedThanhTich);
       } else {
-        setMessage({ type: 'error', text: res.message || 'Không tải được đề xuất' });
+        setMessageAlert({ type: 'error', text: res.message || 'Không tải được đề xuất' });
       }
     } catch (error: any) {
-      setMessage({ type: 'error', text: error.message || 'Lỗi khi tải đề xuất' });
+      setMessageAlert({ type: 'error', text: error.message || 'Lỗi khi tải đề xuất' });
     } finally {
       setLoading(false);
     }
@@ -153,18 +149,18 @@ export default function ProposalDetailPage() {
 
   const handleReject = async () => {
     if (!ghiChu.trim()) {
-      antdMessage.error('Vui lòng nhập lý do từ chối');
+      message.error('Vui lòng nhập lý do từ chối');
       return;
     }
 
     try {
       setRejecting(true);
-      setMessage(null);
+      setMessageAlert(null);
 
       const response = await apiClient.rejectProposal(String(id), ghiChu);
 
       if (response.success) {
-        setMessage({ type: 'success', text: response.message || 'Đã từ chối đề xuất thành công' });
+        message.success('Đã từ chối đề xuất thành công');
         setRejectModalVisible(false);
         await fetchProposalDetail();
 
@@ -172,139 +168,95 @@ export default function ProposalDetailPage() {
           router.push('/admin/proposals/review');
         }, 2000);
       } else {
-        setMessage({ type: 'error', text: response.message || 'Lỗi khi từ chối đề xuất' });
+        setMessageAlert({ type: 'error', text: response.message || 'Lỗi khi từ chối đề xuất' });
       }
     } catch (error: any) {
-      setMessage({ type: 'error', text: error.message || 'Lỗi khi từ chối đề xuất' });
+      setMessageAlert({ type: 'error', text: error.message || 'Lỗi khi từ chối đề xuất' });
     } finally {
       setRejecting(false);
     }
   };
 
   const handleApprove = async () => {
-    // Validate form first
-    try {
-      await form.validateFields();
-    } catch (error) {
-      antdMessage.error('Vui lòng điền đầy đủ số quyết định và upload file PDF');
-      return;
-    }
-
-    const formValues = form.getFieldsValue();
-
     Modal.confirm({
       title: 'Xác nhận phê duyệt',
       content: (
         <div>
-          <p style={{ marginBottom: 8 }}>
-            Bạn có chắc chắn muốn phê duyệt đề xuất này? Dữ liệu sẽ được import vào hệ thống.
+          <p>Bạn có chắc chắn muốn phê duyệt đề xuất này? Dữ liệu sẽ được import vào hệ thống.</p>
+          <p style={{ marginTop: 12, color: '#666' }}>
+            Sau khi phê duyệt, bạn có thể chọn cán bộ và thêm số quyết định khen thưởng.
           </p>
-          {(pendingAchievementsCount > 0 || specialProposalsCount > 0) && (
-            <div
-              style={{
-                marginBottom: 8,
-                padding: '8px 12px',
-                background: '#fff7e6',
-                border: '1px solid #ffe7ba',
-                borderRadius: 6,
-              }}
-            >
-              <strong>Chú ý:</strong>
-              <ul style={{ margin: '6px 0 0 18px' }}>
-                {pendingAchievementsCount > 0 && (
-                  <li>{pendingAchievementsCount} thành tích đang ở trạng thái Chờ duyệt</li>
-                )}
-                {specialProposalsCount > 0 && (
-                  <li>{specialProposalsCount} mục đề xuất đặc biệt (BKBQP/CSTĐTQ)</li>
-                )}
-              </ul>
-            </div>
-          )}
-          <Input.TextArea
-            placeholder="Ghi chú cho Manager (không bắt buộc)"
-            rows={3}
-            value={ghiChu}
-            onChange={e => setGhiChu(e.target.value)}
-            style={{ marginTop: 12 }}
-          />
         </div>
       ),
       okText: 'Phê duyệt',
       cancelText: 'Hủy',
-      width: 500,
       onOk: async () => {
         try {
           setApproving(true);
-          setMessage(null);
+          setMessageAlert(null);
 
-          // Create FormData để gửi file
           const formData = new FormData();
           formData.append('data_danh_hieu', JSON.stringify(editedDanhHieu));
           formData.append('data_thanh_tich', JSON.stringify(editedThanhTich));
-
-          // Thêm ghi chú nếu có
-          if (ghiChu.trim()) {
-            formData.append('ghi_chu', ghiChu.trim());
-          }
-
-          // Thêm số quyết định
-          if (formValues.so_quyet_dinh_cstt) {
-            formData.append('so_quyet_dinh_cstt', formValues.so_quyet_dinh_cstt);
-          }
-          if (formValues.so_quyet_dinh_cstdcs) {
-            formData.append('so_quyet_dinh_cstdcs', formValues.so_quyet_dinh_cstdcs);
-          }
-          if (formValues.so_quyet_dinh_bkbqp) {
-            formData.append('so_quyet_dinh_bkbqp', formValues.so_quyet_dinh_bkbqp);
-          }
-          if (formValues.so_quyet_dinh_cstdtq) {
-            formData.append('so_quyet_dinh_cstdtq', formValues.so_quyet_dinh_cstdtq);
-          }
-
-          // Thêm file PDF
-          if (fileListCSTT.length > 0 && fileListCSTT[0].originFileObj) {
-            formData.append('file_pdf_cstt', fileListCSTT[0].originFileObj);
-          }
-          if (fileListCSTDCS.length > 0 && fileListCSTDCS[0].originFileObj) {
-            formData.append('file_pdf_cstdcs', fileListCSTDCS[0].originFileObj);
-          }
-          if (fileListBKBQP.length > 0 && fileListBKBQP[0].originFileObj) {
-            formData.append('file_pdf_bkbqp', fileListBKBQP[0].originFileObj);
-          }
-          if (fileListCSTDTQ.length > 0 && fileListCSTDTQ[0].originFileObj) {
-            formData.append('file_pdf_cstdtq', fileListCSTDTQ[0].originFileObj);
-          }
 
           const response = await apiClient.approveProposal(String(id), formData);
 
           if (response.success) {
             const importedData = response.data || {};
-            setMessage({
-              type: 'success',
-              text: `${response.message || 'Đã phê duyệt đề xuất'}. Đã import ${
-                importedData.imported_danh_hieu || 0
-              }/${importedData.total_danh_hieu || 0} danh hiệu và ${
-                importedData.imported_thanh_tich || 0
-              }/${importedData.total_thanh_tich || 0} thành tích.`,
-            });
+            message.success(
+              `Đã phê duyệt đề xuất. Import ${importedData.imported_danh_hieu || 0}/${
+                importedData.total_danh_hieu || 0
+              } danh hiệu và ${importedData.imported_thanh_tich || 0}/${
+                importedData.total_thanh_tich || 0
+              } thành tích.`
+            );
 
             // Refresh data
             await fetchProposalDetail();
-
-            // Redirect sau 3 giây
-            setTimeout(() => {
-              router.push('/admin/proposals/review');
-            }, 3000);
           } else {
-            setMessage({ type: 'error', text: response.message || 'Lỗi khi phê duyệt đề xuất' });
+            setMessageAlert({ type: 'error', text: response.message || 'Lỗi khi phê duyệt đề xuất' });
           }
         } catch (error: any) {
-          setMessage({ type: 'error', text: error.message || 'Lỗi khi phê duyệt đề xuất' });
+          setMessageAlert({ type: 'error', text: error.message || 'Lỗi khi phê duyệt đề xuất' });
         } finally {
           setApproving(false);
         }
       },
     });
+  };
+
+  const handleDecisionSuccess = (decision: any) => {
+    if (decisionModalType === 'danh_hieu') {
+      // Apply decision to selected danh hieu
+      const updatedDanhHieu = editedDanhHieu.map((item, index) => {
+        if (selectedRowKeys.includes(index)) {
+          return {
+            ...item,
+            so_quyet_dinh_bkbqp: decision.so_quyet_dinh,
+          };
+        }
+        return item;
+      });
+
+      setEditedDanhHieu(updatedDanhHieu);
+      setSelectedRowKeys([]);
+      message.success(`Đã áp dụng số quyết định cho ${selectedRowKeys.length} cán bộ`);
+    } else {
+      // Apply decision to selected thanh tich
+      const updatedThanhTich = editedThanhTich.map((item, index) => {
+        if (selectedThanhTichKeys.includes(index)) {
+          return {
+            ...item,
+            so_quyet_dinh: decision.so_quyet_dinh,
+          };
+        }
+        return item;
+      });
+
+      setEditedThanhTich(updatedThanhTich);
+      setSelectedThanhTichKeys([]);
+      message.success(`Đã áp dụng số quyết định cho ${selectedThanhTichKeys.length} thành tích`);
+    }
   };
 
   const updateDanhHieu = (index: number, field: keyof DanhHieuItem, value: any) => {
@@ -354,6 +306,13 @@ export default function ProposalDetailPage() {
 
   const danhHieuColumns = [
     {
+      title: 'STT',
+      key: 'stt',
+      width: 60,
+      align: 'center' as const,
+      render: (_: any, __: any, index: number) => index + 1,
+    },
+    {
       title: 'CCCD',
       dataIndex: 'cccd',
       key: 'cccd',
@@ -401,74 +360,26 @@ export default function ProposalDetailPage() {
       ),
     },
     {
-      title: 'BKBQP',
-      dataIndex: 'nhan_bkbqp',
-      key: 'nhan_bkbqp',
-      width: 80,
-      align: 'center' as const,
-      render: (_: any, record: DanhHieuItem, index: number) => (
-        <EditableCell
-          value={record.nhan_bkbqp}
-          type="checkbox"
-          onSave={val => updateDanhHieu(index, 'nhan_bkbqp', val)}
-          editable={proposal.status === 'PENDING'}
-        />
-      ),
-    },
-    {
-      title: 'Số QĐ BKBQP',
+      title: 'Số quyết định',
       dataIndex: 'so_quyet_dinh_bkbqp',
-      key: 'so_quyet_dinh_bkbqp',
+      key: 'so_quyet_dinh',
       width: 150,
-      render: (_: any, record: DanhHieuItem, index: number) => (
-        <EditableCell
-          value={record.so_quyet_dinh_bkbqp}
-          type="text"
-          onSave={val => updateDanhHieu(index, 'so_quyet_dinh_bkbqp', val)}
-          editable={proposal.status === 'PENDING'}
-        />
+      render: (text: string) => (
+        <span style={{ color: text ? '#52c41a' : '#999', fontWeight: text ? 500 : 400 }}>
+          {text || 'Chưa có'}
+        </span>
       ),
-    },
-    {
-      title: 'CSTĐTQ',
-      dataIndex: 'nhan_cstdtq',
-      key: 'nhan_cstdtq',
-      width: 80,
-      align: 'center' as const,
-      render: (_: any, record: DanhHieuItem, index: number) => (
-        <EditableCell
-          value={record.nhan_cstdtq}
-          type="checkbox"
-          onSave={val => updateDanhHieu(index, 'nhan_cstdtq', val)}
-          editable={proposal.status === 'PENDING'}
-        />
-      ),
-    },
-    {
-      title: 'Số QĐ CSTĐTQ',
-      dataIndex: 'so_quyet_dinh_cstdtq',
-      key: 'so_quyet_dinh_cstdtq',
-      width: 150,
-      render: (_: any, record: DanhHieuItem, index: number) => (
-        <EditableCell
-          value={record.so_quyet_dinh_cstdtq}
-          type="text"
-          onSave={val => updateDanhHieu(index, 'so_quyet_dinh_cstdtq', val)}
-          editable={proposal.status === 'PENDING'}
-        />
-      ),
-    },
-    {
-      title: 'Chú ý',
-      key: 'note',
-      width: 140,
-      align: 'center' as const,
-      render: (_: any, record: DanhHieuItem) =>
-        record.nhan_bkbqp || record.nhan_cstdtq ? <Tag color="red">Đề xuất đặc biệt</Tag> : null,
     },
   ];
 
   const thanhTichColumns = [
+    {
+      title: 'STT',
+      key: 'stt',
+      width: 60,
+      align: 'center' as const,
+      render: (_: any, __: any, index: number) => index + 1,
+    },
     {
       title: 'CCCD',
       dataIndex: 'cccd',
@@ -529,32 +440,31 @@ export default function ProposalDetailPage() {
       ),
     },
     {
-      title: 'Trạng thái',
-      dataIndex: 'status',
-      key: 'status',
-      width: 120,
-      render: (_: any, record: ThanhTichItem, index: number) => (
-        <EditableCell
-          value={record.status}
-          type="select"
-          options={[
-            { label: 'Đã duyệt', value: 'APPROVED' },
-            { label: 'Chờ duyệt', value: 'PENDING' },
-          ]}
-          onSave={val => updateThanhTich(index, 'status', val)}
-          editable={proposal.status === 'PENDING'}
-        />
+      title: 'Số quyết định',
+      dataIndex: 'so_quyet_dinh',
+      key: 'so_quyet_dinh',
+      width: 150,
+      render: (text: string) => (
+        <span style={{ color: text ? '#52c41a' : '#999', fontWeight: text ? 500 : 400 }}>
+          {text || 'Chưa có'}
+        </span>
       ),
     },
   ];
 
-  // Cảnh báo khi có dữ liệu chưa đủ điều kiện/đang chờ
-  const pendingAchievementsCount = (proposal?.data_thanh_tich || []).filter(
-    (t: any) => t.status !== 'APPROVED'
-  ).length;
-  const specialProposalsCount = (proposal?.data_danh_hieu || []).filter(
-    (d: any) => d.nhan_bkbqp || d.nhan_cstdtq
-  ).length;
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: (selectedKeys: React.Key[]) => {
+      setSelectedRowKeys(selectedKeys);
+    },
+  };
+
+  const thanhTichRowSelection = {
+    selectedRowKeys: selectedThanhTichKeys,
+    onChange: (selectedKeys: React.Key[]) => {
+      setSelectedThanhTichKeys(selectedKeys);
+    },
+  };
 
   const tabItems = [
     {
@@ -569,9 +479,19 @@ export default function ProposalDetailPage() {
         <Card
           title="Danh Hiệu Hằng Năm"
           extra={
-            <Text type="secondary">
-              Bảng có thể chỉnh sửa. Nhấp vào ô để sửa. Checkbox tự động cập nhật.
-            </Text>
+            proposal.status === 'PENDING' &&
+            selectedRowKeys.length > 0 && (
+              <Button
+                type="primary"
+                icon={<FileTextOutlined />}
+                onClick={() => {
+                  setDecisionModalType('danh_hieu');
+                  setDecisionModalVisible(true);
+                }}
+              >
+                Thêm số quyết định ({selectedRowKeys.length} người)
+              </Button>
+            )
           }
         >
           {editedDanhHieu.length === 0 ? (
@@ -581,9 +501,10 @@ export default function ProposalDetailPage() {
             />
           ) : (
             <Table
+              rowSelection={proposal.status === 'PENDING' ? rowSelection : undefined}
               columns={danhHieuColumns}
               dataSource={editedDanhHieu}
-              rowKey={(_, index) => `danh_hieu_${index}`}
+              rowKey={(_, index) => index}
               pagination={false}
               scroll={{ x: true }}
             />
@@ -602,7 +523,21 @@ export default function ProposalDetailPage() {
       children: (
         <Card
           title="Thành Tích Khoa Học"
-          extra={<Text type="secondary">Bảng có thể chỉnh sửa. Nhấp vào ô để sửa.</Text>}
+          extra={
+            proposal.status === 'PENDING' &&
+            selectedThanhTichKeys.length > 0 && (
+              <Button
+                type="primary"
+                icon={<FileTextOutlined />}
+                onClick={() => {
+                  setDecisionModalType('thanh_tich');
+                  setDecisionModalVisible(true);
+                }}
+              >
+                Thêm số quyết định ({selectedThanhTichKeys.length} thành tích)
+              </Button>
+            )
+          }
         >
           {editedThanhTich.length === 0 ? (
             <Empty
@@ -611,9 +546,10 @@ export default function ProposalDetailPage() {
             />
           ) : (
             <Table
+              rowSelection={proposal.status === 'PENDING' ? thanhTichRowSelection : undefined}
               columns={thanhTichColumns}
               dataSource={editedThanhTich}
-              rowKey={(_, index) => `thanh_tich_${index}`}
+              rowKey={(_, index) => index}
               pagination={false}
               scroll={{ x: true }}
             />
@@ -630,7 +566,7 @@ export default function ProposalDetailPage() {
           <HomeOutlined />
         </Breadcrumb.Item>
         <Breadcrumb.Item href="/admin/proposals/review">Duyệt Đề Xuất</Breadcrumb.Item>
-        <Breadcrumb.Item>Chi Tiết #{proposal.id}</Breadcrumb.Item>
+        <Breadcrumb.Item>Chi Tiết</Breadcrumb.Item>
       </Breadcrumb>
 
       <div style={{ marginBottom: '24px' }}>
@@ -644,27 +580,28 @@ export default function ProposalDetailPage() {
         </Button>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <div>
-            <Title level={2}>Chi Tiết Đề Xuất #{proposal.id}</Title>
+            <Title level={2}>Chi Tiết Đề Xuất</Title>
             <Paragraph>Xem và chỉnh sửa trước khi phê duyệt</Paragraph>
           </div>
           {proposal.status === 'APPROVED' ? (
-            <Badge status="success" text="Đã phê duyệt" />
+            <Tag color="success" style={{ fontSize: 14, padding: '4px 12px' }}>
+              Đã phê duyệt
+            </Tag>
           ) : (
-            <Badge status="warning" text="Đang chờ duyệt" />
+            <Tag color="warning" style={{ fontSize: 14, padding: '4px 12px' }}>
+              Đang chờ duyệt
+            </Tag>
           )}
         </div>
       </div>
 
-      {(message || pendingAchievementsCount > 0 || specialProposalsCount > 0) && (
+      {messageAlert && (
         <Alert
-          message={
-            message?.text ||
-            `Chú ý: ${pendingAchievementsCount} thành tích chưa được phê duyệt và ${specialProposalsCount} mục đề xuất đặc biệt (BKBQP/CSTĐTQ).`
-          }
-          type={message?.type || 'warning'}
+          message={messageAlert.text}
+          type={messageAlert.type}
           showIcon
           closable
-          onClose={() => (message ? setMessage(null) : null)}
+          onClose={() => setMessageAlert(null)}
           style={{ marginBottom: '24px' }}
         />
       )}
@@ -681,6 +618,20 @@ export default function ProposalDetailPage() {
           </div>
           <div>
             <Text type="secondary" style={{ fontSize: '14px' }}>
+              Trạng thái
+            </Text>
+            <div style={{ fontWeight: 500 }}>
+              {proposal.status === 'PENDING' ? (
+                <Tag color="warning">Đang chờ duyệt</Tag>
+              ) : proposal.status === 'APPROVED' ? (
+                <Tag color="success">Đã phê duyệt</Tag>
+              ) : (
+                <Tag color="error">Từ chối</Tag>
+              )}
+            </div>
+          </div>
+          <div>
+            <Text type="secondary" style={{ fontSize: '14px' }}>
               Người đề xuất
             </Text>
             <div style={{ fontWeight: 500 }}>{proposal.nguoi_de_xuat.ho_ten}</div>
@@ -693,180 +644,13 @@ export default function ProposalDetailPage() {
               {format(new Date(proposal.createdAt), 'dd/MM/yyyy HH:mm')}
             </div>
           </div>
-          {proposal.ten_file_pdf && (
-            <div>
-              <Text type="secondary" style={{ fontSize: '14px' }}>
-                File PDF Quyết định
-              </Text>
-              <div>
-                <Button
-                  type="link"
-                  icon={<FileTextOutlined />}
-                  href={`${BASE_URL}/api/proposals/uploads/${proposal.ten_file_pdf}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ padding: 0 }}
-                >
-                  Xem PDF <ExportOutlined style={{ marginLeft: 4, fontSize: 12 }} />
-                </Button>
-              </div>
-            </div>
-          )}
         </div>
       </Card>
 
-      {proposal.status === 'PENDING' && (
-        <Card
-          title={
-            <Space>
-              <FilePdfOutlined style={{ color: '#1890ff' }} />
-              <span>Quyết định khen thưởng</span>
-            </Space>
-          }
-          style={{ marginBottom: '24px' }}
-        >
-          <Alert
-            message="Quan trọng"
-            description="Vui lòng nhập số quyết định và upload file PDF cho từng loại danh hiệu. Hệ thống sẽ tự động gán cho quân nhân theo danh hiệu của họ."
-            type="info"
-            showIcon
-            style={{ marginBottom: 24 }}
-          />
-
-          <Form form={form} layout="vertical">
-            <div style={{ marginBottom: 24 }}>
-              <Title level={5}>Danh hiệu hằng năm</Title>
-              <Divider style={{ margin: '12px 0' }} />
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
-                {/* CSTT */}
-                <Card
-                  size="small"
-                  title="CSTT - Chiến sĩ tiên tiến"
-                  style={{ backgroundColor: '#f6ffed' }}
-                >
-                  <Form.Item
-                    name="so_quyet_dinh_cstt"
-                    label="Số quyết định"
-                    rules={[{ required: true, message: 'Vui lòng nhập số QĐ' }]}
-                  >
-                    <Input placeholder="VD: 123/QĐ-BQP" prefix={<FileTextOutlined />} />
-                  </Form.Item>
-                  <Form.Item
-                    label="File PDF"
-                    rules={[{ required: true, message: 'Vui lòng upload file PDF' }]}
-                  >
-                    <Upload
-                      fileList={fileListCSTT}
-                      onChange={({ fileList }) => setFileListCSTT(fileList)}
-                      beforeUpload={() => false}
-                      accept=".pdf"
-                      maxCount={1}
-                    >
-                      <Button icon={<UploadOutlined />} block>
-                        Upload PDF
-                      </Button>
-                    </Upload>
-                  </Form.Item>
-                </Card>
-
-                {/* CSTDCS */}
-                <Card
-                  size="small"
-                  title="CSTDCS - Chiến sĩ thi đua cơ sở"
-                  style={{ backgroundColor: '#e6f7ff' }}
-                >
-                  <Form.Item
-                    name="so_quyet_dinh_cstdcs"
-                    label="Số quyết định"
-                    rules={[{ required: true, message: 'Vui lòng nhập số QĐ' }]}
-                  >
-                    <Input placeholder="VD: 124/QĐ-BQP" prefix={<FileTextOutlined />} />
-                  </Form.Item>
-                  <Form.Item
-                    label="File PDF"
-                    rules={[{ required: true, message: 'Vui lòng upload file PDF' }]}
-                  >
-                    <Upload
-                      fileList={fileListCSTDCS}
-                      onChange={({ fileList }) => setFileListCSTDCS(fileList)}
-                      beforeUpload={() => false}
-                      accept=".pdf"
-                      maxCount={1}
-                    >
-                      <Button icon={<UploadOutlined />} block>
-                        Upload PDF
-                      </Button>
-                    </Upload>
-                  </Form.Item>
-                </Card>
-              </div>
-            </div>
-
-            <div>
-              <Title level={5}>Khen thưởng đặc biệt (Tự động tính)</Title>
-              <Divider style={{ margin: '12px 0' }} />
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
-                {/* BKBQP */}
-                <Card
-                  size="small"
-                  title="BKBQP - Bằng khen BQP"
-                  style={{ backgroundColor: '#fff7e6' }}
-                >
-                  <Form.Item name="so_quyet_dinh_bkbqp" label="Số quyết định">
-                    <Input placeholder="VD: 125/QĐ-BQP" prefix={<FileTextOutlined />} />
-                  </Form.Item>
-                  <Form.Item label="File PDF">
-                    <Upload
-                      fileList={fileListBKBQP}
-                      onChange={({ fileList }) => setFileListBKBQP(fileList)}
-                      beforeUpload={() => false}
-                      accept=".pdf"
-                      maxCount={1}
-                    >
-                      <Button icon={<UploadOutlined />} block>
-                        Upload PDF
-                      </Button>
-                    </Upload>
-                  </Form.Item>
-                </Card>
-
-                {/* CSTDTQ */}
-                <Card
-                  size="small"
-                  title="CSTDTQ - Chiến sĩ thi đua Toàn quân"
-                  style={{ backgroundColor: '#fff1f0' }}
-                >
-                  <Form.Item name="so_quyet_dinh_cstdtq" label="Số quyết định">
-                    <Input placeholder="VD: 126/QĐ-BQP" prefix={<FileTextOutlined />} />
-                  </Form.Item>
-                  <Form.Item label="File PDF">
-                    <Upload
-                      fileList={fileListCSTDTQ}
-                      onChange={({ fileList }) => setFileListCSTDTQ(fileList)}
-                      beforeUpload={() => false}
-                      accept=".pdf"
-                      maxCount={1}
-                    >
-                      <Button icon={<UploadOutlined />} block>
-                        Upload PDF
-                      </Button>
-                    </Upload>
-                  </Form.Item>
-                </Card>
-              </div>
-            </div>
-          </Form>
-        </Card>
-      )}
-
       <Tabs defaultActiveKey="danh_hieu" items={tabItems} />
 
-      <Divider />
-
       {proposal.status === 'PENDING' && (
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: 24 }}>
           <Button onClick={() => router.push('/admin/proposals/review')}>Hủy</Button>
           <Button
             danger
@@ -883,12 +667,12 @@ export default function ProposalDetailPage() {
             loading={approving}
             size="large"
           >
-            {approving ? 'Đang phê duyệt...' : 'Phê Duyệt và Import'}
+            {approving ? 'Đang phê duyệt...' : 'Phê Duyệt'}
           </Button>
         </div>
       )}
 
-      {/* Modal từ chối */}
+      {/* Reject Modal */}
       <Modal
         title="Từ chối đề xuất"
         open={rejectModalVisible}
@@ -920,58 +704,13 @@ export default function ProposalDetailPage() {
         />
       </Modal>
 
-      {proposal.status === 'APPROVED' && proposal.nguoi_duyet && (
-        <div>
-          <Alert
-            message={
-              <span>
-                Đã được phê duyệt bởi{' '}
-                <strong>{proposal.nguoi_duyet.ho_ten || proposal.nguoi_duyet.username}</strong> vào{' '}
-                {format(new Date(proposal.ngay_duyet!), 'dd/MM/yyyy HH:mm')}
-              </span>
-            }
-            type="success"
-            showIcon
-            icon={<CheckCircleOutlined />}
-          />
-          {proposal.ghi_chu && (
-            <Alert
-              message="Ghi chú từ Admin"
-              description={proposal.ghi_chu}
-              type="info"
-              showIcon
-              style={{ marginTop: 16 }}
-            />
-          )}
-        </div>
-      )}
-
-      {proposal.status === 'REJECTED' && (
-        <div>
-          <Alert
-            message={
-              <span>
-                Đã bị từ chối bởi{' '}
-                <strong>{proposal.nguoi_duyet?.ho_ten || proposal.nguoi_duyet?.username}</strong>{' '}
-                vào{' '}
-                {proposal.ngay_duyet && format(new Date(proposal.ngay_duyet), 'dd/MM/yyyy HH:mm')}
-              </span>
-            }
-            type="error"
-            showIcon
-            icon={<CloseCircleOutlined />}
-          />
-          {proposal.ghi_chu && (
-            <Alert
-              message="Lý do từ chối"
-              description={proposal.ghi_chu}
-              type="warning"
-              showIcon
-              style={{ marginTop: 16 }}
-            />
-          )}
-        </div>
-      )}
+      {/* Decision Modal */}
+      <DecisionModal
+        visible={decisionModalVisible}
+        onClose={() => setDecisionModalVisible(false)}
+        onSuccess={handleDecisionSuccess}
+        loaiKhenThuong="CA_NHAN_HANG_NAM"
+      />
     </div>
   );
 }

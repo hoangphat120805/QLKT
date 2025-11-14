@@ -695,6 +695,82 @@ export const apiClient = {
       return { success: false, message: e?.response?.data?.message || e.message };
     }
   },
+
+  // Decision Management (Quản lý Quyết định)
+  async getDecisions(params?: {
+    nam?: number;
+    loai_khen_thuong?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.get('/api/decisions', { params });
+      return { success: true, data: res.data?.data || res.data };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async autocompleteDecisions(query: string, limit = 10): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.get('/api/decisions/autocomplete', {
+        params: { q: query, limit },
+      });
+      return { success: true, data: res.data?.data || res.data };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async getDecisionBySoQuyetDinh(soQuyetDinh: string): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.get(`/api/decisions/by-number/${soQuyetDinh}`);
+      return { success: true, data: res.data?.data || res.data };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async getDecisionById(id: string): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.get(`/api/decisions/${id}`);
+      return { success: true, data: res.data?.data || res.data };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async createDecision(formData: FormData): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.post('/api/decisions', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return { success: true, data: res.data?.data || res.data, message: res.data?.message };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async updateDecision(id: string, formData: FormData): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.put(`/api/decisions/${id}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return { success: true, data: res.data?.data || res.data, message: res.data?.message };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async deleteDecision(id: string): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.delete(`/api/decisions/${id}`);
+      return { success: true, data: res.data?.data || res.data, message: res.data?.message };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
 };
 
 export default apiClient;

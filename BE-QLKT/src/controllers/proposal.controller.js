@@ -57,8 +57,9 @@ class ProposalController {
 
   /**
    * POST /api/proposals
-   * Nộp file đề xuất khen thưởng (Excel + PDF)
+   * Nộp file đề xuất khen thưởng (Excel + nhiều file đính kèm không giới hạn)
    * Body: type=CA_NHAN_HANG_NAM|DON_VI_HANG_NAM|NIEN_HAN|CONG_HIEN|DOT_XUAT|NCKH, so_quyet_dinh (optional)
+   * Files: file_excel (required), attached_files[] (optional - không giới hạn số lượng)
    */
   async submitProposal(req, res) {
     try {
@@ -91,23 +92,37 @@ class ProposalController {
         });
       }
 
-      // Kiểm tra file Excel bắt buộc
-      if (!req.files || !req.files.file_excel) {
+      // Lấy title_data từ body
+      const { title_data, selected_personnel, nam } = req.body;
+
+      if (!title_data) {
         return res.status(400).json({
           success: false,
-          message: 'Vui lòng gửi file Excel đề xuất',
+          message: 'Vui lòng gửi dữ liệu đề xuất',
         });
       }
 
-      const excelFile = req.files.file_excel[0];
-      const pdfFile = req.files.file_pdf ? req.files.file_pdf[0] : null;
+      // Parse title_data nếu là string
+      let titleDataParsed;
+      try {
+        titleDataParsed = typeof title_data === 'string' ? JSON.parse(title_data) : title_data;
+      } catch (e) {
+        return res.status(400).json({
+          success: false,
+          message: 'Dữ liệu title_data không hợp lệ',
+        });
+      }
+
+      // Lấy tất cả các file đính kèm (có thể nhiều file)
+      const attachedFiles = req.files?.attached_files || [];
 
       const result = await proposalService.submitProposal(
-        excelFile.buffer,
-        pdfFile,
+        titleDataParsed,
+        attachedFiles,
         so_quyet_dinh,
         userId,
-        type
+        type,
+        nam
       );
 
       // Gửi thông báo cho tất cả ADMIN

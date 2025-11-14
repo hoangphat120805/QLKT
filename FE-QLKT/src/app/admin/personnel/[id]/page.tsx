@@ -447,7 +447,7 @@ export default function PersonnelDetailPage() {
                   <Col xs={24} md={8}>
                     <Card size="small">
                       <Statistic
-                        title="Tổng NCKH/SKKH"
+                        title="Tổng ĐTKH/SKKH"
                         value={annualProfile.tong_nckh || 0}
                         suffix="công trình"
                         valueStyle={{ color: '#722ed1' }}

@@ -1,5 +1,7 @@
 # 🎯 QLKT - Hệ thống Quản lý Khen thưởng Học viện Khoa học Quân sự
 
+> ⚠️ **QUAN TRỌNG:** Trước khi code, XEM file `/COMMON_ISSUES.md` để tránh các lỗi thường gặp!
+
 ## 📖 Tổng quan Dự án
 
 Hệ thống quản lý khen thưởng toàn diện cho Học viện Khoa học Quân sự, bao gồm:
