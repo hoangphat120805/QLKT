@@ -21,7 +21,6 @@ class PositionHistoryController {
         data: result,
       });
     } catch (error) {
-      console.error('Get position history error:', error);
       return res.status(500).json({
         success: false,
         message: error.message || 'Lấy lịch sử chức vụ thất bại',
@@ -52,9 +51,8 @@ class PositionHistoryController {
       // Tự động cập nhật lại hồ sơ sau khi thêm lịch sử chức vụ
       try {
         await profileService.recalculateProfile(personnel_id);
-        console.log(`✅ Auto-recalculated profile for personnel ${personnel_id}`);
       } catch (recalcError) {
-        console.error(`⚠️ Failed to auto-recalculate profile:`, recalcError.message);
+        // Silent fail - không ảnh hưởng đến response
       }
 
       return res.status(201).json({
@@ -63,7 +61,6 @@ class PositionHistoryController {
         data: result,
       });
     } catch (error) {
-      console.error('Create position history error:', error);
       return res.status(400).json({
         success: false,
         message: error.message || 'Thêm lịch sử chức vụ thất bại',
@@ -84,19 +81,25 @@ class PositionHistoryController {
 
       // Tự động cập nhật lại hồ sơ sau khi cập nhật lịch sử chức vụ
       try {
-        await profileService.recalculateProfile(result.quan_nhan_id);
-        console.log(`✅ Auto-recalculated profile for personnel ${result.quan_nhan_id}`);
+        const personnelId = result.data?.quan_nhan_id || result.quan_nhan_id;
+        await profileService.recalculateProfile(personnelId);
       } catch (recalcError) {
-        console.error(`⚠️ Failed to auto-recalculate profile:`, recalcError.message);
+        // Silent fail - không ảnh hưởng đến response
       }
 
-      return res.status(200).json({
+      // Trả về response với warning nếu có
+      const response = {
         success: true,
         message: 'Cập nhật lịch sử chức vụ thành công',
-        data: result,
-      });
+        data: result.data || result,
+      };
+
+      if (result.warning) {
+        response.warning = result.warning;
+      }
+
+      return res.status(200).json(response);
     } catch (error) {
-      console.error('Update position history error:', error);
       return res.status(400).json({
         success: false,
         message: error.message || 'Cập nhật lịch sử chức vụ thất bại',
@@ -114,9 +117,8 @@ class PositionHistoryController {
       if (result.personnelId) {
         try {
           await profileService.recalculateProfile(result.personnelId);
-          console.log(`✅ Auto-recalculated profile for personnel ${result.personnelId}`);
         } catch (recalcError) {
-          console.error(`⚠️ Failed to auto-recalculate profile:`, recalcError.message);
+          // Silent fail - không ảnh hưởng đến response
         }
       }
 
@@ -125,7 +127,6 @@ class PositionHistoryController {
         message: result.message,
       });
     } catch (error) {
-      console.error('Delete position history error:', error);
       return res.status(400).json({
         success: false,
         message: error.message || 'Xóa lịch sử chức vụ thất bại',

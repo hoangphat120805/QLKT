@@ -78,6 +78,7 @@ interface ThanhTichItem {
   mo_ta: string;
   status: string;
   so_quyet_dinh?: string | null;
+  file_quyet_dinh?: string | null;
   co_quan_don_vi?: {
     id: string;
     ten_co_quan_don_vi: string;
@@ -142,6 +143,8 @@ export default function ManagerProposalDetailPage() {
   const [proposal, setProposal] = useState<ProposalDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
+  const [positionHistoriesMap, setPositionHistoriesMap] = useState<Record<string, any[]>>({});
+  const [personnelDetails, setPersonnelDetails] = useState<Record<string, any>>({});
 
   useEffect(() => {
     if (proposalId) {
@@ -156,6 +159,19 @@ export default function ManagerProposalDetailPage() {
 
       if (response.success) {
         setProposal(response.data);
+
+        // Fetch thông tin personnel để lấy chức vụ hiện tại
+        if (response.data.data_danh_hieu) {
+          const danhHieuData = Array.isArray(response.data.data_danh_hieu)
+            ? response.data.data_danh_hieu
+            : typeof response.data.data_danh_hieu === 'string'
+            ? JSON.parse(response.data.data_danh_hieu)
+            : [];
+          await fetchPersonnelDetails(danhHieuData);
+
+          // Fetch lịch sử chức vụ cho tất cả quân nhân để hiển thị thời gian
+          await fetchPositionHistories(danhHieuData);
+        }
       } else {
         message.error(response.message || 'Không thể tải chi tiết đề xuất');
       }
@@ -164,6 +180,133 @@ export default function ManagerProposalDetailPage() {
       console.error('Fetch proposal detail error:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPersonnelDetails = async (danhHieuItems: any[]) => {
+    try {
+      const detailsMap: Record<string, any> = {};
+
+      // Fetch thông tin personnel cho mỗi quân nhân
+      await Promise.all(
+        danhHieuItems.map(async item => {
+          if (item.personnel_id) {
+            try {
+              const res = await apiClient.getPersonnelById(item.personnel_id);
+              if (res.success && res.data) {
+                detailsMap[item.personnel_id] = res.data;
+              }
+            } catch (error) {
+              // Ignore errors for individual personnel
+            }
+          }
+        })
+      );
+
+      setPersonnelDetails(detailsMap);
+    } catch (error) {
+      console.error('Error fetching personnel details:', error);
+    }
+  };
+
+  const fetchPositionHistories = async (danhHieuItems: DanhHieuItem[]) => {
+    try {
+      const historiesMap: Record<string, any[]> = {};
+
+      // Fetch lịch sử chức vụ cho mỗi quân nhân
+      await Promise.all(
+        danhHieuItems.map(async item => {
+          if (item.personnel_id) {
+            try {
+              const res = await apiClient.getPositionHistory(item.personnel_id);
+              if (res.success && res.data) {
+                historiesMap[item.personnel_id] = res.data;
+              }
+            } catch (error) {
+              // Ignore errors for individual personnel
+              historiesMap[item.personnel_id] = [];
+            }
+          }
+        })
+      );
+
+      setPositionHistoriesMap(historiesMap);
+    } catch (error) {
+      console.error('Error fetching position histories:', error);
+    }
+  };
+
+  // Tính tổng thời gian đảm nhiệm chức vụ theo nhóm hệ số cho một quân nhân
+  const calculateTotalTimeByGroup = (personnelId: string, group: '0.7' | '0.8' | '0.9-1.0') => {
+    const histories = positionHistoriesMap[personnelId] || [];
+    let totalMonths = 0;
+
+    histories.forEach((history: any) => {
+      const heSo = Number(history.he_so_chuc_vu) || 0;
+      let belongsToGroup = false;
+
+      if (group === '0.7') {
+        belongsToGroup = heSo >= 0.7 && heSo < 0.8;
+      } else if (group === '0.8') {
+        belongsToGroup = heSo >= 0.8 && heSo < 0.9;
+      } else if (group === '0.9-1.0') {
+        belongsToGroup = heSo >= 0.9 && heSo <= 1.0;
+      }
+
+      if (belongsToGroup && history.so_thang !== null && history.so_thang !== undefined) {
+        totalMonths += history.so_thang;
+      }
+    });
+
+    const years = Math.floor(totalMonths / 12);
+    const remainingMonths = totalMonths % 12;
+
+    if (totalMonths === 0) return '-';
+    if (years > 0 && remainingMonths > 0) {
+      return `${years} năm ${remainingMonths} tháng`;
+    } else if (years > 0) {
+      return `${years} năm`;
+    } else {
+      return `${remainingMonths} tháng`;
+    }
+  };
+
+  const handleOpenDecisionFile = async (soQuyetDinh: string, filePath?: string | null) => {
+    try {
+      let filename: string | null = null;
+
+      // Nếu đã có file_path trong record, dùng luôn
+      if (filePath) {
+        filename = filePath.split('/').pop() || null;
+      } else {
+        // Nếu chưa có file_path, tìm từ DB dựa trên số quyết định
+        const response = await apiClient.getDecisionBySoQuyetDinh(soQuyetDinh);
+        if (response.success && response.data?.file_path) {
+          filename = response.data.file_path.split('/').pop() || null;
+        }
+      }
+
+      if (filename) {
+        // Tải file về bằng axios với responseType: 'blob'
+        const response = await axiosInstance.get(`/api/proposals/uploads/${filename}`, {
+          responseType: 'blob',
+        });
+        const blob = response.data;
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename || `${soQuyetDinh}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        message.success('Tải file thành công');
+      } else {
+        message.warning('Không tìm thấy file quyết định');
+      }
+    } catch (error: any) {
+      message.error('Lỗi khi tải file quyết định');
+      console.error('Download decision file error:', error);
     }
   };
 
@@ -425,7 +568,7 @@ export default function ManagerProposalDetailPage() {
                           currentTheme === 'dark' ? styles.fileNameDark : styles.fileNameLight
                         }`}
                       >
-                        {file.originalName}
+                        {decodeURIComponent(escape(file.originalName))}
                       </Text>
                     </div>
                     <Text
@@ -482,12 +625,19 @@ export default function ManagerProposalDetailPage() {
         {/* Data Tables - Hiển thị theo loại đề xuất */}
         {proposal.loai_de_xuat === 'NCKH' ? (
           // Component cho đề xuất NCKH (ĐTKH/SKKH)
-          <Card className="shadow-sm" title={<span><BookOutlined style={{ marginRight: 8 }} />Thành Tích Khoa Học ({proposal.data_thanh_tich?.length || 0})</span>}>
+          <Card
+            className="shadow-sm"
+            title={
+              <span>
+                <BookOutlined style={{ marginRight: 8 }} />
+                Thành Tích Khoa Học ({proposal.data_thanh_tich?.length || 0})
+              </span>
+            }
+          >
             <Table
               dataSource={proposal.data_thanh_tich || []}
               rowKey={(_, index) => `tt_${index}`}
               pagination={false}
-              scroll={{ x: 1400 }}
               columns={[
                 {
                   title: 'STT',
@@ -500,20 +650,29 @@ export default function ManagerProposalDetailPage() {
                   title: 'Họ tên',
                   dataIndex: 'ho_ten',
                   key: 'ho_ten',
-                  width: 150,
-                  render: text => <Text strong>{text || '-'}</Text>,
-                },
-                {
-                  title: 'Cơ quan đơn vị',
-                  key: 'co_quan_don_vi',
-                  width: 180,
-                  render: (_, record) => record.co_quan_don_vi?.ten_co_quan_don_vi || '-',
-                },
-                {
-                  title: 'Đơn vị trực thuộc',
-                  key: 'don_vi_truc_thuoc',
-                  width: 180,
-                  render: (_, record) => record.don_vi_truc_thuoc?.ten_don_vi || '-',
+                  width: 250,
+                  align: 'center',
+                  render: (text: string, record: any) => {
+                    const coQuanDonVi = record.co_quan_don_vi?.ten_co_quan_don_vi;
+                    const donViTrucThuoc = record.don_vi_truc_thuoc?.ten_don_vi;
+                    const parts = [];
+                    if (donViTrucThuoc) parts.push(donViTrucThuoc);
+                    if (coQuanDonVi) parts.push(coQuanDonVi);
+                    const unitInfo = parts.length > 0 ? parts.join(', ') : null;
+
+                    return (
+                      <div
+                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+                      >
+                        <Text strong>{text || '-'}</Text>
+                        {unitInfo && (
+                          <Text type="secondary" style={{ fontSize: '12px', marginTop: '4px' }}>
+                            {unitInfo}
+                          </Text>
+                        )}
+                      </div>
+                    );
+                  },
                 },
                 {
                   title: 'Năm',
@@ -527,6 +686,7 @@ export default function ManagerProposalDetailPage() {
                   dataIndex: 'loai',
                   key: 'loai',
                   width: 150,
+                  align: 'center',
                   render: text => (
                     <Tag color={text === 'NCKH' ? 'blue' : 'green'}>
                       {text === 'NCKH' ? 'Đề tài khoa học' : 'Sáng kiến khoa học'}
@@ -538,26 +698,60 @@ export default function ManagerProposalDetailPage() {
                   dataIndex: 'mo_ta',
                   key: 'mo_ta',
                   width: 300,
+                  align: 'center',
                   render: text => <Text>{text || '-'}</Text>,
                 },
-                {
-                  title: 'Số quyết định',
-                  dataIndex: 'so_quyet_dinh',
-                  key: 'so_quyet_dinh',
-                  width: 180,
-                  render: text => <Text>{text || '-'}</Text>,
-                },
+                ...(proposal.status === 'APPROVED'
+                  ? [
+                      {
+                        title: 'Số quyết định',
+                        dataIndex: 'so_quyet_dinh',
+                        key: 'so_quyet_dinh',
+                        width: 180,
+                        align: 'center' as const,
+                        render: (text: string, record: ThanhTichItem) => {
+                          if (!text || (typeof text === 'string' && text.trim() === '')) {
+                            return <Text type="secondary">-</Text>;
+                          }
+
+                          return (
+                            <a
+                              onClick={e => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleOpenDecisionFile(text, record.file_quyet_dinh);
+                              }}
+                              style={{
+                                color: '#1890ff',
+                                cursor: 'pointer',
+                                textDecoration: 'underline',
+                              }}
+                            >
+                              {text}
+                            </a>
+                          );
+                        },
+                      },
+                    ]
+                  : []),
               ]}
             />
           </Card>
         ) : proposal.data_danh_hieu && proposal.data_danh_hieu.length > 0 ? (
           // Component cho đề xuất có danh hiệu (CA_NHAN_HANG_NAM, DON_VI_HANG_NAM, NIEN_HAN, CONG_HIEN, DOT_XUAT)
-          <Card className="shadow-sm" title={<span><TrophyOutlined style={{ marginRight: 8 }} />Danh Hiệu Hằng Năm ({proposal.data_danh_hieu?.length || 0})</span>}>
+          <Card
+            className="shadow-sm"
+            title={
+              <span>
+                <TrophyOutlined style={{ marginRight: 8 }} />
+                Danh Hiệu Hằng Năm ({proposal.data_danh_hieu?.length || 0})
+              </span>
+            }
+          >
             <Table
               dataSource={proposal.data_danh_hieu || []}
               rowKey={(_, index) => `dh_${index}`}
               pagination={false}
-              scroll={{ x: 1100 }}
               columns={[
                 {
                   title: 'STT',
@@ -570,20 +764,40 @@ export default function ManagerProposalDetailPage() {
                   title: 'Họ và tên',
                   dataIndex: 'ho_ten',
                   key: 'ho_ten',
+                  width: 250,
+                  align: 'center',
+                  render: (text: string, record: any) => {
+                    const coQuanDonVi = record.co_quan_don_vi?.ten_co_quan_don_vi;
+                    const donViTrucThuoc = record.don_vi_truc_thuoc?.ten_don_vi;
+                    const parts = [];
+                    if (donViTrucThuoc) parts.push(donViTrucThuoc);
+                    if (coQuanDonVi) parts.push(coQuanDonVi);
+                    const unitInfo = parts.length > 0 ? parts.join(', ') : null;
+
+                    return (
+                      <div
+                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+                      >
+                        <Text strong>{text || '-'}</Text>
+                        {unitInfo && (
+                          <Text type="secondary" style={{ fontSize: '12px', marginTop: '4px' }}>
+                            {unitInfo}
+                          </Text>
+                        )}
+                      </div>
+                    );
+                  },
+                },
+                {
+                  title: 'Chức vụ hiện tại',
+                  key: 'chuc_vu',
                   width: 200,
-                  render: text => <Text strong>{text || '-'}</Text>,
-                },
-                {
-                  title: 'Cơ quan đơn vị',
-                  key: 'co_quan_don_vi',
-                  width: 180,
-                  render: (_, record) => record.co_quan_don_vi?.ten_co_quan_don_vi || '-',
-                },
-                {
-                  title: 'Đơn vị trực thuộc',
-                  key: 'don_vi_truc_thuoc',
-                  width: 180,
-                  render: (_, record) => record.don_vi_truc_thuoc?.ten_don_vi || '-',
+                  align: 'center',
+                  render: (_: any, record: any) => {
+                    const personnelDetail = personnelDetails[record.personnel_id || ''];
+                    const chucVu = personnelDetail?.ChucVu?.ten_chuc_vu;
+                    return <Text>{chucVu || '-'}</Text>;
+                  },
                 },
                 {
                   title: 'Năm',
@@ -597,20 +811,95 @@ export default function ManagerProposalDetailPage() {
                   dataIndex: 'danh_hieu',
                   key: 'danh_hieu',
                   width: 180,
-                  render: text =>
-                    text ? <Tag color="green">{text}</Tag> : <Text type="secondary">-</Text>,
+                  align: 'center',
+                  render: (text: string) =>
+                    text ? <Text>{text}</Text> : <Text type="secondary">-</Text>,
                 },
+                {
+                  title: 'Tổng thời gian (0.7)',
+                  key: 'total_time_0_7',
+                  width: 150,
+                  align: 'center' as const,
+                  render: (_: any, record: DanhHieuItem) =>
+                    calculateTotalTimeByGroup(record.personnel_id || '', '0.7'),
+                },
+                {
+                  title: 'Tổng thời gian (0.8)',
+                  key: 'total_time_0_8',
+                  width: 150,
+                  align: 'center' as const,
+                  render: (_: any, record: DanhHieuItem) =>
+                    calculateTotalTimeByGroup(record.personnel_id || '', '0.8'),
+                },
+                {
+                  title: 'Tổng thời gian (0.9-1.0)',
+                  key: 'total_time_0_9_1_0',
+                  width: 150,
+                  align: 'center' as const,
+                  render: (_: any, record: DanhHieuItem) =>
+                    calculateTotalTimeByGroup(record.personnel_id || '', '0.9-1.0'),
+                },
+                ...(proposal.status === 'APPROVED'
+                  ? [
+                      {
+                        title: 'Số quyết định',
+                        dataIndex: 'so_quyet_dinh',
+                        key: 'so_quyet_dinh',
+                        width: 180,
+                        align: 'center' as const,
+                        render: (text: string, record: DanhHieuItem) => {
+                          const soQuyetDinh =
+                            text || record.so_quyet_dinh_bkbqp || record.so_quyet_dinh_cstdtq;
+                          const fileQuyetDinh =
+                            record.file_quyet_dinh ||
+                            record.file_quyet_dinh_bkbqp ||
+                            record.file_quyet_dinh_cstdtq;
+
+                          if (
+                            !soQuyetDinh ||
+                            (typeof soQuyetDinh === 'string' && soQuyetDinh.trim() === '')
+                          ) {
+                            return <Text type="secondary">-</Text>;
+                          }
+
+                          return (
+                            <a
+                              onClick={e => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleOpenDecisionFile(soQuyetDinh, fileQuyetDinh);
+                              }}
+                              style={{
+                                color: '#1890ff',
+                                cursor: 'pointer',
+                                textDecoration: 'underline',
+                              }}
+                            >
+                              {soQuyetDinh}
+                            </a>
+                          );
+                        },
+                      },
+                    ]
+                  : []),
               ]}
             />
           </Card>
         ) : proposal.data_nien_han && proposal.data_nien_han.length > 0 ? (
           // Component cho đề xuất niên hạn
-          <Card className="shadow-sm" title={<span><ClockCircleOutlined style={{ marginRight: 8 }} />Niên Hạn ({proposal.data_nien_han?.length || 0})</span>}>
+          <Card
+            className="shadow-sm"
+            title={
+              <span>
+                <ClockCircleOutlined style={{ marginRight: 8 }} />
+                Niên Hạn ({proposal.data_nien_han?.length || 0})
+              </span>
+            }
+          >
             <Table
               dataSource={proposal.data_nien_han || []}
               rowKey={(_, index) => `nh_${index}`}
               pagination={false}
-              scroll={{ x: 1100 }}
               columns={[
                 {
                   title: 'STT',
@@ -623,20 +912,29 @@ export default function ManagerProposalDetailPage() {
                   title: 'Họ và tên',
                   dataIndex: 'ho_ten',
                   key: 'ho_ten',
-                  width: 200,
-                  render: text => <Text strong>{text || '-'}</Text>,
-                },
-                {
-                  title: 'Cơ quan đơn vị',
-                  key: 'co_quan_don_vi',
-                  width: 180,
-                  render: (_, record) => record.co_quan_don_vi?.ten_co_quan_don_vi || '-',
-                },
-                {
-                  title: 'Đơn vị trực thuộc',
-                  key: 'don_vi_truc_thuoc',
-                  width: 180,
-                  render: (_, record) => record.don_vi_truc_thuoc?.ten_don_vi || '-',
+                  width: 250,
+                  align: 'center',
+                  render: (text: string, record: any) => {
+                    const coQuanDonVi = record.co_quan_don_vi?.ten_co_quan_don_vi;
+                    const donViTrucThuoc = record.don_vi_truc_thuoc?.ten_don_vi;
+                    const parts = [];
+                    if (donViTrucThuoc) parts.push(donViTrucThuoc);
+                    if (coQuanDonVi) parts.push(coQuanDonVi);
+                    const unitInfo = parts.length > 0 ? parts.join(', ') : null;
+
+                    return (
+                      <div
+                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+                      >
+                        <Text strong>{text || '-'}</Text>
+                        {unitInfo && (
+                          <Text type="secondary" style={{ fontSize: '12px', marginTop: '4px' }}>
+                            {unitInfo}
+                          </Text>
+                        )}
+                      </div>
+                    );
+                  },
                 },
                 {
                   title: 'Năm',
@@ -650,9 +948,53 @@ export default function ManagerProposalDetailPage() {
                   dataIndex: 'danh_hieu',
                   key: 'danh_hieu',
                   width: 180,
-                  render: text =>
-                    text ? <Tag color="green">{text}</Tag> : <Text type="secondary">-</Text>,
+                  align: 'center',
+                  render: (text: string) =>
+                    text ? <Text>{text}</Text> : <Text type="secondary">-</Text>,
                 },
+                ...(proposal.status === 'APPROVED'
+                  ? [
+                      {
+                        title: 'Số quyết định',
+                        dataIndex: 'so_quyet_dinh',
+                        key: 'so_quyet_dinh',
+                        width: 180,
+                        align: 'center' as const,
+                        render: (text: string, record: DanhHieuItem) => {
+                          const soQuyetDinh =
+                            text || record.so_quyet_dinh_bkbqp || record.so_quyet_dinh_cstdtq;
+                          const fileQuyetDinh =
+                            record.file_quyet_dinh ||
+                            record.file_quyet_dinh_bkbqp ||
+                            record.file_quyet_dinh_cstdtq;
+
+                          if (
+                            !soQuyetDinh ||
+                            (typeof soQuyetDinh === 'string' && soQuyetDinh.trim() === '')
+                          ) {
+                            return <Text type="secondary">-</Text>;
+                          }
+
+                          return (
+                            <a
+                              onClick={e => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleOpenDecisionFile(soQuyetDinh, fileQuyetDinh);
+                              }}
+                              style={{
+                                color: '#1890ff',
+                                cursor: 'pointer',
+                                textDecoration: 'underline',
+                              }}
+                            >
+                              {soQuyetDinh}
+                            </a>
+                          );
+                        },
+                      },
+                    ]
+                  : []),
               ]}
             />
           </Card>

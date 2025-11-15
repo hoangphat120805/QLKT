@@ -54,6 +54,8 @@ interface Proposal {
   ghi_chu: string | null;
   createdAt: string;
   file_excel_path?: string;
+  data_danh_hieu?: Array<{ so_quyet_dinh?: string | null }>;
+  data_thanh_tich?: Array<{ so_quyet_dinh?: string | null }>;
 }
 
 export default function ManagerProposalsPage() {
@@ -179,6 +181,7 @@ export default function ManagerProposalsPage() {
       dataIndex: 'createdAt',
       key: 'createdAt',
       width: 140,
+      align: 'center' as const,
       render: (date: string) => format(new Date(date), 'dd/MM/yyyy HH:mm'),
     },
     {
@@ -186,6 +189,7 @@ export default function ManagerProposalsPage() {
       dataIndex: 'loai_de_xuat',
       key: 'loai_de_xuat',
       width: 180,
+      align: 'center' as const,
       render: (type: string) => getProposalTypeTag(type),
     },
     {
@@ -206,14 +210,18 @@ export default function ManagerProposalsPage() {
           // NCKH: hiển thị số thành tích khoa học
           return (
             <Tooltip title="Số đề tài/sáng kiến khoa học">
-              <Badge count={record.so_thanh_tich} showZero color="magenta" />
+              <span style={{ fontSize: '14px', fontWeight: 500 }}>
+                {record.so_thanh_tich ?? 0}
+              </span>
             </Tooltip>
           );
         } else {
           // Các loại khác: hiển thị số cán bộ (danh hiệu)
           return (
             <Tooltip title="Số cán bộ">
-              <Badge count={record.so_danh_hieu} showZero color="blue" />
+              <span style={{ fontSize: '14px', fontWeight: 500 }}>
+                {record.so_danh_hieu ?? 0}
+              </span>
             </Tooltip>
           );
         }
@@ -224,12 +232,27 @@ export default function ManagerProposalsPage() {
       dataIndex: 'status',
       key: 'status',
       width: 130,
+      align: 'center' as const,
       render: (status: string) => getStatusTag(status),
+    },
+    {
+      title: 'Ngày duyệt',
+      key: 'ngay_duyet',
+      width: 180,
+      align: 'center' as const,
+      render: (_: any, record: Proposal) => {
+        // Chỉ hiển thị ngày duyệt khi đã duyệt
+        if (record.status !== 'APPROVED' || !record.ngay_duyet) {
+          return <Text type="secondary">-</Text>;
+        }
+
+        return format(new Date(record.ngay_duyet), 'dd/MM/yyyy HH:mm');
+      },
     },
     {
       title: 'Hành động',
       key: 'action',
-      align: 'right' as const,
+      align: 'center' as const,
       width: 260,
       render: (_: any, record: Proposal) => (
         <Space>

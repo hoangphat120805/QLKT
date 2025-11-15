@@ -77,9 +77,9 @@ export function PositionsTable({ positions, onEdit, onRefresh }: PositionsTableP
       },
     },
     {
-      title: 'Hệ số lương',
-      dataIndex: 'he_so_luong',
-      key: 'he_so_luong',
+      title: 'Hệ số chức vụ',
+      dataIndex: 'he_so_chuc_vu',
+      key: 'he_so_chuc_vu',
       width: 150,
       render: value => parseFloat(value || 0).toFixed(2),
     },

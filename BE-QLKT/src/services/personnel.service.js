@@ -221,10 +221,10 @@ class PersonnelService {
         },
       });
 
-      // Lấy thông tin chức vụ để lưu hệ số lương
+      // Lấy thông tin chức vụ để lưu hệ số chức vụ
       const chucVu = await prisma.chucVu.findUnique({
         where: { id: position_id },
-        select: { he_so_luong: true },
+        select: { he_so_chuc_vu: true },
       });
 
       // Tạo LichSuChucVu cho chức vụ ban đầu
@@ -233,7 +233,7 @@ class PersonnelService {
         data: {
           quan_nhan_id: newPersonnel.id,
           chuc_vu_id: position_id,
-          he_so_luong: chucVu?.he_so_luong || 0,
+          he_so_chuc_vu: chucVu?.he_so_chuc_vu || 0,
           ngay_bat_dau: ngayBatDau, // Bắt đầu từ ngày tạo
           ngay_ket_thuc: null, // Chức vụ hiện tại
           so_thang: null, // Chưa kết thúc nên chưa tính được
@@ -545,10 +545,10 @@ class PersonnelService {
           });
         }
 
-        // 2. Lấy thông tin chức vụ mới để lưu hệ số lương
+        // 2. Lấy thông tin chức vụ mới để lưu hệ số chức vụ
         const newChucVu = await prisma.chucVu.findUnique({
           where: { id: position_id },
-          select: { he_so_luong: true },
+          select: { he_so_chuc_vu: true },
         });
 
         // 3. Tạo lịch sử chức vụ mới
@@ -556,7 +556,7 @@ class PersonnelService {
           data: {
             quan_nhan_id: id,
             chuc_vu_id: position_id,
-            he_so_luong: newChucVu?.he_so_luong || 0,
+            he_so_chuc_vu: newChucVu?.he_so_chuc_vu || 0,
             ngay_bat_dau: today,
             ngay_ket_thuc: null, // Chức vụ hiện tại
             so_thang: null, // Chưa kết thúc nên chưa tính được
@@ -720,7 +720,7 @@ class PersonnelService {
         { header: 'Tên đơn vị', key: 'ten_don_vi', width: 24 },
         { header: 'Tên chức vụ', key: 'ten_chuc_vu', width: 22 },
         { header: 'Là chỉ huy (is_manager)', key: 'is_manager', width: 16 },
-        { header: 'Hệ số lương', key: 'he_so_luong', width: 15 },
+        { header: 'Hệ số chức vụ', key: 'he_so_chuc_vu', width: 15 },
       ];
 
       // Format cột CCCD thành Text (để giữ số 0 đầu tiên)
@@ -738,7 +738,7 @@ class PersonnelService {
           ten_don_vi: (p.DonViTrucThuoc || p.CoQuanDonVi)?.ten_don_vi || '',
           ten_chuc_vu: p.ChucVu?.ten_chuc_vu || '',
           is_manager: p.ChucVu?.is_manager ? 'TRUE' : 'FALSE',
-          he_so_luong: p.ChucVu?.he_so_luong || '',
+          he_so_chuc_vu: p.ChucVu?.he_so_chuc_vu || '',
         });
       });
 
@@ -968,10 +968,10 @@ class PersonnelService {
             });
           }
 
-          // Lấy thông tin chức vụ để lưu hệ số lương
+          // Lấy thông tin chức vụ để lưu hệ số chức vụ
           const chucVuForHistory = await prisma.chucVu.findUnique({
             where: { id: position.id },
-            select: { he_so_luong: true },
+            select: { he_so_chuc_vu: true },
           });
 
           // Tạo LichSuChucVu cho chức vụ ban đầu
@@ -980,7 +980,7 @@ class PersonnelService {
             data: {
               quan_nhan_id: newPersonnel.id,
               chuc_vu_id: position.id,
-              he_so_luong: chucVuForHistory?.he_so_luong || 0,
+              he_so_chuc_vu: chucVuForHistory?.he_so_chuc_vu || 0,
               ngay_bat_dau: ngayBatDau,
               ngay_ket_thuc: null, // Chức vụ hiện tại
               so_thang: null, // Chưa kết thúc nên chưa tính được
@@ -1077,10 +1077,10 @@ class PersonnelService {
               });
             }
 
-            // 2. Lấy thông tin chức vụ mới để lưu hệ số lương
+            // 2. Lấy thông tin chức vụ mới để lưu hệ số chức vụ
             const newChucVuForImport = await prisma.chucVu.findUnique({
               where: { id: position.id },
-              select: { he_so_luong: true },
+              select: { he_so_chuc_vu: true },
             });
 
             // 3. Tạo lịch sử chức vụ mới
@@ -1088,7 +1088,7 @@ class PersonnelService {
               data: {
                 quan_nhan_id: existing.id,
                 chuc_vu_id: position.id,
-                he_so_luong: newChucVuForImport?.he_so_luong || 0,
+                he_so_chuc_vu: newChucVuForImport?.he_so_chuc_vu || 0,
                 ngay_bat_dau: today,
                 ngay_ket_thuc: null,
                 so_thang: null, // Chưa kết thúc nên chưa tính được

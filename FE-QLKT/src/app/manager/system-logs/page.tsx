@@ -37,7 +37,7 @@ export default function ManagerSystemLogsPage() {
         const normalized = list.map((l: any) => {
           const actionCombined = [l?.action, l?.resource].filter(Boolean).join('_').toUpperCase();
           const actorName =
-            l?.Actor?.QuanNhan?.ho_ten || l?.Actor?.username || l?.actor_name || l?.actor_id;
+            l?.NguoiThucHien?.QuanNhan?.ho_ten || l?.NguoiThucHien?.username || l?.Actor?.QuanNhan?.ho_ten || l?.Actor?.username || l?.actor_name || l?.actor_id;
           return {
             ...l,
             action: actionCombined,

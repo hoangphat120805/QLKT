@@ -5,6 +5,8 @@ const path = require('path');
 const fs = require('fs');
 const annualRewardController = require('../controllers/annualReward.controller');
 const { verifyToken, requireManager, requireAuth, requireAdmin } = require('../middlewares/auth');
+const { auditLog } = require('../middlewares/auditLog');
+const { getLogDescription, getResourceId } = require('../helpers/auditLogHelper');
 
 // Memory storage để xử lý file Excel từ buffer
 const upload = multer({ storage: multer.memoryStorage() });
@@ -39,9 +41,42 @@ const pdfUpload = multer({
 });
 
 router.get('/', verifyToken, requireAuth, annualRewardController.getAnnualRewards);
-router.post('/', verifyToken, requireManager, annualRewardController.createAnnualReward);
-router.put('/:id', verifyToken, requireManager, annualRewardController.updateAnnualReward);
-router.delete('/:id', verifyToken, requireManager, annualRewardController.deleteAnnualReward);
+router.post(
+  '/',
+  verifyToken,
+  requireManager,
+  auditLog({
+    action: 'CREATE',
+    resource: 'annual-rewards',
+    getDescription: getLogDescription('annual-rewards', 'CREATE'),
+    getResourceId: getResourceId.fromResponse(),
+  }),
+  annualRewardController.createAnnualReward
+);
+router.put(
+  '/:id',
+  verifyToken,
+  requireManager,
+  auditLog({
+    action: 'UPDATE',
+    resource: 'annual-rewards',
+    getDescription: getLogDescription('annual-rewards', 'UPDATE'),
+    getResourceId: getResourceId.fromParams('id'),
+  }),
+  annualRewardController.updateAnnualReward
+);
+router.delete(
+  '/:id',
+  verifyToken,
+  requireManager,
+  auditLog({
+    action: 'DELETE',
+    resource: 'annual-rewards',
+    getDescription: getLogDescription('annual-rewards', 'DELETE'),
+    getResourceId: getResourceId.fromParams('id'),
+  }),
+  annualRewardController.deleteAnnualReward
+);
 
 // Thêm danh hiệu đồng loạt cho nhiều quân nhân (có thể kèm file PDF quyết định)
 router.post(
@@ -49,6 +84,12 @@ router.post(
   verifyToken,
   requireAdmin,
   pdfUpload.single('file_quyet_dinh'),
+  auditLog({
+    action: 'BULK',
+    resource: 'annual-rewards',
+    getDescription: getLogDescription('annual-rewards', 'BULK'),
+    getResourceId: () => null, // Bulk operation không có single resource ID
+  }),
   annualRewardController.bulkCreateAnnualRewards
 );
 
@@ -58,6 +99,12 @@ router.post(
   verifyToken,
   requireManager,
   upload.single('file'),
+  auditLog({
+    action: 'IMPORT',
+    resource: 'annual-rewards',
+    getDescription: getLogDescription('annual-rewards', 'IMPORT'),
+    getResourceId: () => null, // Import operation không có single resource ID
+  }),
   annualRewardController.importAnnualRewards
 );
 

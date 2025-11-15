@@ -89,11 +89,41 @@ export default function ProposalDetailModal({
       render: (_, __, index) => index + 1,
     },
     {
-      title: 'Mã quân nhân',
-      dataIndex: 'personnel_id',
-      key: 'personnel_id',
+      title: 'Họ và tên',
+      dataIndex: 'ho_ten',
+      key: 'ho_ten',
+      width: 250,
+      align: 'center',
+      render: (text: string, record: any) => {
+        const coQuanDonVi = record.co_quan_don_vi?.ten_co_quan_don_vi;
+        const donViTrucThuoc = record.don_vi_truc_thuoc?.ten_don_vi;
+        const parts = [];
+        if (donViTrucThuoc) parts.push(donViTrucThuoc);
+        if (coQuanDonVi) parts.push(coQuanDonVi);
+        const unitInfo = parts.length > 0 ? parts.join(', ') : null;
+
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <Text strong>{text || '-'}</Text>
+            {unitInfo && (
+              <Text type="secondary" style={{ fontSize: '12px', marginTop: '4px' }}>
+                {unitInfo}
+              </Text>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      title: 'Chức vụ hiện tại',
+      key: 'chuc_vu',
       width: 200,
-      render: (id: string) => <Text code>{id}</Text>,
+      align: 'center',
+      render: (_: any, record: any) => {
+        // Lấy chức vụ từ record nếu có
+        const chucVu = record.ChucVu?.ten_chuc_vu || record.chuc_vu;
+        return <Text>{chucVu || '-'}</Text>;
+      },
     },
   ];
 

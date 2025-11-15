@@ -27,7 +27,7 @@ export function PositionForm({ position, units = [], onSuccess, onClose }: Posit
         ten_chuc_vu: position.ten_chuc_vu || '',
         // Nếu là đơn vị trực thuộc thì luôn set is_manager = false
         is_manager: isDonViTrucThuoc ? false : position.is_manager || false,
-        he_so_luong: position.he_so_luong || undefined,
+        he_so_chuc_vu: position.he_so_chuc_vu || undefined,
       });
     } else if (units.length === 1) {
       // Nếu chỉ có 1 đơn vị (đang tạo từ trang chi tiết), tự động set don_vi_id
@@ -58,11 +58,11 @@ export function PositionForm({ position, units = [], onSuccess, onClose }: Posit
 
       // Add optional fields
       if (
-        values.he_so_luong !== undefined &&
-        values.he_so_luong !== null &&
-        values.he_so_luong !== ''
+        values.he_so_chuc_vu !== undefined &&
+        values.he_so_chuc_vu !== null &&
+        values.he_so_chuc_vu !== ''
       ) {
-        payload.he_so_luong = parseFloat(values.he_so_luong);
+        payload.he_so_chuc_vu = parseFloat(values.he_so_chuc_vu);
       }
 
       // Add unit_id only when creating (giữ nguyên string UUID)
@@ -159,8 +159,8 @@ export function PositionForm({ position, units = [], onSuccess, onClose }: Posit
         </>
       )}
 
-      <Form.Item label="Hệ số lương" name="he_so_luong">
-        <Input type="number" placeholder="Nhập hệ số lương (VD: 2.5)" step="0.01" min="0" />
+      <Form.Item label="Hệ số chức vụ" name="he_so_chuc_vu">
+        <Input type="number" placeholder="Nhập hệ số chức vụ (VD: 2.5)" step="0.01" min="0" />
       </Form.Item>
 
       {/* Chỉ hiển thị checkbox "Là Chỉ huy?" cho CƠ QUAN ĐƠN VỊ */}

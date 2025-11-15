@@ -55,7 +55,7 @@ model ChucVu {
   don_vi_truc_thuoc_id  String?  @db.VarChar(30) // ID đơn vị trực thuộc (nullable)
   ten_chuc_vu           String   @db.VarChar(255)
   is_manager             Boolean  @default(false)
-  he_so_luong           Decimal? @db.Decimal(10, 2) // Hệ số lương
+  he_so_chuc_vu         Decimal  @default(0) @db.Decimal(10, 2) // Hệ số chức vụ
   createdAt             DateTime @default(now()) @db.Timestamptz(6)
   updatedAt             DateTime @updatedAt @db.Timestamptz(6)
 
@@ -135,7 +135,7 @@ model LichSuChucVu {
   id            String    @id @default(cuid()) @db.VarChar(30)
   quan_nhan_id  String    @db.VarChar(30)
   chuc_vu_id    String    @db.VarChar(30)
-  he_so_luong   Float     @default(0) // Hệ số lương tại thời điểm đó (lưu snapshot)
+  he_so_chuc_vu Float     @default(0) // Hệ số chức vụ tại thời điểm đó (lưu snapshot)
   ngay_bat_dau  DateTime  @db.Date
   ngay_ket_thuc DateTime? @db.Date
   so_thang      Int?      // Số tháng giữ chức vụ (tính từ ngày bắt đầu đến ngày kết thúc, tính tới tháng)

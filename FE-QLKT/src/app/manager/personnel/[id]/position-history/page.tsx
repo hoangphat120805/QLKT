@@ -35,7 +35,7 @@ import { calculateDuration, formatDate } from '@/lib/utils';
 import { useTheme } from '@/components/theme-provider';
 import dayjs from 'dayjs';
 
-const { Title, Paragraph, Text } = Typography;
+const { Title, Paragraph } = Typography;
 
 interface HistoryRecord {
   id: string;
@@ -154,17 +154,10 @@ export default function PositionHistoryPage() {
       setSubmitting(true);
 
       const payload: any = {
-        ngay_bat_dau: values.ngay_bat_dau
-          ? dayjs(values.ngay_bat_dau).format('YYYY-MM-DD')
-          : undefined,
+        ngay_bat_dau: values.ngay_bat_dau ? dayjs(values.ngay_bat_dau).format('YYYY-MM-DD') : undefined,
         // Nếu ngày kết thúc bị xóa (null), gửi null để backend biết là đang xóa
         // Nếu không có (undefined), không gửi field này (giữ nguyên giá trị cũ)
-        ngay_ket_thuc:
-          values.ngay_ket_thuc === null
-            ? null
-            : values.ngay_ket_thuc
-            ? dayjs(values.ngay_ket_thuc).format('YYYY-MM-DD')
-            : undefined,
+        ngay_ket_thuc: values.ngay_ket_thuc === null ? null : values.ngay_ket_thuc ? dayjs(values.ngay_ket_thuc).format('YYYY-MM-DD') : undefined,
         he_so_chuc_vu: values.he_so_chuc_vu || undefined, // Gửi hệ số chức vụ nếu có
       };
 
@@ -180,10 +173,10 @@ export default function PositionHistoryPage() {
 
       if (res.success) {
         // Xử lý warning nếu có
-        if ((res as any).warning) {
+        if (res.warning) {
           Modal.confirm({
             title: 'Cảnh báo',
-            content: (res as any).warning.message,
+            content: res.warning.message,
             okText: 'Đồng ý',
             cancelText: 'Không',
             onOk: async () => {
@@ -191,12 +184,9 @@ export default function PositionHistoryPage() {
                 setSubmitting(true);
                 const newPayload = {
                   ...payload,
-                  ngay_ket_thuc: (res as any).warning.suggestedEndDate,
+                  ngay_ket_thuc: res.warning.suggestedEndDate,
                 };
-                const updateRes = await apiClient.updatePositionHistory(
-                  editingHistory.id,
-                  newPayload
-                );
+                const updateRes = await apiClient.updatePositionHistory(editingHistory.id, newPayload);
                 if (updateRes.success) {
                   message.success('Cập nhật lịch sử thành công');
                   handleCloseDialog();
@@ -214,17 +204,13 @@ export default function PositionHistoryPage() {
             },
             onCancel: () => {
               // Người dùng không đồng ý, giữ nguyên (đã cập nhật thành chưa kết thúc)
-              message.success(
-                editingHistory ? 'Cập nhật lịch sử thành công' : 'Thêm lịch sử thành công'
-              );
+              message.success(editingHistory ? 'Cập nhật lịch sử thành công' : 'Thêm lịch sử thành công');
               handleCloseDialog();
               loadData();
             },
           });
         } else {
-          message.success(
-            editingHistory ? 'Cập nhật lịch sử thành công' : 'Thêm lịch sử thành công'
-          );
+          message.success(editingHistory ? 'Cập nhật lịch sử thành công' : 'Thêm lịch sử thành công');
           handleCloseDialog();
           loadData();
         }
@@ -240,6 +226,40 @@ export default function PositionHistoryPage() {
       // Không gọi handleCloseDialog() - modal vẫn mở
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // Tính tổng thời gian đảm nhiệm chức vụ theo nhóm hệ số
+  const calculateTotalTimeByGroup = (group: '0.7' | '0.8' | '0.9-1.0') => {
+    let totalMonths = 0;
+
+    histories.forEach((history: any) => {
+      const heSo = Number(history.he_so_chuc_vu) || 0;
+      let belongsToGroup = false;
+
+      if (group === '0.7') {
+        belongsToGroup = heSo >= 0.7 && heSo < 0.8;
+      } else if (group === '0.8') {
+        belongsToGroup = heSo >= 0.8 && heSo < 0.9;
+      } else if (group === '0.9-1.0') {
+        belongsToGroup = heSo >= 0.9 && heSo <= 1.0;
+      }
+
+      if (belongsToGroup && history.so_thang !== null && history.so_thang !== undefined) {
+        totalMonths += history.so_thang;
+      }
+    });
+
+    const years = Math.floor(totalMonths / 12);
+    const remainingMonths = totalMonths % 12;
+
+    if (totalMonths === 0) return '-';
+    if (years > 0 && remainingMonths > 0) {
+      return `${years} năm ${remainingMonths} tháng`;
+    } else if (years > 0) {
+      return `${years} năm`;
+    } else {
+      return `${remainingMonths} tháng`;
     }
   };
 
@@ -284,6 +304,7 @@ export default function PositionHistoryPage() {
       dataIndex: 'ngay_bat_dau',
       key: 'ngay_bat_dau',
       width: 150,
+      align: 'center',
       render: (date: string) => formatDate(date),
     },
     {
@@ -300,8 +321,7 @@ export default function PositionHistoryPage() {
       key: 'he_so_chuc_vu',
       width: 120,
       align: 'center',
-      render: (value: number) =>
-        value !== null && value !== undefined ? Number(value).toFixed(2) : '-',
+      render: (value: number) => (value !== null && value !== undefined ? Number(value).toFixed(2) : '-'),
     },
     {
       title: 'Thời gian',
@@ -309,6 +329,27 @@ export default function PositionHistoryPage() {
       width: 200,
       align: 'center',
       render: (_, record) => calculateDuration(record.ngay_bat_dau, record.ngay_ket_thuc),
+    },
+    {
+      title: 'Tổng thời gian (0.7)',
+      key: 'total_time_0_7',
+      width: 150,
+      align: 'center',
+      render: () => calculateTotalTimeByGroup('0.7'),
+    },
+    {
+      title: 'Tổng thời gian (0.8)',
+      key: 'total_time_0_8',
+      width: 150,
+      align: 'center',
+      render: () => calculateTotalTimeByGroup('0.8'),
+    },
+    {
+      title: 'Tổng thời gian (0.9-1.0)',
+      key: 'total_time_0_9_1_0',
+      width: 150,
+      align: 'center',
+      render: () => calculateTotalTimeByGroup('0.9-1.0'),
     },
     {
       title: 'Hành động',
@@ -358,15 +399,15 @@ export default function PositionHistoryPage() {
         {/* Breadcrumb */}
         <Breadcrumb style={{ marginBottom: 24 }}>
           <Breadcrumb.Item>
-            <Link href="/admin/dashboard">
+            <Link href="/manager/dashboard">
               <HomeOutlined />
             </Link>
           </Breadcrumb.Item>
           <Breadcrumb.Item>
-            <Link href="/admin/personnel">Quân nhân</Link>
+            <Link href="/manager/personnel">Quân nhân</Link>
           </Breadcrumb.Item>
           <Breadcrumb.Item>
-            <Link href={`/admin/personnel/${personnelId}`}>#{personnelId}</Link>
+            <Link href={`/manager/personnel/${personnelId}`}>#{personnelId}</Link>
           </Breadcrumb.Item>
           <Breadcrumb.Item>Lịch sử chức vụ</Breadcrumb.Item>
         </Breadcrumb>
@@ -384,7 +425,7 @@ export default function PositionHistoryPage() {
         >
           <div>
             <Space style={{ marginBottom: 8 }}>
-              <Link href={`/admin/personnel/${personnelId}`}>
+              <Link href={`/manager/personnel/${personnelId}`}>
                 <Button icon={<LeftOutlined />}>Quay lại</Button>
               </Link>
             </Space>
@@ -435,20 +476,10 @@ export default function PositionHistoryPage() {
         >
           <Form form={form} onFinish={onSubmit} layout="vertical" style={{ marginTop: 24 }}>
             {isCurrentPosition && (
-              <div
-                style={{
-                  marginBottom: 16,
-                  padding: 12,
-                  backgroundColor: '#fff7e6',
-                  border: '1px solid #ffd591',
-                  borderRadius: 4,
-                }}
-              >
+              <div style={{ marginBottom: 16, padding: 12, backgroundColor: '#fff7e6', border: '1px solid #ffd591', borderRadius: 4 }}>
                 <Text type="warning">
                   <InfoCircleOutlined style={{ marginRight: 8 }} />
-                  Đây là chức vụ hiện tại. Bạn chỉ có thể sửa thời gian (ngày bắt đầu, ngày kết
-                  thúc). Để thay đổi chức vụ đảm nhận, vui lòng sử dụng mục "Cập nhật thông tin cá
-                  nhân".
+                  Đây là chức vụ hiện tại. Bạn chỉ có thể sửa thời gian (ngày bắt đầu, ngày kết thúc). Để thay đổi chức vụ đảm nhận, vui lòng sử dụng mục "Cập nhật thông tin cá nhân".
                 </Text>
               </div>
             )}
@@ -606,3 +637,4 @@ export default function PositionHistoryPage() {
     </ConfigProvider>
   );
 }
+

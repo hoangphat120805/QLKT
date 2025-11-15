@@ -33,9 +33,12 @@ interface Award {
   cccd: string;
   ho_ten: string;
   don_vi: string;
+  co_quan_don_vi?: string;
+  don_vi_truc_thuoc?: string;
   chuc_vu: string;
   nam: number;
   danh_hieu: string | null;
+  so_quyet_dinh?: string | null;
   nhan_bkbqp: boolean;
   so_quyet_dinh_bkbqp: string | null;
   nhan_cstdtq: boolean;
@@ -56,7 +59,7 @@ export default function AdminAwardsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [filters, setFilters] = useState({
     nam: '',
-    danh_hieu: '',
+    ho_ten: '',
   });
 
   useEffect(() => {
@@ -68,7 +71,7 @@ export default function AdminAwardsPage() {
       setLoading(true);
       const params: any = { limit: 1000 };
       if (filters.nam) params.nam = parseInt(filters.nam);
-      if (filters.danh_hieu) params.danh_hieu = filters.danh_hieu;
+      if (filters.ho_ten) params.ho_ten = filters.ho_ten;
 
       const result = await apiClient.getAwards(params);
       if (result.success) {
@@ -87,7 +90,7 @@ export default function AdminAwardsPage() {
       setExporting(true);
       const params: any = {};
       if (filters.nam) params.nam = parseInt(filters.nam);
-      if (filters.danh_hieu) params.danh_hieu = filters.danh_hieu;
+      if (filters.ho_ten) params.ho_ten = filters.ho_ten;
 
       const blob = await apiClient.exportAwards(params);
       const url = window.URL.createObjectURL(blob);
@@ -182,6 +185,37 @@ export default function AdminAwardsPage() {
     fileInputRef.current?.click();
   };
 
+  // Map danh hiệu codes to full names
+  const danhHieuMap: Record<string, string> = {
+    CSTDCS: 'Chiến sĩ thi đua cơ sở (CSTDCS)',
+    CSTT: 'Chiến sĩ tiên tiến (CSTT)',
+    BKBQP: 'Bằng khen của Bộ trưởng Bộ Quốc phòng (BKBQP)',
+    CSTDTQ: 'Chiến sĩ thi đua toàn quân (CSTDTQ)',
+    ĐVQT: 'Đơn vị Quyết thắng (ĐVQT)',
+    ĐVTT: 'Đơn vị Tiên tiến (ĐVTT)',
+    BKTTCP: 'Bằng khen Thủ tướng Chính phủ (BKTTCP)',
+    HCCSVV_HANG_BA: 'Huân chương Chiến sỹ Vẻ vang Hạng Ba',
+    HCCSVV_HANG_NHI: 'Huân chương Chiến sỹ Vẻ vang Hạng Nhì',
+    HCCSVV_HANG_NHAT: 'Huân chương Chiến sỹ Vẻ vang Hạng Nhất',
+    HCBVTQ_HANG_BA: 'Huân chương Bảo vệ Tổ quốc Hạng Ba',
+    HCBVTQ_HANG_NHI: 'Huân chương Bảo vệ Tổ quốc Hạng Nhì',
+    HCBVTQ_HANG_NHAT: 'Huân chương Bảo vệ Tổ quốc Hạng Nhất',
+  };
+
+  // Determine loại khen thưởng based on danh_hieu
+  const getLoaiKhenThuong = (danhHieu: string | null): string => {
+    if (!danhHieu) return '-';
+    if (danhHieu.startsWith('HCBVTQ')) return 'Cống hiến';
+    if (danhHieu.startsWith('HCCSVV')) return 'Niên hạn';
+    if (danhHieu === 'CSTDCS' || danhHieu === 'CSTT' || danhHieu === 'BKBQP' || danhHieu === 'CSTDTQ') {
+      return 'Cá nhân Hằng năm';
+    }
+    if (danhHieu === 'ĐVQT' || danhHieu === 'ĐVTT' || danhHieu === 'BKTTCP') {
+      return 'Đơn vị Hằng năm';
+    }
+    return '-';
+  };
+
   const columns: TableColumnsType<Award> = [
     {
       title: 'STT',
@@ -191,83 +225,76 @@ export default function AdminAwardsPage() {
       render: (_, __, index) => index + 1,
     },
     {
-      title: 'CCCD',
-      dataIndex: 'cccd',
-      key: 'cccd',
-      width: 120,
-      render: text => <Text style={{ fontFamily: 'monospace' }}>{text}</Text>,
-    },
-    {
       title: 'Họ tên',
       dataIndex: 'ho_ten',
       key: 'ho_ten',
-      render: text => <Text strong>{text}</Text>,
-    },
-    {
-      title: 'Đơn vị',
-      dataIndex: 'don_vi',
-      key: 'don_vi',
+      width: 200,
+      align: 'center',
+      render: (text: string, record: Award) => {
+        const unitInfo = [];
+        if (record.don_vi_truc_thuoc) unitInfo.push(record.don_vi_truc_thuoc);
+        if (record.co_quan_don_vi) unitInfo.push(record.co_quan_don_vi);
+        const unitInfoText = unitInfo.length > 0 ? unitInfo.join(', ') : (record.don_vi || '');
+
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <Text strong>{text}</Text>
+            {unitInfoText && (
+              <Text type="secondary" style={{ fontSize: '12px', marginTop: '4px' }}>
+                {unitInfoText}
+              </Text>
+            )}
+          </div>
+        );
+      },
     },
     {
       title: 'Chức vụ',
       dataIndex: 'chuc_vu',
       key: 'chuc_vu',
-      render: text => <Text type="secondary">{text}</Text>,
+      width: 100,
+      align: 'center',
+      render: text => <Text strong>{text}</Text>,
     },
     {
       title: 'Năm',
       dataIndex: 'nam',
       key: 'nam',
-      width: 80,
+      width: 70,
       align: 'center',
       render: text => <Text strong>{text}</Text>,
+    },
+    {
+      title: 'Loại khen thưởng',
+      key: 'loai_khen_thuong',
+      width: 140,
+      align: 'center',
+      render: (_: any, record: Award) => (
+        <Text>{getLoaiKhenThuong(record.danh_hieu)}</Text>
+      ),
     },
     {
       title: 'Danh hiệu',
       dataIndex: 'danh_hieu',
       key: 'danh_hieu',
-      width: 120,
-      render: text => (text ? <Tag color="blue">{text}</Tag> : <Text type="secondary">N/A</Text>),
-    },
-    {
-      title: 'BKBQP',
-      dataIndex: 'nhan_bkbqp',
-      key: 'nhan_bkbqp',
-      width: 100,
+      width: 220,
       align: 'center',
-      render: value =>
-        value ? (
-          <CheckOutlined style={{ color: '#52c41a', fontSize: 16, fontWeight: 'bold' }} />
-        ) : (
-          <Text type="secondary">-</Text>
-        ),
-    },
-    {
-      title: 'Số QĐ BKBQP',
-      dataIndex: 'so_quyet_dinh_bkbqp',
-      key: 'so_quyet_dinh_bkbqp',
-      width: 150,
-      render: text => <Text type="secondary">{text || '-'}</Text>,
-    },
-    {
-      title: 'CSTĐTQ',
-      dataIndex: 'nhan_cstdtq',
-      key: 'nhan_cstdtq',
-      width: 100,
-      align: 'center',
-      render: value =>
-        value ? (
-          <CheckOutlined style={{ color: '#1890ff', fontSize: 16, fontWeight: 'bold' }} />
-        ) : (
-          <Text type="secondary">-</Text>
-        ),
-    },
-    {
-      title: 'Số QĐ CSTĐTQ',
-      dataIndex: 'so_quyet_dinh_cstdtq',
-      key: 'so_quyet_dinh_cstdtq',
-      width: 150,
-      render: text => <Text type="secondary">{text || '-'}</Text>,
+      render: (text: string | null, record: Award) => {
+        if (!text) return <Text type="secondary">-</Text>;
+        const fullName = danhHieuMap[text] || text;
+        const soQuyetDinh = record.so_quyet_dinh || record.so_quyet_dinh_bkbqp || record.so_quyet_dinh_cstdtq;
+
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+            <Text>{fullName}</Text>
+            {soQuyetDinh && (
+              <Text type="secondary" style={{ fontSize: '12px' }}>
+                Số QĐ: {soQuyetDinh}
+              </Text>
+            )}
+          </div>
+        );
+      },
     },
   ];
 
@@ -398,16 +425,18 @@ export default function AdminAwardsPage() {
               placeholder="Ví dụ: 2024"
               value={filters.nam}
               onChange={e => handleFilterChange('nam', e.target.value)}
+              size="large"
             />
           </div>
           <div>
             <Text strong style={{ display: 'block', marginBottom: '8px' }}>
-              Danh hiệu
+              Tìm kiếm theo họ tên
             </Text>
             <Input
-              placeholder="CSTDCS, CSTT"
-              value={filters.danh_hieu}
-              onChange={e => handleFilterChange('danh_hieu', e.target.value)}
+              placeholder="Nhập tên để tìm kiếm"
+              value={filters.ho_ten}
+              onChange={e => handleFilterChange('ho_ten', e.target.value)}
+              size="large"
             />
           </div>
           <div style={{ display: 'flex', alignItems: 'flex-end' }}>
@@ -416,6 +445,7 @@ export default function AdminAwardsPage() {
               icon={<SearchOutlined />}
               onClick={handleApplyFilters}
               style={{ width: '100%' }}
+              size="large"
             >
               Tìm kiếm
             </Button>
@@ -440,7 +470,6 @@ export default function AdminAwardsPage() {
                 showSizeChanger: true,
                 showTotal: total => `Tổng ${total} bản ghi`,
               }}
-              scroll={{ x: 1400 }}
               bordered
             />
           )}

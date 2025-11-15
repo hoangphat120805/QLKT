@@ -54,7 +54,8 @@ interface Proposal {
   DonViTrucThuoc?: {
     ten_don_vi: string;
   };
-  data_danh_hieu?: any[];
+  data_danh_hieu?: Array<{ so_quyet_dinh?: string | null }>;
+  data_thanh_tich?: Array<{ so_quyet_dinh?: string | null }>;
   selected_personnel?: string[];
 }
 
@@ -230,6 +231,32 @@ export default function AdminProposalsPage() {
           <Tag icon={config.icon} color={config.color}>
             {config.text}
           </Tag>
+        );
+      },
+    },
+    {
+      title: 'Số quyết định',
+      key: 'so_quyet_dinh',
+      width: 180,
+      align: 'center',
+      render: (_, record: Proposal) => {
+        // Chỉ hiển thị số quyết định khi đã duyệt
+        if (record.status !== 'APPROVED') {
+          return <Text type="secondary">-</Text>;
+        }
+
+        // Lấy số quyết định từ data_danh_hieu hoặc data_thanh_tich đầu tiên
+        let soQuyetDinh: string | null = null;
+        if (record.data_danh_hieu && record.data_danh_hieu.length > 0) {
+          soQuyetDinh = record.data_danh_hieu[0]?.so_quyet_dinh || null;
+        } else if (record.data_thanh_tich && record.data_thanh_tich.length > 0) {
+          soQuyetDinh = record.data_thanh_tich[0]?.so_quyet_dinh || null;
+        }
+
+        return soQuyetDinh ? (
+          <Text code>{soQuyetDinh}</Text>
+        ) : (
+          <Text type="secondary">-</Text>
         );
       },
     },
@@ -462,22 +489,22 @@ export default function AdminProposalsPage() {
         }}
         onSuccess={async (decision, isNewDecision) => {
           setSelectedDecision(decision);
-          
+
           // Upload quyết định cho các đề xuất đã chọn
           const selectedProposals = filteredProposals.filter(p => selectedRowKeys.includes(p.id));
-          
+
           try {
             const uploadPromises = selectedProposals.map(async (proposal) => {
               const formData = new FormData();
-              
+
               // Thêm số quyết định
               formData.append('so_quyet_dinh', decision.so_quyet_dinh);
-              
+
               // Thêm ghi chú nếu có
               if (decision.ghi_chu) {
                 formData.append('ghi_chu', decision.ghi_chu);
               }
-              
+
               // Gọi API upload quyết định cho đề xuất đã được phê duyệt
               // Lưu ý: Cần tạo endpoint backend /api/proposals/:id/upload-decision
               await axiosInstance.post(`/api/proposals/${proposal.id}/upload-decision`, formData, {
@@ -486,7 +513,7 @@ export default function AdminProposalsPage() {
                 },
               });
             });
-            
+
             await Promise.all(uploadPromises);
             message.success(`Đã thêm quyết định cho ${selectedProposals.length} đề xuất thành công`);
             setDecisionModalVisible(false);

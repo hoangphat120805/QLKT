@@ -46,12 +46,17 @@ export function LoginForm() {
           router.push('/user/dashboard');
         }
       } else {
-        setError(response.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
+        const errorMessage = response.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại tài khoản và mật khẩu.';
+        setError(errorMessage);
+        setLoading(false);
+        return; // Prevent any further execution
       }
     } catch (err: any) {
-      setError(err?.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
-    } finally {
+      // Prevent page reload on error
+      const errorMessage = err?.response?.data?.message || err?.response?.data?.error || err?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại tài khoản và mật khẩu.';
+      setError(errorMessage);
       setLoading(false);
+      return; // Prevent any further execution
     }
   };
 
@@ -143,8 +148,16 @@ export function LoginForm() {
           form={form}
           layout="vertical"
           onFinish={handleLogin}
+          onFinishFailed={() => {
+            setError('Vui lòng nhập đầy đủ thông tin đăng nhập.');
+          }}
           autoComplete="off"
           className="login-form"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && loading) {
+              e.preventDefault();
+            }
+          }}
         >
           <Form.Item
             name="username"

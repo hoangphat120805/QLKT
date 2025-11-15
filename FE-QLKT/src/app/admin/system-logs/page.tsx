@@ -13,7 +13,7 @@ import Link from 'next/link';
 
 const { Title, Text } = Typography;
 
-export default function SystemLogsPage() {
+export default function AdminSystemLogsPage() {
   const { theme } = useTheme();
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,7 +82,7 @@ export default function SystemLogsPage() {
         {/* Breadcrumb */}
         <Breadcrumb style={{ marginBottom: '24px' }}>
           <Breadcrumb.Item>
-            <Link href="/super-admin/dashboard">
+            <Link href="/admin/dashboard">
               <DashboardOutlined />
             </Link>
           </Breadcrumb.Item>
@@ -99,7 +99,7 @@ export default function SystemLogsPage() {
               Nhật ký Hệ thống
             </Title>
             <Text type="secondary" style={{ display: 'block', marginTop: '4px' }}>
-              Xem lịch sử hoạt động và thay đổi trong hệ thống
+              Xem lịch sử hoạt động và thay đổi trong hệ thống (USER, MANAGER, ADMIN)
             </Text>
           </div>
         </div>
@@ -181,3 +181,4 @@ export default function SystemLogsPage() {
     </ConfigProvider>
   );
 }
+

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Table, Input, Select, Space, Alert, Typography, Tag } from 'antd';
+import { Table, Input, Select, Space, Alert, Typography, Tag, InputNumber } from 'antd';
 import { SearchOutlined, TeamOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import axiosInstance from '@/utils/axiosInstance';
@@ -132,25 +132,27 @@ export default function Step2SelectPersonnel({
       title: 'Họ và tên',
       dataIndex: 'ho_ten',
       key: 'ho_ten',
-      width: 200,
-      render: (text) => <Text strong>{text}</Text>,
-    },
-    {
-      title: 'Cơ quan đơn vị',
-      key: 'co_quan_don_vi',
-      width: 180,
-      render: (_, record) => {
-        return record.CoQuanDonVi?.ten_don_vi ||
-               record.DonViTrucThuoc?.CoQuanDonVi?.ten_don_vi ||
-               '-';
-      },
-    },
-    {
-      title: 'Đơn vị trực thuộc',
-      key: 'don_vi_truc_thuoc',
-      width: 180,
-      render: (_, record) => {
-        return record.DonViTrucThuoc?.ten_don_vi || '-';
+      width: 250,
+      align: 'center',
+      render: (text: string, record: Personnel) => {
+        const donViTrucThuoc = record.DonViTrucThuoc?.ten_don_vi;
+        const coQuanDonVi =
+          record.CoQuanDonVi?.ten_don_vi || record.DonViTrucThuoc?.CoQuanDonVi?.ten_don_vi;
+        const parts = [];
+        if (donViTrucThuoc) parts.push(donViTrucThuoc);
+        if (coQuanDonVi) parts.push(coQuanDonVi);
+        const unitInfo = parts.length > 0 ? parts.join(', ') : null;
+
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <Text strong>{text}</Text>
+            {unitInfo && (
+              <Text type="secondary" style={{ fontSize: '12px', marginTop: '4px' }}>
+                {unitInfo}
+              </Text>
+            )}
+          </div>
+        );
       },
     },
     {
@@ -166,23 +168,23 @@ export default function Step2SelectPersonnel({
     // Hàm tính tổng số tháng từ ngày nhập ngũ đến hiện tại (hoặc ngày xuất ngũ)
     const calculateTotalMonths = (ngayNhapNgu: string | Date | null | undefined, ngayXuatNgu: string | Date | null | undefined) => {
       if (!ngayNhapNgu) return null;
-      
+
       try {
         const startDate = typeof ngayNhapNgu === 'string' ? new Date(ngayNhapNgu) : ngayNhapNgu;
-        const endDate = ngayXuatNgu 
+        const endDate = ngayXuatNgu
           ? (typeof ngayXuatNgu === 'string' ? new Date(ngayXuatNgu) : ngayXuatNgu)
           : new Date(); // Nếu chưa xuất ngũ thì tính đến hiện tại
-        
+
         // Đảm bảo startDate và endDate hợp lệ
         if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
           return null;
         }
-        
+
         // Tính số năm và tháng chính xác
         let years = endDate.getFullYear() - startDate.getFullYear();
         let months = endDate.getMonth() - startDate.getMonth();
         let days = endDate.getDate() - startDate.getDate();
-        
+
         // Điều chỉnh nếu ngày cuối nhỏ hơn ngày đầu
         if (days < 0) {
           months -= 1;
@@ -190,20 +192,20 @@ export default function Step2SelectPersonnel({
           const lastDayOfPrevMonth = new Date(endDate.getFullYear(), endDate.getMonth(), 0).getDate();
           days += lastDayOfPrevMonth;
         }
-        
+
         // Điều chỉnh nếu tháng cuối nhỏ hơn tháng đầu
         if (months < 0) {
           years -= 1;
           months += 12;
         }
-        
+
         // Tính tổng số tháng (làm tròn xuống)
         const totalMonths = years * 12 + months;
-        
+
         // Tính số năm và tháng còn lại để hiển thị
         const totalYears = Math.floor(totalMonths / 12);
         const remainingMonths = totalMonths % 12;
-        
+
         // Trả về object với years và months riêng biệt
         return {
           years: totalYears,
@@ -224,8 +226,8 @@ export default function Step2SelectPersonnel({
         render: (_, record) => {
           if (!record.ngay_nhap_ngu) return <Text type="secondary">-</Text>;
           try {
-            const date = typeof record.ngay_nhap_ngu === 'string' 
-              ? new Date(record.ngay_nhap_ngu) 
+            const date = typeof record.ngay_nhap_ngu === 'string'
+              ? new Date(record.ngay_nhap_ngu)
               : record.ngay_nhap_ngu;
             return format(date, 'dd/MM/yyyy');
           } catch {
@@ -241,8 +243,8 @@ export default function Step2SelectPersonnel({
         render: (_, record) => {
           if (!record.ngay_xuat_ngu) return <Text type="secondary">Chưa xuất ngũ</Text>;
           try {
-            const date = typeof record.ngay_xuat_ngu === 'string' 
-              ? new Date(record.ngay_xuat_ngu) 
+            const date = typeof record.ngay_xuat_ngu === 'string'
+              ? new Date(record.ngay_xuat_ngu)
               : record.ngay_xuat_ngu;
             return format(date, 'dd/MM/yyyy');
           } catch {
@@ -258,7 +260,7 @@ export default function Step2SelectPersonnel({
         render: (_, record) => {
           const result = calculateTotalMonths(record.ngay_nhap_ngu, record.ngay_xuat_ngu);
           if (!result) return <Text type="secondary">-</Text>;
-          
+
           // Hiển thị năm ở trên, tháng nhỏ bên dưới
           if (result.years > 0 && result.months > 0) {
             return (
@@ -289,20 +291,13 @@ export default function Step2SelectPersonnel({
     },
   };
 
-  // Generate year options (current year and previous 2 years)
-  const currentYear = new Date().getFullYear();
-  const yearOptions = [currentYear, currentYear - 1, currentYear - 2].map((y) => ({
-    label: `Năm ${y}`,
-    value: y,
-  }));
-
   return (
     <div>
       <Alert
         message="Hướng dẫn"
         description={
           <div>
-            <p>1. Chọn năm đề xuất khen thưởng</p>
+            <p>1. Nhập năm đề xuất khen thưởng</p>
             <p>
               2. Chọn các quân nhân cần đề xuất khen thưởng từ danh sách dưới đây (bao gồm tất cả
               quân nhân thuộc cơ quan đơn vị và đơn vị trực thuộc của bạn)
@@ -320,12 +315,14 @@ export default function Step2SelectPersonnel({
       <Space style={{ marginBottom: 16 }} size="middle">
         <div>
           <Text strong>Năm đề xuất: </Text>
-          <Select
+          <InputNumber
             value={nam}
-            onChange={onNamChange}
-            options={yearOptions}
+            onChange={value => onNamChange(value || new Date().getFullYear())}
             style={{ width: 150 }}
             size="large"
+            min={1900}
+            max={2100}
+            placeholder="Nhập năm"
           />
         </div>
 

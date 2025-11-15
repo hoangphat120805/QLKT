@@ -1032,36 +1032,139 @@ class ProposalService {
       } else {
         // Các loại khác: CONG_HIEN, DOT_XUAT
         // Không lưu cccd, thêm thông tin đơn vị
-        dataDanhHieu = titleData.map(item => {
-          const personnel = personnelMap[item.personnel_id];
-          return {
-            personnel_id: item.personnel_id,
-            ho_ten: personnel?.ho_ten || '',
-            nam: nam,
-            danh_hieu: item.danh_hieu,
-            co_quan_don_vi: personnel?.CoQuanDonVi
-              ? {
-                  id: personnel.CoQuanDonVi.id,
-                  ten_co_quan_don_vi: personnel.CoQuanDonVi.ten_don_vi,
-                  ma_co_quan_don_vi: personnel.CoQuanDonVi.ma_don_vi,
-                }
-              : null,
-            don_vi_truc_thuoc: personnel?.DonViTrucThuoc
-              ? {
-                  id: personnel.DonViTrucThuoc.id,
-                  ten_don_vi: personnel.DonViTrucThuoc.ten_don_vi,
-                  ma_don_vi: personnel.DonViTrucThuoc.ma_don_vi,
-                  co_quan_don_vi: personnel.DonViTrucThuoc.CoQuanDonVi
-                    ? {
-                        id: personnel.DonViTrucThuoc.CoQuanDonVi.id,
-                        ten_don_vi_truc: personnel.DonViTrucThuoc.CoQuanDonVi.ten_don_vi,
-                        ma_don_vi: personnel.DonViTrucThuoc.CoQuanDonVi.ma_don_vi,
+        dataDanhHieu = await Promise.all(
+          titleData.map(async item => {
+            const personnel = personnelMap[item.personnel_id];
+            const baseData = {
+              personnel_id: item.personnel_id,
+              ho_ten: personnel?.ho_ten || '',
+              nam: nam,
+              danh_hieu: item.danh_hieu,
+              co_quan_don_vi: personnel?.CoQuanDonVi
+                ? {
+                    id: personnel.CoQuanDonVi.id,
+                    ten_co_quan_don_vi: personnel.CoQuanDonVi.ten_don_vi,
+                    ma_co_quan_don_vi: personnel.CoQuanDonVi.ma_don_vi,
+                  }
+                : null,
+              don_vi_truc_thuoc: personnel?.DonViTrucThuoc
+                ? {
+                    id: personnel.DonViTrucThuoc.id,
+                    ten_don_vi: personnel.DonViTrucThuoc.ten_don_vi,
+                    ma_don_vi: personnel.DonViTrucThuoc.ma_don_vi,
+                    co_quan_don_vi: personnel.DonViTrucThuoc.CoQuanDonVi
+                      ? {
+                          id: personnel.DonViTrucThuoc.CoQuanDonVi.id,
+                          ten_don_vi_truc: personnel.DonViTrucThuoc.CoQuanDonVi.ten_don_vi,
+                          ma_don_vi: personnel.DonViTrucThuoc.CoQuanDonVi.ma_don_vi,
+                        }
+                      : null,
+                  }
+                : null,
+            };
+
+            // Nếu là CONG_HIEN, thêm thông tin thời gian 3 nhóm
+            if (type === 'CONG_HIEN' && item.personnel_id) {
+              try {
+                const histories = await prisma.lichSuChucVu.findMany({
+                  where: { quan_nhan_id: item.personnel_id },
+                  select: {
+                    he_so_chuc_vu: true,
+                    so_thang: true,
+                    ngay_bat_dau: true,
+                    ngay_ket_thuc: true,
+                  },
+                });
+
+                // Tính số tháng cho chức vụ hiện tại (chưa có ngày kết thúc)
+                const today = new Date();
+                const updatedHistories = histories.map(history => {
+                  if (history.so_thang === null || history.so_thang === undefined) {
+                    if (history.ngay_bat_dau && !history.ngay_ket_thuc) {
+                      const ngayBatDau = new Date(history.ngay_bat_dau);
+                      let months = (today.getFullYear() - ngayBatDau.getFullYear()) * 12;
+                      months += today.getMonth() - ngayBatDau.getMonth();
+                      if (today.getDate() < ngayBatDau.getDate()) {
+                        months--;
                       }
-                    : null,
-                }
-              : null,
-          };
-        });
+                      return {
+                        ...history,
+                        so_thang: Math.max(0, months),
+                      };
+                    }
+                  }
+                  return history;
+                });
+
+                // Hàm tính tổng tháng theo nhóm hệ số
+                const getTotalMonthsByGroup = group => {
+                  let totalMonths = 0;
+                  updatedHistories.forEach(history => {
+                    const heSo = Number(history.he_so_chuc_vu) || 0;
+                    let belongsToGroup = false;
+
+                    if (group === '0.7') {
+                      belongsToGroup = heSo >= 0.7 && heSo < 0.8;
+                    } else if (group === '0.8') {
+                      belongsToGroup = heSo >= 0.8 && heSo < 0.9;
+                    } else if (group === '0.9-1.0') {
+                      belongsToGroup = heSo >= 0.9 && heSo <= 1.0;
+                    }
+
+                    if (
+                      belongsToGroup &&
+                      history.so_thang !== null &&
+                      history.so_thang !== undefined
+                    ) {
+                      totalMonths += Number(history.so_thang);
+                    }
+                  });
+                  return totalMonths;
+                };
+
+                // Tính thời gian cho 3 nhóm
+                const months0_7 = getTotalMonthsByGroup('0.7');
+                const months0_8 = getTotalMonthsByGroup('0.8');
+                const months0_9_1_0 = getTotalMonthsByGroup('0.9-1.0');
+
+                // Format thời gian (năm và tháng)
+                const formatTime = totalMonths => {
+                  const years = Math.floor(totalMonths / 12);
+                  const remainingMonths = totalMonths % 12;
+                  return {
+                    total_months: totalMonths,
+                    years: years,
+                    months: remainingMonths,
+                    display:
+                      totalMonths === 0
+                        ? '-'
+                        : years > 0 && remainingMonths > 0
+                        ? `${years} năm ${remainingMonths} tháng`
+                        : years > 0
+                        ? `${years} năm`
+                        : `${remainingMonths} tháng`,
+                  };
+                };
+
+                return {
+                  ...baseData,
+                  thoi_gian_nhom_0_7: formatTime(months0_7),
+                  thoi_gian_nhom_0_8: formatTime(months0_8),
+                  thoi_gian_nhom_0_9_1_0: formatTime(months0_9_1_0),
+                };
+              } catch (error) {
+                // Nếu có lỗi khi fetch lịch sử, vẫn trả về dữ liệu cơ bản
+                console.error(
+                  `Lỗi khi fetch lịch sử chức vụ cho personnel_id ${item.personnel_id}:`,
+                  error
+                );
+                return baseData;
+              }
+            }
+
+            return baseData;
+          })
+        );
       }
 
       // ============================================
@@ -1113,6 +1216,158 @@ class ProposalService {
             'Không thể đề xuất các nhóm danh hiệu khác nhau trong một đề xuất. ' +
               'Vui lòng tách thành các đề xuất riêng: một đề xuất cho các hạng HCCSVV, một đề xuất cho HC_QKQT, và một đề xuất cho KNC_VSNXD_QDNDVN.'
           );
+        }
+      }
+
+      // ============================================
+      // VALIDATION cho CONG_HIEN: Kiểm tra điều kiện 10 năm trở lên
+      // Hạng nhất (0.9-1.0): >= 10 năm từ nhóm 0.9-1.0
+      // Hạng nhì (0.8): >= 10 năm từ nhóm 0.8 + 0.9-1.0 (hạng cao cộng vào)
+      // Hạng ba (0.7): >= 10 năm từ nhóm 0.7 + 0.8 + 0.9-1.0 (tất cả hạng cao cộng vào)
+      // ============================================
+      if (type === 'CONG_HIEN' && dataDanhHieu && dataDanhHieu.length > 0) {
+        const requiredMonths = 10 * 12; // 10 năm = 120 tháng
+
+        // Fetch lịch sử chức vụ cho tất cả quân nhân trong đề xuất
+        const personnelIds = dataDanhHieu.map(item => item.personnel_id).filter(Boolean);
+        const positionHistoriesMap = {};
+
+        for (const personnelId of personnelIds) {
+          try {
+            const histories = await prisma.lichSuChucVu.findMany({
+              where: { quan_nhan_id: personnelId },
+              select: {
+                he_so_chuc_vu: true,
+                so_thang: true,
+                ngay_bat_dau: true,
+                ngay_ket_thuc: true,
+              },
+            });
+
+            // Tính số tháng cho chức vụ hiện tại (chưa có ngày kết thúc)
+            const today = new Date();
+            const updatedHistories = histories.map(item => {
+              if (item.so_thang === null || item.so_thang === undefined) {
+                // Nếu không có so_thang, tính từ ngày bắt đầu đến hôm nay
+                if (item.ngay_bat_dau && !item.ngay_ket_thuc) {
+                  const ngayBatDau = new Date(item.ngay_bat_dau);
+                  let months = (today.getFullYear() - ngayBatDau.getFullYear()) * 12;
+                  months += today.getMonth() - ngayBatDau.getMonth();
+                  // Nếu ngày hôm nay < ngày bắt đầu trong tháng thì trừ 1 tháng
+                  if (today.getDate() < ngayBatDau.getDate()) {
+                    months--;
+                  }
+                  return {
+                    ...item,
+                    so_thang: Math.max(0, months),
+                  };
+                }
+              }
+              return item;
+            });
+
+            positionHistoriesMap[personnelId] = updatedHistories;
+          } catch (error) {
+            // Ignore errors for individual personnel
+            positionHistoriesMap[personnelId] = [];
+          }
+        }
+
+        // Hàm tính tổng tháng theo nhóm hệ số
+        const getTotalMonthsByGroup = (personnelId, group) => {
+          const histories = positionHistoriesMap[personnelId] || [];
+          let totalMonths = 0;
+
+          histories.forEach(history => {
+            const heSo = Number(history.he_so_chuc_vu) || 0;
+            let belongsToGroup = false;
+
+            if (group === '0.7') {
+              belongsToGroup = heSo >= 0.7 && heSo < 0.8;
+            } else if (group === '0.8') {
+              belongsToGroup = heSo >= 0.8 && heSo < 0.9;
+            } else if (group === '0.9-1.0') {
+              belongsToGroup = heSo >= 0.9 && heSo <= 1.0;
+            }
+
+            if (belongsToGroup && history.so_thang !== null && history.so_thang !== undefined) {
+              totalMonths += Number(history.so_thang);
+            }
+          });
+
+          return totalMonths;
+        };
+
+        // Hàm kiểm tra đủ điều kiện cho hạng
+        const checkEligibleForRank = (personnelId, rank) => {
+          const months0_9_1_0 = getTotalMonthsByGroup(personnelId, '0.9-1.0');
+          const months0_8 = getTotalMonthsByGroup(personnelId, '0.8');
+          const months0_7 = getTotalMonthsByGroup(personnelId, '0.7');
+
+          if (rank === 'HANG_NHAT') {
+            // Hạng nhất: cần >= 10 năm từ nhóm 0.9-1.0
+            return months0_9_1_0 >= requiredMonths;
+          } else if (rank === 'HANG_NHI') {
+            // Hạng nhì: cần >= 10 năm từ nhóm 0.8 + 0.9-1.0 (hạng cao cộng vào)
+            return months0_8 + months0_9_1_0 >= requiredMonths;
+          } else if (rank === 'HANG_BA') {
+            // Hạng ba: cần >= 10 năm từ nhóm 0.7 + 0.8 + 0.9-1.0 (tất cả hạng cao cộng vào)
+            return months0_7 + months0_8 + months0_9_1_0 >= requiredMonths;
+          }
+
+          return false;
+        };
+
+        // Kiểm tra từng quân nhân trong đề xuất
+        for (const item of dataDanhHieu) {
+          if (!item.danh_hieu || !item.personnel_id) continue;
+
+          const personnel = personnelMap[item.personnel_id];
+          const hoTen = personnel?.ho_ten || item.personnel_id;
+
+          let eligible = false;
+          let rankName = '';
+
+          if (item.danh_hieu === 'HCBVTQ_HANG_NHAT') {
+            eligible = checkEligibleForRank(item.personnel_id, 'HANG_NHAT');
+            rankName = 'Hạng Nhất';
+          } else if (item.danh_hieu === 'HCBVTQ_HANG_NHI') {
+            eligible = checkEligibleForRank(item.personnel_id, 'HANG_NHI');
+            rankName = 'Hạng Nhì';
+          } else if (item.danh_hieu === 'HCBVTQ_HANG_BA') {
+            eligible = checkEligibleForRank(item.personnel_id, 'HANG_BA');
+            rankName = 'Hạng Ba';
+          }
+
+          if (!eligible) {
+            const months0_9_1_0 = getTotalMonthsByGroup(item.personnel_id, '0.9-1.0');
+            const months0_8 = getTotalMonthsByGroup(item.personnel_id, '0.8');
+            const months0_7 = getTotalMonthsByGroup(item.personnel_id, '0.7');
+
+            let totalMonths = 0;
+            if (item.danh_hieu === 'HCBVTQ_HANG_NHAT') {
+              totalMonths = months0_9_1_0;
+            } else if (item.danh_hieu === 'HCBVTQ_HANG_NHI') {
+              totalMonths = months0_8 + months0_9_1_0;
+            } else if (item.danh_hieu === 'HCBVTQ_HANG_BA') {
+              totalMonths = months0_7 + months0_8 + months0_9_1_0;
+            }
+
+            const totalYears = Math.floor(totalMonths / 12);
+            const remainingMonths = totalMonths % 12;
+            const totalYearsText =
+              totalYears > 0 && remainingMonths > 0
+                ? `${totalYears} năm ${remainingMonths} tháng`
+                : totalYears > 0
+                ? `${totalYears} năm`
+                : `${remainingMonths} tháng`;
+
+            throw new Error(
+              `Quân nhân "${hoTen}" không đủ điều kiện đề xuất Huân chương Bảo vệ Tổ quốc ${rankName}. ` +
+                `Yêu cầu: ít nhất 10 năm. Hiện tại: ${totalYearsText}. ` +
+                `Vui lòng kiểm tra lại lịch sử chức vụ của quân nhân này.`
+            );
+          }
         }
       }
 
@@ -1987,9 +2242,20 @@ class ProposalService {
             }
 
             // Tự động gán số quyết định và file PDF dựa trên danh_hieu
-            const danhHieuDecision = decisionMapping[item.danh_hieu] || {};
-            const soQuyetDinhDanhHieu = danhHieuDecision.so_quyet_dinh;
-            const filePdfDanhHieu = danhHieuDecision.file_pdf;
+            let soQuyetDinhDanhHieu = null;
+            let filePdfDanhHieu = null;
+
+            // Xử lý đặc biệt cho CONG_HIEN
+            if (proposal.loai_de_xuat === 'CONG_HIEN') {
+              // Lấy số quyết định và file từ decisions (Admin đã nhập khi duyệt)
+              soQuyetDinhDanhHieu = decisions.so_quyet_dinh_cong_hien || item.so_quyet_dinh || null;
+              filePdfDanhHieu = pdfPaths.file_pdf_cong_hien || item.file_quyet_dinh || null;
+            } else {
+              // Các loại đề xuất khác
+              const danhHieuDecision = decisionMapping[item.danh_hieu] || {};
+              soQuyetDinhDanhHieu = danhHieuDecision.so_quyet_dinh;
+              filePdfDanhHieu = danhHieuDecision.file_pdf;
+            }
 
             // Quyết định BKBQP và CSTDTQ (từ item hoặc từ special mapping)
             // Nếu có so_quyet_dinh_bkbqp hoặc file_quyet_dinh_bkbqp, tự động set nhan_bkbqp = true
@@ -2025,6 +2291,79 @@ class ProposalService {
             // Lưu vào cùng năm đề xuất (không phải năm trong item.nam)
             const namLuu = proposal.nam;
 
+            // ============================================
+            // XỬ LÝ ĐẶC BIỆT CHO CONG_HIEN
+            // Mỗi quân nhân chỉ có 1 danh hiệu cống hiến (không phân biệt năm)
+            // ============================================
+            if (proposal.loai_de_xuat === 'CONG_HIEN') {
+              // Kiểm tra xem quân nhân đã có danh hiệu cống hiến chưa (bất kỳ năm nào)
+              const existingCongHien = await prisma.danhHieuHangNam.findFirst({
+                where: {
+                  quan_nhan_id: quanNhan.id,
+                  danh_hieu: {
+                    in: ['HCBVTQ_HANG_BA', 'HCBVTQ_HANG_NHI', 'HCBVTQ_HANG_NHAT'],
+                  },
+                },
+                orderBy: {
+                  nam: 'desc', // Lấy bản ghi mới nhất
+                },
+              });
+
+              if (existingCongHien) {
+                // Quân nhân đã có danh hiệu cống hiến
+                // Chỉ cập nhật nếu hạng mới cao hơn hạng cũ
+                const rankOrder = {
+                  HCBVTQ_HANG_BA: 1,
+                  HCBVTQ_HANG_NHI: 2,
+                  HCBVTQ_HANG_NHAT: 3,
+                };
+
+                const existingRank = rankOrder[existingCongHien.danh_hieu] || 0;
+                const newRank = rankOrder[item.danh_hieu] || 0;
+
+                if (newRank > existingRank) {
+                  // Hạng mới cao hơn, cập nhật
+                  await prisma.danhHieuHangNam.update({
+                    where: { id: existingCongHien.id },
+                    data: {
+                      danh_hieu: item.danh_hieu,
+                      nam: namLuu, // Cập nhật năm mới
+                      so_quyet_dinh: soQuyetDinhDanhHieu,
+                      file_quyet_dinh: filePdfDanhHieu,
+                    },
+                  });
+                  importedDanhHieu++;
+                  affectedPersonnelIds.add(quanNhan.id);
+                } else {
+                  // Hạng mới thấp hơn hoặc bằng, bỏ qua
+                  errors.push(
+                    `Quân nhân "${quanNhan.ho_ten}" đã có danh hiệu cống hiến "${existingCongHien.danh_hieu}" (năm ${existingCongHien.nam}). ` +
+                      `Không thể lưu danh hiệu "${item.danh_hieu}" vì hạng thấp hơn hoặc bằng.`
+                  );
+                }
+                continue; // Bỏ qua, không tạo mới
+              }
+
+              // Chưa có danh hiệu cống hiến, tạo mới
+              await prisma.danhHieuHangNam.create({
+                data: {
+                  quan_nhan_id: quanNhan.id,
+                  nam: namLuu,
+                  danh_hieu: item.danh_hieu,
+                  so_quyet_dinh: soQuyetDinhDanhHieu,
+                  file_quyet_dinh: filePdfDanhHieu,
+                  nhan_bkbqp: false,
+                  nhan_cstdtq: false,
+                },
+              });
+              importedDanhHieu++;
+              affectedPersonnelIds.add(quanNhan.id);
+              continue; // Đã xử lý xong, bỏ qua phần upsert bên dưới
+            }
+
+            // ============================================
+            // XỬ LÝ CÁC LOẠI ĐỀ XUẤT KHÁC (CA_NHAN_HANG_NAM, v.v.)
+            // ============================================
             // Upsert vào bảng DanhHieuHangNam
             await prisma.danhHieuHangNam.upsert({
               where: {

@@ -16,6 +16,7 @@ import {
   Input,
   Tag,
   message,
+  Select,
 } from 'antd';
 import {
   HomeOutlined,
@@ -140,11 +141,14 @@ export default function ProposalDetailPage() {
   const [editedDanhHieu, setEditedDanhHieu] = useState<DanhHieuItem[]>([]);
   const [editedThanhTich, setEditedThanhTich] = useState<ThanhTichItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [positionHistoriesMap, setPositionHistoriesMap] = useState<Record<string, any[]>>({});
+  const [personnelDetails, setPersonnelDetails] = useState<Record<string, any>>({});
   const [approving, setApproving] = useState(false);
   const [rejecting, setRejecting] = useState(false);
-  const [messageAlert, setMessageAlert] = useState<{ type: 'success' | 'error'; text: string } | null>(
-    null
-  );
+  const [messageAlert, setMessageAlert] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
 
   // Selection states for Danh Hieu
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
@@ -153,7 +157,9 @@ export default function ProposalDetailPage() {
   const [selectedThanhTichKeys, setSelectedThanhTichKeys] = useState<React.Key[]>([]);
 
   const [decisionModalVisible, setDecisionModalVisible] = useState(false);
-  const [decisionModalType, setDecisionModalType] = useState<'danh_hieu' | 'thanh_tich'>('danh_hieu');
+  const [decisionModalType, setDecisionModalType] = useState<'danh_hieu' | 'thanh_tich'>(
+    'danh_hieu'
+  );
 
   // Reject modal
   const [rejectModalVisible, setRejectModalVisible] = useState(false);
@@ -178,17 +184,27 @@ export default function ProposalDetailPage() {
         const parsedDanhHieu = Array.isArray(danhHieuData)
           ? danhHieuData
           : danhHieuData && typeof danhHieuData === 'string'
-            ? JSON.parse(danhHieuData)
-            : [];
+          ? JSON.parse(danhHieuData)
+          : [];
 
         const parsedThanhTich = Array.isArray(thanhTichData)
           ? thanhTichData
           : thanhTichData && typeof thanhTichData === 'string'
-            ? JSON.parse(thanhTichData)
-            : [];
+          ? JSON.parse(thanhTichData)
+          : [];
 
         setEditedDanhHieu(parsedDanhHieu);
         setEditedThanhTich(parsedThanhTich);
+
+        // Fetch thông tin personnel để lấy chức vụ hiện tại
+        if (parsedDanhHieu.length > 0) {
+          await fetchPersonnelDetails(parsedDanhHieu);
+        }
+
+        // Nếu là đề xuất cống hiến, fetch lịch sử chức vụ cho tất cả quân nhân
+        if (res.data.loai_de_xuat === 'CONG_HIEN' && parsedDanhHieu.length > 0) {
+          await fetchPositionHistories(parsedDanhHieu);
+        }
       } else {
         setMessageAlert({ type: 'error', text: res.message || 'Không tải được đề xuất' });
       }
@@ -196,6 +212,94 @@ export default function ProposalDetailPage() {
       setMessageAlert({ type: 'error', text: error.message || 'Lỗi khi tải đề xuất' });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPersonnelDetails = async (danhHieuItems: DanhHieuItem[]) => {
+    try {
+      const detailsMap: Record<string, any> = {};
+
+      // Fetch thông tin personnel cho mỗi quân nhân
+      await Promise.all(
+        danhHieuItems.map(async item => {
+          if (item.personnel_id) {
+            try {
+              const res = await apiClient.getPersonnelById(item.personnel_id);
+              if (res.success && res.data) {
+                detailsMap[item.personnel_id] = res.data;
+              }
+            } catch (error) {
+              // Ignore errors for individual personnel
+            }
+          }
+        })
+      );
+
+      setPersonnelDetails(detailsMap);
+    } catch (error) {
+      console.error('Error fetching personnel details:', error);
+    }
+  };
+
+  const fetchPositionHistories = async (danhHieuItems: DanhHieuItem[]) => {
+    try {
+      const historiesMap: Record<string, any[]> = {};
+
+      // Fetch lịch sử chức vụ cho mỗi quân nhân
+      await Promise.all(
+        danhHieuItems.map(async item => {
+          if (item.personnel_id) {
+            try {
+              const res = await apiClient.getPositionHistory(item.personnel_id);
+              if (res.success && res.data) {
+                historiesMap[item.personnel_id] = res.data;
+              }
+            } catch (error) {
+              // Ignore errors for individual personnel
+              historiesMap[item.personnel_id] = [];
+            }
+          }
+        })
+      );
+
+      setPositionHistoriesMap(historiesMap);
+    } catch (error) {
+      console.error('Error fetching position histories:', error);
+    }
+  };
+
+  // Tính tổng thời gian đảm nhiệm chức vụ theo nhóm hệ số cho một quân nhân
+  const calculateTotalTimeByGroup = (personnelId: string, group: '0.7' | '0.8' | '0.9-1.0') => {
+    const histories = positionHistoriesMap[personnelId] || [];
+    let totalMonths = 0;
+
+    histories.forEach((history: any) => {
+      const heSo = Number(history.he_so_chuc_vu) || 0;
+      let belongsToGroup = false;
+
+      if (group === '0.7') {
+        belongsToGroup = heSo >= 0.7 && heSo < 0.8;
+      } else if (group === '0.8') {
+        belongsToGroup = heSo >= 0.8 && heSo < 0.9;
+      } else if (group === '0.9-1.0') {
+        belongsToGroup = heSo >= 0.9 && heSo <= 1.0;
+      }
+
+      if (belongsToGroup && history.so_thang !== null && history.so_thang !== undefined) {
+        totalMonths += history.so_thang;
+      }
+    });
+
+    const years = Math.floor(totalMonths / 12);
+    const remainingMonths = totalMonths % 12;
+
+    if (totalMonths === 0) return '-';
+    if (years > 0 && remainingMonths > 0) {
+      return `${years} năm ${remainingMonths} tháng`;
+    } else if (years > 0) {
+      return `${years} năm`;
+    } else {
+      return `${remainingMonths} tháng`;
     }
   };
 
@@ -232,7 +336,7 @@ export default function ProposalDetailPage() {
   const handleApprove = async () => {
     // Kiểm tra tất cả danh hiệu/thành tích đã có số quyết định chưa
     let missingDecisions: string[] = [];
-    
+
     if (editedDanhHieu.length > 0) {
       editedDanhHieu.forEach((item, index) => {
         if (proposal.loai_de_xuat === 'DON_VI_HANG_NAM') {
@@ -248,7 +352,7 @@ export default function ProposalDetailPage() {
         }
       });
     }
-    
+
     if (editedThanhTich.length > 0) {
       editedThanhTich.forEach((item, index) => {
         if (!item.so_quyet_dinh || item.so_quyet_dinh.trim() === '') {
@@ -256,7 +360,7 @@ export default function ProposalDetailPage() {
         }
       });
     }
-    
+
     // Nếu thiếu số quyết định, hiển thị cảnh báo
     if (missingDecisions.length > 0) {
       Modal.warning({
@@ -268,7 +372,9 @@ export default function ProposalDetailPage() {
             </p>
             <ul style={{ marginLeft: 20, marginBottom: 0 }}>
               {missingDecisions.slice(0, 10).map((item, idx) => (
-                <li key={idx} style={{ marginBottom: 4 }}>{item}</li>
+                <li key={idx} style={{ marginBottom: 4 }}>
+                  {item}
+                </li>
               ))}
               {missingDecisions.length > 10 && (
                 <li>... và {missingDecisions.length - 10} mục khác</li>
@@ -282,14 +388,15 @@ export default function ProposalDetailPage() {
       });
       return;
     }
-    
+
     Modal.confirm({
       title: 'Xác nhận phê duyệt',
       content: (
         <div>
           <p>Bạn có chắc chắn muốn phê duyệt đề xuất này? Dữ liệu sẽ được import vào hệ thống.</p>
           <p style={{ marginTop: 12, color: '#666' }}>
-            Tất cả các mục đã có số quyết định. Sau khi phê duyệt, dữ liệu sẽ được import vào hệ thống.
+            Tất cả các mục đã có số quyết định. Sau khi phê duyệt, dữ liệu sẽ được import vào hệ
+            thống.
           </p>
         </div>
       ),
@@ -317,7 +424,7 @@ export default function ProposalDetailPage() {
             const totalDanhHieu = importedData.total_danh_hieu || 0;
             const importedThanhTich = importedData.imported_thanh_tich || 0;
             const totalThanhTich = importedData.total_thanh_tich || 0;
-            
+
             // Hiển thị thông báo thành công hoặc cảnh báo
             if (importedData.errors && importedData.errors.length > 0) {
               message.warning(
@@ -327,7 +434,9 @@ export default function ProposalDetailPage() {
               // Hiển thị errors chi tiết
               setMessageAlert({
                 type: 'error',
-                text: `Có ${importedData.errors.length} lỗi khi import:\n${importedData.errors.slice(0, 5).join('\n')}${importedData.errors.length > 5 ? '\n...' : ''}`,
+                text: `Có ${importedData.errors.length} lỗi khi import:\n${importedData.errors
+                  .slice(0, 5)
+                  .join('\n')}${importedData.errors.length > 5 ? '\n...' : ''}`,
               });
             } else {
               message.success(
@@ -338,7 +447,10 @@ export default function ProposalDetailPage() {
             // Refresh data
             await fetchProposalDetail();
           } else {
-            setMessageAlert({ type: 'error', text: response.message || 'Lỗi khi phê duyệt đề xuất' });
+            setMessageAlert({
+              type: 'error',
+              text: response.message || 'Lỗi khi phê duyệt đề xuất',
+            });
           }
         } catch (error: any) {
           setMessageAlert({ type: 'error', text: error.message || 'Lỗi khi phê duyệt đề xuất' });
@@ -357,15 +469,17 @@ export default function ProposalDetailPage() {
           // Xác định loại quyết định dựa trên loai_khen_thuong hoặc số quyết định
           const loaiKhenThuong = decision.loai_khen_thuong || '';
           const soQuyetDinh = decision.so_quyet_dinh || '';
-          
+
           // Kiểm tra nếu là quyết định BKBQP hoặc CSTDTQ
-          const isBKBQP = loaiKhenThuong.includes('BKBQP') || 
-                          soQuyetDinh.toLowerCase().includes('bkbqp') ||
-                          soQuyetDinh.toLowerCase().includes('bằng khen');
-          const isCSTDTQ = loaiKhenThuong.includes('CSTDTQ') || 
-                          loaiKhenThuong.includes('CSTĐTQ') ||
-                          soQuyetDinh.toLowerCase().includes('cstdtq') ||
-                          soQuyetDinh.toLowerCase().includes('chiến sĩ thi đua toàn quân');
+          const isBKBQP =
+            loaiKhenThuong.includes('BKBQP') ||
+            soQuyetDinh.toLowerCase().includes('bkbqp') ||
+            soQuyetDinh.toLowerCase().includes('bằng khen');
+          const isCSTDTQ =
+            loaiKhenThuong.includes('CSTDTQ') ||
+            loaiKhenThuong.includes('CSTĐTQ') ||
+            soQuyetDinh.toLowerCase().includes('cstdtq') ||
+            soQuyetDinh.toLowerCase().includes('chiến sĩ thi đua toàn quân');
 
           // Nếu là quyết định BKBQP hoặc CSTDTQ, lưu vào trường tương ứng
           if (isBKBQP) {
@@ -403,7 +517,11 @@ export default function ProposalDetailPage() {
       setEditedDanhHieu(updatedDanhHieu);
       const count = selectedRowKeys.length;
       setSelectedRowKeys([]);
-      message.success(`Đã áp dụng số quyết định cho ${count} ${proposal.loai_de_xuat === 'DON_VI_HANG_NAM' ? 'đơn vị' : 'cán bộ'}`);
+      message.success(
+        `Đã áp dụng số quyết định cho ${count} ${
+          proposal.loai_de_xuat === 'DON_VI_HANG_NAM' ? 'đơn vị' : 'cán bộ'
+        }`
+      );
     } else {
       // Apply decision to selected thanh tich
       const updatedThanhTich = editedThanhTich.map((item, index) => {
@@ -511,7 +629,7 @@ export default function ProposalDetailPage() {
   // ============================================
   // COLUMNS CHO TỪNG LOẠI ĐỀ XUẤT
   // ============================================
-  
+
   // Columns cho CA_NHAN_HANG_NAM (Cá nhân Hằng năm)
   const caNhanHangNamColumns = [
     {
@@ -525,21 +643,26 @@ export default function ProposalDetailPage() {
       title: 'Họ tên',
       dataIndex: 'ho_ten',
       key: 'ho_ten',
-    },
-    {
-      title: 'Cơ quan đơn vị',
-      key: 'co_quan_don_vi',
-      width: 200,
-      render: (_: any, record: DanhHieuItem) => {
-        return record.co_quan_don_vi?.ten_co_quan_don_vi || '-';
-      },
-    },
-    {
-      title: 'Đơn vị trực thuộc',
-      key: 'don_vi_truc_thuoc',
-      width: 200,
-      render: (_: any, record: DanhHieuItem) => {
-        return record.don_vi_truc_thuoc?.ten_don_vi || '-';
+      width: 250,
+      align: 'center' as const,
+      render: (text: string, record: DanhHieuItem) => {
+        const coQuanDonVi = record.co_quan_don_vi?.ten_co_quan_don_vi;
+        const donViTrucThuoc = record.don_vi_truc_thuoc?.ten_don_vi;
+        const parts = [];
+        if (donViTrucThuoc) parts.push(donViTrucThuoc);
+        if (coQuanDonVi) parts.push(coQuanDonVi);
+        const unitInfo = parts.length > 0 ? parts.join(', ') : null;
+
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <Text strong>{text}</Text>
+            {unitInfo && (
+              <Text type="secondary" style={{ fontSize: '12px', marginTop: '4px' }}>
+                {unitInfo}
+              </Text>
+            )}
+          </div>
+        );
       },
     },
     {
@@ -560,21 +683,99 @@ export default function ProposalDetailPage() {
       title: 'Danh hiệu',
       dataIndex: 'danh_hieu',
       key: 'danh_hieu',
-      width: 120,
-      render: (_: any, record: DanhHieuItem, index: number) => (
-        <EditableCell
-          value={record.danh_hieu || ''}
-          type="select"
-          options={[
-            { label: 'CSTDCS', value: 'CSTDCS' },
-            { label: 'CSTT', value: 'CSTT' },
-            { label: 'Không đạt', value: '' },
-          ]}
-          onSave={val => updateDanhHieu(index, 'danh_hieu', val || null)}
-          editable={proposal.status === 'PENDING'}
-        />
-      ),
+      width: 250,
+      render: (_: any, record: DanhHieuItem, index: number) => {
+        // Map mã danh hiệu sang tên đầy đủ cho tất cả loại đề xuất
+        const danhHieuMap: Record<string, string> = {
+          // Cá nhân Hằng năm
+          CSTDCS: 'Chiến sĩ thi đua cơ sở (CSTDCS)',
+          CSTT: 'Chiến sĩ tiên tiến (CSTT)',
+          BKBQP: 'Bằng khen của Bộ trưởng Bộ Quốc phòng (BKBQP)',
+          CSTDTQ: 'Chiến sĩ thi đua toàn quân (CSTDTQ)',
+          // Đơn vị Hằng năm
+          ĐVQT: 'Đơn vị Quyết thắng (ĐVQT)',
+          ĐVTT: 'Đơn vị Tiên tiến (ĐVTT)',
+          BKTTCP: 'Bằng khen Thủ tướng Chính phủ (BKTTCP)',
+          // Niên hạn
+          HCCSVV_HANG_BA: 'Huân chương Chiến sỹ Vẻ vang Hạng Ba',
+          HCCSVV_HANG_NHI: 'Huân chương Chiến sỹ Vẻ vang Hạng Nhì',
+          HCCSVV_HANG_NHAT: 'Huân chương Chiến sỹ Vẻ vang Hạng Nhất',
+          // Cống hiến
+          HCBVTQ_HANG_BA: 'Huân chương Bảo vệ Tổ quốc Hạng Ba',
+          HCBVTQ_HANG_NHI: 'Huân chương Bảo vệ Tổ quốc Hạng Nhì',
+          HCBVTQ_HANG_NHAT: 'Huân chương Bảo vệ Tổ quốc Hạng Nhất',
+        };
+
+        // Lấy options dựa trên loại đề xuất
+        let options: { label: string; value: string }[] = [];
+        switch (proposal.loai_de_xuat) {
+          case 'CA_NHAN_HANG_NAM':
+            options = [
+              { label: 'Chiến sĩ thi đua cơ sở (CSTDCS)', value: 'CSTDCS' },
+              { label: 'Chiến sĩ tiên tiến (CSTT)', value: 'CSTT' },
+              { label: 'Bằng khen của Bộ trưởng Bộ Quốc phòng (BKBQP)', value: 'BKBQP' },
+              { label: 'Chiến sĩ thi đua toàn quân (CSTDTQ)', value: 'CSTDTQ' },
+            ];
+            break;
+          case 'DON_VI_HANG_NAM':
+            options = [
+              { label: 'Đơn vị Quyết thắng (ĐVQT)', value: 'ĐVQT' },
+              { label: 'Đơn vị Tiên tiến (ĐVTT)', value: 'ĐVTT' },
+              { label: 'Bằng khen của Bộ trưởng Bộ Quốc phòng (BKBQP)', value: 'BKBQP' },
+              { label: 'Bằng khen Thủ tướng Chính phủ (BKTTCP)', value: 'BKTTCP' },
+            ];
+            break;
+          case 'NIEN_HAN':
+            options = [
+              { label: 'Huân chương Chiến sỹ Vẻ vang Hạng Ba', value: 'HCCSVV_HANG_BA' },
+              { label: 'Huân chương Chiến sỹ Vẻ vang Hạng Nhì', value: 'HCCSVV_HANG_NHI' },
+              { label: 'Huân chương Chiến sỹ Vẻ vang Hạng Nhất', value: 'HCCSVV_HANG_NHAT' },
+            ];
+            break;
+          case 'CONG_HIEN':
+            options = [
+              { label: 'Huân chương Bảo vệ Tổ quốc Hạng Ba', value: 'HCBVTQ_HANG_BA' },
+              { label: 'Huân chương Bảo vệ Tổ quốc Hạng Nhì', value: 'HCBVTQ_HANG_NHI' },
+              { label: 'Huân chương Bảo vệ Tổ quốc Hạng Nhất', value: 'HCBVTQ_HANG_NHAT' },
+            ];
+            break;
+          default:
+            options = [];
+        }
+
+        // Luôn hiển thị tên đầy đủ, không cho phép chỉnh sửa danh hiệu
+        const fullName = danhHieuMap[record.danh_hieu || ''] || record.danh_hieu || '-';
+        return <Text>{fullName}</Text>;
+      },
     },
+    ...(proposal?.loai_de_xuat === 'CONG_HIEN'
+      ? [
+          {
+            title: 'Tổng thời gian (0.7)',
+            key: 'total_time_0_7',
+            width: 150,
+            align: 'center' as const,
+            render: (_: any, record: DanhHieuItem) =>
+              calculateTotalTimeByGroup(record.personnel_id, '0.7'),
+          },
+          {
+            title: 'Tổng thời gian (0.8)',
+            key: 'total_time_0_8',
+            width: 150,
+            align: 'center' as const,
+            render: (_: any, record: DanhHieuItem) =>
+              calculateTotalTimeByGroup(record.personnel_id, '0.8'),
+          },
+          {
+            title: 'Tổng thời gian (0.9-1.0)',
+            key: 'total_time_0_9_1_0',
+            width: 150,
+            align: 'center' as const,
+            render: (_: any, record: DanhHieuItem) =>
+              calculateTotalTimeByGroup(record.personnel_id, '0.9-1.0'),
+          },
+        ]
+      : []),
     {
       title: 'Số quyết định',
       dataIndex: 'so_quyet_dinh',
@@ -582,20 +783,27 @@ export default function ProposalDetailPage() {
       width: 180,
       render: (_: any, record: DanhHieuItem, index: number) => {
         // Kiểm tra cả so_quyet_dinh và các trường cũ để tương thích với dữ liệu cũ
-        const soQuyetDinh = record.so_quyet_dinh || record.so_quyet_dinh_bkbqp || record.so_quyet_dinh_cstdtq;
-        const fileQuyetDinh = record.file_quyet_dinh || record.file_quyet_dinh_bkbqp || record.file_quyet_dinh_cstdtq;
-        
+        const soQuyetDinh =
+          record.so_quyet_dinh || record.so_quyet_dinh_bkbqp || record.so_quyet_dinh_cstdtq;
+        const fileQuyetDinh =
+          record.file_quyet_dinh || record.file_quyet_dinh_bkbqp || record.file_quyet_dinh_cstdtq;
+
         if (!soQuyetDinh || (typeof soQuyetDinh === 'string' && soQuyetDinh.trim() === '')) {
           return <span style={{ color: '#999', fontWeight: 400 }}>Chưa có</span>;
         }
         return (
           <a
-            onClick={(e) => {
+            onClick={e => {
               e.preventDefault();
               e.stopPropagation();
               handleOpenDecisionFile(soQuyetDinh, fileQuyetDinh);
             }}
-            style={{ color: '#52c41a', fontWeight: 500, textDecoration: 'underline', cursor: 'pointer' }}
+            style={{
+              color: '#52c41a',
+              fontWeight: 500,
+              textDecoration: 'underline',
+              cursor: 'pointer',
+            }}
           >
             {soQuyetDinh}
           </a>
@@ -618,7 +826,9 @@ export default function ProposalDetailPage() {
       key: 'loai_don_vi',
       width: 150,
       render: (_: any, record: DanhHieuItem) => {
-        const type = record.don_vi_type || (record.co_quan_don_vi_cha ? 'DON_VI_TRUC_THUOC' : 'CO_QUAN_DON_VI');
+        const type =
+          record.don_vi_type ||
+          (record.co_quan_don_vi_cha ? 'DON_VI_TRUC_THUOC' : 'CO_QUAN_DON_VI');
         return (
           <Tag color={type === 'CO_QUAN_DON_VI' ? 'blue' : 'green'}>
             {type === 'CO_QUAN_DON_VI' ? 'Cơ quan đơn vị' : 'Đơn vị trực thuộc'}
@@ -662,34 +872,16 @@ export default function ProposalDetailPage() {
       render: (_: any, record: DanhHieuItem, index: number) => {
         // Map mã danh hiệu sang tên đầy đủ để hiển thị
         const danhHieuMap: Record<string, string> = {
-          'ĐVQT': 'Đơn vị Quyết thắng (ĐVQT)',
-          'ĐVTT': 'Đơn vị Tiên tiến (ĐVTT)',
-          'BKBQP': 'Bằng khen của Bộ trưởng Bộ Quốc phòng (BKBQP)',
-          'BKTTCP': 'Bằng khen Thủ tướng Chính phủ (BKTTCP)',
+          ĐVQT: 'Đơn vị Quyết thắng (ĐVQT)',
+          ĐVTT: 'Đơn vị Tiên tiến (ĐVTT)',
+          BKBQP: 'Bằng khen của Bộ trưởng Bộ Quốc phòng (BKBQP)',
+          BKTTCP: 'Bằng khen Thủ tướng Chính phủ (BKTTCP)',
         };
-        
-        const fullName = danhHieuMap[record.danh_hieu || ''] || record.danh_hieu || '';
-        
-        // Nếu không editable, hiển thị tên đầy đủ
-        if (proposal.status !== 'PENDING') {
-          return <Text>{fullName || '-'}</Text>;
-        }
-        
-        return (
-          <EditableCell
-            value={record.danh_hieu || ''}
-            type="select"
-            options={[
-              { label: 'Đơn vị Quyết thắng (ĐVQT)', value: 'ĐVQT' },
-              { label: 'Đơn vị Tiên tiến (ĐVTT)', value: 'ĐVTT' },
-              { label: 'Bằng khen của Bộ trưởng Bộ Quốc phòng (BKBQP)', value: 'BKBQP' },
-              { label: 'Bằng khen Thủ tướng Chính phủ (BKTTCP)', value: 'BKTTCP' },
-              { label: 'Không đạt', value: '' },
-            ]}
-            onSave={val => updateDanhHieu(index, 'danh_hieu', val || null)}
-            editable={true}
-          />
-        );
+
+        const fullName = danhHieuMap[record.danh_hieu || ''] || record.danh_hieu || '-';
+
+        // Luôn hiển thị tên đầy đủ, không cho phép chỉnh sửa danh hiệu
+        return <Text>{fullName || '-'}</Text>;
       },
     },
     {
@@ -699,20 +891,27 @@ export default function ProposalDetailPage() {
       width: 180,
       render: (_: any, record: DanhHieuItem, index: number) => {
         // Kiểm tra cả so_quyet_dinh và các trường cũ để tương thích với dữ liệu cũ
-        const soQuyetDinh = record.so_quyet_dinh || record.so_quyet_dinh_bkbqp || record.so_quyet_dinh_cstdtq;
-        const fileQuyetDinh = record.file_quyet_dinh || record.file_quyet_dinh_bkbqp || record.file_quyet_dinh_cstdtq;
-        
+        const soQuyetDinh =
+          record.so_quyet_dinh || record.so_quyet_dinh_bkbqp || record.so_quyet_dinh_cstdtq;
+        const fileQuyetDinh =
+          record.file_quyet_dinh || record.file_quyet_dinh_bkbqp || record.file_quyet_dinh_cstdtq;
+
         if (!soQuyetDinh || (typeof soQuyetDinh === 'string' && soQuyetDinh.trim() === '')) {
           return <span style={{ color: '#999', fontWeight: 400 }}>Chưa có</span>;
         }
         return (
           <a
-            onClick={(e) => {
+            onClick={e => {
               e.preventDefault();
               e.stopPropagation();
               handleOpenDecisionFile(soQuyetDinh, fileQuyetDinh);
             }}
-            style={{ color: '#52c41a', fontWeight: 500, textDecoration: 'underline', cursor: 'pointer' }}
+            style={{
+              color: '#52c41a',
+              fontWeight: 500,
+              textDecoration: 'underline',
+              cursor: 'pointer',
+            }}
           >
             {soQuyetDinh}
           </a>
@@ -733,21 +932,26 @@ export default function ProposalDetailPage() {
       title: 'Họ tên',
       dataIndex: 'ho_ten',
       key: 'ho_ten',
-    },
-    {
-      title: 'Cơ quan đơn vị',
-      key: 'co_quan_don_vi',
-      width: 200,
-      render: (_: any, record: ThanhTichItem) => {
-        return record.co_quan_don_vi?.ten_co_quan_don_vi || '-';
-      },
-    },
-    {
-      title: 'Đơn vị trực thuộc',
-      key: 'don_vi_truc_thuoc',
-      width: 200,
-      render: (_: any, record: ThanhTichItem) => {
-        return record.don_vi_truc_thuoc?.ten_don_vi || '-';
+      width: 250,
+      align: 'center' as const,
+      render: (text: string, record: ThanhTichItem) => {
+        const coQuanDonVi = record.co_quan_don_vi?.ten_co_quan_don_vi;
+        const donViTrucThuoc = record.don_vi_truc_thuoc?.ten_don_vi;
+        const parts = [];
+        if (donViTrucThuoc) parts.push(donViTrucThuoc);
+        if (coQuanDonVi) parts.push(coQuanDonVi);
+        const unitInfo = parts.length > 0 ? parts.join(', ') : null;
+
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <Text strong>{text}</Text>
+            {unitInfo && (
+              <Text type="secondary" style={{ fontSize: '12px', marginTop: '4px' }}>
+                {unitInfo}
+              </Text>
+            )}
+          </div>
+        );
       },
     },
     {
@@ -807,12 +1011,17 @@ export default function ProposalDetailPage() {
         }
         return (
           <a
-            onClick={(e) => {
+            onClick={e => {
               e.preventDefault();
               e.stopPropagation();
               handleOpenDecisionFile(soQuyetDinh, record.file_quyet_dinh);
             }}
-            style={{ color: '#52c41a', fontWeight: 500, textDecoration: 'underline', cursor: 'pointer' }}
+            style={{
+              color: '#52c41a',
+              fontWeight: 500,
+              textDecoration: 'underline',
+              cursor: 'pointer',
+            }}
           >
             {soQuyetDinh}
           </a>
@@ -834,7 +1043,6 @@ export default function ProposalDetailPage() {
       setSelectedThanhTichKeys(selectedKeys);
     },
   };
-
 
   return (
     <div style={{ padding: '24px', maxWidth: '1600px', margin: '0 auto' }}>
@@ -887,6 +1095,26 @@ export default function ProposalDetailPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
           <div>
             <Text type="secondary" style={{ fontSize: '14px' }}>
+              Loại đề xuất
+            </Text>
+            <div style={{ fontWeight: 500, marginTop: '4px' }}>
+              <Tag color="blue">
+                {proposal.loai_de_xuat === 'CA_NHAN_HANG_NAM'
+                  ? 'Cá nhân Hằng năm'
+                  : proposal.loai_de_xuat === 'DON_VI_HANG_NAM'
+                  ? 'Đơn vị Hằng năm'
+                  : proposal.loai_de_xuat === 'NIEN_HAN'
+                  ? 'Niên hạn'
+                  : proposal.loai_de_xuat === 'CONG_HIEN'
+                  ? 'Cống hiến'
+                  : proposal.loai_de_xuat === 'NCKH'
+                  ? 'ĐTKH/SKKH'
+                  : proposal.loai_de_xuat}
+              </Tag>
+            </div>
+          </div>
+          <div>
+            <Text type="secondary" style={{ fontSize: '14px' }}>
               Đơn vị
             </Text>
             <div style={{ fontWeight: 500 }}>
@@ -921,12 +1149,41 @@ export default function ProposalDetailPage() {
               {format(new Date(proposal.createdAt), 'dd/MM/yyyy HH:mm')}
             </div>
           </div>
+          {proposal.status === 'APPROVED' && proposal.ngay_duyet && (
+            <>
+              <div>
+                <Text type="secondary" style={{ fontSize: '14px' }}>
+                  Người phê duyệt
+                </Text>
+                <div style={{ fontWeight: 500 }}>
+                  {proposal.nguoi_duyet?.ho_ten || proposal.nguoi_duyet?.username || '-'}
+                </div>
+              </div>
+              <div>
+                <Text type="secondary" style={{ fontSize: '14px' }}>
+                  Ngày phê duyệt
+                </Text>
+                <div style={{ fontWeight: 500 }}>
+                  {format(new Date(proposal.ngay_duyet), 'dd/MM/yyyy HH:mm')}
+                </div>
+              </div>
+            </>
+          )}
         </div>
-        
+
         {/* File đính kèm */}
         {proposal.files_attached && proposal.files_attached.length > 0 && (
-          <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid rgba(0, 0, 0, 0.06)' }}>
-            <Text type="secondary" style={{ fontSize: '14px', display: 'block', marginBottom: '12px' }}>
+          <div
+            style={{
+              marginTop: '24px',
+              paddingTop: '24px',
+              borderTop: '1px solid rgba(0, 0, 0, 0.06)',
+            }}
+          >
+            <Text
+              type="secondary"
+              style={{ fontSize: '14px', display: 'block', marginBottom: '12px' }}
+            >
               File đính kèm ({proposal.files_attached.length} file)
             </Text>
             <Space direction="vertical" style={{ width: '100%' }} size="small">
@@ -960,9 +1217,12 @@ export default function ProposalDetailPage() {
                     onClick={async () => {
                       try {
                         const filename = file.filename;
-                        const response = await axiosInstance.get(`/api/proposals/uploads/${filename}`, {
-                          responseType: 'blob',
-                        });
+                        const response = await axiosInstance.get(
+                          `/api/proposals/uploads/${filename}`,
+                          {
+                            responseType: 'blob',
+                          }
+                        );
                         const blob = response.data;
                         const url = window.URL.createObjectURL(blob);
                         const link = document.createElement('a');
@@ -1028,7 +1288,11 @@ export default function ProposalDetailPage() {
       ) : editedDanhHieu.length > 0 ? (
         // Component cho đề xuất có danh hiệu - chỉ hiển thị Danh Hiệu
         <Card
-          title={proposal.loai_de_xuat === 'DON_VI_HANG_NAM' ? 'Danh Hiệu Đơn Vị Hằng Năm' : 'Danh Hiệu Hằng Năm'}
+          title={
+            proposal.loai_de_xuat === 'DON_VI_HANG_NAM'
+              ? 'Danh Hiệu Đơn Vị Hằng Năm'
+              : 'Danh Hiệu Hằng Năm'
+          }
           extra={
             proposal.status === 'PENDING' &&
             selectedRowKeys.length > 0 && (
@@ -1040,7 +1304,8 @@ export default function ProposalDetailPage() {
                   setDecisionModalVisible(true);
                 }}
               >
-                Thêm số quyết định ({selectedRowKeys.length} {proposal.loai_de_xuat === 'DON_VI_HANG_NAM' ? 'đơn vị' : 'người'})
+                Thêm số quyết định ({selectedRowKeys.length}{' '}
+                {proposal.loai_de_xuat === 'DON_VI_HANG_NAM' ? 'đơn vị' : 'người'})
               </Button>
             )
           }
@@ -1054,8 +1319,8 @@ export default function ProposalDetailPage() {
             <Table
               rowSelection={proposal.status === 'PENDING' ? rowSelection : undefined}
               columns={
-                proposal.loai_de_xuat === 'DON_VI_HANG_NAM' 
-                  ? donViHangNamColumns 
+                proposal.loai_de_xuat === 'DON_VI_HANG_NAM'
+                  ? donViHangNamColumns
                   : proposal.loai_de_xuat === 'CA_NHAN_HANG_NAM'
                   ? caNhanHangNamColumns
                   : caNhanHangNamColumns // Tạm thời dùng cho các loại khác (NIEN_HAN, CONG_HIEN, DOT_XUAT), sẽ tạo riêng sau

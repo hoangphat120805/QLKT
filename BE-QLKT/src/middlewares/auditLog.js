@@ -51,11 +51,11 @@ const auditLog = (options = {}) => {
 
           await prisma.systemLog.create({
             data: {
-              actor_id: user.id,
+              nguoi_thuc_hien_id: user.id,
               actor_role: user.role,
               action,
               resource,
-              resource_id: resourceId,
+              tai_nguyen_id: resourceId,
               description,
               payload: payload ? JSON.stringify(payload) : null,
               ip_address: ipAddress,
@@ -109,9 +109,14 @@ const createDescription = {
 
 /**
  * Helper function để lấy ID từ params hoặc response
+ * @deprecated Use getResourceId from helpers/auditLogHelper.js instead
  */
 const getResourceId = {
-  fromParams: paramName => req => parseInt(req.params[paramName]) || null,
+  fromParams: paramName => req => {
+    const value = req.params?.[paramName] || null;
+    // Return as string (CUID), not parseInt
+    return value;
+  },
   fromResponse: key => (req, res, responseData) => {
     try {
       const data = typeof responseData === 'string' ? JSON.parse(responseData) : responseData;

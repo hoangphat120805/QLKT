@@ -36,13 +36,35 @@ class SystemLogsController {
 
       const skip = (page - 1) * limit;
       const where = {};
-      // Lọc theo vai trò tác nhân (theo cấp bậc), MANAGER chỉ xem được USER
+
+      // Phân quyền xem log theo cấp bậc:
+      // - MANAGER: xem được USER và MANAGER (trong đơn vị của mình)
+      // - ADMIN: xem được USER, MANAGER, ADMIN
+      // - SUPER_ADMIN: xem được tất cả (USER, MANAGER, ADMIN, SUPER_ADMIN)
       if (currentUser.role === 'MANAGER') {
-        where.actor_role = 'USER';
-      } else if (actorRole && allowedRoles.includes(actorRole)) {
-        where.actor_role = actorRole;
+        // MANAGER chỉ xem được USER và MANAGER
+        where.actor_role = { in: ['USER', 'MANAGER'] };
+      } else if (currentUser.role === 'ADMIN') {
+        // ADMIN xem được USER, MANAGER, ADMIN
+        where.actor_role = { in: ['USER', 'MANAGER', 'ADMIN'] };
+      } else if (currentUser.role === 'SUPER_ADMIN') {
+        // SUPER_ADMIN xem được tất cả
+        if (actorRole && allowedRoles.includes(actorRole)) {
+          where.actor_role = actorRole;
+        } else {
+          where.actor_role = { in: allowedRoles };
+        }
       } else {
-        where.actor_role = { in: allowedRoles };
+        // USER không được xem log
+        return res.status(403).json({
+          success: false,
+          message: 'Không có quyền xem nhật ký hệ thống',
+        });
+      }
+
+      // Nếu có filter actorRole và role đó được phép xem, override previous filter
+      if (actorRole && allowedRoles.includes(actorRole)) {
+        where.actor_role = actorRole;
       }
 
       // Tìm kiếm theo mô tả
@@ -80,7 +102,7 @@ class SystemLogsController {
           take: parseInt(limit),
           where,
           include: {
-            Actor: {
+            NguoiThucHien: {
               select: {
                 id: true,
                 username: true,

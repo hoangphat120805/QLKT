@@ -7,6 +7,7 @@ import {
   Button,
   Space,
   Input,
+  InputNumber,
   Select,
   Tag,
   Typography,
@@ -71,7 +72,7 @@ export default function AdminDecisionsPage() {
     total: 0,
   });
   const [searchText, setSearchText] = useState('');
-  const [yearFilter, setYearFilter] = useState<number | 'ALL'>('ALL');
+  const [yearFilter, setYearFilter] = useState<number | null>(null);
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [selectedDecision, setSelectedDecision] = useState<Decision | null>(null);
@@ -90,7 +91,7 @@ export default function AdminDecisionsPage() {
         page: paginationToUse.current,
         limit: paginationToUse.pageSize,
       };
-      if (yearFilter !== 'ALL') {
+      if (yearFilter !== null && yearFilter !== undefined) {
         params.nam = yearFilter;
       }
       if (typeFilter !== 'ALL') {
@@ -105,16 +106,16 @@ export default function AdminDecisionsPage() {
       console.log('✅ Response từ API:', response);
       console.log('📊 Response.data:', response.data);
       console.log('📄 Response.pagination:', (response as any).pagination);
-      
+
       if (response.success) {
         // Backend trả về: { success: true, data: [...], pagination: {...} }
         // apiClient.getDecisions() đã parse và trả về: { success: true, data: [...], pagination: {...} }
         const decisions = Array.isArray(response.data) ? response.data : [];
         const paginationData = (response as any).pagination;
-        
+
         console.log('📋 Decisions để hiển thị:', decisions);
         console.log('📄 Pagination data:', paginationData);
-        
+
         setDecisions(decisions);
         setPagination({
           ...paginationToUse,
@@ -209,7 +210,7 @@ export default function AdminDecisionsPage() {
       key: 'so_quyet_dinh',
       width: 200,
       render: (text: string) => (
-        <Text strong style={{ color: '#1890ff' }}>
+        <Text strong>
           {text}
         </Text>
       ),
@@ -242,7 +243,7 @@ export default function AdminDecisionsPage() {
       render: (type: string | null) => {
         if (!type) return '-';
         const option = loaiKhenThuongOptions.find(opt => opt.value === type);
-        return <Tag color="blue">{option?.label || type}</Tag>;
+        return <Text>{option?.label || type}</Text>;
       },
     },
     {
@@ -260,80 +261,67 @@ export default function AdminDecisionsPage() {
       },
     },
     {
-      title: 'File PDF',
-      key: 'file_path',
-      width: 100,
-      align: 'center',
-      render: (_: any, record: Decision) => {
-        if (!record.file_path) {
-          return <Text type="secondary">-</Text>;
-        }
-        return (
-          <Button
-            type="link"
-            icon={<DownloadOutlined />}
-            onClick={() => handleDownloadFile(record.file_path!)}
-            size="small"
-          >
-            Tải
-          </Button>
-        );
-      },
-    },
-    {
       title: 'Thao tác',
       key: 'action',
-      width: 230,
+      width: 200,
       fixed: 'right',
       align: 'center',
       render: (_: any, record: Decision) => (
-        <Space size="small" wrap>
-          <Button
-            type="link"
-            icon={<EyeOutlined />}
-            onClick={() => handleViewDetail(record)}
-            size="small"
-            style={{ padding: '0 4px' }}
-          >
-            Xem
-          </Button>
-          <Button
-            type="link"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-            size="small"
-            style={{ padding: '0 4px' }}
-          >
-            Sửa
-          </Button>
-          <Popconfirm
-            title="Xác nhận xóa"
-            description="Bạn có chắc chắn muốn xóa quyết định này?"
-            onConfirm={() => handleDelete(record.id)}
-            okText="Xóa"
-            cancelText="Hủy"
-          >
-            <Button 
-              type="link" 
-              danger 
-              icon={<DeleteOutlined />} 
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>
+          <Space size="small" wrap style={{ justifyContent: 'center', width: '100%' }}>
+            <Button
+              type="link"
+              icon={<EyeOutlined />}
+              onClick={() => handleViewDetail(record)}
               size="small"
-              style={{ padding: '0 4px' }}
+              style={{ padding: '0 4px', minWidth: '60px' }}
             >
-              Xóa
+              Xem
             </Button>
-          </Popconfirm>
-        </Space>
+            <Button
+              type="link"
+              icon={<EditOutlined />}
+              onClick={() => handleEdit(record)}
+              size="small"
+              style={{ padding: '0 4px', minWidth: '60px' }}
+            >
+              Sửa
+            </Button>
+          </Space>
+          <Space size="small" wrap style={{ justifyContent: 'center', width: '100%' }}>
+            <Popconfirm
+              title="Xác nhận xóa"
+              description="Bạn có chắc chắn muốn xóa quyết định này?"
+              onConfirm={() => handleDelete(record.id)}
+              okText="Xóa"
+              cancelText="Hủy"
+            >
+              <Button
+                type="link"
+                danger
+                icon={<DeleteOutlined />}
+                size="small"
+                style={{ padding: '0 4px', minWidth: '60px' }}
+              >
+                Xóa
+              </Button>
+            </Popconfirm>
+            {record.file_path && (
+              <Button
+                type="link"
+                icon={<DownloadOutlined />}
+                onClick={() => handleDownloadFile(record.file_path!)}
+                size="small"
+                style={{ padding: '0 4px', minWidth: '60px' }}
+              >
+                Tải
+              </Button>
+            )}
+          </Space>
+        </div>
       ),
     },
   ];
-
-  // Generate year options (last 5 years to next 2 years)
-  const currentYear = new Date().getFullYear();
-  const yearOptions = [];
-  for (let i = currentYear - 5; i <= currentYear + 2; i++) {
-    yearOptions.push({ label: i.toString(), value: i });
-  }
 
   return (
     <div style={{ padding: '24px' }}>
@@ -365,20 +353,15 @@ export default function AdminDecisionsPage() {
             style={{ width: 300 }}
             allowClear
           />
-          <Select
-            placeholder="Chọn năm"
+          <InputNumber
+            placeholder="Nhập năm"
             value={yearFilter}
-            onChange={setYearFilter}
+            onChange={value => setYearFilter(value || null)}
             style={{ width: 150 }}
-            allowClear
-          >
-            <Select.Option value="ALL">Tất cả năm</Select.Option>
-            {yearOptions.map(year => (
-              <Select.Option key={year.value} value={year.value}>
-                {year.label}
-              </Select.Option>
-            ))}
-          </Select>
+            min={1900}
+            max={2100}
+            controls={false}
+          />
           <Select
             placeholder="Chọn loại khen thưởng"
             value={typeFilter}
@@ -412,7 +395,6 @@ export default function AdminDecisionsPage() {
             },
           }}
           bordered
-          scroll={{ x: 1400 }}
           locale={{
             emptyText: 'Không có quyết định nào',
           }}

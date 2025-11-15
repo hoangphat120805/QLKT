@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Card,
   Typography,
@@ -26,25 +27,23 @@ import {
   HeartOutlined,
   ExperimentOutlined,
   CheckCircleOutlined,
+  ArrowLeftOutlined,
 } from '@ant-design/icons';
 import Link from 'next/link';
 import type { UploadFile } from 'antd/es/upload/interface';
 import type { ColumnsType } from 'antd/es/table';
 import { apiClient } from '@/lib/api-client';
 import axiosInstance from '@/utils/axiosInstance';
-import Step2SelectPersonnel from './components/Step2SelectPersonnel';
+import Step2SelectPersonnelCaNhanHangNam from './components/Step2SelectPersonnelCaNhanHangNam';
+import Step2SelectPersonnelNienHan from './components/Step2SelectPersonnelNienHan';
+import Step2SelectPersonnelCongHien from './components/Step2SelectPersonnelCongHien';
+import Step2SelectPersonnelNCKH from './components/Step2SelectPersonnelNCKH';
 import Step2SelectUnits from './components/Step2SelectUnits';
 import Step3SetTitles from './components/Step3SetTitles';
 
 const { Title, Paragraph, Text } = Typography;
 
-type ProposalType =
-  | 'CA_NHAN_HANG_NAM'
-  | 'DON_VI_HANG_NAM'
-  | 'NIEN_HAN'
-  | 'CONG_HIEN'
-  | 'DOT_XUAT'
-  | 'NCKH';
+type ProposalType = 'CA_NHAN_HANG_NAM' | 'DON_VI_HANG_NAM' | 'NIEN_HAN' | 'CONG_HIEN' | 'NCKH';
 
 interface Personnel {
   id: string;
@@ -52,6 +51,10 @@ interface Personnel {
   cccd: string;
   ngay_nhap_ngu?: string | Date | null;
   ngay_xuat_ngu?: string | Date | null;
+  ChucVu?: {
+    id: string;
+    ten_chuc_vu: string;
+  };
   CoQuanDonVi?: {
     ten_don_vi: string;
   };
@@ -61,6 +64,7 @@ interface Personnel {
 }
 
 export default function CreateProposalPage() {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
 
@@ -107,11 +111,6 @@ export default function CreateProposalPage() {
       label: 'Cống hiến',
       description: 'HC BVTQ 3 hạng',
     },
-    DOT_XUAT: {
-      icon: <TrophyOutlined />,
-      label: 'Đột xuất',
-      description: 'Khen thưởng đột xuất đặc biệt',
-    },
     NCKH: {
       icon: <ExperimentOutlined />,
       label: 'ĐTKH/SKKH',
@@ -131,6 +130,12 @@ export default function CreateProposalPage() {
     ];
   };
   const steps = getSteps();
+
+  // Đảm bảo năm luôn là năm hiện tại khi component mount
+  useEffect(() => {
+    const currentYear = new Date().getFullYear();
+    setNam(currentYear);
+  }, []);
 
   // Fetch personnel/unit details when reaching Step 5 (Review)
   useEffect(() => {
@@ -160,11 +165,11 @@ export default function CreateProposalPage() {
       // Gọi API để lấy đơn vị của Manager
       const unitsRes = await apiClient.getMyUnits();
       console.log('Units API response:', unitsRes);
-      
+
       if (unitsRes.success) {
         const unitsData = unitsRes.data || [];
         console.log('All manager units:', unitsData);
-        
+
         // Lọc các đơn vị đã chọn
         const selectedUnits = unitsData.filter((unit: any) => selectedUnitIds.includes(unit.id));
         console.log('Selected units for review:', selectedUnits);
@@ -244,13 +249,13 @@ export default function CreateProposalPage() {
       const formData = new FormData();
       formData.append('type', proposalType);
       formData.append('nam', String(nam));
-      
+
       if (proposalType === 'DON_VI_HANG_NAM') {
         formData.append('selected_units', JSON.stringify(selectedUnitIds));
       } else {
         formData.append('selected_personnel', JSON.stringify(selectedPersonnelIds));
       }
-      
+
       formData.append('title_data', JSON.stringify(titleData));
 
       // Upload các file đính kèm (optional, multiple)
@@ -273,6 +278,7 @@ export default function CreateProposalPage() {
       // Reset form
       setCurrentStep(0);
       setProposalType('CA_NHAN_HANG_NAM');
+      setNam(new Date().getFullYear()); // Reset về năm hiện tại
       setSelectedPersonnelIds([]);
       setSelectedUnitIds([]);
       setTitleData([]);
@@ -351,15 +357,47 @@ export default function CreateProposalPage() {
             />
           );
         }
-        return (
-          <Step2SelectPersonnel
-            selectedPersonnelIds={selectedPersonnelIds}
-            onPersonnelChange={setSelectedPersonnelIds}
-            nam={nam}
-            onNamChange={setNam}
-            proposalType={proposalType}
-          />
-        );
+        // Render component riêng cho từng loại đề xuất
+        switch (proposalType) {
+          case 'CA_NHAN_HANG_NAM':
+            return (
+              <Step2SelectPersonnelCaNhanHangNam
+                selectedPersonnelIds={selectedPersonnelIds}
+                onPersonnelChange={setSelectedPersonnelIds}
+                nam={nam}
+                onNamChange={setNam}
+              />
+            );
+          case 'NIEN_HAN':
+            return (
+              <Step2SelectPersonnelNienHan
+                selectedPersonnelIds={selectedPersonnelIds}
+                onPersonnelChange={setSelectedPersonnelIds}
+                nam={nam}
+                onNamChange={setNam}
+              />
+            );
+          case 'CONG_HIEN':
+            return (
+              <Step2SelectPersonnelCongHien
+                selectedPersonnelIds={selectedPersonnelIds}
+                onPersonnelChange={setSelectedPersonnelIds}
+                nam={nam}
+                onNamChange={setNam}
+              />
+            );
+          case 'NCKH':
+            return (
+              <Step2SelectPersonnelNCKH
+                selectedPersonnelIds={selectedPersonnelIds}
+                onPersonnelChange={setSelectedPersonnelIds}
+                nam={nam}
+                onNamChange={setNam}
+              />
+            );
+          default:
+            return null;
+        }
 
       case 2: // Step 3: Set Titles
         return (
@@ -406,7 +444,7 @@ export default function CreateProposalPage() {
       case 4: // Step 5: Review & Submit
         // Merge personnel/unit details with title data
         let reviewTableData: any[] = [];
-        
+
         if (proposalType === 'DON_VI_HANG_NAM') {
           reviewTableData = unitDetails.map(unit => {
             const titleInfo = titleData.find(t => t.don_vi_id === unit.id);
@@ -427,7 +465,7 @@ export default function CreateProposalPage() {
 
         // Build table columns based on proposal type
         const reviewColumns: ColumnsType<any> = [];
-        
+
         if (proposalType === 'DON_VI_HANG_NAM') {
           reviewColumns.push(
             {
@@ -441,8 +479,12 @@ export default function CreateProposalPage() {
               title: 'Loại đơn vị',
               key: 'type',
               width: 150,
+              align: 'center',
               render: (_, record) => {
-                const type = record.co_quan_don_vi_id || record.CoQuanDonVi ? 'DON_VI_TRUC_THUOC' : 'CO_QUAN_DON_VI';
+                const type =
+                  record.co_quan_don_vi_id || record.CoQuanDonVi
+                    ? 'DON_VI_TRUC_THUOC'
+                    : 'CO_QUAN_DON_VI';
                 return (
                   <Tag color={type === 'CO_QUAN_DON_VI' ? 'blue' : 'green'}>
                     {type === 'CO_QUAN_DON_VI' ? 'Cơ quan đơn vị' : 'Đơn vị trực thuộc'}
@@ -455,6 +497,7 @@ export default function CreateProposalPage() {
               dataIndex: 'ma_don_vi',
               key: 'ma_don_vi',
               width: 150,
+              align: 'center',
               render: (text: string) => <Text code>{text}</Text>,
             },
             {
@@ -462,6 +505,7 @@ export default function CreateProposalPage() {
               dataIndex: 'ten_don_vi',
               key: 'ten_don_vi',
               width: 250,
+              align: 'center',
               render: (text: string) => <Text strong>{text}</Text>,
             }
           );
@@ -478,76 +522,95 @@ export default function CreateProposalPage() {
               title: 'Họ và tên',
               dataIndex: 'ho_ten',
               key: 'ho_ten',
-              width: 180,
-              render: (text: string) => <Text strong>{text}</Text>,
-            },
-            {
-              title: 'Cơ quan đơn vị',
-              key: 'co_quan_don_vi',
-              width: 180,
-              render: (_, record) => {
+              width: 250,
+              align: 'center',
+              render: (text: string, record: any) => {
                 // Kiểm tra cả hai cấu trúc: từ API (CoQuanDonVi) và từ JSON (co_quan_don_vi)
-                if (record.co_quan_don_vi?.ten_co_quan_don_vi) {
-                  return record.co_quan_don_vi.ten_co_quan_don_vi;
-                }
-                if (record.CoQuanDonVi?.ten_don_vi) {
-                  return record.CoQuanDonVi.ten_don_vi;
-                }
-                return '-';
+                const coQuanDonVi =
+                  record.co_quan_don_vi?.ten_co_quan_don_vi ||
+                  record.CoQuanDonVi?.ten_don_vi ||
+                  record.don_vi_truc_thuoc?.co_quan_don_vi?.ten_don_vi ||
+                  record.DonViTrucThuoc?.CoQuanDonVi?.ten_don_vi;
+                const donViTrucThuoc =
+                  record.don_vi_truc_thuoc?.ten_don_vi || record.DonViTrucThuoc?.ten_don_vi;
+                const parts = [];
+                if (donViTrucThuoc) parts.push(donViTrucThuoc);
+                if (coQuanDonVi) parts.push(coQuanDonVi);
+                const unitInfo = parts.length > 0 ? parts.join(', ') : null;
+
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <Text strong>{text}</Text>
+                    {unitInfo && (
+                      <Text type="secondary" style={{ fontSize: '12px', marginTop: '4px' }}>
+                        {unitInfo}
+                      </Text>
+                    )}
+                  </div>
+                );
               },
             },
             {
-              title: 'Đơn vị trực thuộc',
-              key: 'don_vi_truc_thuoc',
-              width: 180,
-              render: (_, record) => {
-                // Kiểm tra cả hai cấu trúc: từ API (DonViTrucThuoc) và từ JSON (don_vi_truc_thuoc)
-                if (record.don_vi_truc_thuoc?.ten_don_vi) {
-                  return record.don_vi_truc_thuoc.ten_don_vi;
-                }
-                if (record.DonViTrucThuoc?.ten_don_vi) {
-                  return record.DonViTrucThuoc.ten_don_vi;
-                }
-                return '-';
+              title: 'Chức vụ hiện tại',
+              key: 'chuc_vu',
+              width: 200,
+              align: 'center',
+              render: (_, record: any) => {
+                // Lấy chức vụ từ personnel details nếu có
+                const personnelDetail = personnelDetails.find(
+                  (p: any) => p.id === record.personnel_id || p.id === record.id
+                );
+                const chucVu = personnelDetail?.ChucVu?.ten_chuc_vu;
+                return <Text>{chucVu || '-'}</Text>;
               },
             }
           );
-          
+
           // Thêm cột Tổng tháng cho đề xuất Niên hạn
           if (proposalType === 'NIEN_HAN') {
             // Hàm tính tổng số tháng
-            const calculateTotalMonths = (ngayNhapNgu: string | Date | null | undefined, ngayXuatNgu: string | Date | null | undefined) => {
+            const calculateTotalMonths = (
+              ngayNhapNgu: string | Date | null | undefined,
+              ngayXuatNgu: string | Date | null | undefined
+            ) => {
               if (!ngayNhapNgu) return null;
-              
+
               try {
-                const startDate = typeof ngayNhapNgu === 'string' ? new Date(ngayNhapNgu) : ngayNhapNgu;
-                const endDate = ngayXuatNgu 
-                  ? (typeof ngayXuatNgu === 'string' ? new Date(ngayXuatNgu) : ngayXuatNgu)
+                const startDate =
+                  typeof ngayNhapNgu === 'string' ? new Date(ngayNhapNgu) : ngayNhapNgu;
+                const endDate = ngayXuatNgu
+                  ? typeof ngayXuatNgu === 'string'
+                    ? new Date(ngayXuatNgu)
+                    : ngayXuatNgu
                   : new Date();
-                
+
                 if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
                   return null;
                 }
-                
+
                 let years = endDate.getFullYear() - startDate.getFullYear();
                 let months = endDate.getMonth() - startDate.getMonth();
                 let days = endDate.getDate() - startDate.getDate();
-                
+
                 if (days < 0) {
                   months -= 1;
-                  const lastDayOfPrevMonth = new Date(endDate.getFullYear(), endDate.getMonth(), 0).getDate();
+                  const lastDayOfPrevMonth = new Date(
+                    endDate.getFullYear(),
+                    endDate.getMonth(),
+                    0
+                  ).getDate();
                   days += lastDayOfPrevMonth;
                 }
-                
+
                 if (months < 0) {
                   years -= 1;
                   months += 12;
                 }
-                
+
                 const totalMonths = years * 12 + months;
                 const totalYears = Math.floor(totalMonths / 12);
                 const remainingMonths = totalMonths % 12;
-                
+
                 return {
                   years: totalYears,
                   months: remainingMonths,
@@ -557,7 +620,7 @@ export default function CreateProposalPage() {
                 return null;
               }
             };
-            
+
             reviewColumns.push({
               title: 'Tổng tháng',
               key: 'tong_thang',
@@ -566,7 +629,7 @@ export default function CreateProposalPage() {
               render: (_: any, record: any) => {
                 const result = calculateTotalMonths(record.ngay_nhap_ngu, record.ngay_xuat_ngu);
                 if (!result) return <Text type="secondary">-</Text>;
-                
+
                 // Hiển thị năm ở trên, tháng nhỏ bên dưới
                 if (result.years > 0 && result.months > 0) {
                   return (
@@ -597,6 +660,7 @@ export default function CreateProposalPage() {
               dataIndex: 'loai',
               key: 'loai',
               width: 160,
+              align: 'center',
               render: (loai: string) => (
                 <Tag color={loai === 'NCKH' ? 'blue' : 'green'}>
                   {loai === 'NCKH' ? 'Đề tài khoa học' : 'Sáng kiến khoa học'}
@@ -607,6 +671,7 @@ export default function CreateProposalPage() {
               title: 'Mô tả',
               dataIndex: 'mo_ta',
               key: 'mo_ta',
+              align: 'center',
               ellipsis: true,
             }
           );
@@ -616,29 +681,30 @@ export default function CreateProposalPage() {
             dataIndex: 'danh_hieu',
             key: 'danh_hieu',
             width: 250,
+            align: 'center',
             render: (danh_hieu: string) => {
               // Map mã danh hiệu sang tên đầy đủ
               const danhHieuMap: Record<string, string> = {
                 // Cá nhân Hằng năm
-                'CSTDCS': 'Chiến sĩ thi đua cơ sở (CSTDCS)',
-                'CSTT': 'Chiến sĩ tiên tiến (CSTT)',
-                'BKBQP': 'Bằng khen của Bộ trưởng Bộ Quốc phòng (BKBQP)',
-                'CSTDTQ': 'Chiến sĩ thi đua toàn quân (CSTDTQ)',
+                CSTDCS: 'Chiến sĩ thi đua cơ sở (CSTDCS)',
+                CSTT: 'Chiến sĩ tiên tiến (CSTT)',
+                BKBQP: 'Bằng khen của Bộ trưởng Bộ Quốc phòng (BKBQP)',
+                CSTDTQ: 'Chiến sĩ thi đua toàn quân (CSTDTQ)',
                 // Đơn vị Hằng năm - BKBQP cũng dùng chung tên này
                 // Đơn vị Hằng năm
-                'ĐVQT': 'Đơn vị Quyết thắng (ĐVQT)',
-                'ĐVTT': 'Đơn vị Tiên tiến (ĐVTT)',
-                'BKTTCP': 'Bằng khen Thủ tướng Chính phủ (BKTTCP)',
+                ĐVQT: 'Đơn vị Quyết thắng (ĐVQT)',
+                ĐVTT: 'Đơn vị Tiên tiến (ĐVTT)',
+                BKTTCP: 'Bằng khen Thủ tướng Chính phủ (BKTTCP)',
                 // Niên hạn
-                'HCCSVV_HANG_BA': 'Huân chương Chiến sỹ Vẻ vang Hạng Ba',
-                'HCCSVV_HANG_NHI': 'Huân chương Chiến sỹ Vẻ vang Hạng Nhì',
-                'HCCSVV_HANG_NHAT': 'Huân chương Chiến sỹ Vẻ vang Hạng Nhất',
+                HCCSVV_HANG_BA: 'Huân chương Chiến sỹ Vẻ vang Hạng Ba',
+                HCCSVV_HANG_NHI: 'Huân chương Chiến sỹ Vẻ vang Hạng Nhì',
+                HCCSVV_HANG_NHAT: 'Huân chương Chiến sỹ Vẻ vang Hạng Nhất',
                 // Cống hiến
-                'HCBVTQ_HANG_BA': 'Huân chương Bảo vệ Tổ quốc Hạng Ba',
-                'HCBVTQ_HANG_NHI': 'Huân chương Bảo vệ Tổ quốc Hạng Nhì',
-                'HCBVTQ_HANG_NHAT': 'Huân chương Bảo vệ Tổ quốc Hạng Nhất',
+                HCBVTQ_HANG_BA: 'Huân chương Bảo vệ Tổ quốc Hạng Ba',
+                HCBVTQ_HANG_NHI: 'Huân chương Bảo vệ Tổ quốc Hạng Nhì',
+                HCBVTQ_HANG_NHAT: 'Huân chương Bảo vệ Tổ quốc Hạng Nhất',
               };
-              
+
               const fullName = danhHieuMap[danh_hieu] || danh_hieu;
               return <Text>{fullName}</Text>;
             },
@@ -665,9 +731,13 @@ export default function CreateProposalPage() {
                 <Descriptions.Item label="Năm đề xuất">
                   <Text strong>{nam}</Text>
                 </Descriptions.Item>
-                <Descriptions.Item label={proposalType === 'DON_VI_HANG_NAM' ? 'Số đơn vị' : 'Số quân nhân'}>
+                <Descriptions.Item
+                  label={proposalType === 'DON_VI_HANG_NAM' ? 'Số đơn vị' : 'Số quân nhân'}
+                >
                   <Text strong>
-                    {proposalType === 'DON_VI_HANG_NAM' ? selectedUnitIds.length : selectedPersonnelIds.length}
+                    {proposalType === 'DON_VI_HANG_NAM'
+                      ? selectedUnitIds.length
+                      : selectedPersonnelIds.length}
                   </Text>
                 </Descriptions.Item>
                 <Descriptions.Item label="File đính kèm" span={2}>
@@ -680,7 +750,13 @@ export default function CreateProposalPage() {
               </Descriptions>
             </Card>
 
-            <Card title={proposalType === 'DON_VI_HANG_NAM' ? 'Danh sách đơn vị và danh hiệu' : 'Danh sách cán bộ và danh hiệu'}>
+            <Card
+              title={
+                proposalType === 'DON_VI_HANG_NAM'
+                  ? 'Danh sách đơn vị và danh hiệu'
+                  : 'Danh sách cán bộ và danh hiệu'
+              }
+            >
               <Table
                 columns={reviewColumns}
                 dataSource={reviewTableData}
@@ -688,7 +764,9 @@ export default function CreateProposalPage() {
                 pagination={false}
                 size="small"
                 bordered
-                scroll={{ x: proposalType === 'NCKH' ? 1100 : proposalType === 'NIEN_HAN' ? 1150 : 1000 }}
+                scroll={{
+                  x: proposalType === 'NCKH' ? 1100 : proposalType === 'NIEN_HAN' ? 1150 : 1000,
+                }}
                 locale={{
                   emptyText: 'Không có dữ liệu',
                 }}
@@ -723,7 +801,18 @@ export default function CreateProposalPage() {
 
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
-        <Title level={2}>Tạo Danh Sách Đề Xuất Khen Thưởng</Title>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 8 }}>
+          <Button
+            icon={<ArrowLeftOutlined />}
+            onClick={() => router.push('/manager/proposals')}
+            style={{ marginBottom: 0 }}
+          >
+            Quay lại danh sách
+          </Button>
+        </div>
+        <Title level={2} style={{ marginBottom: 8 }}>
+          Tạo Danh Sách Đề Xuất Khen Thưởng
+        </Title>
         <Paragraph type="secondary">
           Theo dõi các bước bên dưới để hoàn thành đề xuất khen thưởng
         </Paragraph>
@@ -738,7 +827,7 @@ export default function CreateProposalPage() {
       <Card style={{ marginBottom: 24, minHeight: 400 }}>{renderStepContent()}</Card>
 
       {/* Navigation */}
-          <Card>
+      <Card>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           <Button size="large" onClick={handlePrev} disabled={currentStep === 0}>
             Quay lại
@@ -766,7 +855,7 @@ export default function CreateProposalPage() {
             )}
           </div>
         </div>
-          </Card>
+      </Card>
     </div>
   );
 }

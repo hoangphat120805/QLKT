@@ -1,0 +1,247 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Table, Input, Select, Space, Alert, Typography, InputNumber } from 'antd';
+import { SearchOutlined, TeamOutlined } from '@ant-design/icons';
+import type { ColumnsType } from 'antd/es/table';
+import axiosInstance from '@/utils/axiosInstance';
+
+const { Text } = Typography;
+
+interface Personnel {
+  id: string;
+  ho_ten: string;
+  cccd: string;
+  co_quan_don_vi_id: string;
+  don_vi_truc_thuoc_id: string;
+  chuc_vu_id: string;
+  CoQuanDonVi?: {
+    id: string;
+    ten_don_vi: string;
+    ma_don_vi: string;
+  };
+  DonViTrucThuoc?: {
+    id: string;
+    ten_don_vi: string;
+    ma_don_vi: string;
+    CoQuanDonVi?: {
+      id: string;
+      ten_don_vi: string;
+      ma_don_vi: string;
+    };
+  };
+  ChucVu?: {
+    id: string;
+    ten_chuc_vu: string;
+  };
+}
+
+interface Step2SelectPersonnelNCKHProps {
+  selectedPersonnelIds: string[];
+  onPersonnelChange: (ids: string[]) => void;
+  nam: number;
+  onNamChange: (nam: number) => void;
+}
+
+export default function Step2SelectPersonnelNCKH({
+  selectedPersonnelIds,
+  onPersonnelChange,
+  nam,
+  onNamChange,
+}: Step2SelectPersonnelNCKHProps) {
+  const [loading, setLoading] = useState(false);
+  const [personnel, setPersonnel] = useState<Personnel[]>([]);
+  const [searchText, setSearchText] = useState('');
+  const [unitFilter, setUnitFilter] = useState<string>('ALL');
+
+  useEffect(() => {
+    fetchPersonnel();
+  }, []);
+
+  const fetchPersonnel = async () => {
+    try {
+      setLoading(true);
+      const response = await axiosInstance.get('/api/personnel', {
+        params: {
+          page: 1,
+          limit: 1000,
+        },
+      });
+
+      if (response.data.success) {
+        const personnelData = response.data.data?.personnel || response.data.data || [];
+        setPersonnel(personnelData);
+      }
+    } catch (error: any) {
+      console.error('Error fetching personnel:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const units = Array.from(
+    new Set(
+      personnel.map(p => {
+        if (p.DonViTrucThuoc) {
+          return `${p.DonViTrucThuoc.id}|${p.DonViTrucThuoc.ten_don_vi}`;
+        } else if (p.CoQuanDonVi) {
+          return `${p.CoQuanDonVi.id}|${p.CoQuanDonVi.ten_don_vi}`;
+        }
+        return '';
+      })
+    )
+  ).filter(Boolean);
+
+  const filteredPersonnel = personnel.filter(p => {
+    const matchesSearch =
+      searchText === '' || p.ho_ten.toLowerCase().includes(searchText.toLowerCase());
+
+    let matchesUnit = true;
+    if (unitFilter !== 'ALL') {
+      const unitId = unitFilter.split('|')[0];
+      matchesUnit = p.don_vi_truc_thuoc_id === unitId || p.co_quan_don_vi_id === unitId;
+    }
+
+    return matchesSearch && matchesUnit;
+  });
+
+  const columns: ColumnsType<Personnel> = [
+    {
+      title: 'STT',
+      key: 'index',
+      width: 60,
+      align: 'center',
+      render: (_, __, index) => index + 1,
+    },
+    {
+      title: 'Họ và tên',
+      dataIndex: 'ho_ten',
+      key: 'ho_ten',
+      width: 250,
+      align: 'center',
+      render: (text: string, record: Personnel) => {
+        const donViTrucThuoc = record.DonViTrucThuoc?.ten_don_vi;
+        const coQuanDonVi =
+          record.CoQuanDonVi?.ten_don_vi || record.DonViTrucThuoc?.CoQuanDonVi?.ten_don_vi;
+        const parts = [];
+        if (donViTrucThuoc) parts.push(donViTrucThuoc);
+        if (coQuanDonVi) parts.push(coQuanDonVi);
+        const unitInfo = parts.length > 0 ? parts.join(', ') : null;
+
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <Text strong>{text}</Text>
+            {unitInfo && (
+              <Text type="secondary" style={{ fontSize: '12px', marginTop: '4px' }}>
+                {unitInfo}
+              </Text>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      title: 'Chức vụ',
+      key: 'chuc_vu',
+      width: 160,
+      align: 'center',
+      render: (_, record) => record.ChucVu?.ten_chuc_vu || '-',
+    },
+  ];
+
+  const rowSelection = {
+    selectedRowKeys: selectedPersonnelIds,
+    onChange: (selectedRowKeys: React.Key[]) => {
+      onPersonnelChange(selectedRowKeys as string[]);
+    },
+  };
+
+  return (
+    <div>
+      <Alert
+        message="Bước 2: Chọn quân nhân - ĐTKH/SKKH"
+        description={
+          <div>
+            <p>1. Nhập năm đề xuất khen thưởng</p>
+            <p>2. Chọn các quân nhân có thành tích ĐTKH/SKKH từ danh sách dưới đây</p>
+            <p>
+              3. Sau khi chọn xong, nhấn &quot;Tiếp tục&quot; để sang bước nhập thông tin chi tiết
+            </p>
+          </div>
+        }
+        type="info"
+        showIcon
+        icon={<TeamOutlined />}
+        style={{ marginBottom: 24 }}
+      />
+
+      <Space style={{ marginBottom: 16 }} size="middle">
+        <div>
+          <Text strong>Năm đề xuất: </Text>
+          <InputNumber
+            value={nam}
+            onChange={value => onNamChange(value || new Date().getFullYear())}
+            style={{ width: 150 }}
+            size="large"
+            min={1900}
+            max={2100}
+            placeholder="Nhập năm"
+          />
+        </div>
+
+        <Input
+          placeholder="Tìm theo tên"
+          prefix={<SearchOutlined />}
+          value={searchText}
+          onChange={e => setSearchText(e.target.value)}
+          style={{ width: 300 }}
+          size="large"
+          allowClear
+        />
+
+        <Select
+          placeholder="Lọc theo đơn vị"
+          value={unitFilter}
+          onChange={setUnitFilter}
+          style={{ width: 250 }}
+          size="large"
+          allowClear
+        >
+          <Select.Option value="ALL">Tất cả đơn vị</Select.Option>
+          {units.map(unit => {
+            const [id, name] = unit.split('|');
+            return (
+              <Select.Option key={id} value={unit}>
+                {name}
+              </Select.Option>
+            );
+          })}
+        </Select>
+      </Space>
+
+      <div style={{ marginBottom: 16 }}>
+        <Text type="secondary">
+          Tổng số quân nhân: <strong>{filteredPersonnel.length}</strong> | Đã chọn:{' '}
+          <strong style={{ color: '#1890ff' }}>{selectedPersonnelIds.length}</strong>
+        </Text>
+      </div>
+
+      <Table
+        columns={columns}
+        dataSource={filteredPersonnel}
+        rowKey="id"
+        rowSelection={rowSelection}
+        loading={loading}
+        pagination={{
+          pageSize: 20,
+          showSizeChanger: true,
+          showTotal: total => `Tổng số ${total} quân nhân`,
+        }}
+        bordered
+        locale={{
+          emptyText: 'Không có dữ liệu quân nhân',
+        }}
+      />
+    </div>
+  );
+}

@@ -254,7 +254,7 @@ class AccountService {
         // Kiểm tra chức vụ có tồn tại không
         const chucVu = await prisma.chucVu.findUnique({
           where: { id: chuc_vu_id },
-          select: { he_so_luong: true },
+          select: { he_so_chuc_vu: true },
         });
         if (!chucVu) {
           throw new Error('Chức vụ không tồn tại');
@@ -284,7 +284,7 @@ class AccountService {
           data: {
             quan_nhan_id: newPersonnel.id,
             chuc_vu_id: chuc_vu_id,
-            he_so_luong: chucVu?.he_so_luong || 0,
+            he_so_chuc_vu: chucVu?.he_so_chuc_vu || 0,
             ngay_bat_dau: ngayBatDau,
             ngay_ket_thuc: null,
             so_thang: null, // Chưa kết thúc nên chưa tính được

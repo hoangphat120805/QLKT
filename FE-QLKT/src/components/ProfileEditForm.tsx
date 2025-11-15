@@ -72,10 +72,10 @@ const formatAddressInput = (input: string): string => {
   const doubleAdminWords = ['thành phố', 'thị xã', 'thị trấn'];
 
   // Tách thành các phần bởi dấu phẩy
-  const parts = input.split(',').map((part) => part.trim());
+  const parts = input.split(',').map(part => part.trim());
 
-  const formattedParts = parts.map((part) => {
-    const words = part.split(/\s+/).filter((w) => w.length > 0);
+  const formattedParts = parts.map((part, partIndex) => {
+    const words = part.split(/\s+/).filter(w => w.length > 0);
     if (words.length === 0) return '';
 
     const firstWord = words[0].toLowerCase();
@@ -87,12 +87,23 @@ const formatAddressInput = (input: string): string => {
     // Kiểm tra từ hành chính 2 chữ (thành phố, thị xã, thị trấn)
     if (secondWord && doubleAdminWords.includes(`${firstWord} ${secondWord}`)) {
       adminLength = 2;
-      formattedAdmin = `${firstWord} ${secondWord}`;
+      // Chỉ viết hoa chữ đầu của từ hành chính đầu tiên trong phần đầu tiên
+      if (partIndex === 0) {
+        const formattedFirst = firstWord.charAt(0).toUpperCase() + firstWord.slice(1);
+        formattedAdmin = `${formattedFirst} ${secondWord}`;
+      } else {
+        formattedAdmin = `${firstWord} ${secondWord}`;
+      }
     }
     // Kiểm tra từ hành chính 1 chữ (tỉnh, huyện, quận, xã, phường)
     else if (singleAdminWords.includes(firstWord)) {
       adminLength = 1;
-      formattedAdmin = firstWord;
+      // Chỉ viết hoa chữ đầu của từ hành chính đầu tiên trong phần đầu tiên
+      if (partIndex === 0) {
+        formattedAdmin = firstWord.charAt(0).toUpperCase() + firstWord.slice(1);
+      } else {
+        formattedAdmin = firstWord;
+      }
     }
 
     // Nếu có từ hành chính
@@ -100,21 +111,58 @@ const formatAddressInput = (input: string): string => {
       // Lấy phần còn lại là tên địa danh
       const placeNameWords = words.slice(adminLength);
 
-      // Viết hoa chữ đầu mỗi từ của địa danh
+      // Viết hoa chữ đầu mỗi từ của địa danh (giữ nguyên các ký tự đặc biệt như dấu)
       const formattedPlaceName = placeNameWords
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .map(word => {
+          if (word.length === 0) return word;
+          // Tìm ký tự đầu tiên là chữ cái (bỏ qua dấu)
+          const firstLetterIndex = word.search(
+            /[a-zA-ZàáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđĐ]/i
+          );
+          if (firstLetterIndex === -1) return word;
+          const before = word.substring(0, firstLetterIndex);
+          const firstLetter = word[firstLetterIndex];
+          const rest = word.substring(firstLetterIndex + 1);
+          return before + firstLetter.toUpperCase() + rest.toLowerCase();
+        })
         .join(' ');
 
       return `${formattedAdmin} ${formattedPlaceName}`;
     }
 
-    // Nếu không có từ hành chính, viết hoa tất cả
+    // Nếu không có từ hành chính, viết hoa chữ đầu mỗi từ
     return words
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .map(word => {
+        if (word.length === 0) return word;
+        // Tìm ký tự đầu tiên là chữ cái (bỏ qua dấu)
+        const firstLetterIndex = word.search(
+          /[a-zA-ZàáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđĐ]/i
+        );
+        if (firstLetterIndex === -1) return word;
+        const before = word.substring(0, firstLetterIndex);
+        const firstLetter = word[firstLetterIndex];
+        const rest = word.substring(firstLetterIndex + 1);
+        return before + firstLetter.toUpperCase() + rest.toLowerCase();
+      })
       .join(' ');
   });
 
-  return formattedParts.join(', ');
+  let result = formattedParts.join(', ');
+
+  // Viết hoa chữ đầu tiên của toàn bộ chuỗi
+  if (result.length > 0) {
+    const firstLetterIndex = result.search(
+      /[a-zA-ZàáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđĐ]/i
+    );
+    if (firstLetterIndex !== -1) {
+      const before = result.substring(0, firstLetterIndex);
+      const firstLetter = result[firstLetterIndex];
+      const rest = result.substring(firstLetterIndex + 1);
+      result = before + firstLetter.toUpperCase() + rest;
+    }
+  }
+
+  return result;
 };
 
 interface ProfileEditFormProps {
@@ -122,7 +170,10 @@ interface ProfileEditFormProps {
   onSuccess?: () => void; // Callback khi cập nhật thành công
 }
 
-export default function ProfileEditForm({ personnelId: externalPersonnelId, onSuccess }: ProfileEditFormProps = {}) {
+export default function ProfileEditForm({
+  personnelId: externalPersonnelId,
+  onSuccess,
+}: ProfileEditFormProps = {}) {
   const [form] = Form.useForm();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -352,7 +403,7 @@ export default function ProfileEditForm({ personnelId: externalPersonnelId, onSu
             </Form.Item>
 
             <Form.Item
-              label="Số CCCD/CMND (không bắt buộc)"
+              label="Số CCCD/CMND"
               name="cccd"
               rules={[
                 {
@@ -371,7 +422,7 @@ export default function ProfileEditForm({ personnelId: externalPersonnelId, onSu
             >
               <Input
                 prefix={<IdcardOutlined />}
-                placeholder="Nhập số CCCD/CMND (không bắt buộc)"
+                placeholder="Nhập số CCCD/CMND"
                 size="large"
                 className="rounded-lg"
               />

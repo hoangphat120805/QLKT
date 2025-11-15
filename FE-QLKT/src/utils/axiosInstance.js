@@ -55,7 +55,11 @@ axiosInstance.interceptors.response.use(
     }
 
     // Nếu lỗi 401 và chưa retry
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Bỏ qua interceptor cho login request để tránh reload trang
+    const isLoginRequest = originalRequest?.url?.includes('/api/auth/login') ||
+                          originalRequest?.url?.includes('/auth/login');
+
+    if (error.response?.status === 401 && !originalRequest._retry && !isLoginRequest) {
       if (isRefreshing) {
         // Nếu đang refresh, đợi trong queue
         return new Promise((resolve, reject) => {

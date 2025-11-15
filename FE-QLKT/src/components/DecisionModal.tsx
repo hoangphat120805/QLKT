@@ -357,20 +357,25 @@ export default function DecisionModal({
           <Input.TextArea rows={2} placeholder="Ghi chú bổ sung (không bắt buộc)" />
         </Form.Item>
 
-        <Form.Item label="File quyết định" extra="Chấp nhận file PDF.">
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <Upload
+        <Form.Item label="File quyết định">
+          <Upload.Dragger
             fileList={fileList}
             onChange={({ fileList }) => setFileList(fileList)}
             beforeUpload={() => false}
-              accept=".pdf"
+            accept=".pdf"
             maxCount={1}
+            style={{ width: '100%' }}
           >
-              <Button icon={<UploadOutlined />} size="large" style={{ fontSize: '16px', padding: '8px 48px', height: 'auto', minWidth: '200px' }}>
-              {selectedDecision?.file_path ? 'Thay đổi file' : 'Chọn file'}
-            </Button>
-          </Upload>
-          </div>
+            <p className="ant-upload-drag-icon">
+              <UploadOutlined style={{ fontSize: 48, color: '#1890ff' }} />
+            </p>
+            <p className="ant-upload-text">
+              {selectedDecision?.file_path ? 'Kéo thả file để thay đổi hoặc click để chọn file' : 'Kéo thả file vào đây hoặc click để chọn file'}
+            </p>
+            <p className="ant-upload-hint">
+              Chỉ chấp nhận file PDF
+            </p>
+          </Upload.Dragger>
           {selectedDecision?.file_path && !fileList.length && (
             <div style={{ marginTop: 8, color: '#52c41a', textAlign: 'center' }}>
               ✓ Đã có file: {selectedDecision.file_path.split('/').pop()}

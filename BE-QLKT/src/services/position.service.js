@@ -89,7 +89,7 @@ class PositionService {
    */
   async createPosition(data) {
     try {
-      const { unit_id, ten_chuc_vu, is_manager, he_so_luong } = data;
+      const { unit_id, ten_chuc_vu, is_manager, he_so_chuc_vu } = data;
 
       // Đảm bảo unit_id là string (UUID)
       const unitIdString = typeof unit_id === 'string' ? unit_id : unit_id?.toString();
@@ -130,7 +130,7 @@ class PositionService {
         // Nếu là đơn vị trực thuộc thì KHÔNG có chỉ huy, luôn là false
         // Chỉ cơ quan đơn vị mới có chỉ huy
         is_manager: isCoQuanDonVi ? (is_manager || false) : false,
-        he_so_luong: he_so_luong || null,
+        he_so_chuc_vu: he_so_chuc_vu || 0,
       };
 
       if (isCoQuanDonVi) {
@@ -164,7 +164,7 @@ class PositionService {
    */
   async updatePosition(id, data) {
     try {
-      const { ten_chuc_vu, is_manager, he_so_luong } = data;
+      const { ten_chuc_vu, is_manager, he_so_chuc_vu } = data;
 
       // Kiểm tra chức vụ có tồn tại không
       const position = await prisma.chucVu.findUnique({
@@ -188,7 +188,7 @@ class PositionService {
           is_manager: isDonViTrucThuoc
             ? false
             : (is_manager !== undefined ? is_manager : position.is_manager),
-          he_so_luong: he_so_luong !== undefined ? he_so_luong : position.he_so_luong,
+          he_so_chuc_vu: he_so_chuc_vu !== undefined ? he_so_chuc_vu : position.he_so_chuc_vu,
         },
         include: {
           CoQuanDonVi: true,

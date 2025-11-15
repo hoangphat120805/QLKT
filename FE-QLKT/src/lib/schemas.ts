@@ -83,5 +83,5 @@ export const positionFormSchema = z.object({
   don_vi_id: z.string().optional(), // Optional vì khi edit không cần
   ten_chuc_vu: z.string().min(1, 'Tên chức vụ là bắt buộc'),
   is_manager: z.boolean().default(false),
-  he_so_luong: z.number().optional(),
+  he_so_chuc_vu: z.number().optional(),
 });

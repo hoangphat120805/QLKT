@@ -1872,6 +1872,30 @@ button[class*='bg-primary']:hover:not(:disabled) {
   @apply transition-all duration-200;
 }
 
+/* Bỏ focus ring cho tabs */
+.ant-tabs-tab:focus,
+.ant-tabs-tab:focus-visible,
+.ant-tabs-tab-active:focus,
+.ant-tabs-tab-active:focus-visible,
+.ant-tabs-tab-btn:focus,
+.ant-tabs-tab-btn:focus-visible,
+.ant-tabs-tab:focus-within,
+.ant-tabs-tab-active:focus-within {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* Bỏ focus ring cho tab node (RC Tabs) */
+[role="tab"]:focus,
+[role="tab"]:focus-visible,
+[role="tab"][aria-selected="true"]:focus,
+[role="tab"][aria-selected="true"]:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
 /* Tab active styling handled by child elements */
 
 .ant-tabs-tab-active .ant-tabs-tab-btn {
@@ -1917,37 +1941,11 @@ button[class*='bg-primary']:hover:not(:disabled) {
   overflow-x: hidden !important;
 }
 
-/* Custom scrollbar cho nội dung trong tab khi cần (bảng dài, v.v.) */
+/* Bỏ scroll của tab pane, để page scroll thay vì tab pane */
 .ant-tabs-tabpane {
-  max-height: calc(100vh - 300px);
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-/* Custom scrollbar cho tab pane */
-.ant-tabs-tabpane::-webkit-scrollbar {
-  width: 8px;
-}
-
-.ant-tabs-tabpane::-webkit-scrollbar-track {
-  @apply bg-gray-100 dark:bg-gray-800;
-  border-radius: 4px;
-}
-
-.ant-tabs-tabpane::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 dark:bg-gray-600;
-  border-radius: 4px;
-}
-
-.ant-tabs-tabpane::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-400 dark:bg-gray-500;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .ant-tabs-tabpane {
-    max-height: calc(100vh - 350px);
-  }
+  max-height: none !important;
+  overflow-y: visible !important;
+  overflow-x: hidden !important;
 }
 
 /* Action Buttons - luôn hiển thị */
@@ -2010,33 +2008,62 @@ button[class*='bg-primary']:hover:not(:disabled) {
   box-sizing: border-box !important;
 }
 
-/* Notification Dropdown Styles */
-.notification-dropdown .ant-dropdown-menu {
+/* Notification Dropdown Styles - Light Mode */
+.notification-dropdown .ant-dropdown-menu,
+.notification-dropdown .ant-dropdown-menu.ant-dropdown-menu-light {
   max-height: 500px;
   overflow-y: auto;
-  padding: 0 !important;
-  background-color: #2d2d2d !important;
-  border: 1px solid #4a4a4a !important;
+  padding: 8px !important;
+  background-color: white !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
 }
 
 .notification-dropdown .ant-dropdown-menu-item {
   padding: 0 !important;
-  margin: 0 !important;
-  border-radius: 0 !important;
+  margin: 0 0 4px 0 !important;
+  border-radius: 6px !important;
+}
+
+.notification-dropdown .ant-dropdown-menu-item:last-child {
+  margin-bottom: 0 !important;
 }
 
 .notification-dropdown .ant-dropdown-menu-item:hover {
   background-color: transparent !important;
 }
 
-/* Notification dropdown for both light and dark mode */
-.notification-dropdown .ant-dropdown {
-  background-color: #2d2d2d !important;
+/* Notification dropdown for dark mode - Force dark colors */
+.dark .notification-dropdown .ant-dropdown-menu,
+.dark .notification-dropdown .ant-dropdown-menu.ant-dropdown-menu-light,
+.dark .notification-dropdown .ant-dropdown-menu-root,
+.dark .notification-dropdown .ant-dropdown-menu-vertical {
+  background-color: #1f2937 !important;
+  background: #1f2937 !important;
+  border: 1px solid #374151 !important;
+  border-color: #374151 !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2) !important;
+  color: #f3f4f6 !important;
 }
 
-.dark .notification-dropdown .ant-dropdown-menu {
-  background-color: #2d2d2d !important;
-  border: 1px solid #4a4a4a !important;
+/* Override Ant Design's default light menu colors in dark mode */
+.dark .notification-dropdown .ant-dropdown-menu-item,
+.dark .notification-dropdown .ant-dropdown-menu-item-active {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+.dark .notification-dropdown .ant-dropdown-menu-item:hover,
+.dark .notification-dropdown .ant-dropdown-menu-item-active:hover {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+/* Override divider in dark mode */
+.dark .notification-dropdown .ant-dropdown-menu-item-divider {
+  background-color: #374151 !important;
+  border-color: #374151 !important;
 }
 
 /* Custom scrollbar for notification dropdown */

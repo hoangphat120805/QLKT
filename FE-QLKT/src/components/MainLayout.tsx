@@ -510,8 +510,8 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
                           {
                             key: 'loading',
                             label: (
-                              <div className="text-center py-4 text-gray-400 bg-[#2d2d2d]">
-                                Đang tải...
+                              <div className="text-center py-6 text-gray-500 dark:text-gray-300 bg-white dark:bg-gray-800 rounded-lg">
+                                <span className="text-sm">Đang tải...</span>
                               </div>
                             ),
                           },
@@ -521,8 +521,8 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
                           {
                             key: 'empty',
                             label: (
-                              <div className="text-center py-4 text-gray-400 bg-[#2d2d2d]">
-                                Không có thông báo
+                              <div className="text-center py-6 text-gray-500 dark:text-gray-300 bg-white dark:bg-gray-800 rounded-lg">
+                                <span className="text-sm">Không có thông báo</span>
                               </div>
                             ),
                           },
@@ -532,48 +532,51 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
                             key: `notification-${notif.id}`,
                             label: (
                               <div
-                                className={`max-w-xs cursor-pointer p-3 rounded-lg transition-all ${
+                                className={`max-w-xs cursor-pointer p-4 rounded-lg transition-all duration-200 ${
                                   notif.is_read
-                                    ? 'bg-[#3d3d3d] dark:bg-[#3d3d3d] hover:bg-[#4a4a4a] dark:hover:bg-[#4a4a4a] opacity-75'
-                                    : 'bg-[#3d3d3d] dark:bg-[#3d3d3d] hover:bg-[#4a4a4a] dark:hover:bg-[#4a4a4a] border-l-4 border-blue-500 dark:border-blue-400 shadow-sm'
+                                    ? 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border-l-2 border-transparent'
+                                    : 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border-l-4 border-blue-500 dark:border-blue-400 shadow-sm'
                                 }`}
                                 onClick={() => {
                                   handleMarkAsRead(notif.id, notif.is_read, notif.link);
                                 }}
                               >
-                                <div className="flex items-start gap-2">
+                                <div className="flex items-start gap-3">
                                   {!notif.is_read && (
-                                    <div className="w-2.5 h-2.5 bg-blue-500 dark:bg-blue-400 rounded-full mt-1 flex-shrink-0 animate-pulse"></div>
+                                    <div className="w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full mt-2 flex-shrink-0 animate-pulse"></div>
+                                  )}
+                                  {notif.is_read && (
+                                    <div className="w-2 h-2 mt-2 flex-shrink-0"></div>
                                   )}
                                   <div className="flex-1 min-w-0">
                                     <p
-                                      className={`font-bold text-sm mb-1 ${
+                                      className={`font-semibold text-sm mb-1.5 leading-tight ${
                                         notif.is_read
-                                          ? 'text-gray-300 dark:text-gray-300'
-                                          : 'text-white dark:text-white'
+                                          ? 'text-gray-600 dark:text-gray-400'
+                                          : 'text-gray-900 dark:text-gray-100'
                                       }`}
                                     >
                                       {notif.title}
                                     </p>
                                     <p
-                                      className={`text-xs mt-1 leading-relaxed ${
+                                      className={`text-xs mt-1.5 leading-relaxed ${
                                         notif.is_read
-                                          ? 'text-gray-400 dark:text-gray-400'
-                                          : 'text-gray-200 dark:text-gray-200'
+                                          ? 'text-gray-500 dark:text-gray-500'
+                                          : 'text-gray-700 dark:text-gray-300'
                                       }`}
                                     >
                                       {notif.message}
                                     </p>
                                     <p
-                                      className={`text-xs mt-2 flex items-center gap-1.5 ${
+                                      className={`text-xs mt-2.5 flex items-center gap-1.5 ${
                                         notif.is_read
-                                          ? 'text-gray-500 dark:text-gray-500'
-                                          : 'text-gray-400 dark:text-gray-400'
+                                          ? 'text-gray-400 dark:text-gray-500'
+                                          : 'text-gray-500 dark:text-gray-400'
                                       }`}
                                     >
                                       <span>{formatNotificationTime(notif.created_at)}</span>
                                       {notif.is_read && (
-                                        <span className="text-[10px] font-medium text-gray-500 dark:text-gray-500">
+                                        <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500">
                                           • Đã đọc
                                         </span>
                                       )}
@@ -590,7 +593,7 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
                             key: 'mark-all-read',
                             label: (
                               <div
-                                className="text-center text-blue-400 dark:text-blue-400 font-semibold text-sm py-3 cursor-pointer hover:text-blue-300 dark:hover:text-blue-300 transition-colors bg-[#2d2d2d] dark:bg-[#2d2d2d]"
+                                className="text-center text-blue-600 dark:text-blue-400 font-semibold text-sm py-3 cursor-pointer hover:text-blue-700 dark:hover:text-blue-300 transition-colors bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 rounded-b-lg"
                                 onClick={handleMarkAllAsRead}
                               >
                                 Đánh dấu tất cả đã đọc
@@ -609,10 +612,10 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
                   overlayStyle={{ maxWidth: '420px' }}
                   overlayClassName="notification-dropdown"
                 >
-                  <div className="relative cursor-pointer group inline-block">
+                  <div className="relative cursor-pointer group inline-block p-2 -m-2 rounded-lg">
                     <BellOutlined className="text-xl text-gray-600 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
                     {notificationCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-md animate-pulse">
+                      <span className="absolute top-2 -right-1 bg-red-500 text-white text-[10px] rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-lg animate-pulse border-2 border-white dark:border-gray-800">
                         {notificationCount > 99 ? '99+' : notificationCount}
                       </span>
                     )}

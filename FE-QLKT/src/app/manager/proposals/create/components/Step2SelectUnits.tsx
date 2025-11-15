@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Table, Input, Select, Space, Alert, Typography, Tag, message } from 'antd';
+import { Table, Input, Select, Space, Alert, Typography, Tag, message, InputNumber } from 'antd';
 import { SearchOutlined, TeamOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { apiClient } from '@/lib/api-client';
@@ -53,7 +53,7 @@ export default function Step2SelectUnits({
       if (response.success && response.data) {
         const unitsData = Array.isArray(response.data) ? response.data : [];
         console.log('Units data:', unitsData);
-        
+
         const formattedUnits: Unit[] = [];
 
         unitsData.forEach((unit: any) => {
@@ -132,6 +132,7 @@ export default function Step2SelectUnits({
       title: 'Loại đơn vị',
       key: 'type',
       width: 150,
+      align: 'center',
       render: (_, record) => (
         <Tag color={record.type === 'CO_QUAN_DON_VI' ? 'blue' : 'green'}>
           {record.type === 'CO_QUAN_DON_VI' ? 'Cơ quan đơn vị' : 'Đơn vị trực thuộc'}
@@ -143,6 +144,7 @@ export default function Step2SelectUnits({
       dataIndex: 'ma_don_vi',
       key: 'ma_don_vi',
       width: 150,
+      align: 'center',
       render: (text) => <Text code>{text}</Text>,
     },
     {
@@ -150,6 +152,7 @@ export default function Step2SelectUnits({
       dataIndex: 'ten_don_vi',
       key: 'ten_don_vi',
       width: 250,
+      align: 'center',
       render: (text) => <Text strong>{text}</Text>,
     },
   ];
@@ -162,20 +165,13 @@ export default function Step2SelectUnits({
     },
   };
 
-  // Generate year options (current year and previous 2 years)
-  const currentYear = new Date().getFullYear();
-  const yearOptions = [currentYear, currentYear - 1, currentYear - 2].map((y) => ({
-    label: `Năm ${y}`,
-    value: y,
-  }));
-
   return (
     <div>
       <Alert
         message="Hướng dẫn"
         description={
           <div>
-            <p>1. Chọn năm đề xuất khen thưởng</p>
+            <p>1. Nhập năm đề xuất khen thưởng</p>
             <p>
               2. Chọn các đơn vị cần đề xuất khen thưởng từ danh sách dưới đây (bao gồm cơ quan đơn
               vị và đơn vị trực thuộc)
@@ -193,12 +189,14 @@ export default function Step2SelectUnits({
       <Space style={{ marginBottom: 16 }} size="middle">
         <div>
           <Text strong>Năm đề xuất: </Text>
-          <Select
+          <InputNumber
             value={nam}
-            onChange={onNamChange}
-            options={yearOptions}
+            onChange={value => onNamChange(value || new Date().getFullYear())}
             style={{ width: 150 }}
             size="large"
+            min={1900}
+            max={2100}
+            placeholder="Nhập năm"
           />
         </div>
 
@@ -246,7 +244,6 @@ export default function Step2SelectUnits({
           showTotal: (total) => `Tổng số ${total} đơn vị`,
         }}
         bordered
-        scroll={{ x: 1200 }}
         locale={{
           emptyText: 'Không có dữ liệu đơn vị',
         }}

@@ -215,7 +215,7 @@ export default function ManagerDashboard() {
                 type="primary"
                 icon={<TeamOutlined />}
                 size="large"
-                className="w-full h-auto py-4 text-base font-medium hover:scale-105 transition-transform"
+                className="w-full h-auto py-4 text-base font-medium hover:scale-105 transition-transform whitespace-normal break-words"
               >
                 Xem danh sách Quân nhân
               </Button>
@@ -224,7 +224,7 @@ export default function ManagerDashboard() {
               <Button
                 icon={<PlusOutlined />}
                 size="large"
-                className="w-full h-auto py-4 text-base font-medium hover:scale-105 transition-transform"
+                className="w-full h-auto py-4 text-base font-medium hover:scale-105 transition-transform whitespace-normal break-words"
               >
                 Tạo Đề xuất
               </Button>
@@ -233,7 +233,7 @@ export default function ManagerDashboard() {
               <Button
                 icon={<TrophyOutlined />}
                 size="large"
-                className="w-full h-auto py-4 text-base font-medium hover:scale-105 transition-transform"
+                className="w-full h-auto py-4 text-base font-medium hover:scale-105 transition-transform whitespace-normal break-words"
               >
                 Khen Thưởng Đơn vị
               </Button>
@@ -243,7 +243,7 @@ export default function ManagerDashboard() {
                 icon={<FileTextOutlined />}
                 size="large"
                 type="dashed"
-                className="w-full h-auto py-4 text-base font-medium hover:scale-105 transition-transform border-2 hover:border-blue-500"
+                className="w-full h-auto py-4 text-base font-medium hover:scale-105 transition-transform border-2 hover:border-blue-500 whitespace-normal break-words"
               >
                 Hồ sơ Khen thưởng Hằng năm
               </Button>

@@ -30,6 +30,6 @@ export interface Position {
   id: string;
   ten_chuc_vu: string;
   is_manager: boolean;
-  he_so_luong?: number;
+  he_so_chuc_vu?: number;
   don_vi_id: string;
 }

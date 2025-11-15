@@ -4,6 +4,8 @@ const annualRewardController = require('../controllers/annualReward.controller')
 const positionHistoryController = require('../controllers/positionHistory.controller');
 const scientificAchievementController = require('../controllers/scientificAchievement.controller');
 const { verifyToken, requireManager, requireAuth } = require('../middlewares/auth');
+const { auditLog } = require('../middlewares/auditLog');
+const { getLogDescription, getResourceId } = require('../helpers/auditLogHelper');
 
 /**
  * Nested routes for /api/personnel/:personnelId/*
@@ -27,11 +29,22 @@ router.get('/annual-rewards', verifyToken, requireAuth, (req, res, next) => {
  * @desc    Thêm danh hiệu hằng năm (alias)
  * @access  Private - ADMIN, MANAGER
  */
-router.post('/annual-rewards', verifyToken, requireManager, (req, res, next) => {
-  // Add personnel_id from URL params to body (CUID string, không phải number)
-  req.body.personnel_id = req.params.personnelId;
+router.post(
+  '/annual-rewards',
+  verifyToken,
+  requireManager,
+  auditLog({
+    action: 'CREATE',
+    resource: 'annual-rewards',
+    getDescription: getLogDescription('annual-rewards', 'CREATE'),
+    getResourceId: getResourceId.fromResponse(),
+  }),
+  (req, res, next) => {
+    // Add personnel_id from URL params to body (CUID string, không phải number)
+    req.body.personnel_id = req.params.personnelId;
   annualRewardController.createAnnualReward(req, res);
-});
+  }
+);
 
 // ===== POSITION HISTORY =====
 /**
@@ -50,11 +63,22 @@ router.get('/position-history', verifyToken, requireAuth, (req, res, next) => {
  * @desc    Thêm lịch sử chức vụ (alias)
  * @access  Private - ADMIN, MANAGER
  */
-router.post('/position-history', verifyToken, requireManager, (req, res, next) => {
-  // Add personnel_id from URL params to body (CUID string, không phải number)
-  req.body.personnel_id = req.params.personnelId;
+router.post(
+  '/position-history',
+  verifyToken,
+  requireManager,
+  auditLog({
+    action: 'CREATE',
+    resource: 'position-history',
+    getDescription: getLogDescription('position-history', 'CREATE'),
+    getResourceId: getResourceId.fromResponse(),
+  }),
+  (req, res, next) => {
+    // Add personnel_id from URL params to body (CUID string, không phải number)
+    req.body.personnel_id = req.params.personnelId;
   positionHistoryController.createPositionHistory(req, res);
-});
+  }
+);
 
 // ===== SCIENTIFIC ACHIEVEMENTS =====
 /**

@@ -233,9 +233,9 @@ export default function PersonnelDetailPage() {
                 },
                 { label: 'Chức vụ', value: personnel.ChucVu?.ten_chuc_vu || '-' },
                 {
-                  label: 'Hệ số lương',
-                  value: personnel.ChucVu?.he_so_luong
-                    ? Number(personnel.ChucVu.he_so_luong).toFixed(2)
+                  label: 'Hệ số chức vụ',
+                  value: personnel.ChucVu?.he_so_chuc_vu
+                    ? Number(personnel.ChucVu.he_so_chuc_vu).toFixed(2)
                     : '-',
                 },
               ]}
@@ -519,31 +519,43 @@ export default function PersonnelDetailPage() {
           <Row gutter={[16, 16]}>
             <Col xs={24} md={8}>
               <Link href={`/admin/personnel/${personnelId}/position-history`}>
-                <Card hoverable className="text-center h-full">
-                  <Space direction="vertical" size="small">
-                    <HistoryOutlined className="text-3xl text-blue-500" />
-                    <Text strong>Lịch sử chức vụ</Text>
-                  </Space>
+                <Card
+                  hoverable
+                  className="text-center h-full"
+                  bodyStyle={{ padding: '24px', minHeight: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <HistoryOutlined style={{ fontSize: '32px' }} />
+                    <Text strong style={{ fontSize: '16px' }}>Lịch sử chức vụ</Text>
+                  </div>
                 </Card>
               </Link>
             </Col>
             <Col xs={24} md={8}>
               <Link href={`/admin/personnel/${personnelId}/annual-rewards`}>
-                <Card hoverable className="text-center h-full">
-                  <Space direction="vertical" size="small">
-                    <TrophyOutlined className="text-3xl text-yellow-500" />
-                    <Text strong>Danh hiệu hằng năm</Text>
-                  </Space>
+                <Card
+                  hoverable
+                  className="text-center h-full"
+                  bodyStyle={{ padding: '24px', minHeight: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <TrophyOutlined style={{ fontSize: '32px' }} />
+                    <Text strong style={{ fontSize: '16px' }}>Danh hiệu hằng năm</Text>
+                  </div>
                 </Card>
               </Link>
             </Col>
             <Col xs={24} md={8}>
               <Link href={`/admin/personnel/${personnelId}/scientific-achievements`}>
-                <Card hoverable className="text-center h-full">
-                  <Space direction="vertical" size="small">
-                    <ExperimentOutlined className="text-3xl text-purple-500" />
-                    <Text strong>Thành tích khoa học</Text>
-                  </Space>
+                <Card
+                  hoverable
+                  className="text-center h-full"
+                  bodyStyle={{ padding: '24px', minHeight: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <ExperimentOutlined style={{ fontSize: '32px' }} />
+                    <Text strong style={{ fontSize: '16px' }}>Thành tích khoa học</Text>
+                  </div>
                 </Card>
               </Link>
             </Col>
@@ -580,14 +592,16 @@ export default function PersonnelDetailPage() {
                 <Title level={3} className="!mb-1">
                   {personnel.ho_ten}
                 </Title>
-                <Space size="middle" wrap>
+                <div>
                   <Text type="secondary">
-                    <HomeOutlined /> {personnel.cccd}
+                    {personnel.cccd}
                   </Text>
+                </div>
+                <div>
                   <Text type="secondary">
-                    <TeamOutlined /> {personnel.ChucVu?.ten_chuc_vu || '-'}
+                    {personnel.ChucVu?.ten_chuc_vu || '-'}
                   </Text>
-                </Space>
+                </div>
               </div>
             </div>
             <Space>

@@ -104,14 +104,18 @@ export default function ProposalReviewPage() {
       dataIndex: 'so_danh_hieu',
       key: 'so_danh_hieu',
       align: 'center' as const,
-      render: (count: number) => <Badge count={count} showZero color="blue" />,
+      render: (count: number) => (
+        <span style={{ fontSize: '14px', fontWeight: 500 }}>{count ?? 0}</span>
+      ),
     },
     {
       title: 'Thành tích',
       dataIndex: 'so_thanh_tich',
       key: 'so_thanh_tich',
       align: 'center' as const,
-      render: (count: number) => <Badge count={count} showZero color="blue" />,
+      render: (count: number) => (
+        <span style={{ fontSize: '14px', fontWeight: 500 }}>{count ?? 0}</span>
+      ),
     },
     {
       title: 'Trạng thái',

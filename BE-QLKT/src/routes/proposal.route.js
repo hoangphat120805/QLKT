@@ -2,6 +2,8 @@ const router = require('express').Router();
 const multer = require('multer');
 const proposalController = require('../controllers/proposal.controller');
 const { verifyToken, checkRole } = require('../middlewares/auth');
+const { auditLog } = require('../middlewares/auditLog');
+const { getLogDescription, getResourceId } = require('../helpers/auditLogHelper');
 
 // Cấu hình multer để xử lý file upload (lưu vào memory)
 const upload = multer({
@@ -55,6 +57,12 @@ router.post(
   upload.fields([
     { name: 'attached_files' }, // Không giới hạn số lượng file
   ]),
+  auditLog({
+    action: 'CREATE',
+    resource: 'proposals',
+    getDescription: getLogDescription('proposals', 'CREATE'),
+    getResourceId: getResourceId.fromResponse(),
+  }),
   proposalController.submitProposal
 );
 
@@ -95,6 +103,12 @@ router.post(
     { name: 'file_pdf_dot_xuat', maxCount: 1 }, // DOT_XUAT
     { name: 'file_pdf_nckh', maxCount: 1 }, // NCKH
   ]),
+  auditLog({
+    action: 'APPROVE',
+    resource: 'proposals',
+    getDescription: getLogDescription('proposals', 'APPROVE'),
+    getResourceId: getResourceId.fromParams('id'),
+  }),
   proposalController.approveProposal
 );
 
@@ -103,7 +117,18 @@ router.post(
  * @desc    Từ chối đề xuất với lý do
  * @access  ADMIN
  */
-router.post('/:id/reject', verifyToken, checkRole(['ADMIN']), proposalController.rejectProposal);
+router.post(
+  '/:id/reject',
+  verifyToken,
+  checkRole(['ADMIN']),
+  auditLog({
+    action: 'REJECT',
+    resource: 'proposals',
+    getDescription: getLogDescription('proposals', 'REJECT'),
+    getResourceId: getResourceId.fromParams('id'),
+  }),
+  proposalController.rejectProposal
+);
 
 /**
  * @route   GET /api/proposals/:id/download-excel
@@ -138,6 +163,12 @@ router.delete(
   '/:id',
   verifyToken,
   checkRole(['MANAGER', 'ADMIN']),
+  auditLog({
+    action: 'DELETE',
+    resource: 'proposals',
+    getDescription: getLogDescription('proposals', 'DELETE'),
+    getResourceId: getResourceId.fromParams('id'),
+  }),
   proposalController.deleteProposal
 );
 

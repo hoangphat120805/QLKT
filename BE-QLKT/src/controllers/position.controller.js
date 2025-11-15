@@ -33,7 +33,7 @@ class PositionController {
    */
   async createPosition(req, res) {
     try {
-      const { unit_id, ten_chuc_vu, is_manager, he_so_luong } = req.body;
+      const { unit_id, ten_chuc_vu, is_manager, he_so_chuc_vu } = req.body;
 
       // Validate input
       if (!unit_id || !ten_chuc_vu) {
@@ -47,7 +47,7 @@ class PositionController {
         unit_id,
         ten_chuc_vu,
         is_manager,
-        he_so_luong,
+        he_so_chuc_vu,
       });
 
       return res.status(201).json({
@@ -71,12 +71,12 @@ class PositionController {
   async updatePosition(req, res) {
     try {
       const { id } = req.params;
-      const { ten_chuc_vu, is_manager, he_so_luong } = req.body;
+      const { ten_chuc_vu, is_manager, he_so_chuc_vu } = req.body;
 
       const result = await positionService.updatePosition(id, {
         ten_chuc_vu,
         is_manager,
-        he_so_luong,
+        he_so_chuc_vu,
       });
 
       return res.status(200).json({

@@ -37,10 +37,11 @@ const ChucVu = sequelize.define(
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
-    he_so_luong: {
+    he_so_chuc_vu: {
       type: DataTypes.DECIMAL(10, 2),
-      allowNull: true,
-      comment: 'Hệ số lương',
+      allowNull: false,
+      defaultValue: 0,
+      comment: 'Hệ số chức vụ',
     },
     createdAt: {
       type: DataTypes.DATE,

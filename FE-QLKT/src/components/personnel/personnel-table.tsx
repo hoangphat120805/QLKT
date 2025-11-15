@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Eye } from 'lucide-react';
 import Link from 'next/link';
+import { formatDate } from '@/lib/utils';
 
 interface PersonnelTableProps {
   personnel: any[];
@@ -35,7 +36,7 @@ export function PersonnelTable({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[120px] text-center">CCCD</TableHead>
+              <TableHead className="w-[80px] text-center">STT</TableHead>
               <TableHead className="w-[140px] text-center">Họ tên</TableHead>
               <TableHead className="w-[180px] text-center">Cơ quan đơn vị</TableHead>
               <TableHead className="w-[180px] text-center">Đơn vị trực thuộc</TableHead>
@@ -51,7 +52,7 @@ export function PersonnelTable({
                 </TableCell>
               </TableRow>
             ) : (
-              personnel.map(p => {
+              personnel.map((p, index) => {
                 // Lấy tên cơ quan đơn vị
                 const coQuanDonViName =
                   p.DonViTrucThuoc?.CoQuanDonVi?.ten_don_vi ||
@@ -63,8 +64,17 @@ export function PersonnelTable({
 
                 return (
                   <TableRow key={p.id}>
-                    <TableCell className="font-medium text-center">{p.cccd}</TableCell>
-                    <TableCell className="text-center">{p.ho_ten}</TableCell>
+                    <TableCell className="font-medium text-center">{index + 1}</TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex flex-col">
+                        <span className="font-medium">{p.ho_ten}</span>
+                        {p.ngay_sinh && (
+                          <span className="text-xs text-muted-foreground mt-1">
+                            {formatDate(p.ngay_sinh)}
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-center">{coQuanDonViName}</TableCell>
                     <TableCell className="text-center">{donViTrucThuocName}</TableCell>
                     <TableCell className="text-center">
