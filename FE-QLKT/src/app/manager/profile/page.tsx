@@ -679,7 +679,7 @@ export default function UserProfilePage() {
                       </div>
                       <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                         {annualProfile.tong_nckh || 0}{' '}
-                        <span className="text-base font-normal">công trình</span>
+                        <span className="text-base font-normal"></span>
                       </div>
                     </div>
                   </div>

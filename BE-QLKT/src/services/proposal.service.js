@@ -822,6 +822,9 @@ class ProposalService {
           .filter(id => id !== undefined && id !== null); // Filter out undefined/null
 
         if (personnelIds.length > 0) {
+          // Đối với NIEN_HAN, HC_QKQT, KNC_VSNXD_QDNDVN cần thêm ngay_nhap_ngu và ngay_xuat_ngu để tính thoi_gian
+          const needsTimeData = ['NIEN_HAN', 'HC_QKQT', 'KNC_VSNXD_QDNDVN'].includes(type);
+
           personnelList = await prisma.quanNhan.findMany({
             where: {
               id: {
@@ -833,6 +836,10 @@ class ProposalService {
               ho_ten: true,
               co_quan_don_vi_id: true,
               don_vi_truc_thuoc_id: true,
+              ...(needsTimeData && {
+                ngay_nhap_ngu: true,
+                ngay_xuat_ngu: true,
+              }),
               CoQuanDonVi: {
                 select: {
                   id: true,
@@ -909,6 +916,7 @@ class ProposalService {
       let dataDanhHieu = null;
       let dataThanhTich = null;
       let dataNienHan = null;
+      let dataCongHien = null;
 
       if (type === 'NCKH') {
         // NCKH: titleData = [{ personnel_id, loai: 'NCKH'|'SKKH', mo_ta }]
@@ -1052,9 +1060,42 @@ class ProposalService {
         });
       } else if (type === 'NIEN_HAN' || type === 'HC_QKQT' || type === 'KNC_VSNXD_QDNDVN') {
         // NIEN_HAN, HC_QKQT, KNC_VSNXD_QDNDVN: titleData = [{ personnel_id, danh_hieu }]
-        // Không lưu cccd, thêm thông tin đơn vị
+        // Không lưu cccd, thêm thông tin đơn vị và tính toán thời gian
         dataNienHan = titleData.map(item => {
           const personnel = personnelMap[item.personnel_id];
+
+          // Tính thời gian từ ngày nhập ngũ
+          let thoiGian = null;
+          if (personnel?.ngay_nhap_ngu) {
+            const ngayNhapNgu = new Date(personnel.ngay_nhap_ngu);
+            const ngayKetThuc = personnel.ngay_xuat_ngu
+              ? new Date(personnel.ngay_xuat_ngu)
+              : new Date();
+
+            let months = (ngayKetThuc.getFullYear() - ngayNhapNgu.getFullYear()) * 12;
+            months += ngayKetThuc.getMonth() - ngayNhapNgu.getMonth();
+            if (ngayKetThuc.getDate() < ngayNhapNgu.getDate()) {
+              months--;
+            }
+            months = Math.max(0, months);
+
+            const years = Math.floor(months / 12);
+            const remainingMonths = months % 12;
+            thoiGian = {
+              total_months: months,
+              years: years,
+              months: remainingMonths,
+              display:
+                months === 0
+                  ? '-'
+                  : years > 0 && remainingMonths > 0
+                  ? `${years} năm ${remainingMonths} tháng`
+                  : years > 0
+                  ? `${years} năm`
+                  : `${remainingMonths} tháng`,
+            };
+          }
+
           return {
             personnel_id: item.personnel_id,
             ho_ten: personnel?.ho_ten || '',
@@ -1062,6 +1103,7 @@ class ProposalService {
             danh_hieu: item.danh_hieu,
             so_quyet_dinh: item.so_quyet_dinh || null,
             file_quyet_dinh: item.file_quyet_dinh || null,
+            thoi_gian: thoiGian, // Lưu mốc thời gian vào JSON
             co_quan_don_vi: personnel?.CoQuanDonVi
               ? {
                   id: personnel.CoQuanDonVi.id,
@@ -1085,10 +1127,10 @@ class ProposalService {
               : null,
           };
         });
-      } else {
-        // Các loại khác: CONG_HIEN, DOT_XUAT
-        // Không lưu cccd, thêm thông tin đơn vị
-        dataDanhHieu = await Promise.all(
+      } else if (type === 'CONG_HIEN') {
+        // CONG_HIEN: titleData = [{ personnel_id, danh_hieu }]
+        // Lưu vào data_cong_hien thay vì data_danh_hieu
+        dataCongHien = await Promise.all(
           titleData.map(async item => {
             const personnel = personnelMap[item.personnel_id];
             const baseData = {
@@ -1631,6 +1673,7 @@ class ProposalService {
         data_danh_hieu: dataDanhHieu,
         data_thanh_tich: dataThanhTich,
         data_nien_han: dataNienHan,
+        data_cong_hien: dataCongHien,
         files_attached: filesInfo.length > 0 ? filesInfo : null,
         ghi_chu: null,
       };
@@ -1846,7 +1889,7 @@ class ProposalService {
         }
       }
 
-      // Đảm bảo data_danh_hieu và data_thanh_tich luôn là array
+      // Đảm bảo data_danh_hieu, data_thanh_tich và data_nien_han luôn là array
       let dataDanhHieu = Array.isArray(proposal.data_danh_hieu)
         ? proposal.data_danh_hieu
         : proposal.data_danh_hieu
@@ -1857,6 +1900,18 @@ class ProposalService {
         ? proposal.data_thanh_tich
         : proposal.data_thanh_tich
         ? [proposal.data_thanh_tich]
+        : [];
+
+      let dataNienHan = Array.isArray(proposal.data_nien_han)
+        ? proposal.data_nien_han
+        : proposal.data_nien_han
+        ? [proposal.data_nien_han]
+        : [];
+
+      let dataCongHien = Array.isArray(proposal.data_cong_hien)
+        ? proposal.data_cong_hien
+        : proposal.data_cong_hien
+        ? [proposal.data_cong_hien]
         : [];
 
       // Enrich thông tin quân nhân/đơn vị nếu thiếu (dữ liệu cũ)
@@ -1922,6 +1977,8 @@ class ProposalService {
         const allPersonnelIds = [
           ...dataDanhHieu.map(d => d.personnel_id).filter(Boolean),
           ...dataThanhTich.map(d => d.personnel_id).filter(Boolean),
+          ...dataNienHan.map(d => d.personnel_id).filter(Boolean),
+          ...dataCongHien.map(d => d.personnel_id).filter(Boolean),
         ];
 
         if (allPersonnelIds.length > 0) {
@@ -2036,11 +2093,53 @@ class ProposalService {
 
             return enrichedItem;
           });
+
+          // Enrich dataNienHan nếu thiếu thông tin
+          dataNienHan = dataNienHan.map(item => {
+            const personnel = personnelMap[item.personnel_id];
+            const enrichedItem = {
+              ...item,
+              ho_ten: item.ho_ten || personnel?.ho_ten || '',
+              nam: item.nam || proposal.createdAt?.getFullYear() || new Date().getFullYear(),
+            };
+
+            // Thêm thông tin đơn vị nếu chưa có (theo cấu trúc mới)
+            // Luôn lưu cả hai nếu quân nhân có dữ liệu
+            if (!item.co_quan_don_vi && personnel?.CoQuanDonVi) {
+              enrichedItem.co_quan_don_vi = {
+                id: personnel.CoQuanDonVi.id,
+                ten_co_quan_don_vi: personnel.CoQuanDonVi.ten_don_vi,
+                ma_co_quan_don_vi: personnel.CoQuanDonVi.ma_don_vi,
+              };
+            }
+            if (!item.don_vi_truc_thuoc && personnel?.DonViTrucThuoc) {
+              enrichedItem.don_vi_truc_thuoc = {
+                id: personnel.DonViTrucThuoc.id,
+                ten_don_vi: personnel.DonViTrucThuoc.ten_don_vi,
+                ma_don_vi: personnel.DonViTrucThuoc.ma_don_vi,
+                co_quan_don_vi: personnel.DonViTrucThuoc.CoQuanDonVi
+                  ? {
+                      id: personnel.DonViTrucThuoc.CoQuanDonVi.id,
+                      ten_don_vi_truc: personnel.DonViTrucThuoc.CoQuanDonVi.ten_don_vi,
+                      ma_don_vi: personnel.DonViTrucThuoc.CoQuanDonVi.ma_don_vi,
+                    }
+                  : null,
+              };
+            }
+
+            return enrichedItem;
+          });
         }
       }
 
       // Nếu proposal đã được approve, enrich với thông tin file PDF từ database
-      if (proposal.status === 'APPROVED' && dataDanhHieu.length > 0) {
+      // Xử lý cho dataDanhHieu (CA_NHAN_HANG_NAM, DOT_XUAT)
+      // CONG_HIEN sẽ được xử lý riêng ở phần data_cong_hien
+      if (
+        proposal.status === 'APPROVED' &&
+        dataDanhHieu.length > 0 &&
+        proposal.loai_de_xuat !== 'CONG_HIEN'
+      ) {
         if (proposal.loai_de_xuat === 'DON_VI_HANG_NAM') {
           // Với khen thưởng tập thể, file PDF đã được lưu trong data đề xuất khi approve
           // Không cần enrich từ database khác vì không có bảng riêng cho khen thưởng tập thể
@@ -2091,6 +2190,174 @@ class ProposalService {
         }
       }
 
+      // Nếu proposal đã được approve, enrich với thông tin file PDF từ database cho dataNienHan
+      if (proposal.status === 'APPROVED' && dataNienHan.length > 0) {
+        const nienHanTypes = ['NIEN_HAN', 'HC_QKQT', 'KNC_VSNXD_QDNDVN'];
+        if (nienHanTypes.includes(proposal.loai_de_xuat)) {
+          const personnelIds = dataNienHan.map(d => d.personnel_id).filter(Boolean);
+          if (personnelIds.length > 0) {
+            // Lấy dữ liệu từ bảng KhenThuongHCCSVV, HuanChuongQuanKyQuyetThang, KyNiemChuongVSNXDQDNDVN
+            if (proposal.loai_de_xuat === 'NIEN_HAN') {
+              const hccsvvFromDB = await prisma.khenThuongHCCSVV.findMany({
+                where: {
+                  quan_nhan_id: { in: personnelIds },
+                  nam: proposal.nam,
+                },
+              });
+
+              const hccsvvMap = {};
+              hccsvvFromDB.forEach(dh => {
+                const key = `${dh.quan_nhan_id}_${dh.danh_hieu}`;
+                hccsvvMap[key] = dh;
+              });
+
+              // Enrich dataNienHan với file PDF và số quyết định
+              dataNienHan = dataNienHan.map(item => {
+                const key = `${item.personnel_id}_${item.danh_hieu}`;
+                const dbRecord = hccsvvMap[key];
+                if (dbRecord) {
+                  return {
+                    ...item,
+                    so_quyet_dinh: dbRecord.so_quyet_dinh || item.so_quyet_dinh,
+                    file_quyet_dinh: dbRecord.file_quyet_dinh,
+                    thoi_gian: dbRecord.thoi_gian || item.thoi_gian,
+                  };
+                }
+                return item;
+              });
+            } else if (proposal.loai_de_xuat === 'HC_QKQT') {
+              const hcqkqtFromDB = await prisma.huanChuongQuanKyQuyetThang.findMany({
+                where: {
+                  quan_nhan_id: { in: personnelIds },
+                  nam: proposal.nam,
+                },
+              });
+
+              const hcqkqtMap = {};
+              hcqkqtFromDB.forEach(dh => {
+                hcqkqtMap[dh.quan_nhan_id] = dh;
+              });
+
+              // Enrich dataNienHan với file PDF và số quyết định
+              dataNienHan = dataNienHan.map(item => {
+                const dbRecord = hcqkqtMap[item.personnel_id];
+                if (dbRecord) {
+                  return {
+                    ...item,
+                    so_quyet_dinh: dbRecord.so_quyet_dinh || item.so_quyet_dinh,
+                    file_quyet_dinh: dbRecord.file_quyet_dinh,
+                    thoi_gian: dbRecord.thoi_gian || item.thoi_gian,
+                  };
+                }
+                return item;
+              });
+            } else if (proposal.loai_de_xuat === 'KNC_VSNXD_QDNDVN') {
+              const kncFromDB = await prisma.kyNiemChuongVSNXDQDNDVN.findMany({
+                where: {
+                  quan_nhan_id: { in: personnelIds },
+                  nam: proposal.nam,
+                },
+              });
+
+              const kncMap = {};
+              kncFromDB.forEach(dh => {
+                kncMap[dh.quan_nhan_id] = dh;
+              });
+
+              // Enrich dataNienHan với file PDF và số quyết định
+              dataNienHan = dataNienHan.map(item => {
+                const dbRecord = kncMap[item.personnel_id];
+                if (dbRecord) {
+                  return {
+                    ...item,
+                    so_quyet_dinh: dbRecord.so_quyet_dinh || item.so_quyet_dinh,
+                    file_quyet_dinh: dbRecord.file_quyet_dinh,
+                    thoi_gian: dbRecord.thoi_gian || item.thoi_gian,
+                  };
+                }
+                return item;
+              });
+            }
+          }
+        }
+      }
+
+      // Enrich dataCongHien nếu thiếu thông tin
+      if (dataCongHien.length > 0) {
+        dataCongHien = dataCongHien.map(item => {
+          const personnel = personnelMap[item.personnel_id];
+          const enrichedItem = {
+            ...item,
+            ho_ten: item.ho_ten || personnel?.ho_ten || '',
+            nam: item.nam || proposal.createdAt?.getFullYear() || new Date().getFullYear(),
+          };
+
+          // Thêm thông tin đơn vị nếu chưa có (theo cấu trúc mới)
+          // Luôn lưu cả hai nếu quân nhân có dữ liệu
+          if (!item.co_quan_don_vi && personnel?.CoQuanDonVi) {
+            enrichedItem.co_quan_don_vi = {
+              id: personnel.CoQuanDonVi.id,
+              ten_co_quan_don_vi: personnel.CoQuanDonVi.ten_don_vi,
+              ma_co_quan_don_vi: personnel.CoQuanDonVi.ma_don_vi,
+            };
+          }
+          if (!item.don_vi_truc_thuoc && personnel?.DonViTrucThuoc) {
+            enrichedItem.don_vi_truc_thuoc = {
+              id: personnel.DonViTrucThuoc.id,
+              ten_don_vi: personnel.DonViTrucThuoc.ten_don_vi,
+              ma_don_vi: personnel.DonViTrucThuoc.ma_don_vi,
+              co_quan_don_vi: personnel.DonViTrucThuoc.CoQuanDonVi
+                ? {
+                    id: personnel.DonViTrucThuoc.CoQuanDonVi.id,
+                    ten_don_vi_truc: personnel.DonViTrucThuoc.CoQuanDonVi.ten_don_vi,
+                    ma_don_vi: personnel.DonViTrucThuoc.CoQuanDonVi.ma_don_vi,
+                  }
+                : null,
+            };
+          }
+
+          return enrichedItem;
+        });
+      }
+
+      // Nếu proposal đã được approve, enrich với thông tin file PDF từ database cho dataCongHien
+      if (
+        proposal.loai_de_xuat === 'CONG_HIEN' &&
+        proposal.status === 'APPROVED' &&
+        dataCongHien.length > 0
+      ) {
+        const personnelIds = dataCongHien.map(d => d.personnel_id).filter(Boolean);
+        if (personnelIds.length > 0) {
+          const congHienFromDB = await prisma.khenThuongCongHien.findMany({
+            where: {
+              quan_nhan_id: { in: personnelIds },
+            },
+          });
+
+          const congHienMap = {};
+          congHienFromDB.forEach(dh => {
+            congHienMap[dh.quan_nhan_id] = dh;
+          });
+
+          // Enrich dataCongHien với file PDF và số quyết định
+          dataCongHien = dataCongHien.map(item => {
+            const dbRecord = congHienMap[item.personnel_id];
+            if (dbRecord) {
+              return {
+                ...item,
+                so_quyet_dinh: dbRecord.so_quyet_dinh || item.so_quyet_dinh,
+                file_quyet_dinh: dbRecord.file_quyet_dinh,
+                thoi_gian_nhom_0_7: dbRecord.thoi_gian_nhom_0_7 || item.thoi_gian_nhom_0_7,
+                thoi_gian_nhom_0_8: dbRecord.thoi_gian_nhom_0_8 || item.thoi_gian_nhom_0_8,
+                thoi_gian_nhom_0_9_1_0:
+                  dbRecord.thoi_gian_nhom_0_9_1_0 || item.thoi_gian_nhom_0_9_1_0,
+              };
+            }
+            return item;
+          });
+        }
+      }
+
       return {
         id: proposal.id,
         loai_de_xuat: proposal.loai_de_xuat,
@@ -2108,6 +2375,8 @@ class ProposalService {
         status: proposal.status,
         data_danh_hieu: dataDanhHieu,
         data_thanh_tich: dataThanhTich,
+        data_nien_han: dataNienHan,
+        data_cong_hien: dataCongHien,
         files_attached: proposal.files_attached || [],
         ghi_chu: proposal.ghi_chu,
         nguoi_duyet: proposal.NguoiDuyet
@@ -2181,6 +2450,7 @@ class ProposalService {
       const danhHieuData = editedData.data_danh_hieu || proposal.data_danh_hieu || [];
       const thanhTichData = editedData.data_thanh_tich || proposal.data_thanh_tich || [];
       const nienHanData = editedData.data_nien_han || proposal.data_nien_han || [];
+      const congHienData = editedData.data_cong_hien || proposal.data_cong_hien || [];
 
       // ============================================
       // VALIDATION: Kiểm tra đề xuất trùng (cùng năm và cùng danh hiệu)
@@ -2573,8 +2843,114 @@ class ProposalService {
             );
           }
         }
+      } else if (proposal.loai_de_xuat === 'CONG_HIEN') {
+        // Với đề xuất cống hiến, import vào bảng KhenThuongCongHien
+        for (const item of congHienData) {
+          try {
+            // Kiểm tra có personnel_id không (bắt buộc cho đề xuất cá nhân)
+            if (!item.personnel_id) {
+              errors.push(`Thiếu personnel_id trong dữ liệu danh hiệu: ${JSON.stringify(item)}`);
+              continue;
+            }
+
+            // Tìm quân nhân theo personnel_id
+            const quanNhan = await prisma.quanNhan.findUnique({
+              where: { id: item.personnel_id },
+            });
+
+            if (!quanNhan) {
+              errors.push(`Không tìm thấy quân nhân với ID: ${item.personnel_id}`);
+              continue;
+            }
+
+            // Lấy số quyết định và file từ decisions (Admin đã nhập khi duyệt)
+            const soQuyetDinhDanhHieu =
+              decisions.so_quyet_dinh_cong_hien || item.so_quyet_dinh || null;
+            const filePdfDanhHieu = pdfPaths.file_pdf_cong_hien || item.file_quyet_dinh || null;
+
+            // Lưu vào cùng năm đề xuất (không phải năm trong item.nam)
+            const namLuu = proposal.nam;
+
+            // ============================================
+            // XỬ LÝ ĐẶC BIỆT CHO CONG_HIEN
+            // Mỗi quân nhân chỉ có 1 danh hiệu cống hiến (không phân biệt năm)
+            // Lưu vào bảng KhenThuongCongHien riêng
+            // ============================================
+            // Lấy thông tin thời gian 3 nhóm từ data_cong_hien (nếu có)
+            const thoiGianNhom0_7 = item.thoi_gian_nhom_0_7 || null;
+            const thoiGianNhom0_8 = item.thoi_gian_nhom_0_8 || null;
+            const thoiGianNhom0_9_1_0 = item.thoi_gian_nhom_0_9_1_0 || null;
+
+            // Kiểm tra xem quân nhân đã có danh hiệu cống hiến chưa
+            const existingCongHien = await prisma.khenThuongCongHien.findUnique({
+              where: {
+                quan_nhan_id: quanNhan.id,
+              },
+            });
+
+            if (existingCongHien) {
+              // Quân nhân đã có danh hiệu cống hiến
+              // Chỉ cập nhật nếu hạng mới cao hơn hạng cũ
+              const rankOrder = {
+                HCBVTQ_HANG_BA: 1,
+                HCBVTQ_HANG_NHI: 2,
+                HCBVTQ_HANG_NHAT: 3,
+              };
+
+              const existingRank = rankOrder[existingCongHien.danh_hieu] || 0;
+              const newRank = rankOrder[item.danh_hieu] || 0;
+
+              if (newRank > existingRank) {
+                // Hạng mới cao hơn, cập nhật
+                await prisma.khenThuongCongHien.update({
+                  where: { id: existingCongHien.id },
+                  data: {
+                    danh_hieu: item.danh_hieu,
+                    nam: namLuu, // Cập nhật năm mới
+                    so_quyet_dinh: soQuyetDinhDanhHieu,
+                    file_quyet_dinh: filePdfDanhHieu,
+                    thoi_gian_nhom_0_7: thoiGianNhom0_7,
+                    thoi_gian_nhom_0_8: thoiGianNhom0_8,
+                    thoi_gian_nhom_0_9_1_0: thoiGianNhom0_9_1_0,
+                  },
+                });
+                importedDanhHieu++;
+                affectedPersonnelIds.add(quanNhan.id);
+              } else {
+                // Hạng mới thấp hơn hoặc bằng, bỏ qua
+                errors.push(
+                  `Quân nhân "${quanNhan.ho_ten}" đã có danh hiệu cống hiến "${existingCongHien.danh_hieu}" (năm ${existingCongHien.nam}). ` +
+                    `Không thể lưu danh hiệu "${item.danh_hieu}" vì hạng thấp hơn hoặc bằng.`
+                );
+              }
+            } else {
+              // Chưa có danh hiệu cống hiến, tạo mới
+              await prisma.khenThuongCongHien.create({
+                data: {
+                  quan_nhan_id: quanNhan.id,
+                  danh_hieu: item.danh_hieu,
+                  nam: namLuu,
+                  so_quyet_dinh: soQuyetDinhDanhHieu,
+                  file_quyet_dinh: filePdfDanhHieu,
+                  thoi_gian_nhom_0_7: thoiGianNhom0_7,
+                  thoi_gian_nhom_0_8: thoiGianNhom0_8,
+                  thoi_gian_nhom_0_9_1_0: thoiGianNhom0_9_1_0,
+                },
+              });
+              importedDanhHieu++;
+              affectedPersonnelIds.add(quanNhan.id);
+            }
+          } catch (error) {
+            errors.push(
+              `Lỗi import cống hiến personnel_id ${item.personnel_id || 'N/A'}: ${error.message}`
+            );
+          }
+        }
       } else {
-        // Với đề xuất cá nhân, import vào bảng DanhHieuHangNam
+        // ============================================
+        // XỬ LÝ CÁC LOẠI ĐỀ XUẤT KHÁC (CA_NHAN_HANG_NAM, DOT_XUAT)
+        // ============================================
+        // Với đề xuất cá nhân khác, import vào bảng DanhHieuHangNam
         for (const item of danhHieuData) {
           try {
             // Kiểm tra có personnel_id không (bắt buộc cho đề xuất cá nhân)
@@ -2598,19 +2974,12 @@ class ProposalService {
             let soQuyetDinhDanhHieu = null;
             let filePdfDanhHieu = null;
 
-            // Xử lý đặc biệt cho CONG_HIEN
-            if (proposal.loai_de_xuat === 'CONG_HIEN') {
-              // Lấy số quyết định và file từ decisions (Admin đã nhập khi duyệt)
-              soQuyetDinhDanhHieu = decisions.so_quyet_dinh_cong_hien || item.so_quyet_dinh || null;
-              filePdfDanhHieu = pdfPaths.file_pdf_cong_hien || item.file_quyet_dinh || null;
-            } else {
-              // Các loại đề xuất khác
-              // Ưu tiên lấy từ item (đã được Admin chỉnh sửa trong data_danh_hieu)
-              // Nếu không có trong item, mới lấy từ decisionMapping
-              const danhHieuDecision = decisionMapping[item.danh_hieu] || {};
-              soQuyetDinhDanhHieu = item.so_quyet_dinh || danhHieuDecision.so_quyet_dinh || null;
-              filePdfDanhHieu = item.file_quyet_dinh || danhHieuDecision.file_pdf || null;
-            }
+            // Các loại đề xuất khác
+            // Ưu tiên lấy từ item (đã được Admin chỉnh sửa trong data_danh_hieu)
+            // Nếu không có trong item, mới lấy từ decisionMapping
+            const danhHieuDecision = decisionMapping[item.danh_hieu] || {};
+            soQuyetDinhDanhHieu = item.so_quyet_dinh || danhHieuDecision.so_quyet_dinh || null;
+            filePdfDanhHieu = item.file_quyet_dinh || danhHieuDecision.file_pdf || null;
 
             // Quyết định BKBQP và CSTDTQ (từ item hoặc từ special mapping)
             // Nếu có so_quyet_dinh_bkbqp hoặc file_quyet_dinh_bkbqp, tự động set nhan_bkbqp = true
@@ -2646,83 +3015,6 @@ class ProposalService {
             // Lưu vào cùng năm đề xuất (không phải năm trong item.nam)
             const namLuu = proposal.nam;
 
-            // ============================================
-            // XỬ LÝ ĐẶC BIỆT CHO CONG_HIEN
-            // Mỗi quân nhân chỉ có 1 danh hiệu cống hiến (không phân biệt năm)
-            // Lưu vào bảng KhenThuongCongHien riêng
-            // ============================================
-            if (proposal.loai_de_xuat === 'CONG_HIEN') {
-              // Lấy thông tin thời gian 3 nhóm từ data_danh_hieu (nếu có)
-              const thoiGianNhom0_7 = item.thoi_gian_nhom_0_7 || null;
-              const thoiGianNhom0_8 = item.thoi_gian_nhom_0_8 || null;
-              const thoiGianNhom0_9_1_0 = item.thoi_gian_nhom_0_9_1_0 || null;
-
-              // Kiểm tra xem quân nhân đã có danh hiệu cống hiến chưa
-              const existingCongHien = await prisma.khenThuongCongHien.findUnique({
-                where: {
-                  quan_nhan_id: quanNhan.id,
-                },
-              });
-
-              if (existingCongHien) {
-                // Quân nhân đã có danh hiệu cống hiến
-                // Chỉ cập nhật nếu hạng mới cao hơn hạng cũ
-                const rankOrder = {
-                  HCBVTQ_HANG_BA: 1,
-                  HCBVTQ_HANG_NHI: 2,
-                  HCBVTQ_HANG_NHAT: 3,
-                };
-
-                const existingRank = rankOrder[existingCongHien.danh_hieu] || 0;
-                const newRank = rankOrder[item.danh_hieu] || 0;
-
-                if (newRank > existingRank) {
-                  // Hạng mới cao hơn, cập nhật
-                  await prisma.khenThuongCongHien.update({
-                    where: { id: existingCongHien.id },
-                    data: {
-                      danh_hieu: item.danh_hieu,
-                      nam: namLuu, // Cập nhật năm mới
-                      so_quyet_dinh: soQuyetDinhDanhHieu,
-                      file_quyet_dinh: filePdfDanhHieu,
-                      thoi_gian_nhom_0_7: thoiGianNhom0_7,
-                      thoi_gian_nhom_0_8: thoiGianNhom0_8,
-                      thoi_gian_nhom_0_9_1_0: thoiGianNhom0_9_1_0,
-                    },
-                  });
-                  importedDanhHieu++;
-                  affectedPersonnelIds.add(quanNhan.id);
-                } else {
-                  // Hạng mới thấp hơn hoặc bằng, bỏ qua
-                  errors.push(
-                    `Quân nhân "${quanNhan.ho_ten}" đã có danh hiệu cống hiến "${existingCongHien.danh_hieu}" (năm ${existingCongHien.nam}). ` +
-                      `Không thể lưu danh hiệu "${item.danh_hieu}" vì hạng thấp hơn hoặc bằng.`
-                  );
-                }
-                continue; // Bỏ qua, không tạo mới
-              }
-
-              // Chưa có danh hiệu cống hiến, tạo mới
-              await prisma.khenThuongCongHien.create({
-                data: {
-                  quan_nhan_id: quanNhan.id,
-                  danh_hieu: item.danh_hieu,
-                  nam: namLuu,
-                  so_quyet_dinh: soQuyetDinhDanhHieu,
-                  file_quyet_dinh: filePdfDanhHieu,
-                  thoi_gian_nhom_0_7: thoiGianNhom0_7,
-                  thoi_gian_nhom_0_8: thoiGianNhom0_8,
-                  thoi_gian_nhom_0_9_1_0: thoiGianNhom0_9_1_0,
-                },
-              });
-              importedDanhHieu++;
-              affectedPersonnelIds.add(quanNhan.id);
-              continue; // Đã xử lý xong, bỏ qua phần upsert bên dưới
-            }
-
-            // ============================================
-            // XỬ LÝ CÁC LOẠI ĐỀ XUẤT KHÁC (CA_NHAN_HANG_NAM, v.v.)
-            // ============================================
             // Upsert vào bảng DanhHieuHangNam
             const savedDanhHieu = await prisma.danhHieuHangNam.upsert({
               where: {
@@ -3393,6 +3685,7 @@ class ProposalService {
         data_danh_hieu: danhHieuData, // Lưu lại dữ liệu đã chỉnh sửa
         data_thanh_tich: thanhTichData,
         data_nien_han: nienHanData,
+        data_cong_hien: congHienData, // Lưu lại dữ liệu cống hiến đã chỉnh sửa
       };
 
       // Thêm ghi chú nếu có
@@ -4165,18 +4458,7 @@ class ProposalService {
       }
       // ADMIN có thể xóa bất kỳ đề xuất nào
 
-      // Xóa file PDF nếu có
-      if (proposal.ten_file_pdf) {
-        try {
-          const fs = require('fs').promises;
-          const path = require('path');
-          const filePath = path.join(__dirname, '../../storage/proposals', proposal.ten_file_pdf);
-          await fs.unlink(filePath);
-        } catch (fileError) {
-          console.warn(`[deleteProposal] Không thể xóa file PDF: ${fileError.message}`);
-          // Không throw error, tiếp tục xóa proposal
-        }
-      }
+      // File PDF đã được lưu trong files_attached, không cần xóa riêng
 
       // Xóa proposal
       await prisma.bangDeXuat.delete({

@@ -20,6 +20,49 @@
   background-color: #4a3a2a !important;
 }
 
+/* Tô màu dòng quân nhân chưa có ngày nhập ngũ */
+.ant-table-tbody > tr.row-missing-ngay-nhap-ngu > td {
+  background-color: #fff1f0 !important;
+}
+
+.dark .ant-table-tbody > tr.row-missing-ngay-nhap-ngu > td {
+  background-color: #3d1f1f !important;
+}
+
+/* Tô màu dòng quân nhân chưa đủ điều kiện HCCSVV (chưa đủ 10 năm) */
+.ant-table-tbody > tr.row-not-eligible-hccsvv > td {
+  background-color: #fffbe6 !important;
+}
+
+.dark .ant-table-tbody > tr.row-not-eligible-hccsvv > td {
+  background-color: #3d3d1f !important;
+}
+
+.ant-table-tbody > tr.row-not-eligible-hccsvv:hover > td {
+  background-color: #fff7d1 !important;
+}
+
+.dark .ant-table-tbody > tr.row-not-eligible-hccsvv:hover > td {
+  background-color: #4a4a2a !important;
+}
+
+/* Tô màu dòng quân nhân đã đủ Hạng Ba nhưng chưa đủ Hạng Nhì/Nhất */
+.ant-table-tbody > tr.row-partial-eligible-hccsvv > td {
+  background-color: #f6ffed !important;
+}
+
+.dark .ant-table-tbody > tr.row-partial-eligible-hccsvv > td {
+  background-color: #1f3d1f !important;
+}
+
+.ant-table-tbody > tr.row-partial-eligible-hccsvv:hover > td {
+  background-color: #d9f7be !important;
+}
+
+.dark .ant-table-tbody > tr.row-partial-eligible-hccsvv:hover > td {
+  background-color: #2a4a2a !important;
+}
+
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -601,6 +644,46 @@
 
   .dark .ant-descriptions-item-content {
     color: #f9fafb !important;
+  }
+
+  /* Bảng lịch sử khen thưởng trong modal */
+  .reward-history-table {
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .reward-history-table .ant-table {
+    border-radius: 8px;
+  }
+
+  .reward-history-table .ant-table-thead > tr > th {
+    background-color: #fafafa !important;
+    color: #262626 !important;
+    font-weight: 600;
+    border-bottom: 2px solid #d9d9d9;
+  }
+
+  .dark .reward-history-table .ant-table-thead > tr > th {
+    background-color: #1f2937 !important;
+    color: #f9fafb !important;
+    border-bottom: 2px solid #374151;
+  }
+
+  .reward-history-table .ant-table-tbody > tr > td {
+    background-color: #ffffff;
+  }
+
+  .dark .reward-history-table .ant-table-tbody > tr > td {
+    background-color: #111827 !important;
+    color: #f9fafb !important;
+  }
+
+  .reward-history-table .ant-table-tbody > tr:hover > td {
+    background-color: #f5f5f5 !important;
+  }
+
+  .dark .reward-history-table .ant-table-tbody > tr:hover > td {
+    background-color: #374151 !important;
   }
 
   /* Ant Design Modal */
@@ -2048,7 +2131,7 @@ button[class*='bg-primary']:hover:not(:disabled) {
 }
 
 .notification-dropdown .ant-dropdown-menu-item:hover {
-  background-color: transparent !important;
+  /* Remove background override to allow notification item backgrounds to show */
 }
 
 /* Notification dropdown for dark mode - Force dark colors */
@@ -2067,14 +2150,12 @@ button[class*='bg-primary']:hover:not(:disabled) {
 /* Override Ant Design's default light menu colors in dark mode */
 .dark .notification-dropdown .ant-dropdown-menu-item,
 .dark .notification-dropdown .ant-dropdown-menu-item-active {
-  background-color: transparent !important;
-  background: transparent !important;
+  /* Remove background override to allow notification item backgrounds to show */
 }
 
 .dark .notification-dropdown .ant-dropdown-menu-item:hover,
 .dark .notification-dropdown .ant-dropdown-menu-item-active:hover {
-  background-color: transparent !important;
-  background: transparent !important;
+  /* Remove background override to allow notification item backgrounds to show */
 }
 
 /* Override divider in dark mode */
@@ -2089,17 +2170,31 @@ button[class*='bg-primary']:hover:not(:disabled) {
 }
 
 .notification-dropdown .ant-dropdown-menu::-webkit-scrollbar-track {
-  @apply bg-gray-100 dark:bg-gray-700;
+  background-color: #f3f4f6;
+  border-radius: 3px;
+}
+
+.dark .notification-dropdown .ant-dropdown-menu::-webkit-scrollbar-track {
+  background-color: #1f2937;
   border-radius: 3px;
 }
 
 .notification-dropdown .ant-dropdown-menu::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 dark:bg-gray-600;
+  background-color: #d1d5db;
+  border-radius: 3px;
+}
+
+.dark .notification-dropdown .ant-dropdown-menu::-webkit-scrollbar-thumb {
+  background-color: #4b5563;
   border-radius: 3px;
 }
 
 .notification-dropdown .ant-dropdown-menu::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-400 dark:bg-gray-500;
+  background-color: #9ca3af;
+}
+
+.dark .notification-dropdown .ant-dropdown-menu::-webkit-scrollbar-thumb:hover {
+  background-color: #6b7280;
 }
 
 /* Notification pulse animation */

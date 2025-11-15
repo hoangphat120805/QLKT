@@ -510,8 +510,8 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
                           {
                             key: 'loading',
                             label: (
-                              <div className="text-center py-6 text-gray-500 dark:text-gray-300 bg-white dark:bg-gray-800 rounded-lg">
-                                <span className="text-sm">Đang tải...</span>
+                              <div className="text-center py-8 text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 rounded-lg">
+                                <span className="text-sm font-medium">Đang tải...</span>
                               </div>
                             ),
                           },
@@ -521,8 +521,8 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
                           {
                             key: 'empty',
                             label: (
-                              <div className="text-center py-6 text-gray-500 dark:text-gray-300 bg-white dark:bg-gray-800 rounded-lg">
-                                <span className="text-sm">Không có thông báo</span>
+                              <div className="text-center py-8 text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 rounded-lg">
+                                <span className="text-sm font-medium">Không có thông báo</span>
                               </div>
                             ),
                           },
@@ -534,8 +534,8 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
                               <div
                                 className={`max-w-xs cursor-pointer p-4 rounded-lg transition-all duration-200 ${
                                   notif.is_read
-                                    ? 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border-l-2 border-transparent'
-                                    : 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border-l-4 border-blue-500 dark:border-blue-400 shadow-sm'
+                                    ? 'bg-[#2e2f30]/5 dark:bg-gray-800/50 hover:bg-[#2e2f30]/10 dark:hover:bg-gray-800 border-l-2 border-transparent'
+                                    : 'bg-[#2e2f30]/10 dark:bg-blue-900/20 hover:bg-[#2e2f30]/20 dark:hover:bg-blue-900/30 border-l-4 border-blue-500 dark:border-blue-400 shadow-sm'
                                 }`}
                                 onClick={() => {
                                   handleMarkAsRead(notif.id, notif.is_read, notif.link);
@@ -552,8 +552,8 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
                                     <p
                                       className={`font-semibold text-sm mb-1.5 leading-tight ${
                                         notif.is_read
-                                          ? 'text-gray-600 dark:text-gray-400'
-                                          : 'text-gray-900 dark:text-gray-100'
+                                          ? 'text-gray-600 dark:text-gray-300'
+                                          : 'text-gray-900 dark:text-white'
                                       }`}
                                     >
                                       {notif.title}
@@ -561,8 +561,8 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
                                     <p
                                       className={`text-xs mt-1.5 leading-relaxed ${
                                         notif.is_read
-                                          ? 'text-gray-500 dark:text-gray-500'
-                                          : 'text-gray-700 dark:text-gray-300'
+                                          ? 'text-gray-500 dark:text-gray-400'
+                                          : 'text-gray-700 dark:text-gray-200'
                                       }`}
                                     >
                                       {notif.message}
@@ -571,7 +571,7 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
                                       className={`text-xs mt-2.5 flex items-center gap-1.5 ${
                                         notif.is_read
                                           ? 'text-gray-400 dark:text-gray-500'
-                                          : 'text-gray-500 dark:text-gray-400'
+                                          : 'text-gray-500 dark:text-gray-300'
                                       }`}
                                     >
                                       <span>{formatNotificationTime(notif.created_at)}</span>
@@ -593,7 +593,7 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
                             key: 'mark-all-read',
                             label: (
                               <div
-                                className="text-center text-blue-600 dark:text-blue-400 font-semibold text-sm py-3 cursor-pointer hover:text-blue-700 dark:hover:text-blue-300 transition-colors bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 rounded-b-lg"
+                                className="text-center text-blue-600 dark:text-blue-400 font-semibold text-sm py-3 cursor-pointer hover:text-blue-700 dark:hover:text-blue-300 transition-colors bg-[#2e2f30]/5 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 rounded-b-lg hover:bg-[#2e2f30]/10"
                                 onClick={handleMarkAllAsRead}
                               >
                                 Đánh dấu tất cả đã đọc

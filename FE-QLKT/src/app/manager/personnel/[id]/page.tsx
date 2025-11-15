@@ -459,7 +459,7 @@ export default function ManagerPersonnelDetailPage() {
                             ? annualProfile.tong_nckh.length
                             : annualProfile.tong_nckh || 0
                         }
-                        suffix="công trình"
+                        suffix=""
                         valueStyle={{ color: '#722ed1' }}
                       />
                     </Card>

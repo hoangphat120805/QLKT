@@ -460,7 +460,6 @@ export default function PersonnelDetailPage() {
                       <Statistic
                         title="Tổng ĐTKH/SKKH"
                         value={annualProfile.tong_nckh || 0}
-                        suffix="công trình"
                         valueStyle={{ color: '#722ed1' }}
                       />
                     </Card>

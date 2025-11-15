@@ -13,8 +13,10 @@ interface Personnel {
 }
 
 interface AnnualProfile {
-  tong_cstdcs?: any[] | number;
-  tong_nckh?: any[] | number;
+  tong_cstdcs?: number; // Số lượng (Int)
+  tong_nckh?: number; // Số lượng (Int)
+  tong_cstdcs_json?: any[]; // Chi tiết danh hiệu dạng JSON
+  tong_nckh_json?: any[]; // Chi tiết NCKH dạng JSON
   cstdcs_lien_tuc?: number;
   du_dieu_kien_bkbqp?: boolean;
   du_dieu_kien_cstdtq?: boolean;
@@ -36,8 +38,19 @@ export default function PersonnelRewardHistoryModal({
   loading,
   onClose,
 }: PersonnelRewardHistoryModalProps) {
-  const tongCstdcs = Array.isArray(annualProfile?.tong_cstdcs) ? annualProfile.tong_cstdcs : [];
-  const tongNckh = Array.isArray(annualProfile?.tong_nckh) ? annualProfile.tong_nckh : [];
+  // Đọc dữ liệu từ các trường JSON (nếu có), nếu không thì fallback về trường cũ để tương thích
+  const tongCstdcs =
+    annualProfile?.tong_cstdcs_json && Array.isArray(annualProfile.tong_cstdcs_json)
+      ? annualProfile.tong_cstdcs_json
+      : annualProfile?.tong_cstdcs && Array.isArray(annualProfile.tong_cstdcs)
+      ? annualProfile.tong_cstdcs
+      : [];
+  const tongNckh =
+    annualProfile?.tong_nckh_json && Array.isArray(annualProfile.tong_nckh_json)
+      ? annualProfile.tong_nckh_json
+      : annualProfile?.tong_nckh && Array.isArray(annualProfile.tong_nckh)
+      ? annualProfile.tong_nckh
+      : [];
 
   const hasData = tongCstdcs.length > 0 || tongNckh.length > 0;
 
@@ -313,9 +326,7 @@ export default function PersonnelRewardHistoryModal({
             style={{ marginBottom: 24 }}
           >
             <Descriptions.Item label="Tổng CSTDCS">{tongCstdcs.length} năm</Descriptions.Item>
-            <Descriptions.Item label="Tổng NCKH/SKKH">
-              {tongNckh.length} công trình
-            </Descriptions.Item>
+            <Descriptions.Item label="Tổng NCKH/SKKH">{tongNckh.length}</Descriptions.Item>
             <Descriptions.Item label="CSTDCS liên tục">
               {annualProfile?.cstdcs_lien_tuc || 0} năm
             </Descriptions.Item>
@@ -350,6 +361,8 @@ export default function PersonnelRewardHistoryModal({
                         pagination={false}
                         size="small"
                         columns={cstdcsColumns}
+                        className="reward-history-table"
+                        bordered
                       />
                     ) : (
                       <Text type="secondary">Chưa có danh hiệu</Text>
@@ -369,6 +382,8 @@ export default function PersonnelRewardHistoryModal({
                         pagination={false}
                         size="small"
                         columns={nckhColumns}
+                        className="reward-history-table"
+                        bordered
                       />
                     ) : (
                       <Text type="secondary">Chưa có thành tích NCKH/SKKH</Text>

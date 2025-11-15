@@ -182,7 +182,12 @@ export default function ManagerAwardsPage() {
     if (!danhHieu) return '-';
     if (danhHieu.startsWith('HCBVTQ')) return 'Cống hiến';
     if (danhHieu.startsWith('HCCSVV')) return 'Niên hạn';
-    if (danhHieu === 'CSTDCS' || danhHieu === 'CSTT' || danhHieu === 'BKBQP' || danhHieu === 'CSTDTQ') {
+    if (
+      danhHieu === 'CSTDCS' ||
+      danhHieu === 'CSTT' ||
+      danhHieu === 'BKBQP' ||
+      danhHieu === 'CSTDTQ'
+    ) {
       return 'Cá nhân Hằng năm';
     }
     if (danhHieu === 'ĐVQT' || danhHieu === 'ĐVTT' || danhHieu === 'BKTTCP') {
@@ -304,7 +309,7 @@ export default function ManagerAwardsPage() {
         return (
           <Popover content={content} title="Thành tích khoa học" trigger="hover">
             <Tag color="cyan" style={{ cursor: 'pointer' }}>
-              {thanhTichList.length} công trình
+              {thanhTichList.length}
             </Tag>
           </Popover>
         );

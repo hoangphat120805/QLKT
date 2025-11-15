@@ -6,6 +6,7 @@ import { SearchOutlined, TeamOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import axiosInstance from '@/utils/axiosInstance';
 import { formatDate } from '@/lib/utils';
+import { apiClient } from '@/lib/api-client';
 
 const { Text } = Typography;
 
@@ -57,6 +58,7 @@ export default function Step2SelectPersonnelNienHan({
   const [searchText, setSearchText] = useState('');
   const [unitFilter, setUnitFilter] = useState<string>('ALL');
   const [localNam, setLocalNam] = useState<number | null>(nam);
+  const [serviceProfilesMap, setServiceProfilesMap] = useState<Record<string, any>>({});
 
   useEffect(() => {
     fetchPersonnel();
@@ -80,11 +82,43 @@ export default function Step2SelectPersonnelNienHan({
       if (response.data.success) {
         const personnelData = response.data.data?.personnel || response.data.data || [];
         setPersonnel(personnelData);
+
+        // Fetch service profiles để biết quân nhân đã nhận hạng nào
+        if (personnelData.length > 0) {
+          await fetchServiceProfiles(personnelData);
+        }
       }
     } catch (error: any) {
       console.error('Error fetching personnel:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchServiceProfiles = async (personnelList: Personnel[]) => {
+    try {
+      const profilesMap: Record<string, any> = {};
+
+      // Fetch service profile cho mỗi quân nhân
+      await Promise.all(
+        personnelList.map(async p => {
+          if (p.id) {
+            try {
+              const res = await apiClient.getServiceProfile(p.id);
+              if (res.success && res.data) {
+                profilesMap[p.id] = res.data;
+              }
+            } catch (error) {
+              // Ignore errors for individual personnel
+              profilesMap[p.id] = null;
+            }
+          }
+        })
+      );
+
+      setServiceProfilesMap(profilesMap);
+    } catch (error) {
+      console.error('Error fetching service profiles:', error);
     }
   };
 
@@ -159,6 +193,85 @@ export default function Step2SelectPersonnelNienHan({
     } catch {
       return null;
     }
+  };
+
+  // Kiểm tra điều kiện thời gian cho HCCSVV
+  const checkHCCSVVEligibility = (record: Personnel) => {
+    if (!record.ngay_nhap_ngu) return null;
+
+    const result = calculateTotalMonths(record.ngay_nhap_ngu, record.ngay_xuat_ngu);
+    if (!result) return null;
+
+    const totalYears = result.years;
+    const currentDate = new Date();
+    const startDate =
+      typeof record.ngay_nhap_ngu === 'string'
+        ? new Date(record.ngay_nhap_ngu)
+        : record.ngay_nhap_ngu;
+
+    // Tính ngày đủ điều kiện cho từng hạng
+    const eligibilityDateBa = new Date(startDate);
+    eligibilityDateBa.setFullYear(eligibilityDateBa.getFullYear() + 10);
+    const eligibilityYearBa = eligibilityDateBa.getFullYear();
+
+    const eligibilityDateNhi = new Date(startDate);
+    eligibilityDateNhi.setFullYear(eligibilityDateNhi.getFullYear() + 15);
+    const eligibilityYearNhi = eligibilityDateNhi.getFullYear();
+
+    const eligibilityDateNhat = new Date(startDate);
+    eligibilityDateNhat.setFullYear(eligibilityDateNhat.getFullYear() + 20);
+    const eligibilityYearNhat = eligibilityDateNhat.getFullYear();
+
+    const currentYear = currentDate.getFullYear();
+
+    return {
+      hangBa: {
+        eligible: currentYear >= eligibilityYearBa,
+        yearsNeeded: Math.max(0, eligibilityYearBa - currentYear),
+        totalYears,
+      },
+      hangNhi: {
+        eligible: currentYear >= eligibilityYearNhi,
+        yearsNeeded: Math.max(0, eligibilityYearNhi - currentYear),
+        totalYears,
+      },
+      hangNhat: {
+        eligible: currentYear >= eligibilityYearNhat,
+        yearsNeeded: Math.max(0, eligibilityYearNhat - currentYear),
+        totalYears,
+      },
+    };
+  };
+
+  // Kiểm tra quân nhân có thể đề xuất hạng tiếp theo không
+  const canProposeNextRank = (record: Personnel) => {
+    if (!record.ngay_nhap_ngu) return false;
+
+    const eligibility = checkHCCSVVEligibility(record);
+    if (!eligibility) return false;
+
+    const serviceProfile = serviceProfilesMap[record.id];
+    const hasHangBa = serviceProfile?.hccsvv_hang_ba_status === 'DA_NHAN';
+    const hasHangNhi = serviceProfile?.hccsvv_hang_nhi_status === 'DA_NHAN';
+    const hasHangNhat = serviceProfile?.hccsvv_hang_nhat_status === 'DA_NHAN';
+
+    // Nếu chưa nhận Hạng Ba, chỉ có thể đề xuất nếu đủ 10 năm
+    if (!hasHangBa) {
+      return eligibility.hangBa.eligible;
+    }
+
+    // Nếu đã nhận Hạng Ba nhưng chưa nhận Hạng Nhì, chỉ có thể đề xuất nếu đủ 15 năm
+    if (hasHangBa && !hasHangNhi) {
+      return eligibility.hangNhi.eligible;
+    }
+
+    // Nếu đã nhận Hạng Nhì nhưng chưa nhận Hạng Nhất, chỉ có thể đề xuất nếu đủ 20 năm
+    if (hasHangNhi && !hasHangNhat) {
+      return eligibility.hangNhat.eligible;
+    }
+
+    // Nếu đã nhận tất cả hạng, không thể đề xuất nữa
+    return false;
   };
 
   const columns: ColumnsType<Personnel> = [
@@ -252,6 +365,118 @@ export default function Step2SelectPersonnelNienHan({
         }
       },
     },
+    {
+      title: 'Điều kiện HCCSVV',
+      key: 'hccsvv_eligibility',
+      width: 200,
+      align: 'center',
+      render: (_, record) => {
+        const eligibility = checkHCCSVVEligibility(record);
+        if (!eligibility) return <Text type="secondary">-</Text>;
+
+        const serviceProfile = serviceProfilesMap[record.id];
+        const hasHangBa = serviceProfile?.hccsvv_hang_ba_status === 'DA_NHAN';
+        const hasHangNhi = serviceProfile?.hccsvv_hang_nhi_status === 'DA_NHAN';
+        const hasHangNhat = serviceProfile?.hccsvv_hang_nhat_status === 'DA_NHAN';
+
+        const { hangBa, hangNhi, hangNhat } = eligibility;
+
+        // Chưa đủ 10 năm
+        if (!hangBa.eligible) {
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+              <Text type="warning" strong>
+                Chưa đủ 10 năm
+              </Text>
+              <Text type="secondary" style={{ fontSize: '11px' }}>
+                Còn {hangBa.yearsNeeded} năm
+              </Text>
+            </div>
+          );
+        }
+
+        // Đủ 10 năm nhưng chưa nhận Hạng Ba → chỉ được đề xuất Hạng Ba
+        if (hangBa.eligible && !hasHangBa) {
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+              <Text type="success" strong>
+                Đủ Hạng Ba
+              </Text>
+              <Text type="secondary" style={{ fontSize: '11px' }}>
+                Có thể đề xuất Hạng Ba
+              </Text>
+            </div>
+          );
+        }
+
+        // Đã nhận Hạng Ba, đủ 15 năm nhưng chưa nhận Hạng Nhì → có thể đề xuất Hạng Nhì
+        if (hasHangBa && hangNhi.eligible && !hasHangNhi) {
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+              <Text type="success" strong>
+                Đủ Hạng Nhì
+              </Text>
+              <Text type="secondary" style={{ fontSize: '11px' }}>
+                Có thể đề xuất Hạng Nhì
+              </Text>
+            </div>
+          );
+        }
+
+        // Đã nhận Hạng Ba, chưa đủ 15 năm
+        if (hasHangBa && !hangNhi.eligible) {
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+              <Text type="success" strong>
+                Đã nhận Hạng Ba
+              </Text>
+              <Text type="warning" style={{ fontSize: '11px' }}>
+                Chưa đủ 15 năm (Hạng Nhì)
+              </Text>
+            </div>
+          );
+        }
+
+        // Đã nhận Hạng Nhì, đủ 20 năm nhưng chưa nhận Hạng Nhất → có thể đề xuất Hạng Nhất
+        if (hasHangNhi && hangNhat.eligible && !hasHangNhat) {
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+              <Text type="success" strong>
+                Đủ Hạng Nhất
+              </Text>
+              <Text type="secondary" style={{ fontSize: '11px' }}>
+                Có thể đề xuất Hạng Nhất
+              </Text>
+            </div>
+          );
+        }
+
+        // Đã nhận Hạng Nhì, chưa đủ 20 năm
+        if (hasHangNhi && !hangNhat.eligible) {
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+              <Text type="success" strong>
+                Đã nhận Hạng Nhì
+              </Text>
+              <Text type="warning" style={{ fontSize: '11px' }}>
+                Chưa đủ 20 năm (Hạng Nhất)
+              </Text>
+            </div>
+          );
+        }
+
+        // Đã nhận tất cả hạng
+        if (hasHangNhat) {
+          return (
+            <Text type="success" strong>
+              Đã nhận đủ tất cả hạng
+            </Text>
+          );
+        }
+
+        return <Text type="secondary">-</Text>;
+      },
+    },
   ];
 
   const rowSelection = {
@@ -261,20 +486,66 @@ export default function Step2SelectPersonnelNienHan({
     },
     getCheckboxProps: (record: Personnel) => {
       const missingNgayNhapNgu = !record.ngay_nhap_ngu;
+      const canPropose = canProposeNextRank(record);
+
+      let title = '';
+      if (missingNgayNhapNgu) {
+        title = 'Quân nhân này chưa cập nhật ngày nhập ngũ. Vui lòng cập nhật trước khi đề xuất.';
+      } else if (!canPropose) {
+        const eligibility = checkHCCSVVEligibility(record);
+        const serviceProfile = serviceProfilesMap[record.id];
+        const hasHangBa = serviceProfile?.hccsvv_hang_ba_status === 'DA_NHAN';
+        const hasHangNhi = serviceProfile?.hccsvv_hang_nhi_status === 'DA_NHAN';
+        const hasHangNhat = serviceProfile?.hccsvv_hang_nhat_status === 'DA_NHAN';
+
+        if (!hasHangBa && eligibility && !eligibility.hangBa.eligible) {
+          title = `Chưa đủ 10 năm để đề xuất Hạng Ba. Còn ${eligibility.hangBa.yearsNeeded} năm.`;
+        } else if (hasHangBa && !hasHangNhi && eligibility && !eligibility.hangNhi.eligible) {
+          title = `Chưa đủ 15 năm để đề xuất Hạng Nhì. Còn ${eligibility.hangNhi.yearsNeeded} năm.`;
+        } else if (hasHangNhi && !hasHangNhat && eligibility && !eligibility.hangNhat.eligible) {
+          title = `Chưa đủ 20 năm để đề xuất Hạng Nhất. Còn ${eligibility.hangNhat.yearsNeeded} năm.`;
+        } else if (hasHangNhat) {
+          title = 'Quân nhân này đã nhận đủ tất cả hạng HCCSVV.';
+        }
+      }
 
       return {
-        disabled: missingNgayNhapNgu,
-        title: missingNgayNhapNgu
-          ? 'Quân nhân này chưa cập nhật ngày nhập ngũ. Vui lòng cập nhật trước khi đề xuất.'
-          : '',
+        disabled: missingNgayNhapNgu || !canPropose,
+        title,
       };
     },
     onSelect: (record: Personnel, selected: boolean) => {
-      if (selected && !record.ngay_nhap_ngu) {
+      if (selected) {
+        if (!record.ngay_nhap_ngu) {
         message.warning(
           `Quân nhân ${record.ho_ten} chưa cập nhật ngày nhập ngũ. Vui lòng cập nhật trước khi đề xuất.`
         );
         return false;
+        }
+        if (!canProposeNextRank(record)) {
+          const eligibility = checkHCCSVVEligibility(record);
+          const serviceProfile = serviceProfilesMap[record.id];
+          const hasHangBa = serviceProfile?.hccsvv_hang_ba_status === 'DA_NHAN';
+          const hasHangNhi = serviceProfile?.hccsvv_hang_nhi_status === 'DA_NHAN';
+          const hasHangNhat = serviceProfile?.hccsvv_hang_nhat_status === 'DA_NHAN';
+
+          if (!hasHangBa && eligibility && !eligibility.hangBa.eligible) {
+            message.warning(
+              `Quân nhân ${record.ho_ten} chưa đủ 10 năm để đề xuất Hạng Ba. Còn ${eligibility.hangBa.yearsNeeded} năm.`
+            );
+          } else if (hasHangBa && !hasHangNhi && eligibility && !eligibility.hangNhi.eligible) {
+            message.warning(
+              `Quân nhân ${record.ho_ten} chưa đủ 15 năm để đề xuất Hạng Nhì. Còn ${eligibility.hangNhi.yearsNeeded} năm.`
+            );
+          } else if (hasHangNhi && !hasHangNhat && eligibility && !eligibility.hangNhat.eligible) {
+            message.warning(
+              `Quân nhân ${record.ho_ten} chưa đủ 20 năm để đề xuất Hạng Nhất. Còn ${eligibility.hangNhat.yearsNeeded} năm.`
+            );
+          } else if (hasHangNhat) {
+            message.warning(`Quân nhân ${record.ho_ten} đã nhận đủ tất cả hạng HCCSVV.`);
+          }
+          return false;
+        }
       }
     },
   };
@@ -387,9 +658,7 @@ export default function Step2SelectPersonnelNienHan({
 
       {/* Cảnh báo về quân nhân chưa có ngày nhập ngũ */}
       {(() => {
-        const missingNgayNhapNguCount = filteredPersonnel.filter(
-          p => !p.ngay_nhap_ngu
-        ).length;
+        const missingNgayNhapNguCount = filteredPersonnel.filter(p => !p.ngay_nhap_ngu).length;
 
         if (missingNgayNhapNguCount > 0) {
           return (
@@ -411,11 +680,38 @@ export default function Step2SelectPersonnelNienHan({
         rowKey="id"
         rowSelection={rowSelection}
         loading={loading}
-        rowClassName={(record) => {
+        rowClassName={record => {
           // Tô màu dòng quân nhân chưa có ngày nhập ngũ
           if (!record.ngay_nhap_ngu) {
-            return 'row-missing-gender';
+            return 'row-missing-ngay-nhap-ngu';
           }
+
+          // Chỉ tô màu nếu chưa đủ điều kiện cho hạng tiếp theo
+          if (!canProposeNextRank(record)) {
+            const eligibility = checkHCCSVVEligibility(record);
+            const serviceProfile = serviceProfilesMap[record.id];
+            const hasHangBa = serviceProfile?.hccsvv_hang_ba_status === 'DA_NHAN';
+            const hasHangNhi = serviceProfile?.hccsvv_hang_nhi_status === 'DA_NHAN';
+            const hasHangNhat = serviceProfile?.hccsvv_hang_nhat_status === 'DA_NHAN';
+
+            // Nếu chưa nhận Hạng Ba và chưa đủ 10 năm
+            if (!hasHangBa && eligibility && !eligibility.hangBa.eligible) {
+              return 'row-not-eligible-hccsvv';
+          }
+            // Nếu đã nhận Hạng Ba nhưng chưa nhận Hạng Nhì và chưa đủ 15 năm
+            if (hasHangBa && !hasHangNhi && eligibility && !eligibility.hangNhi.eligible) {
+              return 'row-partial-eligible-hccsvv';
+            }
+            // Nếu đã nhận Hạng Nhì nhưng chưa nhận Hạng Nhất và chưa đủ 20 năm
+            if (hasHangNhi && !hasHangNhat && eligibility && !eligibility.hangNhat.eligible) {
+              return 'row-partial-eligible-hccsvv';
+            }
+            // Nếu đã nhận tất cả hạng
+            if (hasHangNhat) {
+              return 'row-not-eligible-hccsvv';
+            }
+          }
+
           return '';
         }}
         pagination={{

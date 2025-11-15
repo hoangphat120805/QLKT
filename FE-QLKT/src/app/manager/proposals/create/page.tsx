@@ -153,10 +153,36 @@ export default function CreateProposalPage() {
   // Chỉ set năm hiện tại lần đầu khi component mount (nếu chưa có giá trị)
   useEffect(() => {
     if (!nam) {
-      const currentYear = new Date().getFullYear();
-      setNam(currentYear);
+    const currentYear = new Date().getFullYear();
+    setNam(currentYear);
     }
   }, []);
+
+  // Reset state khi quay lại bước 1 (chọn loại đề xuất)
+  useEffect(() => {
+    if (currentStep === 0) {
+      // Reset tất cả state liên quan đến quân nhân/đơn vị đã chọn
+      setSelectedPersonnelIds([]);
+      setSelectedUnitIds([]);
+      setTitleData([]);
+      setAttachedFiles([]);
+      setPersonnelDetails([]);
+      setUnitDetails([]);
+    }
+  }, [currentStep]);
+
+  // Reset state khi thay đổi loại đề xuất
+  useEffect(() => {
+    // Reset tất cả state khi thay đổi loại đề xuất
+    setSelectedPersonnelIds([]);
+    setSelectedUnitIds([]);
+    setTitleData([]);
+    setAttachedFiles([]);
+    setPersonnelDetails([]);
+    setUnitDetails([]);
+    // Reset về năm hiện tại khi đổi loại đề xuất
+    setNam(new Date().getFullYear());
+  }, [proposalType]);
 
   // Fetch personnel/unit details when reaching Step 5 (Review)
   useEffect(() => {

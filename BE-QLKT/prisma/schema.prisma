@@ -338,6 +338,8 @@ model HoSoHangNam {
   quan_nhan_id        String   @unique @db.VarChar(30)
   tong_cstdcs         Int      @default(0)
   tong_nckh           Int      @default(0)
+  tong_cstdcs_json    Json?    // Lưu chi tiết danh hiệu dạng JSON
+  tong_nckh_json      Json?    // Lưu chi tiết NCKH dạng JSON
   cstdcs_lien_tuc     Int      @default(0)
   du_dieu_kien_bkbqp  Boolean  @default(false)
   du_dieu_kien_cstdtq Boolean  @default(false)
@@ -413,9 +415,8 @@ model BangDeXuat {
   data_danh_hieu       Json? // Dữ liệu danh hiệu (JSON array) - cho HANG_NAM
   data_thanh_tich      Json? // Dữ liệu thành tích (JSON array) - cho HANG_NAM
   data_nien_han        Json? // Dữ liệu niên hạn (JSON array) - cho NIEN_HAN
+  data_cong_hien       Json? // Dữ liệu cống hiến (JSON array) - cho CONG_HIEN
   files_attached       Json?     // Array các file đính kèm: [{ filename, originalName, size, uploadedAt }]
-  so_quyet_dinh_goc    String?   @db.VarChar(100) // Số quyết định gốc (Admin nhập khi duyệt)
-  ten_file_pdf         String?   @db.VarChar(255) // Tên file PDF (Admin upload khi duyệt)
   ghi_chu              String?   @db.Text // Ghi chú từ Manager hoặc Admin
   rejection_reason     String?   @db.Text // Lý do từ chối (nếu status = REJECTED)
   nguoi_duyet_id       String?   @db.VarChar(30) // ID tài khoản Admin phê duyệt

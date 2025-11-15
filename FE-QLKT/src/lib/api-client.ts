@@ -790,6 +790,21 @@ export const apiClient = {
       return { success: false, message: e?.response?.data?.message || e.message };
     }
   },
+
+  // Unit Annual Awards
+  async getUnitAnnualAwards(donViId: string, year?: number): Promise<ApiResponse> {
+    try {
+      const params: any = { don_vi_id: donViId, limit: 1000 }; // Lấy tất cả lịch sử
+      if (year) params.year = year;
+      const res = await axiosInstance.get('/api/awards/units/annual', { params });
+      return {
+        success: true,
+        data: res.data?.data?.items || res.data?.data || res.data || [],
+      };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
 };
 
 export default apiClient;

@@ -1,6 +1,19 @@
 const { prisma } = require('../models');
 const { NOTIFICATION_TYPES, RESOURCE_TYPES } = require('../constants/notificationTypes');
 
+// Helper function to format proposal type to Vietnamese
+const formatProposalType = (loaiDeXuat) => {
+  const proposalTypeMap = {
+    CA_NHAN_HANG_NAM: 'Đề xuất cá nhân hằng năm',
+    DON_VI_HANG_NAM: 'Đề xuất đơn vị hằng năm',
+    NIEN_HAN: 'Đề xuất niên hạn',
+    CONG_HIEN: 'Đề xuất cống hiến',
+    DOT_XUAT: 'Đề xuất đột xuất',
+    NCKH: 'Đề xuất NCKH',
+  };
+  return proposalTypeMap[loaiDeXuat] || 'Đề xuất khen thưởng';
+};
+
 class NotificationHelper {
   /**
    * Gửi thông báo khi Manager gửi đề xuất khen thưởng
@@ -20,12 +33,13 @@ class NotificationHelper {
       });
 
       // Tạo thông báo cho từng admin
+      const proposalTypeName = formatProposalType(proposal.loai_de_xuat);
       const notifications = admins.map(admin => ({
         nguoi_nhan_id: admin.id,
         recipient_role: admin.role,
         type: NOTIFICATION_TYPES.PROPOSAL_SUBMITTED,
         title: 'Đề xuất khen thưởng mới',
-        message: `${submitter.username} đã gửi đề xuất khen thưởng #${proposal.id}`,
+        message: `${submitter.username} đã gửi ${proposalTypeName.toLowerCase()}`,
         resource: RESOURCE_TYPES.PROPOSALS,
         tai_nguyen_id: proposal.id,
         link: `/admin/proposals/${proposal.id}`,
@@ -50,13 +64,14 @@ class NotificationHelper {
    */
   async notifyManagerOnProposalApproval(proposal, approver) {
     try {
+      const proposalTypeName = formatProposalType(proposal.loai_de_xuat);
       const notification = await prisma.thongBao.create({
         data: {
           nguoi_nhan_id: proposal.nguoi_de_xuat_id,
           recipient_role: 'MANAGER',
           type: NOTIFICATION_TYPES.PROPOSAL_APPROVED,
           title: 'Đề xuất đã được phê duyệt',
-          message: `Đề xuất khen thưởng #${proposal.id} của bạn đã được ${approver.username} phê duyệt`,
+          message: `${proposalTypeName} của bạn đã được ${approver.username} phê duyệt`,
           resource: RESOURCE_TYPES.PROPOSALS,
           tai_nguyen_id: proposal.id,
           link: `/manager/proposals/${proposal.id}`,
@@ -76,13 +91,14 @@ class NotificationHelper {
    */
   async notifyManagerOnProposalRejection(proposal, rejector, reason) {
     try {
+      const proposalTypeName = formatProposalType(proposal.loai_de_xuat);
       const notification = await prisma.thongBao.create({
         data: {
           nguoi_nhan_id: proposal.nguoi_de_xuat_id,
           recipient_role: 'MANAGER',
           type: NOTIFICATION_TYPES.PROPOSAL_REJECTED,
           title: 'Đề xuất bị từ chối',
-          message: `Đề xuất khen thưởng #${proposal.id} của bạn đã bị từ chối. Lý do: ${reason}`,
+          message: `${proposalTypeName} của bạn đã bị từ chối. Lý do: ${reason}`,
           resource: RESOURCE_TYPES.PROPOSALS,
           tai_nguyen_id: proposal.id,
           link: `/manager/proposals/${proposal.id}`,

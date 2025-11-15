@@ -19,6 +19,10 @@ import type { ColumnsType } from 'antd/es/table';
 import axiosInstance from '@/utils/axiosInstance';
 import { apiClient } from '@/lib/api-client';
 import PersonnelRewardHistoryModal from './PersonnelRewardHistoryModal';
+import ServiceHistoryModal from './ServiceHistoryModal';
+import PositionHistoryModal from './PositionHistoryModal';
+import ScientificAchievementHistoryModal from './ScientificAchievementHistoryModal';
+import UnitAnnualAwardHistoryModal from './UnitAnnualAwardHistoryModal';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -106,12 +110,24 @@ export default function Step3SetTitles({
   const [personnel, setPersonnel] = useState<Personnel[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
   const [positionHistoriesMap, setPositionHistoriesMap] = useState<Record<string, any[]>>({});
+  const [serviceProfilesMap, setServiceProfilesMap] = useState<Record<string, any>>({});
 
   // Modal states
   const [modalVisible, setModalVisible] = useState(false);
   const [historyModalVisible, setHistoryModalVisible] = useState(false);
+  const [serviceHistoryModalVisible, setServiceHistoryModalVisible] = useState(false);
+  const [positionHistoryModalVisible, setPositionHistoryModalVisible] = useState(false);
+  const [scientificAchievementHistoryModalVisible, setScientificAchievementHistoryModalVisible] =
+    useState(false);
+  const [unitAnnualAwardHistoryModalVisible, setUnitAnnualAwardHistoryModalVisible] =
+    useState(false);
   const [selectedPersonnel, setSelectedPersonnel] = useState<Personnel | null>(null);
+  const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null);
   const [annualProfile, setAnnualProfile] = useState<any>(null);
+  const [serviceProfile, setServiceProfile] = useState<any>(null);
+  const [positionHistory, setPositionHistory] = useState<any[]>([]);
+  const [scientificAchievements, setScientificAchievements] = useState<any[]>([]);
+  const [unitAnnualAwards, setUnitAnnualAwards] = useState<any[]>([]);
   const [loadingModal, setLoadingModal] = useState(false);
 
   // Fetch personnel/unit details
@@ -146,6 +162,11 @@ export default function Step3SetTitles({
       // Nếu là đề xuất cống hiến, fetch lịch sử chức vụ
       if (proposalType === 'CONG_HIEN' && personnelData.length > 0) {
         await fetchPositionHistories(personnelData);
+      }
+
+      // Nếu là đề xuất niên hạn, fetch service profiles để biết quân nhân đã nhận hạng nào
+      if (proposalType === 'NIEN_HAN' && personnelData.length > 0) {
+        await fetchServiceProfiles(personnelData);
       }
 
       // Initialize title data if empty
@@ -211,6 +232,33 @@ export default function Step3SetTitles({
       setPositionHistoriesMap(historiesMap);
     } catch (error) {
       console.error('Error fetching position histories:', error);
+    }
+  };
+
+  const fetchServiceProfiles = async (personnelList: Personnel[]) => {
+    try {
+      const profilesMap: Record<string, any> = {};
+
+      // Fetch service profile cho mỗi quân nhân
+      await Promise.all(
+        personnelList.map(async p => {
+          if (p.id) {
+            try {
+              const res = await apiClient.getServiceProfile(p.id);
+              if (res.success && res.data) {
+                profilesMap[p.id] = res.data;
+              }
+            } catch (error) {
+              // Ignore errors for individual personnel
+              profilesMap[p.id] = null;
+            }
+          }
+        })
+      );
+
+      setServiceProfilesMap(profilesMap);
+    } catch (error) {
+      console.error('Error fetching service profiles:', error);
     }
   };
 
@@ -427,32 +475,13 @@ export default function Step3SetTitles({
           { label: 'Bằng khen Thủ tướng Chính phủ (BKTTCP)', value: 'BKTTCP' },
         ];
       case 'NIEN_HAN':
-        const nienHanSelectedType = getSelectedNienHanType();
-        const nienHanAllOptions = [
+        // Chỉ hiển thị các hạng HCCSVV, không hiển thị HC_QKQT và KNC_VSNXD_QDNDVN
+        // vì đã có loại đề xuất riêng cho chúng
+        return [
           { label: 'Huân chương Chiến sỹ Vẻ vang Hạng Ba', value: 'HCCSVV_HANG_BA' },
           { label: 'Huân chương Chiến sỹ Vẻ vang Hạng Nhì', value: 'HCCSVV_HANG_NHI' },
           { label: 'Huân chương Chiến sỹ Vẻ vang Hạng Nhất', value: 'HCCSVV_HANG_NHAT' },
-          { label: 'Huy chương Quân kỳ quyết thắng', value: 'HC_QKQT' },
-          { label: 'Kỷ niệm chương vì sự nghiệp xây dựng QĐNDVN', value: 'KNC_VSNXD_QDNDVN' },
         ];
-
-        // Nếu đã chọn các hạng HCCSVV, chỉ hiển thị các hạng HCCSVV
-        // Nếu đã chọn HC_QKQT, chỉ hiển thị HC_QKQT
-        // Nếu đã chọn KNC_VSNXD_QDNDVN, chỉ hiển thị KNC_VSNXD_QDNDVN
-        if (nienHanSelectedType === 'hcsvv') {
-          return nienHanAllOptions.filter(
-            opt =>
-              opt.value === 'HCCSVV_HANG_BA' ||
-              opt.value === 'HCCSVV_HANG_NHI' ||
-              opt.value === 'HCCSVV_HANG_NHAT'
-          );
-        } else if (nienHanSelectedType === 'hc_qkqt') {
-          return nienHanAllOptions.filter(opt => opt.value === 'HC_QKQT');
-        } else if (nienHanSelectedType === 'knc') {
-          return nienHanAllOptions.filter(opt => opt.value === 'KNC_VSNXD_QDNDVN');
-        }
-
-        return nienHanAllOptions;
       case 'HC_QKQT':
         return [{ label: 'Huy chương Quân kỳ quyết thắng', value: 'HC_QKQT' }];
       case 'KNC_VSNXD_QDNDVN':
@@ -553,8 +582,68 @@ export default function Step3SetTitles({
       }
     }
 
-    // Validation cho NIEN_HAN: Kiểm tra nếu đang chọn danh hiệu và đã có danh hiệu khác nhóm
+    // Validation cho NIEN_HAN: Kiểm tra điều kiện thời gian cho HCCSVV
     if (field === 'danh_hieu' && proposalType === 'NIEN_HAN' && value) {
+      const personnelRecord = personnel.find(p => p.id === id);
+      if (personnelRecord) {
+        const eligibility = checkHCCSVVEligibilityForPersonnel(personnelRecord);
+        if (eligibility) {
+          // Kiểm tra logic thứ bậc: Phải đủ Hạng Ba trước, sau đó mới có Hạng Nhì, rồi mới có Hạng Nhất
+          if (value === 'HCCSVV_HANG_NHI') {
+            if (!eligibility.hangBa) {
+              message.error(
+                `Quân nhân "${personnelRecord.ho_ten}" chưa đủ điều kiện Hạng Ba (10 năm). ` +
+                  `Không thể đề xuất Hạng Nhì (15 năm) khi chưa đủ Hạng Ba.`
+              );
+              return;
+            }
+            if (!eligibility.hangNhi) {
+              message.error(
+                `Quân nhân "${personnelRecord.ho_ten}" chưa đủ điều kiện Hạng Nhì (15 năm). ` +
+                  `Vui lòng kiểm tra lại thời gian phục vụ.`
+              );
+              return;
+            }
+          } else if (value === 'HCCSVV_HANG_NHAT') {
+            if (!eligibility.hangBa) {
+              message.error(
+                `Quân nhân "${personnelRecord.ho_ten}" chưa đủ điều kiện Hạng Ba (10 năm). ` +
+                  `Không thể đề xuất Hạng Nhất (20 năm) khi chưa đủ Hạng Ba.`
+              );
+              return;
+            }
+            if (!eligibility.hangNhi) {
+              message.error(
+                `Quân nhân "${personnelRecord.ho_ten}" chưa đủ điều kiện Hạng Nhì (15 năm). ` +
+                  `Không thể đề xuất Hạng Nhất (20 năm) khi chưa đủ Hạng Nhì.`
+              );
+              return;
+            }
+            if (!eligibility.hangNhat) {
+              message.error(
+                `Quân nhân "${personnelRecord.ho_ten}" chưa đủ điều kiện Hạng Nhất (20 năm). ` +
+                  `Vui lòng kiểm tra lại thời gian phục vụ.`
+              );
+              return;
+            }
+          } else if (value === 'HCCSVV_HANG_BA') {
+            if (!eligibility.hangBa) {
+              message.error(
+                `Quân nhân "${personnelRecord.ho_ten}" chưa đủ điều kiện Hạng Ba (10 năm). ` +
+                  `Vui lòng kiểm tra lại thời gian phục vụ.`
+              );
+              return;
+            }
+          }
+        } else {
+          message.error(
+            `Quân nhân "${personnelRecord.ho_ten}" chưa có thông tin ngày nhập ngũ. ` +
+              `Vui lòng cập nhật thông tin ngày nhập ngũ trước khi đề xuất.`
+          );
+          return;
+        }
+      }
+
       const selectedType = getSelectedNienHanType();
       const isHCCSVV =
         value === 'HCCSVV_HANG_BA' || value === 'HCCSVV_HANG_NHI' || value === 'HCCSVV_HANG_NHAT';
@@ -706,6 +795,45 @@ export default function Step3SetTitles({
                 personnelDetail.gioi_tinh === 'NU' ? 'Nữ' : 'Nam'
               } >= ${requiredYears} năm phục vụ (hiện tại: ${years} năm).`
           );
+          return;
+        }
+      }
+    }
+
+    // Validation cho NIEN_HAN: Kiểm tra thứ tự hạng (phải nhận từ thấp lên cao)
+    if (field === 'danh_hieu' && proposalType === 'NIEN_HAN' && value) {
+      const personnelRecord = personnel.find(p => p.id === id);
+      if (personnelRecord) {
+        const serviceProfile = serviceProfilesMap[id];
+        const hasHangBa = serviceProfile?.hccsvv_hang_ba_status === 'DA_NHAN';
+        const hasHangNhi = serviceProfile?.hccsvv_hang_nhi_status === 'DA_NHAN';
+        const hasHangNhat = serviceProfile?.hccsvv_hang_nhat_status === 'DA_NHAN';
+
+        if (value === 'HCCSVV_HANG_NHI' && !hasHangBa) {
+          message.error(`${personnelRecord.ho_ten}: Phải nhận Hạng Ba trước khi đề xuất Hạng Nhì.`);
+          return;
+        }
+
+        if (value === 'HCCSVV_HANG_NHAT' && !hasHangNhi) {
+          message.error(
+            `${personnelRecord.ho_ten}: Phải nhận Hạng Nhì trước khi đề xuất Hạng Nhất.`
+          );
+          return;
+        }
+
+        // Kiểm tra nếu đã nhận hạng rồi thì không cho đề xuất lại
+        if (value === 'HCCSVV_HANG_BA' && hasHangBa) {
+          message.warning(`${personnelRecord.ho_ten}: Đã nhận Hạng Ba rồi.`);
+          return;
+        }
+
+        if (value === 'HCCSVV_HANG_NHI' && hasHangNhi) {
+          message.warning(`${personnelRecord.ho_ten}: Đã nhận Hạng Nhì rồi.`);
+          return;
+        }
+
+        if (value === 'HCCSVV_HANG_NHAT' && hasHangNhat) {
+          message.warning(`${personnelRecord.ho_ten}: Đã nhận Hạng Nhất rồi.`);
           return;
         }
       }
@@ -871,7 +999,58 @@ export default function Step3SetTitles({
         );
       },
     },
+    {
+      title: 'Xem lịch sử khen thưởng',
+      key: 'history',
+      width: 180,
+      align: 'center',
+      render: (_, record) => (
+        <Button
+          type="link"
+          icon={<HistoryOutlined />}
+          onClick={() => handleViewUnitHistory(record)}
+          size="small"
+        >
+          Xem lịch sử
+        </Button>
+      ),
+    },
   ];
+
+  // Kiểm tra điều kiện thời gian cho HCCSVV
+  const checkHCCSVVEligibilityForPersonnel = (record: Personnel) => {
+    if (!record.ngay_nhap_ngu) return null;
+
+    const result = calculateTotalMonths(record.ngay_nhap_ngu, record.ngay_xuat_ngu);
+    if (!result) return null;
+
+    const currentDate = new Date();
+    const startDate =
+      typeof record.ngay_nhap_ngu === 'string'
+        ? new Date(record.ngay_nhap_ngu)
+        : record.ngay_nhap_ngu;
+
+    // Tính ngày đủ điều kiện cho từng hạng
+    const eligibilityDateBa = new Date(startDate);
+    eligibilityDateBa.setFullYear(eligibilityDateBa.getFullYear() + 10);
+    const eligibilityYearBa = eligibilityDateBa.getFullYear();
+
+    const eligibilityDateNhi = new Date(startDate);
+    eligibilityDateNhi.setFullYear(eligibilityDateNhi.getFullYear() + 15);
+    const eligibilityYearNhi = eligibilityDateNhi.getFullYear();
+
+    const eligibilityDateNhat = new Date(startDate);
+    eligibilityDateNhat.setFullYear(eligibilityDateNhat.getFullYear() + 20);
+    const eligibilityYearNhat = eligibilityDateNhat.getFullYear();
+
+    const currentYear = currentDate.getFullYear();
+
+    return {
+      hangBa: currentYear >= eligibilityYearBa,
+      hangNhi: currentYear >= eligibilityYearNhi,
+      hangNhat: currentYear >= eligibilityYearNhat,
+    };
+  };
 
   // Hàm tính tổng số tháng từ ngày nhập ngũ đến hiện tại (hoặc ngày xuất ngũ)
   const calculateTotalMonths = (
@@ -958,21 +1137,78 @@ export default function Step3SetTitles({
   const handleViewHistory = async (record: Personnel) => {
     setSelectedPersonnel(record);
     setLoadingModal(true);
-    setHistoryModalVisible(true);
 
     try {
-      // Lấy hồ sơ hằng năm (đã có tong_cstdcs và tong_nckh dạng JSON)
-      // Truyền năm lên để tính toán lại gợi ý với năm được chọn
-      const profileRes = await apiClient.getAnnualProfile(record.id, nam);
-      if (profileRes.success && profileRes.data) {
-        setAnnualProfile(profileRes.data);
+      // Gọi modal và API phù hợp theo loại đề xuất
+      if (proposalType === 'NIEN_HAN') {
+        // Modal lịch sử niên hạn
+        setServiceHistoryModalVisible(true);
+        const profileRes = await apiClient.getServiceProfile(record.id);
+        if (profileRes.success && profileRes.data) {
+          setServiceProfile(profileRes.data);
+        } else {
+          setServiceProfile(null);
+        }
+      } else if (proposalType === 'CONG_HIEN') {
+        // Modal lịch sử chức vụ (cống hiến)
+        setPositionHistoryModalVisible(true);
+        const historyRes = await apiClient.getPositionHistory(record.id);
+        if (historyRes.success && historyRes.data) {
+          setPositionHistory(Array.isArray(historyRes.data) ? historyRes.data : []);
+        } else {
+          setPositionHistory([]);
+        }
+      } else if (proposalType === 'NCKH') {
+        // Modal lịch sử NCKH/SKKH
+        setScientificAchievementHistoryModalVisible(true);
+        const achievementsRes = await apiClient.getScientificAchievements(record.id);
+        if (achievementsRes.success && achievementsRes.data) {
+          setScientificAchievements(
+            Array.isArray(achievementsRes.data) ? achievementsRes.data : []
+          );
+        } else {
+          setScientificAchievements([]);
+        }
       } else {
-        setAnnualProfile(null);
+        // Modal lịch sử khen thưởng cá nhân hằng năm (CA_NHAN_HANG_NAM, HC_QKQT, KNC_VSNXD_QDNDVN)
+        setHistoryModalVisible(true);
+        const profileRes = await apiClient.getAnnualProfile(record.id, nam);
+        if (profileRes.success && profileRes.data) {
+          setAnnualProfile(profileRes.data);
+        } else {
+          setAnnualProfile(null);
+        }
       }
     } catch (error: any) {
-      console.error('Error fetching profile:', error);
+      console.error('Error fetching history:', error);
       message.error('Không thể tải lịch sử khen thưởng');
       setAnnualProfile(null);
+      setServiceProfile(null);
+      setPositionHistory([]);
+      setScientificAchievements([]);
+      setUnitAnnualAwards([]);
+    } finally {
+      setLoadingModal(false);
+    }
+  };
+
+  // Hàm mở modal xem lịch sử khen thưởng đơn vị
+  const handleViewUnitHistory = async (record: Unit) => {
+    setSelectedUnit(record);
+    setLoadingModal(true);
+    setUnitAnnualAwardHistoryModalVisible(true);
+
+    try {
+      const awardsRes = await apiClient.getUnitAnnualAwards(record.id);
+      if (awardsRes.success && awardsRes.data) {
+        setUnitAnnualAwards(Array.isArray(awardsRes.data) ? awardsRes.data : []);
+      } else {
+        setUnitAnnualAwards([]);
+      }
+    } catch (error: any) {
+      console.error('Error fetching unit awards:', error);
+      message.error('Không thể tải lịch sử khen thưởng đơn vị');
+      setUnitAnnualAwards([]);
     } finally {
       setLoadingModal(false);
     }
@@ -1112,7 +1348,7 @@ export default function Step3SetTitles({
           return <Text>{danhHieuMap[danhHieuValue]}</Text>;
         }
 
-        // Lọc danh hiệu dựa trên điều kiện thời gian cho CONG_HIEN
+        // Lọc danh hiệu dựa trên điều kiện thời gian
         let availableOptions = getDanhHieuOptions();
         if (proposalType === 'CONG_HIEN') {
           availableOptions = availableOptions.filter(option => {
@@ -1125,6 +1361,41 @@ export default function Step3SetTitles({
             }
             return true;
           });
+        } else if (proposalType === 'NIEN_HAN') {
+          // Lọc danh hiệu dựa trên điều kiện thời gian và hạng đã nhận cho HCCSVV
+          // Logic: Phải nhận từ thấp lên cao: Hạng Ba → Hạng Nhì → Hạng Nhất
+          const eligibility = checkHCCSVVEligibilityForPersonnel(record);
+          const serviceProfile = serviceProfilesMap[record.id];
+
+          // Kiểm tra quân nhân đã nhận hạng nào
+          const hasHangBa = serviceProfile?.hccsvv_hang_ba_status === 'DA_NHAN';
+          const hasHangNhi = serviceProfile?.hccsvv_hang_nhi_status === 'DA_NHAN';
+          const hasHangNhat = serviceProfile?.hccsvv_hang_nhat_status === 'DA_NHAN';
+
+          if (eligibility) {
+            availableOptions = availableOptions.filter(option => {
+              if (option.value === 'HCCSVV_HANG_BA') {
+                // Hạng Ba: cần đủ 10 năm VÀ chưa nhận Hạng Ba
+                return eligibility.hangBa && !hasHangBa;
+              } else if (option.value === 'HCCSVV_HANG_NHI') {
+                // Hạng Nhì: phải đã nhận Hạng Ba VÀ đủ 15 năm VÀ chưa nhận Hạng Nhì
+                return hasHangBa && eligibility.hangBa && eligibility.hangNhi && !hasHangNhi;
+              } else if (option.value === 'HCCSVV_HANG_NHAT') {
+                // Hạng Nhất: phải đã nhận Hạng Nhì VÀ đủ 20 năm VÀ chưa nhận Hạng Nhất
+                return (
+                  hasHangNhi &&
+                  eligibility.hangBa &&
+                  eligibility.hangNhi &&
+                  eligibility.hangNhat &&
+                  !hasHangNhat
+                );
+              }
+              return true;
+            });
+          } else {
+            // Nếu không có ngày nhập ngũ, không cho chọn hạng nào
+            availableOptions = [];
+          }
         }
 
         return (
@@ -1138,7 +1409,10 @@ export default function Step3SetTitles({
             popupMatchSelectWidth={false}
             styles={{ popup: { root: { minWidth: 'max-content' } } }}
             options={availableOptions}
-            disabled={proposalType === 'CONG_HIEN' && availableOptions.length === 0}
+            disabled={
+              (proposalType === 'CONG_HIEN' && availableOptions.length === 0) ||
+              (proposalType === 'NIEN_HAN' && availableOptions.length === 0)
+            }
           />
         );
       },
@@ -1570,7 +1844,7 @@ export default function Step3SetTitles({
         )}
       </Modal>
 
-      {/* Modal xem lịch sử khen thưởng */}
+      {/* Modal xem lịch sử khen thưởng cá nhân hằng năm */}
       <PersonnelRewardHistoryModal
         visible={historyModalVisible}
         personnel={selectedPersonnel}
@@ -1580,6 +1854,58 @@ export default function Step3SetTitles({
           setHistoryModalVisible(false);
           setSelectedPersonnel(null);
           setAnnualProfile(null);
+        }}
+      />
+
+      {/* Modal xem lịch sử niên hạn */}
+      <ServiceHistoryModal
+        visible={serviceHistoryModalVisible}
+        personnel={selectedPersonnel}
+        serviceProfile={serviceProfile}
+        loading={loadingModal}
+        onClose={() => {
+          setServiceHistoryModalVisible(false);
+          setSelectedPersonnel(null);
+          setServiceProfile(null);
+        }}
+      />
+
+      {/* Modal xem lịch sử chức vụ (Cống hiến) */}
+      <PositionHistoryModal
+        visible={positionHistoryModalVisible}
+        personnel={selectedPersonnel}
+        positionHistory={positionHistory}
+        loading={loadingModal}
+        onClose={() => {
+          setPositionHistoryModalVisible(false);
+          setSelectedPersonnel(null);
+          setPositionHistory([]);
+        }}
+      />
+
+      {/* Modal xem lịch sử NCKH/SKKH */}
+      <ScientificAchievementHistoryModal
+        visible={scientificAchievementHistoryModalVisible}
+        personnel={selectedPersonnel}
+        achievements={scientificAchievements}
+        loading={loadingModal}
+        onClose={() => {
+          setScientificAchievementHistoryModalVisible(false);
+          setSelectedPersonnel(null);
+          setScientificAchievements([]);
+        }}
+      />
+
+      {/* Modal xem lịch sử khen thưởng đơn vị hằng năm */}
+      <UnitAnnualAwardHistoryModal
+        visible={unitAnnualAwardHistoryModalVisible}
+        unit={selectedUnit}
+        awards={unitAnnualAwards}
+        loading={loadingModal}
+        onClose={() => {
+          setUnitAnnualAwardHistoryModalVisible(false);
+          setSelectedUnit(null);
+          setUnitAnnualAwards([]);
         }}
       />
     </div>
