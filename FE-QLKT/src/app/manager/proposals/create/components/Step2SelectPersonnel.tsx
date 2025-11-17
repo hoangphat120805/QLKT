@@ -95,7 +95,7 @@ export default function Step2SelectPersonnel({
   // Get unique units for filter
   const units = Array.from(
     new Set(
-      personnel.map((p) => {
+      personnel.map(p => {
         if (p.DonViTrucThuoc) {
           return `${p.DonViTrucThuoc.id}|${p.DonViTrucThuoc.ten_don_vi}`;
         } else if (p.CoQuanDonVi) {
@@ -107,11 +107,10 @@ export default function Step2SelectPersonnel({
   ).filter(Boolean);
 
   // Filter personnel
-  const filteredPersonnel = personnel.filter((p) => {
+  const filteredPersonnel = personnel.filter(p => {
     // Search filter
     const matchesSearch =
-      searchText === '' ||
-      p.ho_ten.toLowerCase().includes(searchText.toLowerCase());
+      searchText === '' || p.ho_ten.toLowerCase().includes(searchText.toLowerCase());
 
     // Unit filter
     let matchesUnit = true;
@@ -191,13 +190,18 @@ export default function Step2SelectPersonnel({
   // Thêm cột ngày nhập ngũ, xuất ngũ và tổng tháng cho đề xuất niên hạn
   if (proposalType === 'NIEN_HAN') {
     // Hàm tính tổng số tháng từ ngày nhập ngũ đến hiện tại (hoặc ngày xuất ngũ)
-    const calculateTotalMonths = (ngayNhapNgu: string | Date | null | undefined, ngayXuatNgu: string | Date | null | undefined) => {
+    const calculateTotalMonths = (
+      ngayNhapNgu: string | Date | null | undefined,
+      ngayXuatNgu: string | Date | null | undefined
+    ) => {
       if (!ngayNhapNgu) return null;
 
       try {
         const startDate = typeof ngayNhapNgu === 'string' ? new Date(ngayNhapNgu) : ngayNhapNgu;
         const endDate = ngayXuatNgu
-          ? (typeof ngayXuatNgu === 'string' ? new Date(ngayXuatNgu) : ngayXuatNgu)
+          ? typeof ngayXuatNgu === 'string'
+            ? new Date(ngayXuatNgu)
+            : ngayXuatNgu
           : new Date(); // Nếu chưa xuất ngũ thì tính đến hiện tại
 
         // Đảm bảo startDate và endDate hợp lệ
@@ -214,7 +218,11 @@ export default function Step2SelectPersonnel({
         if (days < 0) {
           months -= 1;
           // Lấy số ngày của tháng trước đó
-          const lastDayOfPrevMonth = new Date(endDate.getFullYear(), endDate.getMonth(), 0).getDate();
+          const lastDayOfPrevMonth = new Date(
+            endDate.getFullYear(),
+            endDate.getMonth(),
+            0
+          ).getDate();
           days += lastDayOfPrevMonth;
         }
 
@@ -251,9 +259,10 @@ export default function Step2SelectPersonnel({
         render: (_, record) => {
           if (!record.ngay_nhap_ngu) return <Text type="secondary">-</Text>;
           try {
-            const date = typeof record.ngay_nhap_ngu === 'string'
-              ? new Date(record.ngay_nhap_ngu)
-              : record.ngay_nhap_ngu;
+            const date =
+              typeof record.ngay_nhap_ngu === 'string'
+                ? new Date(record.ngay_nhap_ngu)
+                : record.ngay_nhap_ngu;
             return format(date, 'dd/MM/yyyy');
           } catch {
             return <Text type="secondary">-</Text>;
@@ -268,9 +277,10 @@ export default function Step2SelectPersonnel({
         render: (_, record) => {
           if (!record.ngay_xuat_ngu) return <Text type="secondary">Chưa xuất ngũ</Text>;
           try {
-            const date = typeof record.ngay_xuat_ngu === 'string'
-              ? new Date(record.ngay_xuat_ngu)
-              : record.ngay_xuat_ngu;
+            const date =
+              typeof record.ngay_xuat_ngu === 'string'
+                ? new Date(record.ngay_xuat_ngu)
+                : record.ngay_xuat_ngu;
             return format(date, 'dd/MM/yyyy');
           } catch {
             return <Text type="secondary">-</Text>;
@@ -355,7 +365,7 @@ export default function Step2SelectPersonnel({
           placeholder="Tìm theo tên"
           prefix={<SearchOutlined />}
           value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
+          onChange={e => setSearchText(e.target.value)}
           style={{ width: 300 }}
           size="large"
           allowClear
@@ -370,7 +380,7 @@ export default function Step2SelectPersonnel({
           allowClear
         >
           <Select.Option value="ALL">Tất cả đơn vị</Select.Option>
-          {units.map((unit) => {
+          {units.map(unit => {
             const [id, name] = unit.split('|');
             return (
               <Select.Option key={id} value={unit}>
@@ -399,7 +409,7 @@ export default function Step2SelectPersonnel({
         pagination={{
           pageSize: 20,
           showSizeChanger: true,
-          showTotal: (total) => `Tổng số ${total} quân nhân`,
+          showTotal: total => `Tổng số ${total} quân nhân`,
         }}
         bordered
         scroll={{ x: proposalType === 'NIEN_HAN' ? 1650 : 1200 }}

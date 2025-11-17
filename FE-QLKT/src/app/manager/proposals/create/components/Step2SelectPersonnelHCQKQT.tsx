@@ -520,4 +520,3 @@ export default function Step2SelectPersonnelHCQKQT({
     </div>
   );
 }
-

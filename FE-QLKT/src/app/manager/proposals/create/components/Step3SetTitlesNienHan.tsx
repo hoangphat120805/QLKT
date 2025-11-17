@@ -387,7 +387,8 @@ export default function Step3SetTitlesNienHan({
       key: 'ngay_sinh',
       width: 140,
       align: 'center',
-      render: (date: string | undefined | null) => (date ? new Date(date).toLocaleDateString() : '-'),
+      render: (date: string | undefined | null) =>
+        date ? new Date(date).toLocaleDateString() : '-',
     },
     {
       title: 'Cấp bậc / Chức vụ',

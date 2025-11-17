@@ -58,7 +58,6 @@ export default function Step3SetTitlesHCQKQT({
   const [selectedPersonnel, setSelectedPersonnel] = useState<Personnel | null>(null);
   const [annualProfile, setAnnualProfile] = useState<any>(null);
   const [loadingModal, setLoadingModal] = useState(false);
-  
 
   useEffect(() => {
     if (selectedPersonnelIds.length > 0) {

@@ -334,11 +334,7 @@ export default function Step3SetTitlesCongHien({
         const unitInfo = parts.length > 0 ? parts.join(', ') : null;
 
         const genderText =
-          record.gioi_tinh === 'NAM'
-            ? 'Nam'
-            : record.gioi_tinh === 'NU'
-            ? 'Nữ'
-            : null;
+          record.gioi_tinh === 'NAM' ? 'Nam' : record.gioi_tinh === 'NU' ? 'Nữ' : null;
 
         return (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
