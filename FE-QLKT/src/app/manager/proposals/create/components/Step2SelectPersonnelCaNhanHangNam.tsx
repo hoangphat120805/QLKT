@@ -13,6 +13,8 @@ interface Personnel {
   id: string;
   ho_ten: string;
   cccd: string;
+  ngay_sinh?: string | null;
+  cap_bac?: string;
   co_quan_don_vi_id: string;
   don_vi_truc_thuoc_id: string;
   chuc_vu_id: string;
@@ -138,15 +140,23 @@ export default function Step2SelectPersonnelCaNhanHangNam({
         return (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Text strong>{text}</Text>
-            {unitInfo && (
-              <Text type="secondary" style={{ fontSize: '12px', marginTop: '4px' }}>
-                {unitInfo}
-              </Text>
-            )}
+                {unitInfo && (
+                  <Text type="secondary" style={{ fontSize: '12px', marginTop: '4px' }}>
+                    {unitInfo}
+                  </Text>
+                )}
           </div>
         );
       },
     },
+        {
+          title: 'Ngày sinh',
+          dataIndex: 'ngay_sinh',
+          key: 'ngay_sinh',
+          width: 140,
+          align: 'center',
+          render: (date: string) => (date ? formatDate(date) : '-'),
+        },
     {
       title: 'Cấp bậc / Chức vụ',
       key: 'cap_bac_chuc_vu',

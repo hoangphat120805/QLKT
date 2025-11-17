@@ -5,6 +5,7 @@ import { Table, Alert, Typography, Space, message, Button } from 'antd';
 import { EditOutlined, HistoryOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import axiosInstance from '@/utils/axiosInstance';
+import { formatDate } from '@/lib/utils';
 import { apiClient } from '@/lib/api-client';
 import PersonnelRewardHistoryModal from './PersonnelRewardHistoryModal';
 
@@ -14,6 +15,7 @@ interface Personnel {
   id: string;
   ho_ten: string;
   cccd: string;
+  ngay_sinh?: string | null;
   gioi_tinh?: string | null;
   ngay_nhap_ngu?: string | Date | null;
   ngay_xuat_ngu?: string | Date | null;
@@ -200,6 +202,14 @@ export default function Step3SetTitlesKNCVSNXD({
           </div>
         );
       },
+    },
+    {
+      title: 'Ngày sinh',
+      dataIndex: 'ngay_sinh',
+      key: 'ngay_sinh',
+      width: 140,
+      align: 'center',
+      render: (date: string) => (date ? formatDate(date) : '-'),
     },
     {
       title: 'Cấp bậc / Chức vụ',

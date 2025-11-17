@@ -7,7 +7,7 @@ import type { ColumnsType } from 'antd/es/table';
 import axiosInstance from '@/utils/axiosInstance';
 import { apiClient } from '@/lib/api-client';
 import PersonnelRewardHistoryModal from './PersonnelRewardHistoryModal';
-import { se } from 'date-fns/locale';
+import { formatDate } from '@/lib/utils';
 
 const { Text } = Typography;
 
@@ -15,6 +15,7 @@ interface Personnel {
   id: string;
   ho_ten: string;
   cccd: string;
+  ngay_sinh?: string | null;
   cap_bac?: string;
   ChucVu?: {
     id: string;
@@ -326,6 +327,14 @@ export default function Step3SetTitlesCaNhanHangNam({
       },
     },
     {
+      title: 'Ngày sinh',
+      dataIndex: 'ngay_sinh',
+      key: 'ngay_sinh',
+      width: 140,
+      align: 'center',
+      render: (date: string) => (date ? formatDate(date) : '-'),
+    },
+    {
       title: 'Cấp bậc / Chức vụ',
       key: 'cap_bac_chuc_vu',
       width: 200,
@@ -452,7 +461,12 @@ export default function Step3SetTitlesCaNhanHangNam({
       <Modal
         title={
           <span>
-            <EyeOutlined /> Thông tin danh hiệu và NCKH - {selectedPersonnel?.ho_ten}
+            <EyeOutlined /> Thông tin danh hiệu và NCKH - {selectedPersonnel?.ho_ten}{' '}
+            {selectedPersonnel?.ngay_sinh ? (
+              <Text type="secondary" style={{ fontSize: '12px' }}>
+                ({formatDate(selectedPersonnel.ngay_sinh)})
+              </Text>
+            ) : null}
           </span>
         }
         open={modalVisible}

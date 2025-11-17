@@ -14,6 +14,7 @@ interface Personnel {
   id: string;
   ho_ten: string;
   cccd: string;
+  ngay_sinh?: string | null;
   cap_bac?: string;
   ngay_nhap_ngu?: string | Date | null;
   ngay_xuat_ngu?: string | Date | null;
@@ -379,6 +380,14 @@ export default function Step3SetTitlesNienHan({
           </div>
         );
       },
+    },
+    {
+      title: 'Ngày sinh',
+      dataIndex: 'ngay_sinh',
+      key: 'ngay_sinh',
+      width: 140,
+      align: 'center',
+      render: (date: string | undefined | null) => (date ? new Date(date).toLocaleDateString() : '-'),
     },
     {
       title: 'Cấp bậc / Chức vụ',
