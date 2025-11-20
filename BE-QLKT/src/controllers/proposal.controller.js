@@ -679,6 +679,41 @@ class ProposalController {
       });
     }
   }
+
+  /**
+   * GET /api/proposals/check-duplicate-unit
+   * Kiểm tra xem đơn vị đã có đề xuất cùng năm và cùng danh hiệu chưa
+   */
+  async checkDuplicateUnitAward(req, res) {
+    try {
+      const { don_vi_id, nam, danh_hieu, proposal_type } = req.query;
+
+      if (!don_vi_id || !nam || !danh_hieu || !proposal_type) {
+        return res.status(400).json({
+          success: false,
+          message: 'Thiếu thông tin: don_vi_id, nam, danh_hieu, proposal_type',
+        });
+      }
+
+      const result = await proposalService.checkDuplicateUnitAward(
+        don_vi_id,
+        parseInt(nam),
+        danh_hieu,
+        proposal_type
+      );
+
+      return res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      console.error('Check duplicate unit award error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Lỗi khi kiểm tra đề xuất trùng',
+      });
+    }
+  }
 }
 
 module.exports = new ProposalController();
