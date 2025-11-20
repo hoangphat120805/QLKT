@@ -24,6 +24,8 @@ interface Proposal {
   status: string;
   so_danh_hieu: number;
   so_thanh_tich: number;
+  so_nien_han: number;
+  so_cong_hien: number;
   nguoi_duyet: string | null;
   ngay_duyet: string | null;
   ghi_chu: string | null;
@@ -121,22 +123,28 @@ export default function ProposalReviewPage() {
       render: (date: string) => format(new Date(date), 'dd/MM/yyyy HH:mm'),
     },
     {
-      title: 'Danh hiệu',
-      dataIndex: 'so_danh_hieu',
-      key: 'so_danh_hieu',
+      title: 'Số lượng',
+      key: 'so_luong',
       align: 'center' as const,
-      render: (count: number) => (
-        <span style={{ fontSize: '14px', fontWeight: 500 }}>{count ?? 0}</span>
-      ),
-    },
-    {
-      title: 'Thành tích',
-      dataIndex: 'so_thanh_tich',
-      key: 'so_thanh_tich',
-      align: 'center' as const,
-      render: (count: number) => (
-        <span style={{ fontSize: '14px', fontWeight: 500 }}>{count ?? 0}</span>
-      ),
+      width: 100,
+      render: (_: any, record: Proposal) => {
+        let count = 0;
+        switch (record.loai_de_xuat) {
+          case 'NCKH':
+            count = record.so_thanh_tich ?? 0;
+            break;
+          case 'NIEN_HAN':
+            count = record.so_nien_han ?? 0;
+            break;
+          case 'CONG_HIEN':
+            count = record.so_cong_hien ?? 0;
+            break;
+          default:
+            count = record.so_danh_hieu ?? 0;
+            break;
+        }
+        return <span style={{ fontSize: '14px', fontWeight: 500 }}>{count}</span>;
+      },
     },
     {
       title: 'Trạng thái',

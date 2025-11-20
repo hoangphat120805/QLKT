@@ -1856,6 +1856,8 @@ class ProposalService {
           status: p.status,
           so_danh_hieu: Array.isArray(p.data_danh_hieu) ? p.data_danh_hieu.length : 0,
           so_thanh_tich: Array.isArray(p.data_thanh_tich) ? p.data_thanh_tich.length : 0,
+          so_nien_han: Array.isArray(p.data_nien_han) ? p.data_nien_han.length : 0,
+          so_cong_hien: Array.isArray(p.data_cong_hien) ? p.data_cong_hien.length : 0,
           nguoi_duyet: p.NguoiDuyet?.QuanNhan?.ho_ten || null,
           ngay_duyet: p.ngay_duyet,
           ghi_chu: p.ghi_chu,

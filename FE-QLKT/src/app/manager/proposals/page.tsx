@@ -50,6 +50,8 @@ interface Proposal {
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   so_danh_hieu: number;
   so_thanh_tich: number;
+  so_nien_han: number;
+  so_cong_hien: number;
   nguoi_duyet: string | null;
   ngay_duyet: string | null;
   ly_do: string | null;
@@ -210,21 +212,38 @@ export default function ManagerProposalsPage() {
       align: 'center' as const,
       width: 120,
       render: (_: any, record: Proposal) => {
-        if (record.loai_de_xuat === 'NCKH') {
-          // NCKH: hiển thị số thành tích khoa học
-          return (
-            <Tooltip title="Số đề tài/sáng kiến khoa học">
-              <span style={{ fontSize: '14px', fontWeight: 500 }}>{record.so_thanh_tich ?? 0}</span>
-            </Tooltip>
-          );
-        } else {
-          // Các loại khác: hiển thị số quân nhân (danh hiệu)
-          return (
-            <Tooltip title="Số quân nhân">
-              <span style={{ fontSize: '14px', fontWeight: 500 }}>{record.so_danh_hieu ?? 0}</span>
-            </Tooltip>
-          );
+        let count = 0;
+        let tooltip = '';
+
+        switch (record.loai_de_xuat) {
+          case 'NCKH':
+            count = record.so_thanh_tich ?? 0;
+            tooltip = 'Số đề tài/sáng kiến khoa học';
+            break;
+          case 'NIEN_HAN':
+            count = record.so_nien_han ?? 0;
+            tooltip = 'Số quân nhân đề xuất niên hạn';
+            break;
+          case 'CONG_HIEN':
+            count = record.so_cong_hien ?? 0;
+            tooltip = 'Số quân nhân đề xuất cống hiến';
+            break;
+          case 'DON_VI_HANG_NAM':
+            count = record.so_danh_hieu ?? 0;
+            tooltip = 'Số đơn vị đề xuất';
+            break;
+          case 'CA_NHAN_HANG_NAM':
+          default:
+            count = record.so_danh_hieu ?? 0;
+            tooltip = 'Số quân nhân đề xuất';
+            break;
         }
+
+        return (
+          <Tooltip title={tooltip}>
+            <span style={{ fontSize: '14px', fontWeight: 500 }}>{count}</span>
+          </Tooltip>
+        );
       },
     },
     {
