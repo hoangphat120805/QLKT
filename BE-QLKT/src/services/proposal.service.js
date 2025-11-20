@@ -4812,6 +4812,49 @@ class ProposalService {
       throw error;
     }
   }
+
+  /**
+   * Kiểm tra xem đơn vị đã có đề xuất trùng với năm và danh hiệu chưa
+   * @param {string} donViId - ID đơn vị
+   * @param {number} nam - Năm
+   * @param {string} danhHieu - Danh hiệu (ĐVQT, ĐVTT, BKBQP, BKTTCP)
+   * @param {string} proposalType - Loại đề xuất (DON_VI_HANG_NAM)
+   * @returns {Promise<Object>} - { exists: boolean, message?: string }
+   */
+  async checkDuplicateUnitAward(donViId, nam, danhHieu, proposalType) {
+    try {
+      const { prisma } = require('../models');
+
+      // DON_VI_HANG_NAM: Kiểm tra trong DanhHieuDonViHangNam
+      if (proposalType === 'DON_VI_HANG_NAM') {
+        const existing = await prisma.danhHieuDonViHangNam.findFirst({
+          where: {
+            nam: parseInt(nam),
+            danh_hieu: danhHieu,
+            OR: [{ co_quan_don_vi_id: donViId }, { don_vi_truc_thuoc_id: donViId }],
+          },
+          include: {
+            CoQuanDonVi: { select: { ten_don_vi: true } },
+            DonViTrucThuoc: { select: { ten_don_vi: true } },
+          },
+        });
+
+        if (existing) {
+          const tenDonVi =
+            existing.CoQuanDonVi?.ten_don_vi || existing.DonViTrucThuoc?.ten_don_vi || 'Đơn vị';
+          return {
+            exists: true,
+            message: `${tenDonVi} đã có danh hiệu ${danhHieu} cho năm ${nam}`,
+          };
+        }
+      }
+
+      return { exists: false };
+    } catch (error) {
+      console.error('Check duplicate unit award error:', error);
+      throw error;
+    }
+  }
 }
 
 module.exports = new ProposalService();

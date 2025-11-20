@@ -625,24 +625,15 @@ class UnitAnnualAwardService {
     }
 
     // Trả về danh sách danh hiệu và thống kê
-    const [danhHieuRecords, hoSoRecord] = await Promise.all([
-      prisma.danhHieuDonViHangNam.findMany({
-        where: {
-          OR: [{ co_quan_don_vi_id: donViId }, { don_vi_truc_thuoc_id: donViId }],
-          status: 'APPROVED',
-        },
-        orderBy: { nam: 'desc' },
-      }),
-      prisma.hoSoDonViHangNam.findFirst({
-        where: { OR: [{ co_quan_don_vi_id: donViId }, { don_vi_truc_thuoc_id: donViId }] },
-        orderBy: { nam: 'desc' },
-      }),
-    ]);
+    const danhHieuRecords = await prisma.danhHieuDonViHangNam.findMany({
+      where: {
+        OR: [{ co_quan_don_vi_id: donViId }, { don_vi_truc_thuoc_id: donViId }],
+        status: 'APPROVED',
+      },
+      orderBy: { nam: 'desc' },
+    });
 
-    return {
-      awards: danhHieuRecords,
-      summary: hoSoRecord,
-    };
+    return danhHieuRecords;
   }
 }
 

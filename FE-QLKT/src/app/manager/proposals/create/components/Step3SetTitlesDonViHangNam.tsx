@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Table, Select, Alert, Typography, Space, Tag, Button } from 'antd';
+import { Table, Select, Alert, Typography, Space, Tag, Button, message } from 'antd';
 import { EditOutlined, HistoryOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { apiClient } from '@/lib/api-client';
 import UnitAnnualAwardHistoryModal from './UnitAnnualAwardHistoryModal';
-import { all } from 'axios';
+import axiosInstance from '@/utils/axiosInstance';
 
 const { Text } = Typography;
 
@@ -183,7 +183,34 @@ export default function Step3SetTitlesDonViHangNam({
     return allOptions;
   };
 
-  const updateTitle = (id: string, field: string, value: any) => {
+  const updateTitle = async (id: string, field: string, value: any) => {
+    // Kiểm tra đề xuất trùng: cùng năm và cùng danh hiệu
+    if (field === 'danh_hieu' && value) {
+      const unitDetail = units.find(u => u.id === id);
+      if (unitDetail) {
+        try {
+          const response = await axiosInstance.get('/api/proposals/check-duplicate-unit', {
+            params: {
+              don_vi_id: id,
+              nam: nam,
+              danh_hieu: value,
+              proposal_type: 'DON_VI_HANG_NAM',
+            },
+          });
+
+          if (response.data.success && response.data.data.exists) {
+            message.warning(
+              `${unitDetail.ten_don_vi}: ${response.data.data.message}. Vui lòng kiểm tra lại.`
+            );
+            // Vẫn cho phép chọn nhưng cảnh báo
+          }
+        } catch (error: any) {
+          console.error('Error checking duplicate unit award:', error);
+          // Không block nếu lỗi API, chỉ log
+        }
+      }
+    }
+
     const newData = [...titleData];
     const index = newData.findIndex(d => d.don_vi_id === id);
     if (index >= 0) {
@@ -213,7 +240,7 @@ export default function Step3SetTitlesDonViHangNam({
       // Fetch awards for history modal (separate from profile)
       const awardsRes = await apiClient.getUnitAnnualAwards(record.id, nam);
       if (awardsRes.success && awardsRes.data) {
-        setUnitAnnualAwards(Array.isArray(awardsRes.data.awards) ? awardsRes.data.awards : []);
+        setUnitAnnualAwards(Array.isArray(awardsRes.data) ? awardsRes.data : []);
       } else {
         setUnitAnnualAwards([]);
       }
