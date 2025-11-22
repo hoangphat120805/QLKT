@@ -641,13 +641,7 @@ class ProfileService {
                 // Không reset, để kiểm tra CSTDTQ
               } else {
                 // Chưa có BKBQP, reset và bắt đầu cụm mới từ năm tiếp theo
-                if (currentSequence.length === 2) {
-                  // Có đúng 2 năm, reset và bắt đầu cụm mới
-                  currentSequence = [];
-                  lastCheckedYear = null;
-                  cstdcs_lien_tuc = 0;
-                  nam_cstdcs_lien_tuc = [];
-                } else if (currentSequence.length > 2) {
+                if (currentSequence.length > 2) {
                   // Có hơn 2 năm, reset và bắt đầu cụm mới từ năm thứ 3
                   // Bỏ qua 2 năm đầu (đã xử lý xong), bắt đầu từ năm thứ 3
                   const remainingYears = currentSequence.slice(2);

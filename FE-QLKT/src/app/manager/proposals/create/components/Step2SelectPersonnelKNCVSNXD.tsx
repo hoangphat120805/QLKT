@@ -61,6 +61,7 @@ export default function Step2SelectPersonnelKNCVSNXD({
   const [unitFilter, setUnitFilter] = useState<string>('ALL');
   const [localNam, setLocalNam] = useState<number | null>(nam);
   const [alreadyReceivedMap, setAlreadyReceivedMap] = useState<Record<string, boolean>>({});
+  const [receivedReasonMap, setReceivedReasonMap] = useState<Record<string, string>>({});
   const [checkingReceived, setCheckingReceived] = useState(false);
 
   useEffect(() => {
@@ -83,13 +84,17 @@ export default function Step2SelectPersonnelKNCVSNXD({
     try {
       setCheckingReceived(true);
       const receivedMap: Record<string, boolean> = {};
-      
+      const reasonMap: Record<string, string> = {};
+
       await Promise.all(
-        personnel.map(async (p) => {
+        personnel.map(async p => {
           try {
             const response = await axiosInstance.get(`/api/annual-rewards/check-knc-vsnxd/${p.id}`);
             if (response.data.success) {
               receivedMap[p.id] = response.data.data.alreadyReceived;
+              if (response.data.data.alreadyReceived && response.data.data.reason) {
+                reasonMap[p.id] = response.data.data.reason;
+              }
             }
           } catch (error) {
             console.error(`Error checking KNC VSNXD for ${p.id}:`, error);
@@ -97,8 +102,9 @@ export default function Step2SelectPersonnelKNCVSNXD({
           }
         })
       );
-      
+
       setAlreadyReceivedMap(receivedMap);
+      setReceivedReasonMap(reasonMap);
     } catch (error) {
       console.error('Error checking already received:', error);
     } finally {
@@ -370,17 +376,18 @@ export default function Step2SelectPersonnelKNCVSNXD({
     {
       title: 'Đủ điều kiện',
       key: 'du_dieu_kien',
-      width: 180,
+      width: 200,
       align: 'center',
       render: (_, record) => {
         if (alreadyReceivedMap[record.id]) {
+          const reason = receivedReasonMap[record.id] || 'Đã nhận';
           return (
-            <Tag color="green" style={{ fontSize: '13px', padding: '4px 12px' }}>
-              Đã nhận
+            <Tag color="red" style={{ fontSize: '13px', padding: '4px 12px' }}>
+              {reason}
             </Tag>
           );
         }
-        
+
         const eligibility = checkEligibleForKNCVSNXD(record);
         if (eligibility.eligible) {
           return (

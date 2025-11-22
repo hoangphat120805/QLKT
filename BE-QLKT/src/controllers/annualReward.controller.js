@@ -246,21 +246,44 @@ class AnnualRewardController {
 
   /**
    * Kiểm tra quân nhân đã nhận Huy chương Quân kỳ Quyết thắng chưa
+   * hoặc đang trong đề xuất PENDING/APPROVED
    * GET /api/annual-reward/check-hcqkqt/:personnelId
    */
   async checkAlreadyReceivedHCQKQT(req, res) {
     try {
       const { personnelId } = req.params;
 
-      const record = await prisma.huanChuongQuanKyQuyetThang.findFirst({
-        where: { quan_nhan_id: personnelId },
+      // Kiểm tra đang trong đề xuất PENDING hoặc APPROVED
+      const pendingOrApprovedProposal = await prisma.bangDeXuat.findFirst({
+        where: {
+          loai_de_xuat: 'HC_QKQT',
+          status: {
+            in: ['PENDING', 'APPROVED'],
+          },
+          data_nien_han: {
+            array_contains: [{ personnel_id: personnelId }],
+          },
+        },
       });
+
+      if (pendingOrApprovedProposal) {
+        const statusText =
+          pendingOrApprovedProposal.status === 'PENDING' ? 'Đang chờ duyệt' : 'Đã nhận';
+        return res.status(200).json({
+          success: true,
+          data: {
+            alreadyReceived: true,
+            reason: statusText,
+            proposal: pendingOrApprovedProposal,
+          },
+        });
+      }
 
       return res.status(200).json({
         success: true,
         data: {
-          alreadyReceived: !!record,
-          record: record || null,
+          alreadyReceived: false,
+          reason: null,
         },
       });
     } catch (error) {
@@ -274,21 +297,44 @@ class AnnualRewardController {
 
   /**
    * Kiểm tra quân nhân đã nhận Kỷ niệm chương VSNXD QĐNDVN chưa
+   * hoặc đang trong đề xuất PENDING/APPROVED
    * GET /api/annual-reward/check-knc-vsnxd/:personnelId
    */
   async checkAlreadyReceivedKNCVSNXD(req, res) {
     try {
       const { personnelId } = req.params;
 
-      const record = await prisma.kyNiemChuongVSNXDQDNDVN.findFirst({
-        where: { quan_nhan_id: personnelId },
+      // Kiểm tra đang trong đề xuất PENDING hoặc APPROVED
+      const pendingOrApprovedProposal = await prisma.bangDeXuat.findFirst({
+        where: {
+          loai_de_xuat: 'KNC_VSNXD_QDNDVN',
+          status: {
+            in: ['PENDING', 'APPROVED'],
+          },
+          data_nien_han: {
+            array_contains: [{ personnel_id: personnelId }],
+          },
+        },
       });
+
+      if (pendingOrApprovedProposal) {
+        const statusText =
+          pendingOrApprovedProposal.status === 'PENDING' ? 'Đang chờ duyệt' : 'Đã nhận';
+        return res.status(200).json({
+          success: true,
+          data: {
+            alreadyReceived: true,
+            reason: statusText,
+            proposal: pendingOrApprovedProposal,
+          },
+        });
+      }
 
       return res.status(200).json({
         success: true,
         data: {
-          alreadyReceived: !!record,
-          record: record || null,
+          alreadyReceived: false,
+          reason: null,
         },
       });
     } catch (error) {
