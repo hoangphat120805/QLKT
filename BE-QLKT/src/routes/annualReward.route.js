@@ -41,6 +41,23 @@ const pdfUpload = multer({
 });
 
 router.get('/', verifyToken, requireAuth, annualRewardController.getAnnualRewards);
+
+// Kiểm tra quân nhân đã nhận HC QKQT chưa
+router.get(
+  '/check-hcqkqt/:personnelId',
+  verifyToken,
+  requireAuth,
+  annualRewardController.checkAlreadyReceivedHCQKQT
+);
+
+// Kiểm tra quân nhân đã nhận KNC VSNXD chưa
+router.get(
+  '/check-knc-vsnxd/:personnelId',
+  verifyToken,
+  requireAuth,
+  annualRewardController.checkAlreadyReceivedKNCVSNXD
+);
+
 router.post(
   '/',
   verifyToken,

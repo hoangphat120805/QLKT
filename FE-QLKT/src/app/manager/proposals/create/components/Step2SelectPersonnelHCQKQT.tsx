@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Table, Input, Select, Space, Alert, Typography, InputNumber, message } from 'antd';
+import { Table, Input, Select, Space, Alert, Typography, InputNumber, message, Tag } from 'antd';
 import { SearchOutlined, TrophyOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import axiosInstance from '@/utils/axiosInstance';
@@ -59,6 +59,8 @@ export default function Step2SelectPersonnelHCQKQT({
   const [searchText, setSearchText] = useState('');
   const [unitFilter, setUnitFilter] = useState<string>('ALL');
   const [localNam, setLocalNam] = useState<number | null>(nam);
+  const [alreadyReceivedMap, setAlreadyReceivedMap] = useState<Record<string, boolean>>({});
+  const [checkingReceived, setCheckingReceived] = useState(false);
 
   useEffect(() => {
     fetchPersonnel();
@@ -68,6 +70,40 @@ export default function Step2SelectPersonnelHCQKQT({
   useEffect(() => {
     setLocalNam(nam);
   }, [nam]);
+
+  // Kiểm tra quân nhân đã nhận HC QKQT chưa
+  useEffect(() => {
+    if (personnel.length > 0) {
+      checkAlreadyReceived();
+    }
+  }, [personnel]);
+
+  const checkAlreadyReceived = async () => {
+    try {
+      setCheckingReceived(true);
+      const receivedMap: Record<string, boolean> = {};
+
+      await Promise.all(
+        personnel.map(async p => {
+          try {
+            const response = await axiosInstance.get(`/api/annual-rewards/check-hcqkqt/${p.id}`);
+            if (response.data.success) {
+              receivedMap[p.id] = response.data.data.alreadyReceived;
+            }
+          } catch (error) {
+            console.error(`Error checking HC QKQT for ${p.id}:`, error);
+            receivedMap[p.id] = false;
+          }
+        })
+      );
+
+      setAlreadyReceivedMap(receivedMap);
+    } catch (error) {
+      console.error('Error checking already received:', error);
+    } finally {
+      setCheckingReceived(false);
+    }
+  };
 
   const fetchPersonnel = async () => {
     try {
@@ -80,7 +116,7 @@ export default function Step2SelectPersonnelHCQKQT({
       });
 
       if (response.data.success) {
-        const personnelData = response.data.data?.personnel || response.data.data || [];
+        const personnelData = response.data.data?.personnel || [];
         setPersonnel(personnelData);
         if (personnelData.length === 0) {
           message.warning('Không có quân nhân nào trong đơn vị của bạn.');
@@ -173,6 +209,11 @@ export default function Step2SelectPersonnelHCQKQT({
 
   // Kiểm tra quân nhân có đủ điều kiện đề xuất HC_QKQT không
   const checkEligibleForHCQKQT = (record: Personnel): { eligible: boolean; reason?: string } => {
+    // Kiểm tra đã nhận chưa
+    if (alreadyReceivedMap[record.id]) {
+      return { eligible: false, reason: 'Đã nhận' };
+    }
+
     // Kiểm tra ngày nhập ngũ
     if (!record.ngay_nhap_ngu) {
       return { eligible: false, reason: 'Chưa cập nhật ngày nhập ngũ' };
@@ -314,6 +355,14 @@ export default function Step2SelectPersonnelHCQKQT({
       width: 180,
       align: 'center',
       render: (_, record) => {
+        if (alreadyReceivedMap[record.id]) {
+          return (
+            <Tag color="green" style={{ fontSize: '13px', padding: '4px 12px' }}>
+              Đã nhận
+            </Tag>
+          );
+        }
+
         const eligibility = checkEligibleForHCQKQT(record);
         if (eligibility.eligible) {
           return (

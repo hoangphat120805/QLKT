@@ -87,14 +87,14 @@ export default function DecisionModal({
         }
       } else {
         // Create mode
-      form.resetFields();
-      setFileList([]);
-      setSelectedDecision(null);
-      setIsEditing(false);
-      if (loaiKhenThuong) {
-        form.setFieldsValue({ loai_khen_thuong: loaiKhenThuong });
+        form.resetFields();
+        setFileList([]);
+        setSelectedDecision(null);
+        setIsEditing(false);
+        if (loaiKhenThuong) {
+          form.setFieldsValue({ loai_khen_thuong: loaiKhenThuong });
+        }
       }
-    }
     }
   }, [visible, loaiKhenThuong, initialDecision, form]);
 
@@ -112,7 +112,9 @@ export default function DecisionModal({
         setAutocompleteOptions(
           response.data.map((item: any) => ({
             value: item.so_quyet_dinh,
-            label: `${item.so_quyet_dinh} - ${item.nguoi_ky} (${dayjs(item.ngay_ky).format('DD/MM/YYYY')})`,
+            label: `${item.so_quyet_dinh} - ${item.nguoi_ky} (${dayjs(item.ngay_ky).format(
+              'DD/MM/YYYY'
+            )})`,
           }))
         );
       } else {
@@ -250,9 +252,11 @@ export default function DecisionModal({
     { label: 'Cá nhân Hằng năm', value: 'CA_NHAN_HANG_NAM' },
     { label: 'Đơn vị Hằng năm', value: 'DON_VI_HANG_NAM' },
     { label: 'Niên hạn', value: 'NIEN_HAN' },
+    { label: 'Huy chương Quân kỳ Quyết thắng', value: 'HC_QKQT' },
+    { label: 'Kỷ niệm chương Vì sự nghiệp xây dựng QĐNDVN', value: 'KNC_VSNXD_QDNDVN' },
     { label: 'Cống hiến', value: 'CONG_HIEN' },
     { label: 'Đột xuất', value: 'DOT_XUAT' },
-    { label: 'ĐTKH/SKKH', value: 'NCKH' },
+    { label: 'Thành tích Khoa học', value: 'NCKH' },
   ];
 
   return (
@@ -260,7 +264,9 @@ export default function DecisionModal({
       title={
         <Space>
           <FileTextOutlined />
-          <span>{initialDecision ? 'Sửa Quyết định Khen thưởng' : 'Thêm Số Quyết định Khen thưởng'}</span>
+          <span>
+            {initialDecision ? 'Sửa Quyết định Khen thưởng' : 'Thêm Số Quyết định Khen thưởng'}
+          </span>
         </Space>
       }
       open={visible}
@@ -295,7 +301,11 @@ export default function DecisionModal({
             icon={<SaveOutlined />}
             style={{ background: '#52c41a', borderColor: '#52c41a' }}
           >
-            {initialDecision ? 'Lưu thay đổi' : selectedDecision ? 'Lưu thay đổi' : 'Thêm mới và Lưu'}
+            {initialDecision
+              ? 'Lưu thay đổi'
+              : selectedDecision
+              ? 'Lưu thay đổi'
+              : 'Thêm mới và Lưu'}
           </Button>
         ),
       ]}
@@ -320,26 +330,35 @@ export default function DecisionModal({
             style={{ width: '100%' }}
             disabled={!!initialDecision}
           >
-            <Input size="large" disabled={!!initialDecision} style={{ fontSize: '14px', height: '40px' }} />
+            <Input
+              size="large"
+              disabled={!!initialDecision}
+              style={{ fontSize: '14px', height: '40px' }}
+            />
           </AutoComplete>
         </Form.Item>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-        <Form.Item
-          name="nam"
-          label="Năm"
-          rules={[{ required: true, message: 'Vui lòng nhập năm' }]}
-        >
+          <Form.Item
+            name="nam"
+            label="Năm"
+            rules={[{ required: true, message: 'Vui lòng nhập năm' }]}
+          >
             <Input type="number" placeholder="2024" size="large" />
-        </Form.Item>
+          </Form.Item>
 
-        <Form.Item
-          name="ngay_ky"
-          label="Ngày ký quyết định"
-          rules={[{ required: true, message: 'Vui lòng chọn ngày ký' }]}
-        >
-            <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} placeholder="Chọn ngày ký" size="large" />
-        </Form.Item>
+          <Form.Item
+            name="ngay_ky"
+            label="Ngày ký quyết định"
+            rules={[{ required: true, message: 'Vui lòng chọn ngày ký' }]}
+          >
+            <DatePicker
+              format="DD/MM/YYYY"
+              style={{ width: '100%' }}
+              placeholder="Chọn ngày ký"
+              size="large"
+            />
+          </Form.Item>
         </div>
 
         <Form.Item
@@ -377,11 +396,11 @@ export default function DecisionModal({
               <UploadOutlined style={{ fontSize: 48, color: '#1890ff' }} />
             </p>
             <p className="ant-upload-text">
-              {selectedDecision?.file_path ? 'Kéo thả file để thay đổi hoặc click để chọn file' : 'Kéo thả file vào đây hoặc click để chọn file'}
+              {selectedDecision?.file_path
+                ? 'Kéo thả file để thay đổi hoặc click để chọn file'
+                : 'Kéo thả file vào đây hoặc click để chọn file'}
             </p>
-            <p className="ant-upload-hint">
-              Chỉ chấp nhận file PDF
-            </p>
+            <p className="ant-upload-hint">Chỉ chấp nhận file PDF</p>
           </Upload.Dragger>
           {selectedDecision?.file_path && !fileList.length && (
             <div style={{ marginTop: 8, color: '#52c41a', textAlign: 'center' }}>

@@ -1,5 +1,6 @@
 const annualRewardService = require('../services/annualReward.service');
 const profileService = require('../services/profile.service');
+const { prisma } = require('../models');
 
 class AnnualRewardController {
   async getAnnualRewards(req, res) {
@@ -239,6 +240,62 @@ class AnnualRewardController {
       return res.status(400).json({
         success: false,
         message: error.message || 'Import danh hiệu hằng năm thất bại',
+      });
+    }
+  }
+
+  /**
+   * Kiểm tra quân nhân đã nhận Huy chương Quân kỳ Quyết thắng chưa
+   * GET /api/annual-reward/check-hcqkqt/:personnelId
+   */
+  async checkAlreadyReceivedHCQKQT(req, res) {
+    try {
+      const { personnelId } = req.params;
+
+      const record = await prisma.huanChuongQuanKyQuyetThang.findFirst({
+        where: { quan_nhan_id: personnelId },
+      });
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          alreadyReceived: !!record,
+          record: record || null,
+        },
+      });
+    } catch (error) {
+      console.error('Check HC QKQT error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Lỗi khi kiểm tra trạng thái nhận HC QKQT',
+      });
+    }
+  }
+
+  /**
+   * Kiểm tra quân nhân đã nhận Kỷ niệm chương VSNXD QĐNDVN chưa
+   * GET /api/annual-reward/check-knc-vsnxd/:personnelId
+   */
+  async checkAlreadyReceivedKNCVSNXD(req, res) {
+    try {
+      const { personnelId } = req.params;
+
+      const record = await prisma.kyNiemChuongVSNXDQDNDVN.findFirst({
+        where: { quan_nhan_id: personnelId },
+      });
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          alreadyReceived: !!record,
+          record: record || null,
+        },
+      });
+    } catch (error) {
+      console.error('Check KNC VSNXD error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Lỗi khi kiểm tra trạng thái nhận KNC VSNXD QĐNDVN',
       });
     }
   }

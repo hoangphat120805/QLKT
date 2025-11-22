@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Table, Input, Select, Space, Alert, Typography, InputNumber, message } from 'antd';
+import { Table, Input, Select, Space, Alert, Typography, InputNumber, message, Tag } from 'antd';
 import { SearchOutlined, TrophyOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import axiosInstance from '@/utils/axiosInstance';
@@ -60,6 +60,8 @@ export default function Step2SelectPersonnelKNCVSNXD({
   const [searchText, setSearchText] = useState('');
   const [unitFilter, setUnitFilter] = useState<string>('ALL');
   const [localNam, setLocalNam] = useState<number | null>(nam);
+  const [alreadyReceivedMap, setAlreadyReceivedMap] = useState<Record<string, boolean>>({});
+  const [checkingReceived, setCheckingReceived] = useState(false);
 
   useEffect(() => {
     fetchPersonnel();
@@ -69,6 +71,40 @@ export default function Step2SelectPersonnelKNCVSNXD({
   useEffect(() => {
     setLocalNam(nam);
   }, [nam]);
+
+  // Kiểm tra quân nhân đã nhận KNC VSNXD chưa
+  useEffect(() => {
+    if (personnel.length > 0) {
+      checkAlreadyReceived();
+    }
+  }, [personnel]);
+
+  const checkAlreadyReceived = async () => {
+    try {
+      setCheckingReceived(true);
+      const receivedMap: Record<string, boolean> = {};
+      
+      await Promise.all(
+        personnel.map(async (p) => {
+          try {
+            const response = await axiosInstance.get(`/api/annual-rewards/check-knc-vsnxd/${p.id}`);
+            if (response.data.success) {
+              receivedMap[p.id] = response.data.data.alreadyReceived;
+            }
+          } catch (error) {
+            console.error(`Error checking KNC VSNXD for ${p.id}:`, error);
+            receivedMap[p.id] = false;
+          }
+        })
+      );
+      
+      setAlreadyReceivedMap(receivedMap);
+    } catch (error) {
+      console.error('Error checking already received:', error);
+    } finally {
+      setCheckingReceived(false);
+    }
+  };
 
   const fetchPersonnel = async () => {
     try {
@@ -174,6 +210,11 @@ export default function Step2SelectPersonnelKNCVSNXD({
 
   // Kiểm tra quân nhân có đủ điều kiện đề xuất KNC_VSNXD_QDNDVN không
   const checkEligibleForKNCVSNXD = (record: Personnel): { eligible: boolean; reason?: string } => {
+    // Kiểm tra đã nhận chưa
+    if (alreadyReceivedMap[record.id]) {
+      return { eligible: false, reason: 'Đã nhận' };
+    }
+
     // Kiểm tra giới tính
     if (!record.gioi_tinh || (record.gioi_tinh !== 'NAM' && record.gioi_tinh !== 'NU')) {
       return { eligible: false, reason: 'Chưa cập nhật giới tính' };
@@ -332,6 +373,14 @@ export default function Step2SelectPersonnelKNCVSNXD({
       width: 180,
       align: 'center',
       render: (_, record) => {
+        if (alreadyReceivedMap[record.id]) {
+          return (
+            <Tag color="green" style={{ fontSize: '13px', padding: '4px 12px' }}>
+              Đã nhận
+            </Tag>
+          );
+        }
+        
         const eligibility = checkEligibleForKNCVSNXD(record);
         if (eligibility.eligible) {
           return (

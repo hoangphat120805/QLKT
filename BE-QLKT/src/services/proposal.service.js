@@ -803,17 +803,6 @@ class ProposalService {
         throw new Error('Dữ liệu đề xuất không hợp lệ');
       }
 
-      // Validate năm đề xuất cho DON_VI_HANG_NAM (chỉ cho phép năm sau)
-      if (type === 'DON_VI_HANG_NAM') {
-        const currentYear = new Date().getFullYear();
-        const nextYear = currentYear + 1;
-        if (!nam || parseInt(nam) !== nextYear) {
-          throw new Error(
-            `Đề xuất khen thưởng đơn vị hằng năm chỉ được phép đề xuất cho năm ${nextYear} (năm sau)`
-          );
-        }
-      }
-
       // Fetch thông tin quân nhân để lấy họ tên, đơn vị (chỉ cho đề xuất cá nhân)
       // Với DON_VI_HANG_NAM, titleData sẽ có don_vi_id thay vì personnel_id
       let personnelList = [];
@@ -2037,6 +2026,9 @@ class ProposalService {
           ...dataCongHien.map(d => d.personnel_id).filter(Boolean),
         ];
 
+        // Khởi tạo personnelMap trước để tránh lỗi undefined
+        const personnelMap = {};
+
         if (allPersonnelIds.length > 0) {
           // Fetch thông tin quân nhân và đơn vị
           const personnelList = await prisma.quanNhan.findMany({
@@ -2080,7 +2072,6 @@ class ProposalService {
             },
           });
 
-          const personnelMap = {};
           personnelList.forEach(p => {
             personnelMap[p.id] = p;
           });
@@ -2165,6 +2156,45 @@ class ProposalService {
 
           // Enrich dataNienHan nếu thiếu thông tin
           dataNienHan = dataNienHan.map(item => {
+            const personnel = personnelMap[item.personnel_id];
+            const enrichedItem = {
+              ...item,
+              ho_ten: item.ho_ten || personnel?.ho_ten || '',
+              nam: item.nam || proposal.createdAt?.getFullYear() || new Date().getFullYear(),
+              // Chỉ lấy từ dataJSON, không lấy từ personnel hiện tại (đề xuất có thể từ quá khứ)
+              cap_bac: item.cap_bac !== undefined && item.cap_bac !== null ? item.cap_bac : null,
+              chuc_vu: item.chuc_vu !== undefined && item.chuc_vu !== null ? item.chuc_vu : null,
+            };
+
+            // Thêm thông tin đơn vị nếu chưa có (theo cấu trúc mới)
+            // Luôn lưu cả hai nếu quân nhân có dữ liệu
+            if (!item.co_quan_don_vi && personnel?.CoQuanDonVi) {
+              enrichedItem.co_quan_don_vi = {
+                id: personnel.CoQuanDonVi.id,
+                ten_co_quan_don_vi: personnel.CoQuanDonVi.ten_don_vi,
+                ma_co_quan_don_vi: personnel.CoQuanDonVi.ma_don_vi,
+              };
+            }
+            if (!item.don_vi_truc_thuoc && personnel?.DonViTrucThuoc) {
+              enrichedItem.don_vi_truc_thuoc = {
+                id: personnel.DonViTrucThuoc.id,
+                ten_don_vi: personnel.DonViTrucThuoc.ten_don_vi,
+                ma_don_vi: personnel.DonViTrucThuoc.ma_don_vi,
+                co_quan_don_vi: personnel.DonViTrucThuoc.CoQuanDonVi
+                  ? {
+                      id: personnel.DonViTrucThuoc.CoQuanDonVi.id,
+                      ten_don_vi_truc: personnel.DonViTrucThuoc.CoQuanDonVi.ten_don_vi,
+                      ma_don_vi: personnel.DonViTrucThuoc.CoQuanDonVi.ma_don_vi,
+                    }
+                  : null,
+              };
+            }
+
+            return enrichedItem;
+          });
+
+          // Enrich dataCongHien nếu thiếu thông tin
+          dataCongHien = dataCongHien.map(item => {
             const personnel = personnelMap[item.personnel_id];
             const enrichedItem = {
               ...item,
@@ -2352,47 +2382,6 @@ class ProposalService {
             }
           }
         }
-      }
-
-      // Enrich dataCongHien nếu thiếu thông tin
-      if (dataCongHien.length > 0) {
-        dataCongHien = dataCongHien.map(item => {
-          const personnel = personnelMap[item.personnel_id];
-          const enrichedItem = {
-            ...item,
-            ho_ten: item.ho_ten || personnel?.ho_ten || '',
-            nam: item.nam || proposal.createdAt?.getFullYear() || new Date().getFullYear(),
-            // Chỉ lấy từ dataJSON, không lấy từ personnel hiện tại (đề xuất có thể từ quá khứ)
-            cap_bac: item.cap_bac !== undefined && item.cap_bac !== null ? item.cap_bac : null,
-            chuc_vu: item.chuc_vu !== undefined && item.chuc_vu !== null ? item.chuc_vu : null,
-          };
-
-          // Thêm thông tin đơn vị nếu chưa có (theo cấu trúc mới)
-          // Luôn lưu cả hai nếu quân nhân có dữ liệu
-          if (!item.co_quan_don_vi && personnel?.CoQuanDonVi) {
-            enrichedItem.co_quan_don_vi = {
-              id: personnel.CoQuanDonVi.id,
-              ten_co_quan_don_vi: personnel.CoQuanDonVi.ten_don_vi,
-              ma_co_quan_don_vi: personnel.CoQuanDonVi.ma_don_vi,
-            };
-          }
-          if (!item.don_vi_truc_thuoc && personnel?.DonViTrucThuoc) {
-            enrichedItem.don_vi_truc_thuoc = {
-              id: personnel.DonViTrucThuoc.id,
-              ten_don_vi: personnel.DonViTrucThuoc.ten_don_vi,
-              ma_don_vi: personnel.DonViTrucThuoc.ma_don_vi,
-              co_quan_don_vi: personnel.DonViTrucThuoc.CoQuanDonVi
-                ? {
-                    id: personnel.DonViTrucThuoc.CoQuanDonVi.id,
-                    ten_don_vi_truc: personnel.DonViTrucThuoc.CoQuanDonVi.ten_don_vi,
-                    ma_don_vi: personnel.DonViTrucThuoc.CoQuanDonVi.ma_don_vi,
-                  }
-                : null,
-            };
-          }
-
-          return enrichedItem;
-        });
       }
 
       // Nếu proposal đã được approve, enrich với thông tin file PDF từ database cho dataCongHien
