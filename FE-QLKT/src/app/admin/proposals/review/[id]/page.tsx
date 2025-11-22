@@ -493,6 +493,8 @@ export default function ProposalDetailPage() {
             const totalThanhTich = importedData.total_thanh_tich || 0;
             const importedNienHan = importedData.imported_nien_han || 0;
             const totalNienHan = importedData.total_nien_han || 0;
+            const importedCongHien = importedData.imported_cong_hien || 0;
+            const totalCongHien = importedData.total_cong_hien || 0;
 
             // Tạo thông báo dựa trên loại đề xuất
             let successMessage = 'Đã phê duyệt đề xuất thành công. ';
@@ -503,21 +505,21 @@ export default function ProposalDetailPage() {
               loaiDeXuat === 'HC_QKQT' ||
               loaiDeXuat === 'KNC_VSNXD_QDNDVN'
             ) {
-              successMessage += `Import ${importedNienHan}/${totalNienHan} niên hạn.`;
+              successMessage += `Đã thêm ${importedNienHan}/${totalNienHan} niên hạn thành công.`;
             } else if (loaiDeXuat === 'CONG_HIEN') {
-              successMessage += `Import ${importedDanhHieu}/${totalDanhHieu} cống hiến.`;
+              successMessage += `Đã thêm ${importedCongHien}/${totalCongHien} cống hiến thành công.`;
             } else if (loaiDeXuat === 'NCKH') {
-              successMessage += `Import ${importedThanhTich}/${totalThanhTich} thành tích khoa học.`;
+              successMessage += `Đã thêm ${importedThanhTich}/${totalThanhTich} thành tích khoa học thành công.`;
             } else if (loaiDeXuat === 'DON_VI_HANG_NAM') {
-              successMessage += `Import ${importedDanhHieu}/${totalDanhHieu} danh hiệu đơn vị.`;
+              successMessage += `Đã thêm ${importedDanhHieu}/${totalDanhHieu} danh hiệu đơn vị thành công.`;
             } else {
               // CA_NHAN_HANG_NAM hoặc các loại khác
               if (importedDanhHieu > 0 && importedThanhTich > 0) {
-                successMessage += `Import ${importedDanhHieu}/${totalDanhHieu} danh hiệu và ${importedThanhTich}/${totalThanhTich} thành tích.`;
+                successMessage += `Đã thêm ${importedDanhHieu}/${totalDanhHieu} danh hiệu và ${importedThanhTich}/${totalThanhTich} thành tích thành công.`;
               } else if (importedDanhHieu > 0) {
-                successMessage += `Import ${importedDanhHieu}/${totalDanhHieu} danh hiệu.`;
+                successMessage += `Đã thêm ${importedDanhHieu}/${totalDanhHieu} danh hiệu thành công.`;
               } else if (importedThanhTich > 0) {
-                successMessage += `Import ${importedThanhTich}/${totalThanhTich} thành tích.`;
+                successMessage += `Đã thêm ${importedThanhTich}/${totalThanhTich} thành tích thành công.`;
               }
             }
 

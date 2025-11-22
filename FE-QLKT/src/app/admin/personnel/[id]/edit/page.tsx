@@ -282,7 +282,6 @@ export default function PersonnelEditPage() {
                 layout="vertical"
                 onFinish={onFinish}
                 autoComplete="off"
-                requiredMark="optional"
               >
                 {/* Thông tin cơ bản */}
                 <Title level={5} className="!mb-4 !mt-0 border-b pb-2">
@@ -330,16 +329,6 @@ export default function PersonnelEditPage() {
                       disabled={loading}
                       style={{ width: '100%' }}
                     />
-                  </Form.Item>
-
-                  <Form.Item name="cap_bac" label="Cấp bậc" required={false}>
-                    <Select placeholder="Chọn cấp bậc" disabled={loading} size="large" allowClear>
-                      {MILITARY_RANKS.map(rank => (
-                        <Select.Option key={rank} value={rank}>
-                          {rank}
-                        </Select.Option>
-                      ))}
-                    </Select>
                   </Form.Item>
 
                   <Form.Item name="so_dien_thoai" label="Số điện thoại">

@@ -26,6 +26,7 @@ import {
   DownloadOutlined,
   PlusOutlined,
   DeleteOutlined,
+  UnorderedListOutlined,
 } from '@ant-design/icons';
 import { format } from 'date-fns';
 import Link from 'next/link';
@@ -221,6 +222,8 @@ export default function ManagerProposalsPage() {
             tooltip = 'Số đề tài/sáng kiến khoa học';
             break;
           case 'NIEN_HAN':
+          case 'HC_QKQT':
+          case 'KNC_VSNXD_QDNDVN':
             count = record.so_nien_han ?? 0;
             tooltip = 'Số quân nhân đề xuất niên hạn';
             break;
@@ -323,7 +326,7 @@ export default function ManagerProposalsPage() {
       key: 'all',
       label: (
         <span>
-          <HomeOutlined /> Tất cả ({proposals.length})
+          <UnorderedListOutlined /> Tất cả ({proposals.length})
         </span>
       ),
     },

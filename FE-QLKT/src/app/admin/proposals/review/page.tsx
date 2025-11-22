@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, Tabs, Table, Button, Badge, Typography, Breadcrumb, Space, Spin, Empty } from 'antd';
+import { Card, Tabs, Table, Button, Badge, Typography, Breadcrumb, Space, Spin, Empty, Tag } from 'antd';
 import {
   HomeOutlined,
   EyeOutlined,
@@ -10,6 +10,7 @@ import {
   CheckCircleOutlined,
   WarningOutlined,
   LoadingOutlined,
+  UnorderedListOutlined,
 } from '@ant-design/icons';
 import { format } from 'date-fns';
 import { apiClient } from '@/lib/api-client';
@@ -37,7 +38,7 @@ export default function ProposalReviewPage() {
   const router = useRouter();
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('pending');
+  const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
     fetchProposals();
@@ -65,6 +66,7 @@ export default function ProposalReviewPage() {
     if (activeTab === 'pending') return p.status === 'PENDING';
     if (activeTab === 'approved') return p.status === 'APPROVED';
     if (activeTab === 'rejected') return p.status === 'REJECTED';
+    if (activeTab === 'all') return true;
     return true;
   });
 
@@ -114,7 +116,23 @@ export default function ProposalReviewPage() {
       title: 'Loại đề xuất',
       dataIndex: 'loai_de_xuat',
       key: 'loai_de_xuat',
-      render: (loaiDeXuat: string) => getProposalTypeName(loaiDeXuat),
+      align: 'center' as const,
+      render: (loaiDeXuat: string) => {
+        const typeName = getProposalTypeName(loaiDeXuat);
+        const colorMap: Record<string, string> = {
+          CA_NHAN_HANG_NAM: 'blue',
+          DON_VI_HANG_NAM: 'cyan',
+          NIEN_HAN: 'purple',
+          HC_QKQT: 'gold',
+          KNC_VSNXD_QDNDVN: 'orange',
+          CONG_HIEN: 'green',
+          NCKH: 'volcano',
+          DOT_XUAT: 'red',
+        };
+        return (
+          <Tag color={colorMap[loaiDeXuat] || 'default'}>{typeName}</Tag>
+        );
+      },
     },
     {
       title: 'Ngày gửi',
@@ -134,6 +152,8 @@ export default function ProposalReviewPage() {
             count = record.so_thanh_tich ?? 0;
             break;
           case 'NIEN_HAN':
+          case 'HC_QKQT':
+          case 'KNC_VSNXD_QDNDVN':
             count = record.so_nien_han ?? 0;
             break;
           case 'CONG_HIEN':
@@ -169,6 +189,15 @@ export default function ProposalReviewPage() {
   ];
 
   const tabItems = [
+    {
+      key: 'all',
+      label: (
+        <span>
+          <UnorderedListOutlined style={{ marginRight: 8 }} />
+          Tất cả ({proposals.length})
+        </span>
+      ),
+    },
     {
       key: 'pending',
       label: (
@@ -221,7 +250,9 @@ export default function ProposalReviewPage() {
           children: (
             <Card
               title={
-                activeTab === 'pending'
+                activeTab === 'all'
+                  ? 'Tất cả đề xuất'
+                  : activeTab === 'pending'
                   ? 'Đề xuất đang chờ phê duyệt'
                   : activeTab === 'approved'
                   ? 'Đề xuất đã được phê duyệt'
@@ -229,7 +260,9 @@ export default function ProposalReviewPage() {
               }
               extra={
                 <Paragraph style={{ margin: 0, color: '#666' }}>
-                  {activeTab === 'pending'
+                  {activeTab === 'all'
+                    ? 'Danh sách tất cả các đề xuất khen thưởng'
+                    : activeTab === 'pending'
                     ? "Nhấn 'Xem và Duyệt' để kiểm tra và phê duyệt đề xuất"
                     : activeTab === 'approved'
                     ? 'Danh sách các đề xuất đã được phê duyệt và import vào hệ thống'
@@ -249,7 +282,9 @@ export default function ProposalReviewPage() {
                     <div>
                       <div style={{ fontWeight: 500 }}>Không có đề xuất nào</div>
                       <div style={{ fontSize: '14px', marginTop: '4px' }}>
-                        {activeTab === 'pending'
+                        {activeTab === 'all'
+                          ? 'Chưa có đề xuất nào trong hệ thống'
+                          : activeTab === 'pending'
                           ? 'Chưa có đề xuất chờ phê duyệt'
                           : activeTab === 'approved'
                           ? 'Chưa có đề xuất nào được phê duyệt'

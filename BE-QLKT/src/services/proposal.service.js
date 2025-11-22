@@ -1848,22 +1848,99 @@ class ProposalService {
       ]);
 
       return {
-        proposals: proposals.map(p => ({
-          id: p.id,
-          loai_de_xuat: p.loai_de_xuat,
-          nam: p.nam,
-          don_vi: (p.DonViTrucThuoc || p.CoQuanDonVi)?.ten_don_vi || '-',
-          nguoi_de_xuat: p.NguoiDeXuat.QuanNhan?.ho_ten || p.NguoiDeXuat.username,
-          status: p.status,
-          so_danh_hieu: Array.isArray(p.data_danh_hieu) ? p.data_danh_hieu.length : 0,
-          so_thanh_tich: Array.isArray(p.data_thanh_tich) ? p.data_thanh_tich.length : 0,
-          so_nien_han: Array.isArray(p.data_nien_han) ? p.data_nien_han.length : 0,
-          so_cong_hien: Array.isArray(p.data_cong_hien) ? p.data_cong_hien.length : 0,
-          nguoi_duyet: p.NguoiDuyet?.QuanNhan?.ho_ten || null,
-          ngay_duyet: p.ngay_duyet,
-          ghi_chu: p.ghi_chu,
-          createdAt: p.createdAt,
-        })),
+        proposals: proposals.map(p => {
+          // Parse data_nien_han nếu là string (cho tương thích với dữ liệu cũ)
+          let dataNienHan = p.data_nien_han;
+          if (typeof dataNienHan === 'string') {
+            try {
+              dataNienHan = JSON.parse(dataNienHan);
+            } catch (e) {
+              dataNienHan = [];
+            }
+          }
+          if (!Array.isArray(dataNienHan)) {
+            dataNienHan = dataNienHan ? [dataNienHan] : [];
+          }
+
+          // Xử lý đặc biệt cho HC_QKQT và KNC_VSNXD_QDNDVN
+          // Nếu data_nien_han rỗng nhưng có data_danh_hieu, dùng data_danh_hieu (cho các proposal cũ)
+          let soNienHan = dataNienHan.length;
+          if (
+            (p.loai_de_xuat === 'HC_QKQT' || p.loai_de_xuat === 'KNC_VSNXD_QDNDVN') &&
+            soNienHan === 0
+          ) {
+            // Parse data_danh_hieu nếu là string
+            let dataDanhHieu = p.data_danh_hieu;
+            if (typeof dataDanhHieu === 'string') {
+              try {
+                dataDanhHieu = JSON.parse(dataDanhHieu);
+              } catch (e) {
+                dataDanhHieu = [];
+              }
+            }
+            if (!Array.isArray(dataDanhHieu)) {
+              dataDanhHieu = dataDanhHieu ? [dataDanhHieu] : [];
+            }
+            // Nếu có dữ liệu trong data_danh_hieu, dùng nó
+            if (dataDanhHieu.length > 0) {
+              soNienHan = dataDanhHieu.length;
+            }
+          }
+
+          // Parse các field khác nếu là string
+          let dataDanhHieu = p.data_danh_hieu;
+          if (typeof dataDanhHieu === 'string') {
+            try {
+              dataDanhHieu = JSON.parse(dataDanhHieu);
+            } catch (e) {
+              dataDanhHieu = [];
+            }
+          }
+          if (!Array.isArray(dataDanhHieu)) {
+            dataDanhHieu = dataDanhHieu ? [dataDanhHieu] : [];
+          }
+
+          let dataThanhTich = p.data_thanh_tich;
+          if (typeof dataThanhTich === 'string') {
+            try {
+              dataThanhTich = JSON.parse(dataThanhTich);
+            } catch (e) {
+              dataThanhTich = [];
+            }
+          }
+          if (!Array.isArray(dataThanhTich)) {
+            dataThanhTich = dataThanhTich ? [dataThanhTich] : [];
+          }
+
+          let dataCongHien = p.data_cong_hien;
+          if (typeof dataCongHien === 'string') {
+            try {
+              dataCongHien = JSON.parse(dataCongHien);
+            } catch (e) {
+              dataCongHien = [];
+            }
+          }
+          if (!Array.isArray(dataCongHien)) {
+            dataCongHien = dataCongHien ? [dataCongHien] : [];
+          }
+
+          return {
+            id: p.id,
+            loai_de_xuat: p.loai_de_xuat,
+            nam: p.nam,
+            don_vi: (p.DonViTrucThuoc || p.CoQuanDonVi)?.ten_don_vi || '-',
+            nguoi_de_xuat: p.NguoiDeXuat.QuanNhan?.ho_ten || p.NguoiDeXuat.username,
+            status: p.status,
+            so_danh_hieu: dataDanhHieu.length,
+            so_thanh_tich: dataThanhTich.length,
+            so_nien_han: soNienHan,
+            so_cong_hien: dataCongHien.length,
+            nguoi_duyet: p.NguoiDuyet?.QuanNhan?.ho_ten || null,
+            ngay_duyet: p.ngay_duyet,
+            ghi_chu: p.ghi_chu,
+            createdAt: p.createdAt,
+          };
+        }),
         pagination: {
           total,
           page: parseInt(page),
@@ -2201,6 +2278,47 @@ class ProposalService {
 
             return enrichedItem;
           });
+
+          // Enrich dataCongHien nếu thiếu thông tin
+          if (dataCongHien.length > 0) {
+            dataCongHien = dataCongHien.map(item => {
+              const personnel = personnelMap[item.personnel_id];
+              const enrichedItem = {
+                ...item,
+                ho_ten: item.ho_ten || personnel?.ho_ten || '',
+                nam: item.nam || proposal.createdAt?.getFullYear() || new Date().getFullYear(),
+                // Chỉ lấy từ dataJSON, không lấy từ personnel hiện tại (đề xuất có thể từ quá khứ)
+                cap_bac: item.cap_bac !== undefined && item.cap_bac !== null ? item.cap_bac : null,
+                chuc_vu: item.chuc_vu !== undefined && item.chuc_vu !== null ? item.chuc_vu : null,
+              };
+
+              // Thêm thông tin đơn vị nếu chưa có (theo cấu trúc mới)
+              // Luôn lưu cả hai nếu quân nhân có dữ liệu
+              if (!item.co_quan_don_vi && personnel?.CoQuanDonVi) {
+                enrichedItem.co_quan_don_vi = {
+                  id: personnel.CoQuanDonVi.id,
+                  ten_co_quan_don_vi: personnel.CoQuanDonVi.ten_don_vi,
+                  ma_co_quan_don_vi: personnel.CoQuanDonVi.ma_don_vi,
+                };
+              }
+              if (!item.don_vi_truc_thuoc && personnel?.DonViTrucThuoc) {
+                enrichedItem.don_vi_truc_thuoc = {
+                  id: personnel.DonViTrucThuoc.id,
+                  ten_don_vi: personnel.DonViTrucThuoc.ten_don_vi,
+                  ma_don_vi: personnel.DonViTrucThuoc.ma_don_vi,
+                  co_quan_don_vi: personnel.DonViTrucThuoc.CoQuanDonVi
+                    ? {
+                        id: personnel.DonViTrucThuoc.CoQuanDonVi.id,
+                        ten_don_vi_truc: personnel.DonViTrucThuoc.CoQuanDonVi.ten_don_vi,
+                        ma_don_vi: personnel.DonViTrucThuoc.CoQuanDonVi.ma_don_vi,
+                      }
+                    : null,
+                };
+              }
+
+              return enrichedItem;
+            });
+          }
         }
       }
 
@@ -2352,47 +2470,6 @@ class ProposalService {
             }
           }
         }
-      }
-
-      // Enrich dataCongHien nếu thiếu thông tin
-      if (dataCongHien.length > 0) {
-        dataCongHien = dataCongHien.map(item => {
-          const personnel = personnelMap[item.personnel_id];
-          const enrichedItem = {
-            ...item,
-            ho_ten: item.ho_ten || personnel?.ho_ten || '',
-            nam: item.nam || proposal.createdAt?.getFullYear() || new Date().getFullYear(),
-            // Chỉ lấy từ dataJSON, không lấy từ personnel hiện tại (đề xuất có thể từ quá khứ)
-            cap_bac: item.cap_bac !== undefined && item.cap_bac !== null ? item.cap_bac : null,
-            chuc_vu: item.chuc_vu !== undefined && item.chuc_vu !== null ? item.chuc_vu : null,
-          };
-
-          // Thêm thông tin đơn vị nếu chưa có (theo cấu trúc mới)
-          // Luôn lưu cả hai nếu quân nhân có dữ liệu
-          if (!item.co_quan_don_vi && personnel?.CoQuanDonVi) {
-            enrichedItem.co_quan_don_vi = {
-              id: personnel.CoQuanDonVi.id,
-              ten_co_quan_don_vi: personnel.CoQuanDonVi.ten_don_vi,
-              ma_co_quan_don_vi: personnel.CoQuanDonVi.ma_don_vi,
-            };
-          }
-          if (!item.don_vi_truc_thuoc && personnel?.DonViTrucThuoc) {
-            enrichedItem.don_vi_truc_thuoc = {
-              id: personnel.DonViTrucThuoc.id,
-              ten_don_vi: personnel.DonViTrucThuoc.ten_don_vi,
-              ma_don_vi: personnel.DonViTrucThuoc.ma_don_vi,
-              co_quan_don_vi: personnel.DonViTrucThuoc.CoQuanDonVi
-                ? {
-                    id: personnel.DonViTrucThuoc.CoQuanDonVi.id,
-                    ten_don_vi_truc: personnel.DonViTrucThuoc.CoQuanDonVi.ten_don_vi,
-                    ma_don_vi: personnel.DonViTrucThuoc.CoQuanDonVi.ma_don_vi,
-                  }
-                : null,
-            };
-          }
-
-          return enrichedItem;
-        });
       }
 
       // Nếu proposal đã được approve, enrich với thông tin file PDF từ database cho dataCongHien
@@ -2587,8 +2664,8 @@ class ProposalService {
       }
 
       // Kiểm tra cống hiến (CONG_HIEN)
-      if (proposalType === 'CONG_HIEN' && nienHanData && nienHanData.length > 0) {
-        for (const item of nienHanData) {
+      if (proposalType === 'CONG_HIEN' && congHienData && congHienData.length > 0) {
+        for (const item of congHienData) {
           if (item.personnel_id && item.danh_hieu) {
             const checkResult = await this.checkDuplicateAward(
               item.personnel_id,
@@ -2619,6 +2696,7 @@ class ProposalService {
       let importedDanhHieu = 0;
       let importedThanhTich = 0;
       let importedNienHan = 0;
+      let importedCongHien = 0;
       const errors = [];
       const affectedPersonnelIds = new Set(); // Track quân nhân bị ảnh hưởng
 
@@ -3020,7 +3098,7 @@ class ProposalService {
                     thoi_gian_nhom_0_9_1_0: thoiGianNhom0_9_1_0,
                   },
                 });
-                importedDanhHieu++;
+                importedCongHien++;
                 affectedPersonnelIds.add(quanNhan.id);
               } else {
                 // Hạng mới thấp hơn hoặc bằng, bỏ qua
@@ -3043,7 +3121,7 @@ class ProposalService {
                   thoi_gian_nhom_0_9_1_0: thoiGianNhom0_9_1_0,
                 },
               });
-              importedDanhHieu++;
+              importedCongHien++;
               affectedPersonnelIds.add(quanNhan.id);
             }
           } catch (error) {
@@ -3920,9 +3998,11 @@ class ProposalService {
           imported_danh_hieu: importedDanhHieu,
           imported_thanh_tich: importedThanhTich,
           imported_nien_han: importedNienHan,
+          imported_cong_hien: importedCongHien,
           total_danh_hieu: danhHieuData.length,
           total_thanh_tich: thanhTichData.length,
           total_nien_han: nienHanData.length,
+          total_cong_hien: congHienData.length,
           errors: errors.length > 0 ? errors : null,
           recalculated_profiles: recalculateSuccess,
           recalculate_errors: recalculateErrors,
