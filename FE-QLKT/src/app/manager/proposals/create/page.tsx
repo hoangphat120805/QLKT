@@ -1132,9 +1132,59 @@ export default function CreateProposalPage() {
 
             <Card
               title={
-                proposalType === 'DON_VI_HANG_NAM'
-                  ? 'Danh sách đơn vị và danh hiệu'
-                  : 'Danh sách quân nhân và danh hiệu'
+                <div style={{ display: 'flex', alignItems: 'baseline' }}>
+                  <span>
+                    {proposalType === 'DON_VI_HANG_NAM'
+                      ? 'Danh sách đơn vị và danh hiệu'
+                      : 'Danh sách quân nhân và danh hiệu'}
+                  </span>
+                  {(proposalType === 'CA_NHAN_HANG_NAM' || proposalType === 'DON_VI_HANG_NAM') &&
+                    reviewTableData.length > 0 &&
+                    (() => {
+                      // Chỉ tính cho CSTT, CSTDCS, DVTT, DVQT
+                      const allowedTitles = ['CSTT', 'CSTDCS', 'ĐVTT', 'ĐVQT'];
+                      const titleCounts: Record<string, number> = {};
+
+                      reviewTableData.forEach((item: any) => {
+                        const title = item.danh_hieu;
+                        if (title && allowedTitles.includes(title)) {
+                          titleCounts[title] = (titleCounts[title] || 0) + 1;
+                        }
+                      });
+
+                      if (Object.keys(titleCounts).length === 0) return null;
+
+                      const total = Object.values(titleCounts).reduce(
+                        (sum, count) => sum + count,
+                        0
+                      );
+                      const percentages = Object.entries(titleCounts).map(([title, count]) => ({
+                        title,
+                        count,
+                        percentage: ((count / total) * 100).toFixed(1),
+                      }));
+
+                      return (
+                        <span
+                          style={{
+                            fontSize: '13px',
+                            marginLeft: '12px',
+                            color: '#8c8c8c',
+                            fontWeight: 'normal',
+                          }}
+                        >
+                          (
+                          {percentages.map((item, idx) => (
+                            <span key={item.title}>
+                              {item.title}: {item.count} ({item.percentage}%)
+                              {idx < percentages.length - 1 ? ', ' : ''}
+                            </span>
+                          ))}
+                          )
+                        </span>
+                      );
+                    })()}
+                </div>
               }
             >
               <Table

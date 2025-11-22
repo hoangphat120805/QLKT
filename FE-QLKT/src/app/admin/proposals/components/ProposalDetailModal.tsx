@@ -284,7 +284,48 @@ export default function ProposalDetailModal({
 
         {/* Title data table */}
         <div style={{ marginTop: 16 }}>
-          <Title level={5}>Danh sách quân nhân và danh hiệu</Title>
+          <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: 8 }}>
+            <Title level={5} style={{ margin: 0 }}>
+              Danh sách quân nhân và danh hiệu
+            </Title>
+            {titleData.length > 0 &&
+              (proposal.loai_de_xuat === 'CA_NHAN_HANG_NAM' ||
+                proposal.loai_de_xuat === 'DON_VI_HANG_NAM') &&
+              (() => {
+                // Chỉ tính cho CSTT, CSTDCS, ĐVTT, ĐVQT
+                const allowedTitles = ['CSTT', 'CSTDCS', 'ĐVTT', 'ĐVQT'];
+                const titleCounts: Record<string, number> = {};
+
+                titleData.forEach((item: any) => {
+                  const title = item.danh_hieu;
+                  if (title && allowedTitles.includes(title)) {
+                    titleCounts[title] = (titleCounts[title] || 0) + 1;
+                  }
+                });
+
+                if (Object.keys(titleCounts).length === 0) return null;
+
+                const total = Object.values(titleCounts).reduce((sum, count) => sum + count, 0);
+                const percentages = Object.entries(titleCounts).map(([title, count]) => ({
+                  title,
+                  count,
+                  percentage: ((count / total) * 100).toFixed(1),
+                }));
+
+                return (
+                  <span style={{ fontSize: '13px', marginLeft: '12px', color: '#8c8c8c' }}>
+                    (
+                    {percentages.map((item, idx) => (
+                      <span key={item.title}>
+                        {item.title}: {item.count} ({item.percentage}%)
+                        {idx < percentages.length - 1 ? ', ' : ''}
+                      </span>
+                    ))}
+                    )
+                  </span>
+                );
+              })()}
+          </div>
           <Table
             columns={columns}
             dataSource={titleData}
