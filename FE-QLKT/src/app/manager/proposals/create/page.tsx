@@ -377,55 +377,6 @@ export default function CreateProposalPage() {
       }
     }
 
-    // Gọi API recalculate khi chuyển từ bước 2 sang bước 3 cho đề xuất CA_NHAN_HANG_NAM
-    if (
-      currentStep === 1 &&
-      proposalType === 'CA_NHAN_HANG_NAM' &&
-      selectedPersonnelIds.length > 0 &&
-      canProceedToNextStep()
-    ) {
-      try {
-        setLoading(true);
-        antMessage.loading('Đang tính toán gợi ý...', 0);
-
-        // Gọi API recalculate cho từng quân nhân đã chọn, truyền năm được chọn
-        const recalculatePromises = selectedPersonnelIds.map(personnelId =>
-          apiClient.recalculateProfile(personnelId, nam)
-        );
-
-        const results = await Promise.all(recalculatePromises);
-        const failed = results.filter(r => !r.success);
-
-        antMessage.destroy();
-
-        if (failed.length > 0) {
-          console.warn('Một số quân nhân không thể tính toán gợi ý:', failed);
-          antMessage.warning(
-            `Đã tính toán gợi ý cho ${results.length - failed.length}/${
-              results.length
-            } quân nhân. Một số quân nhân có thể chưa có đủ dữ liệu.`
-          );
-        } else {
-          antMessage.success(`Đã tính toán gợi ý cho ${results.length} quân nhân`);
-        }
-
-        // Sau khi tính toán xong, mới chuyển sang bước 3
-        setCurrentStep(currentStep + 1);
-        return; // Return để không chạy logic chuyển step ở dưới
-      } catch (error: any) {
-        console.error('Error recalculating profiles:', error);
-        antMessage.destroy();
-        antMessage.error('Lỗi khi tính toán gợi ý. Vui lòng thử lại.');
-        // Nếu lỗi, vẫn cho phép chuyển step nhưng có cảnh báo
-        if (canProceedToNextStep()) {
-          setCurrentStep(currentStep + 1);
-        }
-        return;
-      } finally {
-        setLoading(false);
-      }
-    }
-
     if (canProceedToNextStep()) {
       setCurrentStep(currentStep + 1);
     } else {

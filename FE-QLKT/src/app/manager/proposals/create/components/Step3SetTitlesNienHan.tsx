@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Table, Select, Alert, Typography, Space, message, Button } from 'antd';
-import { EditOutlined, HistoryOutlined } from '@ant-design/icons';
+import { EditOutlined, HistoryOutlined, ReloadOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import axiosInstance from '@/utils/axiosInstance';
 import { apiClient } from '@/lib/api-client';
@@ -76,11 +76,6 @@ export default function Step3SetTitlesNienHan({
       const personnelData = responses.filter(r => r.data.success).map(r => r.data.data);
       setPersonnel(personnelData);
 
-      // Fetch service profiles để biết quân nhân đã nhận hạng nào
-      if (personnelData.length > 0) {
-        await fetchServiceProfiles(personnelData);
-      }
-
       // Initialize title data if empty
       if (titleData.length === 0) {
         const initialData = personnelData.map((p: Personnel) => ({
@@ -117,6 +112,42 @@ export default function Step3SetTitlesNienHan({
       setServiceProfilesMap(profilesMap);
     } catch (error) {
       console.error('Error fetching service profiles:', error);
+    }
+  };
+
+  const handleRecalculate = async () => {
+    if (!personnel || personnel.length === 0) {
+      message.warning('Không có quân nhân nào được chọn');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      message.loading({ content: 'Đang tính toán lại...', key: 'recalculate', duration: 0 });
+
+      const profilesMap: Record<string, any> = {};
+      await Promise.all(
+        personnel.map(async p => {
+          if (p.id) {
+            try {
+              const res = await apiClient.getServiceProfile(p.id, true); // force recalculate
+              if (res.success && res.data) {
+                profilesMap[p.id] = res.data;
+              }
+            } catch (error) {
+              profilesMap[p.id] = null;
+            }
+          }
+        })
+      );
+
+      setServiceProfilesMap(profilesMap);
+      message.success({ content: 'Tính toán lại thành công!', key: 'recalculate', duration: 2 });
+    } catch (error) {
+      console.error('Error recalculating profiles:', error);
+      message.error({ content: 'Có lỗi khi tính toán lại', key: 'recalculate', duration: 2 });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -552,16 +583,29 @@ export default function Step3SetTitlesNienHan({
       />
 
       <Space direction="vertical" style={{ marginBottom: 16, width: '100%' }} size="small">
-        <Text type="secondary">
-          Tổng số quân nhân: <strong>{personnel.length}</strong>
-        </Text>
-        <Text type={allTitlesSet ? 'success' : 'warning'}>
-          Đã set danh hiệu:{' '}
-          <strong>
-            {titleData.filter(d => d.danh_hieu).length}/{personnel.length}
-          </strong>
-          {allTitlesSet && ' ✓'}
-        </Text>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <Text type="secondary">
+              Tổng số quân nhân: <strong>{personnel.length}</strong>
+            </Text>
+            <br />
+            <Text type={allTitlesSet ? 'success' : 'warning'}>
+              Đã set danh hiệu:{' '}
+              <strong>
+                {titleData.filter(d => d.danh_hieu).length}/{personnel.length}
+              </strong>
+              {allTitlesSet && ' ✓'}
+            </Text>
+          </div>
+          <Button
+            type="primary"
+            icon={<ReloadOutlined />}
+            onClick={handleRecalculate}
+            loading={loading}
+          >
+            Tính toán lại
+          </Button>
+        </div>
       </Space>
 
       <Table<Personnel>

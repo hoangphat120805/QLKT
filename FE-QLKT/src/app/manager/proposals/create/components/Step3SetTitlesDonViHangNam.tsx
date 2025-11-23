@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Table, Select, Alert, Typography, Space, Tag, Button, message } from 'antd';
-import { EditOutlined, HistoryOutlined } from '@ant-design/icons';
+import { EditOutlined, HistoryOutlined, ReloadOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { apiClient } from '@/lib/api-client';
 import UnitAnnualAwardHistoryModal from './UnitAnnualAwardHistoryModal';
@@ -97,29 +97,6 @@ export default function Step3SetTitlesDonViHangNam({
 
         setUnits(formattedUnits);
 
-        // Prefetch unit annual profiles for all selected units and store in a map
-        try {
-          const profilesMap: Record<string, any> = {};
-          await Promise.all(
-            formattedUnits.map(async unit => {
-              try {
-                const profileRes = await apiClient.getUnitAnnualProfile(unit.id, nam);
-                if (profileRes.success && profileRes.data) {
-                  profilesMap[unit.id] = profileRes.data;
-                } else {
-                  profilesMap[unit.id] = null;
-                }
-              } catch (e) {
-                profilesMap[unit.id] = null;
-              }
-            })
-          );
-          console.log('Prefetched all unit annual profiles:', profilesMap);
-          setAllUnitAnnualAwards(profilesMap);
-        } catch (e) {
-          // ignore prefetch errors
-        }
-
         // Initialize title data if empty
         if (titleData.length === 0 && formattedUnits.length > 0) {
           const initialData: TitleData[] = formattedUnits.map((unit: Unit) => ({
@@ -133,6 +110,42 @@ export default function Step3SetTitlesDonViHangNam({
       }
     } catch (error) {
       console.error('Error fetching unit details:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRecalculate = async () => {
+    if (!selectedUnitIds || selectedUnitIds.length === 0) {
+      message.warning('Không có đơn vị nào được chọn');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      message.loading({ content: 'Đang tính toán lại...', key: 'recalculate', duration: 0 });
+
+      const profilesMap: Record<string, any> = {};
+      await Promise.all(
+        units.map(async unit => {
+          try {
+            const profileRes = await apiClient.getUnitAnnualProfile(unit.id, nam, true); // force recalculate
+            if (profileRes.success && profileRes.data) {
+              profilesMap[unit.id] = profileRes.data;
+            } else {
+              profilesMap[unit.id] = null;
+            }
+          } catch (e) {
+            profilesMap[unit.id] = null;
+          }
+        })
+      );
+
+      setAllUnitAnnualAwards(profilesMap);
+      message.success({ content: 'Tính toán lại thành công!', key: 'recalculate', duration: 2 });
+    } catch (error) {
+      console.error('Error recalculating profiles:', error);
+      message.error({ content: 'Có lỗi khi tính toán lại', key: 'recalculate', duration: 2 });
     } finally {
       setLoading(false);
     }
@@ -362,16 +375,29 @@ export default function Step3SetTitlesDonViHangNam({
       />
 
       <Space direction="vertical" style={{ marginBottom: 16, width: '100%' }} size="small">
-        <Text type="secondary">
-          Tổng số đơn vị: <strong>{units.length}</strong>
-        </Text>
-        <Text type={allTitlesSet ? 'success' : 'warning'}>
-          Đã set danh hiệu:{' '}
-          <strong>
-            {titleData.filter(d => d.danh_hieu).length}/{units.length}
-          </strong>
-          {allTitlesSet && ' ✓'}
-        </Text>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <Text type="secondary">
+              Tổng số đơn vị: <strong>{units.length}</strong>
+            </Text>
+            <br />
+            <Text type={allTitlesSet ? 'success' : 'warning'}>
+              Đã set danh hiệu:{' '}
+              <strong>
+                {titleData.filter(d => d.danh_hieu).length}/{units.length}
+              </strong>
+              {allTitlesSet && ' ✓'}
+            </Text>
+          </div>
+          <Button
+            type="primary"
+            icon={<ReloadOutlined />}
+            onClick={handleRecalculate}
+            loading={loading}
+          >
+            Tính toán lại
+          </Button>
+        </div>
       </Space>
 
       <Table<Unit>

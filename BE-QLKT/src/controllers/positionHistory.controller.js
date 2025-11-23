@@ -4,13 +4,23 @@ const profileService = require('../services/profile.service');
 class PositionHistoryController {
   async getPositionHistory(req, res) {
     try {
-      const { personnel_id } = req.query;
+      const { personnel_id, recalculate } = req.query;
 
       if (!personnel_id) {
         return res.status(400).json({
           success: false,
           message: 'Tham số personnel_id là bắt buộc',
         });
+      }
+
+      // Nếu có tham số recalculate=true, tính toán lại hồ sơ cống hiến
+      if (recalculate === 'true') {
+        try {
+          await profileService.recalculateContributionProfile(personnel_id);
+        } catch (recalcError) {
+          console.error('Lỗi khi recalculate contribution profile:', recalcError);
+          // Không throw error, tiếp tục lấy dữ liệu
+        }
       }
 
       const result = await positionHistoryService.getPositionHistory(personnel_id);

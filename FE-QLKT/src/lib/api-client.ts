@@ -352,9 +352,13 @@ export const apiClient = {
   },
 
   // Position History
-  async getPositionHistory(personnelId: string): Promise<ApiResponse> {
+  async getPositionHistory(personnelId: string, forceRecalculate?: boolean): Promise<ApiResponse> {
     try {
-      const res = await axiosInstance.get(`/api/personnel/${personnelId}/position-history`);
+      let url = `/api/personnel/${personnelId}/position-history`;
+      if (forceRecalculate) {
+        url += '?recalculate=true';
+      }
+      const res = await axiosInstance.get(url);
       return { success: true, data: res.data?.data?.history || res.data?.data || res.data };
     } catch (e: any) {
       return { success: false, message: e?.response?.data?.message || e.message };
@@ -668,11 +672,20 @@ export const apiClient = {
   },
 
   // Profiles
-  async getAnnualProfile(personnelId: string, year?: number): Promise<ApiResponse> {
+  async getAnnualProfile(
+    personnelId: string,
+    year?: number,
+    forceRecalculate?: boolean
+  ): Promise<ApiResponse> {
     try {
-      const url = year
+      let url = year
         ? `/api/profiles/annual/${personnelId}?year=${year}`
         : `/api/profiles/annual/${personnelId}`;
+
+      if (forceRecalculate) {
+        url += year ? '&recalculate=true' : '?recalculate=true';
+      }
+
       const res = await axiosInstance.get(url);
       return { success: true, data: res.data?.data || res.data };
     } catch (e: any) {
@@ -680,9 +693,13 @@ export const apiClient = {
     }
   },
 
-  async getServiceProfile(personnelId: string): Promise<ApiResponse> {
+  async getServiceProfile(personnelId: string, forceRecalculate?: boolean): Promise<ApiResponse> {
     try {
-      const res = await axiosInstance.get(`/api/profiles/service/${personnelId}`);
+      let url = `/api/profiles/service/${personnelId}`;
+      if (forceRecalculate) {
+        url += '?recalculate=true';
+      }
+      const res = await axiosInstance.get(url);
       return { success: true, data: res.data?.data || res.data };
     } catch (e: any) {
       return { success: false, message: e?.response?.data?.message || e.message };
@@ -853,11 +870,20 @@ export const apiClient = {
     }
   },
 
-  async getUnitAnnualProfile(donViId: string, year?: number): Promise<ApiResponse> {
+  async getUnitAnnualProfile(
+    donViId: string,
+    year?: number,
+    forceRecalculate?: boolean
+  ): Promise<ApiResponse> {
     try {
-      const url = year
+      let url = year
         ? `/api/awards/units/annual/profile/${donViId}?year=${year}`
         : `/api/awards/units/annual/profile/${donViId}`;
+
+      if (forceRecalculate) {
+        url += year ? '&recalculate=true' : '?recalculate=true';
+      }
+
       const res = await axiosInstance.get(url);
       return { success: true, data: res.data?.data || res.data };
     } catch (e: any) {

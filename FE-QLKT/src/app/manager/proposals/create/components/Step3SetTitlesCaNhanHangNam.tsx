@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Table, Select, Alert, Typography, Space, message, Button, Modal, Tabs, Tag } from 'antd';
-import { EditOutlined, HistoryOutlined, EyeOutlined } from '@ant-design/icons';
+import { EditOutlined, HistoryOutlined, EyeOutlined, ReloadOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import axiosInstance from '@/utils/axiosInstance';
 import { apiClient } from '@/lib/api-client';
@@ -87,7 +87,6 @@ export default function Step3SetTitlesCaNhanHangNam({
   useEffect(() => {
     if (selectedPersonnelIds.length > 0) {
       fetchPersonnelDetails();
-      fetchAnnualProfiles();
     } else {
       setPersonnel([]);
       onTitleDataChange([]);
@@ -139,6 +138,44 @@ export default function Step3SetTitlesCaNhanHangNam({
       setAnnualProfiles(prev => ({ ...prev, ...map }));
     } catch (error) {
       console.error('Error prefetching annual profiles:', error);
+    } finally {
+      setLoadingProfiles(false);
+    }
+  };
+
+  const handleRecalculate = async () => {
+    if (!selectedPersonnelIds || selectedPersonnelIds.length === 0) {
+      message.warning('Không có quân nhân nào được chọn');
+      return;
+    }
+
+    try {
+      setLoadingProfiles(true);
+      message.loading({ content: 'Đang tính toán lại...', key: 'recalculate', duration: 0 });
+
+      const promises = selectedPersonnelIds.map(id =>
+        apiClient
+          .getAnnualProfile(id, nam, true) // force recalculate
+          .then(res => ({ id, res }))
+          .catch(err => ({ id, res: null }))
+      );
+
+      const results = await Promise.all(promises);
+      const map: Record<string, any> = {};
+
+      results.forEach((r: any) => {
+        if (r && r.res && r.res.success && r.res.data) {
+          map[r.id] = r.res.data;
+        } else {
+          map[r.id] = null;
+        }
+      });
+
+      setAnnualProfiles(map);
+      message.success({ content: 'Tính toán lại thành công!', key: 'recalculate', duration: 2 });
+    } catch (error) {
+      console.error('Error recalculating profiles:', error);
+      message.error({ content: 'Có lỗi khi tính toán lại', key: 'recalculate', duration: 2 });
     } finally {
       setLoadingProfiles(false);
     }
@@ -431,16 +468,30 @@ export default function Step3SetTitlesCaNhanHangNam({
       />
 
       <Space direction="vertical" style={{ marginBottom: 16, width: '100%' }} size="small">
-        <Text type="secondary">
-          Tổng số quân nhân: <strong>{personnel.length}</strong>
-        </Text>
-        <Text type={allTitlesSet ? 'success' : 'warning'}>
-          Đã set danh hiệu:{' '}
-          <strong>
-            {titleData.filter(d => selectedPersonnelIds.includes(d.personnel_id)).length}/{personnel.length}
-          </strong>
-          {allTitlesSet && ' ✓'}
-        </Text>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <Text type="secondary">
+              Tổng số quân nhân: <strong>{personnel.length}</strong>
+            </Text>
+            <br />
+            <Text type={allTitlesSet ? 'success' : 'warning'}>
+              Đã set danh hiệu:{' '}
+              <strong>
+                {titleData.filter(d => selectedPersonnelIds.includes(d.personnel_id)).length}/
+                {personnel.length}
+              </strong>
+              {allTitlesSet && ' ✓'}
+            </Text>
+          </div>
+          <Button
+            type="primary"
+            icon={<ReloadOutlined />}
+            onClick={handleRecalculate}
+            loading={loadingProfiles}
+          >
+            Tính toán lại
+          </Button>
+        </div>
       </Space>
       <Table<Personnel>
         columns={columns}

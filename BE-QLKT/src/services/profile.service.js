@@ -498,6 +498,11 @@ class ProfileService {
    * @returns {Promise<Object>} Kết quả tính toán
    */
   async recalculateAnnualProfile(personnelId, year = null) {
+    console.log(
+      `[recalculateAnnualProfile] Bắt đầu tính toán cho quân nhân ID: ${personnelId}, năm: ${
+        year || 'all'
+      }`
+    );
     try {
       // ==============================================
       // BƯỚC 1: Thu thập Toàn bộ Dữ liệu Lịch sử (Input)
@@ -1033,6 +1038,11 @@ class ProfileService {
    * @param {number} [year] - Năm để tính toán gợi ý (mặc định là null, sẽ dùng năm hiện tại)
    */
   async recalculateProfile(personnelId, year = null) {
+    console.log(
+      `[recalculateProfile] Bắt đầu tính toán toàn bộ profile cho quân nhân ID: ${personnelId}, năm: ${
+        year || 'all'
+      }`
+    );
     try {
       // Load tất cả dữ liệu cần thiết
       const personnel = await prisma.quanNhan.findUnique({
@@ -1198,6 +1208,9 @@ class ProfileService {
    * @param {string} personnelId - ID quân nhân
    */
   async recalculateTenureProfile(personnelId) {
+    console.log(
+      `[recalculateTenureProfile] Bắt đầu tính toán hồ sơ niên hạn cho quân nhân ID: ${personnelId}`
+    );
     try {
       // Load thông tin quân nhân
       const personnel = await prisma.quanNhan.findUnique({
@@ -1207,6 +1220,10 @@ class ProfileService {
       if (!personnel) {
         throw new Error('Quân nhân không tồn tại');
       }
+
+      console.log(
+        `[recalculateTenureProfile] Quân nhân: ${personnel.ho_ten}, Ngày nhập ngũ: ${personnel.ngay_nhap_ngu}`
+      );
 
       // Lấy hồ sơ niên hạn hiện tại
       const existingProfile = await prisma.hoSoNienHan.findUnique({
@@ -1319,6 +1336,9 @@ class ProfileService {
    * @param {string} personnelId - ID quân nhân
    */
   async recalculateContributionProfile(personnelId) {
+    console.log(
+      `[recalculateContributionProfile] Bắt đầu tính toán hồ sơ cống hiến cho quân nhân ID: ${personnelId}`
+    );
     try {
       // Load thông tin quân nhân và lịch sử chức vụ
       const personnel = await prisma.quanNhan.findUnique({
@@ -1338,6 +1358,10 @@ class ProfileService {
       if (!personnel) {
         throw new Error('Quân nhân không tồn tại');
       }
+
+      console.log(
+        `[recalculateContributionProfile] Quân nhân: ${personnel.ho_ten}, Giới tính: ${personnel.gioi_tinh}, Số lịch sử chức vụ: ${personnel.LichSuChucVu.length}`
+      );
 
       // Lấy hồ sơ cống hiến hiện tại
       const existingProfile = await prisma.hoSoCongHien.findUnique({
@@ -1519,10 +1543,13 @@ class ProfileService {
    * Tính toán lại cho toàn bộ quân nhân
    */
   async recalculateAll() {
+    console.log('[recalculateAll] Bắt đầu tính toán lại cho tất cả quân nhân...');
     try {
       const allPersonnel = await prisma.quanNhan.findMany({
         select: { id: true },
       });
+
+      console.log(`[recalculateAll] Tổng số quân nhân: ${allPersonnel.length}`);
 
       let successCount = 0;
       let errorCount = 0;
@@ -1531,11 +1558,16 @@ class ProfileService {
         try {
           await this.recalculateProfile(personnel.id);
           successCount++;
+          if (successCount % 10 === 0) {
+            console.log(`[recalculateAll] Tiến độ: ${successCount}/${allPersonnel.length}`);
+          }
         } catch (error) {
           console.error(`Lỗi khi tính toán cho quân nhân ID ${personnel.id}:`, error.message);
           errorCount++;
         }
       }
+
+      console.log(`[recalculateAll] Hoàn tất. Thành công: ${successCount}, Lỗi: ${errorCount}`);
 
       return {
         message: `Tính toán hoàn tất. Thành công: ${successCount}, Lỗi: ${errorCount}`,
