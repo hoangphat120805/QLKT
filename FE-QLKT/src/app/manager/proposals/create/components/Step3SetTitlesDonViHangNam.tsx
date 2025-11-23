@@ -30,6 +30,7 @@ interface TitleData {
 
 interface Step3SetTitlesDonViHangNamProps {
   selectedUnitIds: string[];
+  onUnitChange: (ids: string[]) => void;
   titleData: TitleData[];
   onTitleDataChange: (data: TitleData[]) => void;
   nam: number;
@@ -37,6 +38,7 @@ interface Step3SetTitlesDonViHangNamProps {
 
 export default function Step3SetTitlesDonViHangNam({
   selectedUnitIds,
+  onUnitChange,
   titleData,
   onTitleDataChange,
   nam,
@@ -404,6 +406,17 @@ export default function Step3SetTitlesDonViHangNam({
         columns={columns}
         dataSource={units}
         rowKey="id"
+        rowSelection={{
+          selectedRowKeys: selectedUnitIds,
+          onChange: (selectedRowKeys: React.Key[]) => {
+            onUnitChange(selectedRowKeys as string[]);
+            // Xóa dữ liệu danh hiệu của các đơn vị bị bỏ chọn
+            const newTitleData = titleData.filter(d => 
+              (selectedRowKeys as string[]).includes(d.don_vi_id || '')
+            );
+            onTitleDataChange(newTitleData);
+          },
+        }}
         loading={loading}
         pagination={{
           pageSize: 10,

@@ -719,6 +719,8 @@ export default function CreateProposalPage() {
             proposalType={proposalType}
             titleData={titleData}
             onTitleDataChange={setTitleData}
+            onPersonnelChange={setSelectedPersonnelIds}
+            onUnitChange={setSelectedUnitIds}
             nam={nam}
           />
         );

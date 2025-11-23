@@ -42,6 +42,7 @@ interface TitleData {
 
 interface Step3SetTitlesKNCVSNXDProps {
   selectedPersonnelIds: string[];
+  onPersonnelChange: (ids: string[]) => void;
   titleData: TitleData[];
   onTitleDataChange: (data: TitleData[]) => void;
   nam: number;
@@ -49,6 +50,7 @@ interface Step3SetTitlesKNCVSNXDProps {
 
 export default function Step3SetTitlesKNCVSNXD({
   selectedPersonnelIds,
+  onPersonnelChange,
   titleData,
   onTitleDataChange,
   nam,
@@ -341,6 +343,17 @@ export default function Step3SetTitlesKNCVSNXD({
         columns={columns}
         dataSource={personnel}
         rowKey="id"
+        rowSelection={{
+          selectedRowKeys: selectedPersonnelIds,
+          onChange: (selectedRowKeys: React.Key[]) => {
+            onPersonnelChange(selectedRowKeys as string[]);
+            // Xóa dữ liệu danh hiệu của các quân nhân bị bỏ chọn
+            const newTitleData = titleData.filter(d => 
+              (selectedRowKeys as string[]).includes(d.personnel_id || '')
+            );
+            onTitleDataChange(newTitleData);
+          },
+        }}
         loading={loading}
         pagination={{
           pageSize: 10,

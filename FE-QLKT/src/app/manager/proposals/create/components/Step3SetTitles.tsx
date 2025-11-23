@@ -23,6 +23,8 @@ interface Step3SetTitlesProps {
   proposalType: string;
   titleData: TitleData[];
   onTitleDataChange: (data: TitleData[]) => void;
+  onPersonnelChange?: (ids: string[]) => void;
+  onUnitChange?: (ids: string[]) => void;
   nam: number;
 }
 
@@ -32,6 +34,8 @@ export default function Step3SetTitles({
   proposalType,
   titleData,
   onTitleDataChange,
+  onPersonnelChange = () => {},
+  onUnitChange = () => {},
   nam,
 }: Step3SetTitlesProps) {
   // Router component - gọi component tương ứng với từng loại đề xuất
@@ -40,6 +44,7 @@ export default function Step3SetTitles({
       return (
         <Step3SetTitlesHCQKQT
           selectedPersonnelIds={selectedPersonnelIds}
+          onPersonnelChange={onPersonnelChange}
           titleData={titleData}
           onTitleDataChange={onTitleDataChange}
           nam={nam}
@@ -49,6 +54,7 @@ export default function Step3SetTitles({
       return (
         <Step3SetTitlesKNCVSNXD
           selectedPersonnelIds={selectedPersonnelIds}
+          onPersonnelChange={onPersonnelChange}
           titleData={titleData}
           onTitleDataChange={onTitleDataChange}
           nam={nam}
@@ -58,6 +64,7 @@ export default function Step3SetTitles({
       return (
         <Step3SetTitlesCaNhanHangNam
           selectedPersonnelIds={selectedPersonnelIds}
+          onPersonnelChange={onPersonnelChange}
           titleData={titleData}
           onTitleDataChange={onTitleDataChange}
           nam={nam}
@@ -67,6 +74,7 @@ export default function Step3SetTitles({
       return (
         <Step3SetTitlesDonViHangNam
           selectedUnitIds={selectedUnitIds || []}
+          onUnitChange={onUnitChange}
           titleData={titleData}
           onTitleDataChange={onTitleDataChange}
           nam={nam}
@@ -76,6 +84,7 @@ export default function Step3SetTitles({
       return (
         <Step3SetTitlesNienHan
           selectedPersonnelIds={selectedPersonnelIds}
+          onPersonnelChange={onPersonnelChange}
           titleData={titleData}
           onTitleDataChange={onTitleDataChange}
           nam={nam}
@@ -85,6 +94,7 @@ export default function Step3SetTitles({
       return (
         <Step3SetTitlesCongHien
           selectedPersonnelIds={selectedPersonnelIds}
+          onPersonnelChange={onPersonnelChange}
           titleData={titleData}
           onTitleDataChange={onTitleDataChange}
           nam={nam}
@@ -94,6 +104,7 @@ export default function Step3SetTitles({
       return (
         <Step3SetTitlesNCKH
           selectedPersonnelIds={selectedPersonnelIds}
+          onPersonnelChange={onPersonnelChange}
           titleData={titleData}
           onTitleDataChange={onTitleDataChange}
           nam={nam}

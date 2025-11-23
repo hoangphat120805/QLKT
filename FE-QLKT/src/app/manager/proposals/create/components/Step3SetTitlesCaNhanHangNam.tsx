@@ -63,6 +63,7 @@ interface NCKHItem {
 
 interface Step3SetTitlesCaNhanHangNamProps {
   selectedPersonnelIds: string[];
+  onPersonnelChange: (ids: string[]) => void;
   titleData: TitleData[];
   onTitleDataChange: (data: TitleData[]) => void;
   nam: number;
@@ -70,6 +71,7 @@ interface Step3SetTitlesCaNhanHangNamProps {
 
 export default function Step3SetTitlesCaNhanHangNam({
   selectedPersonnelIds,
+  onPersonnelChange,
   titleData,
   onTitleDataChange,
   nam,
@@ -150,7 +152,7 @@ export default function Step3SetTitlesCaNhanHangNam({
     }
 
     try {
-      setLoadingProfiles(true);
+      setLoading(true);
       message.loading({ content: 'Đang tính toán lại...', key: 'recalculate', duration: 0 });
 
       const promises = selectedPersonnelIds.map(id =>
@@ -177,7 +179,7 @@ export default function Step3SetTitlesCaNhanHangNam({
       console.error('Error recalculating profiles:', error);
       message.error({ content: 'Có lỗi khi tính toán lại', key: 'recalculate', duration: 2 });
     } finally {
-      setLoadingProfiles(false);
+      setLoading(false);
     }
   };
 
@@ -487,7 +489,7 @@ export default function Step3SetTitlesCaNhanHangNam({
             type="primary"
             icon={<ReloadOutlined />}
             onClick={handleRecalculate}
-            loading={loadingProfiles}
+            loading={loading}
           >
             Tính toán lại
           </Button>
@@ -497,6 +499,17 @@ export default function Step3SetTitlesCaNhanHangNam({
         columns={columns}
         dataSource={personnel}
         rowKey="id"
+        rowSelection={{
+          selectedRowKeys: selectedPersonnelIds,
+          onChange: (selectedRowKeys: React.Key[]) => {
+            onPersonnelChange(selectedRowKeys as string[]);
+            // Xóa dữ liệu danh hiệu của các quân nhân bị bỏ chọn
+            const newTitleData = titleData.filter(d => 
+              (selectedRowKeys as string[]).includes(d.personnel_id || '')
+            );
+            onTitleDataChange(newTitleData);
+          },
+        }}
         loading={loading}
         pagination={{
           pageSize: 10,
