@@ -194,8 +194,8 @@ export default function ManagerPersonnelPage() {
     // Sử dụng DonViTrucThuoc relation có sẵn trong position
     if (pos.don_vi_truc_thuoc_id && pos.DonViTrucThuoc) {
       // Kiểm tra co_quan_don_vi_id từ DonViTrucThuoc relation
-      const coQuanIdFromRelation = pos.DonViTrucThuoc.co_quan_don_vi_id ||
-                                   pos.DonViTrucThuoc.CoQuanDonVi?.id;
+      const coQuanIdFromRelation =
+        pos.DonViTrucThuoc.co_quan_don_vi_id || pos.DonViTrucThuoc.CoQuanDonVi?.id;
       if (coQuanIdFromRelation === managerUnitId) {
         return true;
       }

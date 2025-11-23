@@ -794,9 +794,7 @@
     border-color: #374151 !important;
     border-radius: 8px !important;
     overflow: hidden !important;
-    box-shadow:
-      0 4px 6px -1px rgba(0, 0, 0, 0.1),
-      0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
   }
 
   /* Fix white corners - target all container elements */
@@ -1987,19 +1985,28 @@ button[class*='bg-primary']:hover:not(:disabled) {
 }
 
 /* Bỏ focus ring cho tab node (RC Tabs) */
-[role="tab"]:focus,
-[role="tab"]:focus-visible,
-[role="tab"][aria-selected="true"]:focus,
-[role="tab"][aria-selected="true"]:focus-visible {
+[role='tab']:focus,
+[role='tab']:focus-visible,
+[role='tab'][aria-selected='true']:focus,
+[role='tab'][aria-selected='true']:focus-visible {
   outline: none !important;
   box-shadow: none !important;
   border: none !important;
 }
 
-/* Tab active styling handled by child elements */
+/* Tab active styling - highlight toàn bộ chiều cao */
+.ant-tabs-tab-active {
+  background-color: rgba(37, 99, 235, 0.08) !important;
+  border-radius: 8px 8px 0 0 !important;
+}
+
+.dark .ant-tabs-tab-active {
+  background-color: rgba(96, 165, 250, 0.12) !important;
+}
 
 .ant-tabs-tab-active .ant-tabs-tab-btn {
   @apply font-semibold !important;
+  background: transparent !important;
   /* Text giữ màu gốc, không đổi màu xanh */
 }
 
