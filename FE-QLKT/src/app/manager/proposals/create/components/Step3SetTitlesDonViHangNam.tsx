@@ -411,7 +411,7 @@ export default function Step3SetTitlesDonViHangNam({
           onChange: (selectedRowKeys: React.Key[]) => {
             onUnitChange(selectedRowKeys as string[]);
             // Xóa dữ liệu danh hiệu của các đơn vị bị bỏ chọn
-            const newTitleData = titleData.filter(d => 
+            const newTitleData = titleData.filter(d =>
               (selectedRowKeys as string[]).includes(d.don_vi_id || '')
             );
             onTitleDataChange(newTitleData);

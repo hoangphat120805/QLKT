@@ -48,14 +48,14 @@ class AuthService {
         { expiresIn: '15m' }
       );
 
-      // Tạo refresh token (thời hạn dài - 7 ngày)
+      // Tạo refresh token (thời hạn dài - 1 ngày)
       const refreshToken = jwt.sign(
         {
           id: account.id,
           username: account.username,
         },
         process.env.JWT_REFRESH_SECRET,
-        { expiresIn: '7d' }
+        { expiresIn: '1d' }
       );
 
       // Lưu refresh token vào database
@@ -123,10 +123,32 @@ class AuthService {
         { expiresIn: '15m' }
       );
 
-      return { accessToken: newAccessToken };
+      // Tạo refresh token mới (token rotation để tăng bảo mật)
+      const newRefreshToken = jwt.sign(
+        {
+          id: account.id,
+          username: account.username,
+        },
+        process.env.JWT_REFRESH_SECRET,
+        { expiresIn: '1d' }
+      );
+
+      // Cập nhật refresh token mới vào database
+      await prisma.taiKhoan.update({
+        where: { id: account.id },
+        data: { refreshToken: newRefreshToken },
+      });
+
+      return {
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+      };
     } catch (error) {
       if (error.name === 'TokenExpiredError') {
         throw new Error('Refresh token đã hết hạn. Vui lòng đăng nhập lại.');
+      }
+      if (error.name === 'JsonWebTokenError') {
+        throw new Error('Refresh token không hợp lệ');
       }
       throw error;
     }

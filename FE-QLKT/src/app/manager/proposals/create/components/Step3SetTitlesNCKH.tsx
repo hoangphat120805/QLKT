@@ -333,7 +333,7 @@ export default function Step3SetTitlesNCKH({
           onChange: (selectedRowKeys: React.Key[]) => {
             onPersonnelChange(selectedRowKeys as string[]);
             // Xóa dữ liệu danh hiệu của các quân nhân bị bỏ chọn
-            const newTitleData = titleData.filter(d => 
+            const newTitleData = titleData.filter(d =>
               (selectedRowKeys as string[]).includes(d.personnel_id || '')
             );
             onTitleDataChange(newTitleData);

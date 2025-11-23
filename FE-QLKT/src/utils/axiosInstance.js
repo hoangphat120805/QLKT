@@ -31,12 +31,12 @@ axiosInstance.interceptors.request.use(
 let isRefreshing = false;
 let failedQueue = [];
 
-const processQueue = (error, success = false) => {
+const processQueue = (error, token = null) => {
   failedQueue.forEach(prom => {
     if (error) {
       prom.reject(error);
     } else {
-      prom.resolve(success);
+      prom.resolve(token);
     }
   });
 
@@ -66,7 +66,11 @@ axiosInstance.interceptors.response.use(
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
-          .then(() => {
+          .then(token => {
+            // Cập nhật token cho request này nếu cần
+            if (token && !document.cookie.includes('accessToken')) {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+            }
             return axiosInstance(originalRequest);
           })
           .catch(err => {
@@ -85,7 +89,11 @@ axiosInstance.interceptors.response.use(
         if (!storedRefresh) {
           // Không có refresh token -> bắt buộc đăng nhập lại
           isRefreshing = false;
-          if (typeof window !== 'undefined') window.location.href = '/login';
+          processQueue(new Error('No refresh token available'), null);
+          if (typeof window !== 'undefined') {
+            localStorage.clear();
+            window.location.href = '/login';
+          }
           return Promise.reject(new Error('No refresh token available'));
         }
 
@@ -95,29 +103,60 @@ axiosInstance.interceptors.response.use(
           {
             withCredentials: true,
             timeout: 10000,
+            _retry: true, // Đánh dấu để không retry request này
           }
         );
 
-        // Fallback: Lưu token mới vào localStorage nếu backend trả
-        if (refreshResponse.data?.data?.accessToken || refreshResponse.data?.accessToken) {
-          const newAccess =
-            refreshResponse.data?.data?.accessToken || refreshResponse.data?.accessToken;
-          const newRefresh =
-            refreshResponse.data?.data?.refreshToken || refreshResponse.data?.refreshToken;
-          localStorage.setItem('accessToken', newAccess);
-          if (newRefresh) localStorage.setItem('refreshToken', newRefresh);
+        // Lưu token mới vào localStorage
+        let newAccessToken = null;
+
+        if (refreshResponse.data?.data?.accessToken) {
+          newAccessToken = refreshResponse.data.data.accessToken;
+          const newRefresh = refreshResponse.data.data.refreshToken;
+
+          localStorage.setItem('accessToken', newAccessToken);
+
+          // Cập nhật refresh token mới (token rotation)
+          if (newRefresh) {
+            localStorage.setItem('refreshToken', newRefresh);
+          }
+        } else if (refreshResponse.data?.accessToken) {
+          // Fallback cho format response khác
+          newAccessToken = refreshResponse.data.accessToken;
+          const newRefresh = refreshResponse.data.refreshToken;
+
+          localStorage.setItem('accessToken', newAccessToken);
+
+          if (newRefresh) {
+            localStorage.setItem('refreshToken', newRefresh);
+          }
         }
 
-        processQueue(null, true);
+        // Dispatch event để thông báo token đã được refresh thành công
+        if (typeof window !== 'undefined' && newAccessToken) {
+          window.dispatchEvent(
+            new CustomEvent('tokenRefreshed', {
+              detail: { accessToken: newAccessToken },
+            })
+          );
+        }
+
+        processQueue(null, newAccessToken);
         isRefreshing = false;
+
+        // Cập nhật token cho request hiện tại
+        if (newAccessToken && !document.cookie.includes('accessToken')) {
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        }
 
         return axiosInstance(originalRequest);
       } catch (refreshError) {
         console.error('Refresh token failed:', refreshError);
-        processQueue(refreshError, false);
+        processQueue(refreshError, null);
         isRefreshing = false;
 
         if (typeof window !== 'undefined') {
+          localStorage.clear();
           window.location.href = '/login';
         }
 
