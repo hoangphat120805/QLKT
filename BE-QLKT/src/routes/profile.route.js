@@ -5,17 +5,32 @@ const { verifyToken, requireAdmin, requireManager, requireAuth } = require('../m
 
 /**
  * @route   GET /api/profiles/annual/:personnel_id
- * @desc    Lấy hồ sơ gợi ý hằng năm
+ * @desc    Lấy hồ sơ đề xuất khen thưởng hằng năm (CSTT, CSTDCS, BKBQP, CSTDTQ)
+ *          Query: ?year=2025 (nếu có năm, tự động recalculate trước khi trả về)
  * @access  Private - ADMIN, MANAGER, USER
  */
 router.get('/annual/:personnel_id', verifyToken, requireAuth, profileController.getAnnualProfile);
 
 /**
- * @route   GET /api/profiles/service/:personnel_id
- * @desc    Lấy hồ sơ gợi ý niên hạn
+ * @route   GET /api/profiles/tenure/:personnel_id
+ * @desc    Lấy hồ sơ đề xuất Huân chương Chiến sỹ Vẻ vang (HCCSVV) theo niên hạn
+ *          Tự động recalculate khi gọi API
  * @access  Private - ADMIN, MANAGER, USER
  */
-router.get('/service/:personnel_id', verifyToken, requireAuth, profileController.getServiceProfile);
+router.get('/tenure/:personnel_id', verifyToken, requireAuth, profileController.getTenureProfile);
+
+/**
+ * @route   GET /api/profiles/contribution/:personnel_id
+ * @desc    Lấy hồ sơ đề xuất Huân chương Bảo vệ Tổ quốc (HCBVTQ) theo cống hiến
+ *          Tự động recalculate khi gọi API
+ * @access  Private - ADMIN, MANAGER, USER
+ */
+router.get(
+  '/contribution/:personnel_id',
+  verifyToken,
+  requireAuth,
+  profileController.getContributionProfile
+);
 
 /**
  * @route   POST /api/profiles/recalculate/:personnel_id
@@ -37,22 +52,22 @@ router.post(
 router.post('/recalculate-all', verifyToken, requireAdmin, profileController.recalculateAll);
 
 /**
- * @route   GET /api/profiles/service
+ * @route   GET /api/profiles/tenure
  * @desc    Lấy danh sách tất cả hồ sơ niên hạn (cho admin)
  * @access  Private - ADMIN only
  */
-router.get('/service', verifyToken, requireAdmin, profileController.getAllServiceProfiles);
+router.get('/tenure', verifyToken, requireAdmin, profileController.getAllTenureProfiles);
 
 /**
- * @route   PUT /api/profiles/service/:personnel_id
+ * @route   PUT /api/profiles/tenure/:personnel_id
  * @desc    Cập nhật trạng thái hồ sơ niên hạn (ADMIN duyệt huân chương)
  * @access  Private - ADMIN only
  */
 router.put(
-  '/service/:personnel_id',
+  '/tenure/:personnel_id',
   verifyToken,
   requireAdmin,
-  profileController.updateServiceProfile
+  profileController.updateTenureProfile
 );
 
 module.exports = router;

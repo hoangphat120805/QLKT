@@ -27,6 +27,11 @@ const HoSoHangNam = require('./HoSoHangNam');
 const ThongBao = require('./ThongBao');
 const HoSoDonViHangNam = require('./HoSoDonViHangNam');
 const DanhHieuDonViHangNam = require('./DanhHieuDonViHangNam');
+const KhenThuongCongHien = require('./KhenThuongCongHien');
+const HuanChuongQuanKyQuyetThang = require('./HuanChuongQuanKyQuyetThang');
+const KyNiemChuongVSNXDQDNDVN = require('./KyNiemChuongVSNXDQDNDVN');
+const KhenThuongHCCSVV = require('./KhenThuongHCCSVV');
+const KhenThuongDotXuat = require('./KhenThuongDotXuat');
 
 // ============================================
 // SEQUELIZE RELATIONSHIPS
@@ -53,6 +58,10 @@ CoQuanDonVi.hasMany(DanhHieuDonViHangNam, {
   foreignKey: 'co_quan_don_vi_id',
   as: 'danhHieuDonViHangNam',
 });
+CoQuanDonVi.hasMany(KhenThuongDotXuat, {
+  foreignKey: 'co_quan_don_vi_id',
+  as: 'khenThuongDotXuat',
+});
 
 // DonViTrucThuoc relationships
 DonViTrucThuoc.belongsTo(CoQuanDonVi, {
@@ -74,6 +83,10 @@ DonViTrucThuoc.hasMany(HoSoDonViHangNam, {
 DonViTrucThuoc.hasMany(DanhHieuDonViHangNam, {
   foreignKey: 'don_vi_truc_thuoc_id',
   as: 'danhHieuDonViHangNam',
+});
+DonViTrucThuoc.hasMany(KhenThuongDotXuat, {
+  foreignKey: 'don_vi_truc_thuoc_id',
+  as: 'khenThuongDotXuat',
 });
 
 // ChucVu relationships
@@ -114,6 +127,26 @@ QuanNhan.hasMany(DanhHieuHangNam, {
 QuanNhan.hasOne(HoSoNienHan, { foreignKey: 'quan_nhan_id', as: 'hoSoNienHan' });
 QuanNhan.hasOne(HoSoCongHien, { foreignKey: 'quan_nhan_id', as: 'hoSoCongHien' });
 QuanNhan.hasOne(HoSoHangNam, { foreignKey: 'quan_nhan_id', as: 'hoSoHangNam' });
+QuanNhan.hasOne(KhenThuongCongHien, {
+  foreignKey: 'quan_nhan_id',
+  as: 'khenThuongCongHien',
+});
+QuanNhan.hasOne(HuanChuongQuanKyQuyetThang, {
+  foreignKey: 'quan_nhan_id',
+  as: 'huanChuongQuanKyQuyetThang',
+});
+QuanNhan.hasOne(KyNiemChuongVSNXDQDNDVN, {
+  foreignKey: 'quan_nhan_id',
+  as: 'kyNiemChuongVSNXDQDNDVN',
+});
+QuanNhan.hasMany(KhenThuongHCCSVV, {
+  foreignKey: 'quan_nhan_id',
+  as: 'khenThuongHCCSVV',
+});
+QuanNhan.hasMany(KhenThuongDotXuat, {
+  foreignKey: 'quan_nhan_id',
+  as: 'khenThuongDotXuat',
+});
 
 // TaiKhoan relationships
 TaiKhoan.belongsTo(QuanNhan, { foreignKey: 'quan_nhan_id', as: 'quanNhan' });
@@ -146,6 +179,44 @@ HoSoCongHien.belongsTo(QuanNhan, { foreignKey: 'quan_nhan_id', as: 'quanNhan' })
 
 // HoSoHangNam relationships
 HoSoHangNam.belongsTo(QuanNhan, { foreignKey: 'quan_nhan_id', as: 'quanNhan' });
+
+// KhenThuongCongHien relationships
+KhenThuongCongHien.belongsTo(QuanNhan, {
+  foreignKey: 'quan_nhan_id',
+  as: 'quanNhan',
+});
+
+// HuanChuongQuanKyQuyetThang relationships
+HuanChuongQuanKyQuyetThang.belongsTo(QuanNhan, {
+  foreignKey: 'quan_nhan_id',
+  as: 'quanNhan',
+});
+
+// KyNiemChuongVSNXDQDNDVN relationships
+KyNiemChuongVSNXDQDNDVN.belongsTo(QuanNhan, {
+  foreignKey: 'quan_nhan_id',
+  as: 'quanNhan',
+});
+
+// KhenThuongHCCSVV relationships
+KhenThuongHCCSVV.belongsTo(QuanNhan, {
+  foreignKey: 'quan_nhan_id',
+  as: 'quanNhan',
+});
+
+// KhenThuongDotXuat relationships
+KhenThuongDotXuat.belongsTo(QuanNhan, {
+  foreignKey: 'quan_nhan_id',
+  as: 'quanNhan',
+});
+KhenThuongDotXuat.belongsTo(CoQuanDonVi, {
+  foreignKey: 'co_quan_don_vi_id',
+  as: 'coQuanDonVi',
+});
+KhenThuongDotXuat.belongsTo(DonViTrucThuoc, {
+  foreignKey: 'don_vi_truc_thuoc_id',
+  as: 'donViTrucThuoc',
+});
 
 // ThongBao relationships
 ThongBao.belongsTo(TaiKhoan, { foreignKey: 'nguoi_nhan_id', as: 'nguoiNhan' });
@@ -211,3 +282,8 @@ module.exports.HoSoHangNam = HoSoHangNam;
 module.exports.ThongBao = ThongBao;
 module.exports.HoSoDonViHangNam = HoSoDonViHangNam;
 module.exports.DanhHieuDonViHangNam = DanhHieuDonViHangNam;
+module.exports.KhenThuongCongHien = KhenThuongCongHien;
+module.exports.HuanChuongQuanKyQuyetThang = HuanChuongQuanKyQuyetThang;
+module.exports.KyNiemChuongVSNXDQDNDVN = KyNiemChuongVSNXDQDNDVN;
+module.exports.KhenThuongHCCSVV = KhenThuongHCCSVV;
+module.exports.KhenThuongDotXuat = KhenThuongDotXuat;

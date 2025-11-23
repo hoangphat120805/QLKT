@@ -14,20 +14,22 @@ interface Unit {
 }
 
 interface UnitAnnualAward {
-  id: string;
   nam: number;
-  danh_hieu?: string | null;
+  danh_hieu: string;
   so_quyet_dinh?: string | null;
-  ten_file_pdf?: string | null;
-  so_nam_lien_tuc?: number;
-  ghi_chu?: string | null;
-  createdAt?: string;
+  file_quyet_dinh?: string | null;
+  nhan_bkbqp?: boolean;
+  nhan_bkttcp?: boolean;
+  so_quyet_dinh_bkbqp?: string | null;
+  file_quyet_dinh_bkbqp?: string | null;
+  so_quyet_dinh_bkttcp?: string | null;
+  file_quyet_dinh_bkttcp?: string | null;
 }
 
 interface UnitAnnualAwardHistoryModalProps {
   visible: boolean;
   unit: Unit | null;
-  awards: UnitAnnualAward[];
+  annualAwards: any;
   loading: boolean;
   onClose: () => void;
 }
@@ -35,11 +37,10 @@ interface UnitAnnualAwardHistoryModalProps {
 export default function UnitAnnualAwardHistoryModal({
   visible,
   unit,
-  awards,
+  annualAwards,
   loading,
   onClose,
 }: UnitAnnualAwardHistoryModalProps) {
-  console.log('awards', awards);
   const columns: ColumnsType<UnitAnnualAward> = [
     {
       title: 'Năm',
@@ -54,56 +55,57 @@ export default function UnitAnnualAwardHistoryModal({
       title: 'Danh hiệu',
       dataIndex: 'danh_hieu',
       key: 'danh_hieu',
-      width: 200,
+      width: 150,
       align: 'center',
-      render: (danhHieu: string | null) => {
-        if (!danhHieu) return <Text type="secondary">-</Text>;
-        const map: Record<string, { text: string; color: string }> = {
-          ĐVTT: { text: 'Đơn vị tiên tiến', color: 'blue' },
-          ĐVQT: { text: 'Đơn vị quyết thắng', color: 'green' },
-          BKTTCP: { text: 'Bằng khen Thủ tướng Chính phủ', color: 'orange' },
-          BKBQP: { text: 'Bằng khen Bộ Quốc phòng', color: 'purple' },
+      render: (text: string) => {
+        const map: Record<string, string> = {
+          ĐVQT: 'Đơn vị quyết thắng',
+          ĐVTT: 'Đơn vị tiên tiến',
         };
-        const item = map[danhHieu] || { text: danhHieu, color: 'default' };
-        return <Tag color={item.color}>{item.text}</Tag>;
+        return map[text] || text;
       },
+    },
+    {
+      title: 'Nhận BKBQP',
+      dataIndex: 'nhan_bkbqp',
+      key: 'nhan_bkbqp',
+      width: 120,
+      align: 'center',
+      render: value => (value ? <Tag color="green">Có</Tag> : <Tag>Không</Tag>),
+    },
+    {
+      title: 'Nhận BKTTCP',
+      dataIndex: 'nhan_bkttcp',
+      key: 'nhan_bkttcp',
+      width: 120,
+      align: 'center',
+      render: value => (value ? <Tag color="green">Có</Tag> : <Tag>Không</Tag>),
     },
     {
       title: 'Số quyết định',
-      dataIndex: 'so_quyet_dinh',
       key: 'so_quyet_dinh',
-      width: 150,
+      width: 200,
       align: 'center',
-      render: (soQuyetDinh: string | null) => soQuyetDinh || <Text type="secondary">-</Text>,
-    },
-    {
-      title: 'Số năm liên tục',
-      dataIndex: 'so_nam_lien_tuc',
-      key: 'so_nam_lien_tuc',
-      width: 120,
-      align: 'center',
-      render: (soNam: number | null) => {
-        if (!soNam) return <Text type="secondary">-</Text>;
-        return <Tag color="cyan">{soNam} năm</Tag>;
+      render: (_, record) => {
+        const decisions = [record.so_quyet_dinh];
+        if (record.so_quyet_dinh_bkbqp) {
+          decisions.push(`BKBQP: ${record.so_quyet_dinh_bkbqp}`);
+        }
+        if (record.so_quyet_dinh_bkttcp) {
+          decisions.push(`BKTTCP: ${record.so_quyet_dinh_bkttcp}`);
+        }
+        return decisions.length > 0 ? (
+          <div style={{ textAlign: 'left' }}>
+            {decisions.map((d, i) => (
+              <div key={i}>{d}</div>
+            ))}
+          </div>
+        ) : (
+          '-'
+        );
       },
     },
-    {
-      title: 'Ngày tạo',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      width: 150,
-      align: 'center',
-      render: (date: string) => (date ? dayjs(date).format('DD/MM/YYYY') : '-'),
-    },
   ];
-
-  // Tính tổng số năm liên tục hiện tại
-  const getCurrentContinuousYears = () => {
-    if (!awards || awards.length === 0) return 0;
-    const sortedAwards = [...awards].sort((a, b) => b.nam - a.nam);
-    const latestAward = sortedAwards[0];
-    return latestAward?.so_nam_lien_tuc || 0;
-  };
 
   return (
     <Modal
@@ -120,22 +122,27 @@ export default function UnitAnnualAwardHistoryModal({
       centered
     >
       <Spin spinning={loading}>
-        {awards && awards.length > 0 ? (
+        {annualAwards && annualAwards.tong_dvqt_json && annualAwards.tong_dvqt_json.length > 0 ? (
           <div>
             <Descriptions bordered column={1} size="small" style={{ marginBottom: 16 }}>
-              <Descriptions.Item label="Tổng số năm liên tục hiện tại">
+              <Descriptions.Item label="Tổng số danh hiệu ĐVQT">
                 <Tag color="green" style={{ fontSize: '14px', padding: '4px 12px' }}>
-                  {getCurrentContinuousYears()} năm
+                  {annualAwards?.tong_dvqt || 0} năm
+                </Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Số năm liên tục ĐVQT">
+                <Tag color="blue" style={{ fontSize: '14px', padding: '4px 12px' }}>
+                  {annualAwards?.dvqt_lien_tuc || 0} năm
                 </Tag>
               </Descriptions.Item>
             </Descriptions>
             <Table
               columns={columns}
-              dataSource={awards}
-              rowKey="id"
+              dataSource={annualAwards?.tong_dvqt_json}
+              rowKey={(record, index) => `${record.nam}-${index}`}
               pagination={false}
               size="small"
-              scroll={{ x: 800 }}
+              scroll={{ x: 900 }}
             />
           </div>
         ) : (

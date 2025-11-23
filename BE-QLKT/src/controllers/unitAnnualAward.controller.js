@@ -78,6 +78,12 @@ exports.approve = async (req, res) => {
     const data = await service.approve(req.params.id, {
       so_quyet_dinh: req.body?.so_quyet_dinh,
       file_quyet_dinh: req.body?.file_quyet_dinh,
+      nhan_bkbqp: req.body?.nhan_bkbqp,
+      so_quyet_dinh_bkbqp: req.body?.so_quyet_dinh_bkbqp,
+      file_quyet_dinh_bkbqp: req.body?.file_quyet_dinh_bkbqp,
+      nhan_bkttcp: req.body?.nhan_bkttcp,
+      so_quyet_dinh_bkttcp: req.body?.so_quyet_dinh_bkttcp,
+      file_quyet_dinh_bkttcp: req.body?.file_quyet_dinh_bkttcp,
       nguoi_duyet_id: req.user?.id || req.body?.nguoi_duyet_id,
     });
     res.json({ success: true, data, message: 'Đã phê duyệt đề xuất' });

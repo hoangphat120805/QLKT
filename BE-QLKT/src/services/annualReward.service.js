@@ -42,6 +42,9 @@ class AnnualRewardService {
         personnel_id,
         nam,
         danh_hieu,
+        cap_bac,
+        chuc_vu,
+        ghi_chu,
         nhan_bkbqp,
         so_quyet_dinh_bkbqp,
         nhan_cstdtq,
@@ -85,6 +88,9 @@ class AnnualRewardService {
           quan_nhan_id: personnel_id,
           nam,
           danh_hieu,
+          cap_bac: cap_bac || null,
+          chuc_vu: chuc_vu || null,
+          ghi_chu: ghi_chu || null,
           nhan_bkbqp: nhan_bkbqp || false,
           so_quyet_dinh_bkbqp: so_quyet_dinh_bkbqp || null,
           nhan_cstdtq: nhan_cstdtq || false,
@@ -115,8 +121,17 @@ class AnnualRewardService {
    */
   async updateAnnualReward(id, data) {
     try {
-      const { nam, danh_hieu, nhan_bkbqp, so_quyet_dinh_bkbqp, nhan_cstdtq, so_quyet_dinh_cstdtq } =
-        data;
+      const {
+        nam,
+        danh_hieu,
+        cap_bac,
+        chuc_vu,
+        ghi_chu,
+        nhan_bkbqp,
+        so_quyet_dinh_bkbqp,
+        nhan_cstdtq,
+        so_quyet_dinh_cstdtq,
+      } = data;
 
       // Kiểm tra bản ghi có tồn tại không
       const reward = await prisma.danhHieuHangNam.findUnique({
@@ -145,6 +160,9 @@ class AnnualRewardService {
         data: {
           nam: nam || reward.nam,
           danh_hieu: danh_hieu || reward.danh_hieu,
+          cap_bac: cap_bac !== undefined ? cap_bac : reward.cap_bac,
+          chuc_vu: chuc_vu !== undefined ? chuc_vu : reward.chuc_vu,
+          ghi_chu: ghi_chu !== undefined ? ghi_chu : reward.ghi_chu,
           nhan_bkbqp: nhan_bkbqp !== undefined ? nhan_bkbqp : reward.nhan_bkbqp,
           so_quyet_dinh_bkbqp:
             so_quyet_dinh_bkbqp !== undefined ? so_quyet_dinh_bkbqp : reward.so_quyet_dinh_bkbqp,
@@ -252,6 +270,15 @@ class AnnualRewardService {
         const cccd = String(row.getCell(headerMap['cccd']).value || '').trim();
         const namVal = row.getCell(headerMap['nam']).value;
         const danh_hieu_raw = String(row.getCell(headerMap['danh_hieu']).value || '').trim();
+        const cap_bac = headerMap['cap_bac']
+          ? String(row.getCell(headerMap['cap_bac']).value || '').trim()
+          : null;
+        const chuc_vu = headerMap['chuc_vu']
+          ? String(row.getCell(headerMap['chuc_vu']).value || '').trim()
+          : null;
+        const ghi_chu = headerMap['ghi_chu']
+          ? String(row.getCell(headerMap['ghi_chu']).value || '').trim()
+          : null;
 
         if (!cccd && !namVal && !danh_hieu_raw) continue; // dòng trống
         if (!cccd || !namVal) {
@@ -303,6 +330,9 @@ class AnnualRewardService {
               quan_nhan_id: personnel.id,
               nam,
               danh_hieu,
+              cap_bac: cap_bac || null,
+              chuc_vu: chuc_vu || null,
+              ghi_chu: ghi_chu || null,
               nhan_bkbqp: false,
               nhan_cstdtq: false,
             },
@@ -311,7 +341,12 @@ class AnnualRewardService {
         } else {
           await prisma.danhHieuHangNam.update({
             where: { id: existing.id },
-            data: { danh_hieu },
+            data: {
+              danh_hieu,
+              cap_bac: cap_bac !== undefined ? cap_bac : existing.cap_bac,
+              chuc_vu: chuc_vu !== undefined ? chuc_vu : existing.chuc_vu,
+              ghi_chu: ghi_chu !== undefined ? ghi_chu : existing.ghi_chu,
+            },
           });
           updated.push(existing.id);
         }
@@ -344,7 +379,16 @@ class AnnualRewardService {
    */
   async bulkCreateAnnualRewards(data) {
     try {
-      const { personnel_ids, nam, danh_hieu, so_quyet_dinh, file_quyet_dinh } = data;
+      const {
+        personnel_ids,
+        nam,
+        danh_hieu,
+        cap_bac,
+        chuc_vu,
+        ghi_chu,
+        so_quyet_dinh,
+        file_quyet_dinh,
+      } = data;
       const profileService = require('./profile.service');
 
       // Validate danh hiệu
@@ -396,6 +440,9 @@ class AnnualRewardService {
               quan_nhan_id: personnelId,
               nam: parseInt(nam),
               danh_hieu: finalDanhHieu,
+              cap_bac: cap_bac || null,
+              chuc_vu: chuc_vu || null,
+              ghi_chu: ghi_chu || null,
               so_quyet_dinh: so_quyet_dinh || null,
               file_quyet_dinh: file_quyet_dinh || null,
               nhan_bkbqp: false,

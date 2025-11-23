@@ -48,13 +48,14 @@ export default function Step3SetTitlesDonViHangNam({
   const [unitAnnualAwardHistoryModalVisible, setUnitAnnualAwardHistoryModalVisible] =
     useState(false);
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null);
-  const [unitAnnualAwards, setUnitAnnualAwards] = useState<any[]>([]);
+  const [unitAnnualAwards, setUnitAnnualAwards] = useState<any>(null);
   const [allUnitAnnualAwards, setAllUnitAnnualAwards] = useState<Record<string, any>>({});
   const [loadingModal, setLoadingModal] = useState(false);
 
   useEffect(() => {
     if (selectedUnitIds.length > 0) {
       fetchUnitDetails();
+      fetchUnitAnnualProfiles();
     } else {
       setUnits([]);
       onTitleDataChange([]);
@@ -117,39 +118,33 @@ export default function Step3SetTitlesDonViHangNam({
     }
   };
 
-  const handleRecalculate = async () => {
-    if (!selectedUnitIds || selectedUnitIds.length === 0) {
-      message.warning('Không có đơn vị nào được chọn');
-      return;
-    }
-
+  const fetchUnitAnnualProfiles = async () => {
+    if (!selectedUnitIds || selectedUnitIds.length === 0) return;
+    const hideMessage = message.loading('Đang tính toán lại hồ sơ đơn vị...', 0);
     try {
-      setLoading(true);
-      message.loading({ content: 'Đang tính toán lại...', key: 'recalculate', duration: 0 });
-
       const profilesMap: Record<string, any> = {};
       await Promise.all(
-        units.map(async unit => {
+        selectedUnitIds.map(async unitId => {
           try {
-            const profileRes = await apiClient.getUnitAnnualProfile(unit.id, nam, true); // force recalculate
+            const profileRes = await apiClient.getUnitAnnualProfile(unitId, nam);
             if (profileRes.success && profileRes.data) {
-              profilesMap[unit.id] = profileRes.data;
+              profilesMap[unitId] = profileRes.data;
             } else {
-              profilesMap[unit.id] = null;
+              profilesMap[unitId] = null;
             }
           } catch (e) {
-            profilesMap[unit.id] = null;
+            profilesMap[unitId] = null;
           }
         })
       );
-
+      console.log('Fetched unit annual profiles:', profilesMap);
       setAllUnitAnnualAwards(profilesMap);
-      message.success({ content: 'Tính toán lại thành công!', key: 'recalculate', duration: 2 });
+      hideMessage();
+      message.success('Tính toán hồ sơ hoàn tất!');
     } catch (error) {
-      console.error('Error recalculating profiles:', error);
-      message.error({ content: 'Có lỗi khi tính toán lại', key: 'recalculate', duration: 2 });
-    } finally {
-      setLoading(false);
+      console.error('Error fetching unit annual profiles:', error);
+      hideMessage();
+      message.error('Có lỗi khi tính toán hồ sơ');
     }
   };
 
@@ -252,15 +247,15 @@ export default function Step3SetTitlesDonViHangNam({
     setUnitAnnualAwardHistoryModalVisible(true);
 
     try {
-      // Fetch awards for history modal (separate from profile)
-      const awardsRes = await apiClient.getUnitAnnualAwards(record.id, nam);
-      if (awardsRes.success && awardsRes.data) {
-        setUnitAnnualAwards(Array.isArray(awardsRes.data) ? awardsRes.data : []);
+      // Sử dụng dữ liệu đã fetch từ allUnitAnnualAwards (getUnitAnnualProfile)
+      const profile = allUnitAnnualAwards[record.id];
+      if (profile) {
+        setUnitAnnualAwards(profile);
       } else {
         setUnitAnnualAwards([]);
       }
     } catch (error: any) {
-      console.error('Error fetching unit awards:', error);
+      console.error('Error loading unit history:', error);
       setUnitAnnualAwards([]);
     } finally {
       setLoadingModal(false);
@@ -391,14 +386,6 @@ export default function Step3SetTitlesDonViHangNam({
               {allTitlesSet && ' ✓'}
             </Text>
           </div>
-          <Button
-            type="primary"
-            icon={<ReloadOutlined />}
-            onClick={handleRecalculate}
-            loading={loading}
-          >
-            Tính toán lại
-          </Button>
         </div>
       </Space>
 
@@ -431,12 +418,12 @@ export default function Step3SetTitlesDonViHangNam({
       <UnitAnnualAwardHistoryModal
         visible={unitAnnualAwardHistoryModalVisible}
         unit={selectedUnit}
-        awards={unitAnnualAwards}
+        annualAwards={unitAnnualAwards}
         loading={loadingModal}
         onClose={() => {
           setUnitAnnualAwardHistoryModalVisible(false);
           setSelectedUnit(null);
-          setUnitAnnualAwards([]);
+          setUnitAnnualAwards(null);
         }}
       />
     </div>

@@ -183,6 +183,9 @@ model DanhHieuHangNam {
   quan_nhan_id           String   @db.VarChar(30)
   nam                    Int
   danh_hieu              String?  @db.VarChar(20) // CSTDCS, CSTT (null = không đạt)
+  cap_bac                String?  @db.VarChar(50) // Cấp bậc tại thời điểm được đề xuất
+  chuc_vu                String?  @db.VarChar(255) // Chức vụ tại thời điểm được đề xuất (text tự do)
+  ghi_chu                String?  @db.Text // Ghi chú bổ sung (vd: Phó giám đốc tại đơn vị A)
   so_quyet_dinh          String?  @db.VarChar(100) // Số quyết định danh hiệu
   file_quyet_dinh        String?  @db.VarChar(500) // Path to PDF file
   nhan_bkbqp             Boolean  @default(false)
@@ -207,6 +210,9 @@ model KhenThuongCongHien {
   quan_nhan_id           String   @unique @db.VarChar(30) // Mỗi quân nhân chỉ có 1 danh hiệu cống hiến
   danh_hieu              String   @db.VarChar(20) // HCBVTQ_HANG_BA, HCBVTQ_HANG_NHI, HCBVTQ_HANG_NHAT
   nam                    Int // Năm được trao
+  cap_bac                String?  @db.VarChar(50) // Cấp bậc tại thời điểm được đề xuất
+  chuc_vu                String?  @db.VarChar(255) // Chức vụ tại thời điểm được đề xuất (text tự do)
+  ghi_chu                String?  @db.Text // Ghi chú bổ sung (vd: Phó giám đốc tại đơn vị A)
   so_quyet_dinh          String?  @db.VarChar(100) // Số quyết định
   file_quyet_dinh        String?  @db.VarChar(500) // Path to PDF file
   // Thời gian đảm nhiệm chức vụ theo 3 nhóm hệ số
@@ -227,6 +233,9 @@ model HuanChuongQuanKyQuyetThang {
   id                     String   @id @default(cuid()) @db.VarChar(30)
   quan_nhan_id           String   @unique @db.VarChar(30) // Mỗi quân nhân chỉ có 1 huân chương
   nam                    Int // Năm được trao
+  cap_bac                String?  @db.VarChar(50) // Cấp bậc tại thời điểm được đề xuất
+  chuc_vu                String?  @db.VarChar(255) // Chức vụ tại thời điểm được đề xuất (text tự do)
+  ghi_chu                String?  @db.Text // Ghi chú bổ sung (vd: Phó giám đốc tại đơn vị A)
   so_quyet_dinh          String?  @db.VarChar(100) // Số quyết định
   file_quyet_dinh        String?  @db.VarChar(500) // Path to PDF file
   // Thời gian tính từ ngày nhập ngũ
@@ -245,6 +254,9 @@ model KyNiemChuongVSNXDQDNDVN {
   id                     String   @id @default(cuid()) @db.VarChar(30)
   quan_nhan_id           String   @unique @db.VarChar(30) // Mỗi quân nhân chỉ có 1 kỷ niệm chương
   nam                    Int // Năm được trao
+  cap_bac                String?  @db.VarChar(50) // Cấp bậc tại thời điểm được đề xuất
+  chuc_vu                String?  @db.VarChar(255) // Chức vụ tại thời điểm được đề xuất (text tự do)
+  ghi_chu                String?  @db.Text // Ghi chú bổ sung (vd: Phó giám đốc tại đơn vị A)
   so_quyet_dinh          String?  @db.VarChar(100) // Số quyết định
   file_quyet_dinh        String?  @db.VarChar(500) // Path to PDF file
   // Thời gian tính từ ngày nhập ngũ
@@ -264,6 +276,9 @@ model KhenThuongHCCSVV {
   quan_nhan_id           String   @db.VarChar(30)
   danh_hieu              String   @db.VarChar(20) // HCCSVV_HANG_BA, HCCSVV_HANG_NHI, HCCSVV_HANG_NHAT
   nam                    Int // Năm được trao
+  cap_bac                String?  @db.VarChar(50) // Cấp bậc tại thời điểm được đề xuất
+  chuc_vu                String?  @db.VarChar(255) // Chức vụ tại thời điểm được đề xuất (text tự do)
+  ghi_chu                String?  @db.Text // Ghi chú bổ sung (vd: Phó giám đốc tại đơn vị A)
   so_quyet_dinh          String?  @db.VarChar(100) // Số quyết định
   file_quyet_dinh        String?  @db.VarChar(500) // Path to PDF file
   // Thời gian tính từ ngày nhập ngũ
@@ -288,6 +303,9 @@ model KhenThuongDotXuat {
   don_vi_truc_thuoc_id   String?  @db.VarChar(30) // ID đơn vị trực thuộc (khi loai = TAP_THE và don_vi_type = DON_VI_TRUC_THUOC)
   hinh_thuc_khen_thuong  String   @db.VarChar(255) // Ví dụ: "Giấy khen của abc", "Bằng khen của def"
   nam                    Int // Năm nhận khen thưởng
+  cap_bac                String?  @db.VarChar(50) // Cấp bậc tại thời điểm được đề xuất (cho CA_NHAN)
+  chuc_vu                String?  @db.VarChar(255) // Chức vụ tại thời điểm được đề xuất (cho CA_NHAN, text tự do)
+  ghi_chu                String?  @db.Text // Ghi chú bổ sung (vd: Phó giám đốc tại đơn vị A)
   so_quyet_dinh          String?  @db.VarChar(100) // Số quyết định
   file_quyet_dinh        String?  @db.VarChar(500) // Path to PDF file
   createdAt              DateTime @default(now()) @db.Timestamptz(6)

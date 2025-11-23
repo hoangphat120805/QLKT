@@ -35,6 +35,9 @@ interface RewardRecord {
   id: string;
   nam: number;
   danh_hieu: string;
+  cap_bac?: string;
+  chuc_vu?: string;
+  ghi_chu?: string;
   so_quyet_dinh?: string;
   file_quyet_dinh?: string;
 }
@@ -84,12 +87,18 @@ export default function AnnualRewardsPage() {
       form.setFieldsValue({
         nam: reward.nam?.toString() || new Date().getFullYear().toString(),
         danh_hieu: reward.danh_hieu || '',
+        cap_bac: reward.cap_bac || undefined,
+        chuc_vu: reward.chuc_vu || '',
+        ghi_chu: reward.ghi_chu || '',
       });
     } else {
       setEditingReward(null);
       form.setFieldsValue({
         nam: new Date().getFullYear().toString(),
         danh_hieu: '',
+        cap_bac: undefined,
+        chuc_vu: '',
+        ghi_chu: '',
       });
     }
     setDialogOpen(true);
@@ -108,6 +117,9 @@ export default function AnnualRewardsPage() {
       const payload = {
         nam: parseInt(values.nam),
         danh_hieu: values.danh_hieu,
+        cap_bac: values.cap_bac || null,
+        chuc_vu: values.chuc_vu || null,
+        ghi_chu: values.ghi_chu || null,
       };
 
       const res = editingReward
@@ -160,6 +172,28 @@ export default function AnnualRewardsPage() {
       dataIndex: 'danh_hieu',
       key: 'danh_hieu',
       width: 200,
+      render: (text: string) => text || '-',
+    },
+    {
+      title: 'Cấp bậc',
+      dataIndex: 'cap_bac',
+      key: 'cap_bac',
+      width: 120,
+      render: (text: string) => text || '-',
+    },
+    {
+      title: 'Chức vụ',
+      dataIndex: 'chuc_vu',
+      key: 'chuc_vu',
+      width: 180,
+      render: (text: string) => text || '-',
+    },
+    {
+      title: 'Ghi chú',
+      dataIndex: 'ghi_chu',
+      key: 'ghi_chu',
+      width: 200,
+      ellipsis: true,
       render: (text: string) => text || '-',
     },
     {
@@ -326,6 +360,33 @@ export default function AnnualRewardsPage() {
               <Select.Option value="CSTDCS">Chiến sĩ thi đua cơ sở (CSTDCS)</Select.Option>
               <Select.Option value="CSTT">Chiến sĩ tốt (CSTT)</Select.Option>
             </Select>
+          </Form.Item>
+
+          <Form.Item name="cap_bac" label="Cấp bậc (tại thời điểm đề nghị)">
+            <Select placeholder="Chọn cấp bậc" size="large" allowClear>
+              <Select.Option value="Thượng tá">Thượng tá</Select.Option>
+              <Select.Option value="Trung tá">Trung tá</Select.Option>
+              <Select.Option value="Thiếu tá">Thiếu tá</Select.Option>
+              <Select.Option value="Đại úy">Đại úy</Select.Option>
+              <Select.Option value="Thượng úy">Thượng úy</Select.Option>
+              <Select.Option value="Trung úy">Trung úy</Select.Option>
+              <Select.Option value="Thiếu úy">Thiếu úy</Select.Option>
+              <Select.Option value="Thượng sĩ">Thượng sĩ</Select.Option>
+              <Select.Option value="Trung sĩ">Trung sĩ</Select.Option>
+              <Select.Option value="Hạ sĩ">Hạ sĩ</Select.Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item name="chuc_vu" label="Chức vụ (tại thời điểm đề nghị)">
+            <Input placeholder="Nhập chức vụ" size="large" />
+          </Form.Item>
+
+          <Form.Item name="ghi_chu" label="Ghi chú">
+            <Input.TextArea
+              placeholder="Ghi chú (ví dụ: chuyển từ đơn vị khác)"
+              rows={3}
+              size="large"
+            />
           </Form.Item>
 
           <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>

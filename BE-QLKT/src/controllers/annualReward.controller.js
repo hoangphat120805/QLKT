@@ -36,6 +36,9 @@ class AnnualRewardController {
         personnel_id,
         nam,
         danh_hieu,
+        cap_bac,
+        chuc_vu,
+        ghi_chu,
         nhan_bkbqp,
         so_quyet_dinh_bkbqp,
         nhan_cstdtq,
@@ -53,6 +56,9 @@ class AnnualRewardController {
         personnel_id,
         nam,
         danh_hieu,
+        cap_bac,
+        chuc_vu,
+        ghi_chu,
         nhan_bkbqp,
         so_quyet_dinh_bkbqp,
         nhan_cstdtq,
@@ -84,12 +90,24 @@ class AnnualRewardController {
   async updateAnnualReward(req, res) {
     try {
       const { id } = req.params;
-      const { nam, danh_hieu, nhan_bkbqp, so_quyet_dinh_bkbqp, nhan_cstdtq, so_quyet_dinh_cstdtq } =
-        req.body;
+      const {
+        nam,
+        danh_hieu,
+        cap_bac,
+        chuc_vu,
+        ghi_chu,
+        nhan_bkbqp,
+        so_quyet_dinh_bkbqp,
+        nhan_cstdtq,
+        so_quyet_dinh_cstdtq,
+      } = req.body;
 
       const result = await annualRewardService.updateAnnualReward(id, {
         nam,
         danh_hieu,
+        cap_bac,
+        chuc_vu,
+        ghi_chu,
         nhan_bkbqp,
         so_quyet_dinh_bkbqp,
         nhan_cstdtq,
@@ -155,7 +173,7 @@ class AnnualRewardController {
    */
   async bulkCreateAnnualRewards(req, res) {
     try {
-      const { personnel_ids, nam, danh_hieu, so_quyet_dinh } = req.body;
+      const { personnel_ids, nam, danh_hieu, cap_bac, chuc_vu, ghi_chu, so_quyet_dinh } = req.body;
 
       // Parse personnel_ids nếu là string
       let parsedPersonnelIds = personnel_ids;
@@ -195,6 +213,9 @@ class AnnualRewardController {
         personnel_ids: parsedPersonnelIds,
         nam,
         danh_hieu,
+        cap_bac,
+        chuc_vu,
+        ghi_chu,
         so_quyet_dinh,
         file_quyet_dinh,
       });

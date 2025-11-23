@@ -2733,6 +2733,34 @@ class ProposalService {
           so_quyet_dinh: decisions.so_quyet_dinh_cstdcs,
           file_pdf: pdfPaths.file_pdf_cstdcs,
         },
+        ĐVQT: {
+          so_quyet_dinh: decisions.so_quyet_dinh_don_vi_hang_nam,
+          file_pdf: pdfPaths.file_pdf_don_vi_hang_nam,
+        },
+        ĐVTT: {
+          so_quyet_dinh: decisions.so_quyet_dinh_don_vi_hang_nam,
+          file_pdf: pdfPaths.file_pdf_don_vi_hang_nam,
+        },
+        HCCSVV_HANG_BA: {
+          so_quyet_dinh: decisions.so_quyet_dinh_nien_han,
+          file_pdf: pdfPaths.file_pdf_nien_han,
+        },
+        HCCSVV_HANG_NHI: {
+          so_quyet_dinh: decisions.so_quyet_dinh_nien_han,
+          file_pdf: pdfPaths.file_pdf_nien_han,
+        },
+        HCCSVV_HANG_NHAT: {
+          so_quyet_dinh: decisions.so_quyet_dinh_nien_han,
+          file_pdf: pdfPaths.file_pdf_nien_han,
+        },
+        HC_QKQT: {
+          so_quyet_dinh: decisions.so_quyet_dinh_hc_qkqt || decisions.so_quyet_dinh_nien_han,
+          file_pdf: pdfPaths.file_pdf_hc_qkqt || pdfPaths.file_pdf_nien_han,
+        },
+        KNC_VSNXD_QDNDVN: {
+          so_quyet_dinh: decisions.so_quyet_dinh_knc_vsnxd || decisions.so_quyet_dinh_nien_han,
+          file_pdf: pdfPaths.file_pdf_knc_vsnxd || pdfPaths.file_pdf_nien_han,
+        },
       };
 
       const specialDecisionMapping = {
@@ -2759,33 +2787,114 @@ class ProposalService {
               continue;
             }
 
-            // Chỉ lưu các đơn vị có danh hiệu
-            if (!item.danh_hieu || item.danh_hieu.trim() === '') {
-              continue;
-            }
-
             // Xác định co_quan_don_vi_id và don_vi_truc_thuoc_id
             const coQuanDonViId = item.don_vi_type === 'CO_QUAN_DON_VI' ? item.don_vi_id : null;
             const donViTrucThuocId =
               item.don_vi_type === 'DON_VI_TRUC_THUOC' ? item.don_vi_id : null;
 
-            // Lấy số quyết định và file từ mapping theo danh hiệu
+            const namValue = typeof item.nam === 'string' ? parseInt(item.nam, 10) : item.nam;
+
+            // ============================================
+            // XỬ LÝ ĐẶC BIỆT CHO BKBQP VÀ BKTTCP
+            // Chỉ update các field liên quan, không tạo record mới
+            // ============================================
+            if (item.danh_hieu === 'BKBQP' || item.danh_hieu === 'BKTTCP') {
+              // Tìm record hiện tại
+              const whereCondition = {
+                nam: namValue,
+                OR: [
+                  ...(coQuanDonViId ? [{ co_quan_don_vi_id: coQuanDonViId }] : []),
+                  ...(donViTrucThuocId ? [{ don_vi_truc_thuoc_id: donViTrucThuocId }] : []),
+                ],
+              };
+
+              const existingRecord = await prisma.danhHieuDonViHangNam.findFirst({
+                where: whereCondition,
+              });
+
+              if (!existingRecord) {
+                errors.push(
+                  `Không tìm thấy record danh hiệu năm ${namValue} cho đơn vị (ID: ${item.don_vi_id}). ` +
+                    `Không thể cập nhật ${item.danh_hieu}.`
+                );
+                continue;
+              }
+
+              // Chuẩn bị dữ liệu update
+              const updateData = {};
+
+              if (item.danh_hieu === 'BKBQP') {
+                // Lấy quyết định BKBQP từ item hoặc special mapping
+                let soQuyetDinhBKBQP =
+                  item.so_quyet_dinh || specialDecisionMapping.BKBQP?.so_quyet_dinh || null;
+                let filePdfBKBQP =
+                  item.file_quyet_dinh || specialDecisionMapping.BKBQP?.file_pdf || null;
+
+                updateData.nhan_bkbqp = true;
+                updateData.so_quyet_dinh_bkbqp = soQuyetDinhBKBQP;
+                updateData.file_quyet_dinh_bkbqp = filePdfBKBQP;
+
+                console.log(
+                  `📝 Cập nhật BKBQP cho đơn vị (ID: ${item.don_vi_id}, năm: ${namValue})`
+                );
+              } else if (item.danh_hieu === 'BKTTCP') {
+                // Lấy quyết định BKTTCP từ item hoặc special mapping (dùng CSTDTQ mapping)
+                let soQuyetDinhBKTTCP =
+                  item.so_quyet_dinh || specialDecisionMapping.CSTDTQ?.so_quyet_dinh || null;
+                let filePdfBKTTCP =
+                  item.file_quyet_dinh || specialDecisionMapping.CSTDTQ?.file_pdf || null;
+
+                updateData.nhan_bkttcp = true;
+                updateData.so_quyet_dinh_bkttcp = soQuyetDinhBKTTCP;
+                updateData.file_quyet_dinh_bkttcp = filePdfBKTTCP;
+
+                console.log(
+                  `📝 Cập nhật BKTTCP cho đơn vị (ID: ${item.don_vi_id}, năm: ${namValue})`
+                );
+              }
+
+              // Update record
+              await prisma.danhHieuDonViHangNam.update({
+                where: { id: existingRecord.id },
+                data: updateData,
+              });
+
+              importedDanhHieu++;
+              console.log(
+                `✅ Đã cập nhật ${item.danh_hieu} cho đơn vị (ID: ${item.don_vi_id}, năm: ${namValue})`
+              );
+              continue; // Skip to next item
+            }
+
+            // ============================================
+            // XỬ LÝ BÌNH THƯỜNG CHO ĐVQT VÀ ĐVTT
+            // ============================================
+            // Chỉ lưu các đơn vị có danh hiệu
+            if (!item.danh_hieu || item.danh_hieu.trim() === '') {
+              continue;
+            }
+
+            // Lấy số quyết định và file từ item hoặc mapping theo danh hiệu
+            // Ưu tiên lấy từ item (đã được Admin chỉnh sửa), sau đó mới fallback về decisionMapping
             const decisionInfo = decisionMapping[item.danh_hieu] || {};
-            const soQuyetDinh = decisionInfo.so_quyet_dinh || null;
-            const fileQuyetDinh = decisionInfo.file_pdf || null;
+            const soQuyetDinh = item.so_quyet_dinh || decisionInfo.so_quyet_dinh || null;
+            const fileQuyetDinh = item.file_quyet_dinh || decisionInfo.file_pdf || null;
 
             // Lấy thông tin bằng khen đặc biệt (nếu có)
             const nhanBKBQP = item.nhan_bkbqp || false;
-            const soQuyetDinhBKBQP = nhanBKBQP ? specialDecisionMapping.BKBQP?.so_quyet_dinh : null;
-            const fileQuyetDinhBKBQP = nhanBKBQP ? specialDecisionMapping.BKBQP?.file_pdf : null;
+            const soQuyetDinhBKBQP =
+              item.so_quyet_dinh_bkbqp ||
+              (nhanBKBQP ? specialDecisionMapping.BKBQP?.so_quyet_dinh : null);
+            const fileQuyetDinhBKBQP =
+              item.file_quyet_dinh_bkbqp || (nhanBKBQP ? specialDecisionMapping.BKBQP?.file_pdf : null);
 
             const nhanBKTTCP = item.nhan_bkttcp || false;
-            const soQuyetDinhBKTTCP = nhanBKTTCP
-              ? specialDecisionMapping.CSTDTQ?.so_quyet_dinh
-              : null;
-            const fileQuyetDinhBKTTCP = nhanBKTTCP ? specialDecisionMapping.CSTDTQ?.file_pdf : null;
-
-            const namValue = typeof item.nam === 'string' ? parseInt(item.nam, 10) : item.nam;
+            const soQuyetDinhBKTTCP =
+              item.so_quyet_dinh_bkttcp ||
+              (nhanBKTTCP ? specialDecisionMapping.CSTDTQ?.so_quyet_dinh : null);
+            const fileQuyetDinhBKTTCP =
+              item.file_quyet_dinh_bkttcp ||
+              (nhanBKTTCP ? specialDecisionMapping.CSTDTQ?.file_pdf : null);
 
             // Tìm bản ghi DanhHieuDonViHangNam hiện tại
             const whereCondition = {
@@ -2958,10 +3067,11 @@ class ProposalService {
               continue;
             }
 
-            // Lấy số quyết định và file từ decisions (Admin đã nhập khi duyệt)
+            // Lấy số quyết định và file từ item hoặc decisions
+            // Ưu tiên lấy từ item (đã được Admin chỉnh sửa), sau đó mới fallback về decisions
             const soQuyetDinhDanhHieu =
-              decisions.so_quyet_dinh_cong_hien || item.so_quyet_dinh || null;
-            const filePdfDanhHieu = pdfPaths.file_pdf_cong_hien || item.file_quyet_dinh || null;
+              item.so_quyet_dinh || decisions.so_quyet_dinh_cong_hien || null;
+            const filePdfDanhHieu = item.file_quyet_dinh || pdfPaths.file_pdf_cong_hien || null;
 
             // Lưu vào cùng năm đề xuất (không phải năm trong item.nam)
             const namLuu = proposal.nam;
@@ -3002,6 +3112,9 @@ class ProposalService {
                   data: {
                     danh_hieu: item.danh_hieu,
                     nam: namLuu, // Cập nhật năm mới
+                    cap_bac: item.cap_bac || null,
+                    chuc_vu: item.chuc_vu || null,
+                    ghi_chu: item.ghi_chu || null,
                     so_quyet_dinh: soQuyetDinhDanhHieu,
                     file_quyet_dinh: filePdfDanhHieu,
                     thoi_gian_nhom_0_7: thoiGianNhom0_7,
@@ -3025,6 +3138,9 @@ class ProposalService {
                   quan_nhan_id: quanNhan.id,
                   danh_hieu: item.danh_hieu,
                   nam: namLuu,
+                  cap_bac: item.cap_bac || null,
+                  chuc_vu: item.chuc_vu || null,
+                  ghi_chu: item.ghi_chu || null,
                   so_quyet_dinh: soQuyetDinhDanhHieu,
                   file_quyet_dinh: filePdfDanhHieu,
                   thoi_gian_nhom_0_7: thoiGianNhom0_7,
@@ -3064,6 +3180,90 @@ class ProposalService {
               continue;
             }
 
+            // Lưu vào cùng năm đề xuất
+            const namLuu = proposal.nam;
+
+            // ============================================
+            // XỬ LÝ ĐẶC BIỆT CHO BKBQP VÀ CSTDTQ
+            // Chỉ update các field liên quan, không tạo record mới
+            // ============================================
+            if (item.danh_hieu === 'BKBQP' || item.danh_hieu === 'CSTDTQ') {
+              // Tìm record hiện tại
+              const existingRecord = await prisma.danhHieuHangNam.findUnique({
+                where: {
+                  quan_nhan_id_nam: {
+                    quan_nhan_id: quanNhan.id,
+                    nam: namLuu,
+                  },
+                },
+              });
+
+              if (!existingRecord) {
+                errors.push(
+                  `Không tìm thấy record danh hiệu năm ${namLuu} cho quân nhân ${quanNhan.ho_ten} (ID: ${quanNhan.id}). ` +
+                    `Không thể cập nhật ${item.danh_hieu}.`
+                );
+                continue;
+              }
+
+              // Chuẩn bị dữ liệu update
+              const updateData = {};
+
+              if (item.danh_hieu === 'BKBQP') {
+                // Lấy quyết định BKBQP từ item hoặc special mapping
+                let soQuyetDinhBKBQP =
+                  item.so_quyet_dinh || specialDecisionMapping.BKBQP?.so_quyet_dinh || null;
+                let filePdfBKBQP =
+                  item.file_quyet_dinh || specialDecisionMapping.BKBQP?.file_pdf || null;
+
+                updateData.nhan_bkbqp = true;
+                updateData.so_quyet_dinh_bkbqp = soQuyetDinhBKBQP;
+                updateData.file_quyet_dinh_bkbqp = filePdfBKBQP;
+
+                console.log(
+                  `📝 Cập nhật BKBQP cho quân nhân ${quanNhan.ho_ten} (ID: ${quanNhan.id}, năm: ${namLuu})`
+                );
+              } else if (item.danh_hieu === 'CSTDTQ') {
+                // Lấy quyết định CSTDTQ từ item hoặc special mapping
+                let soQuyetDinhCSTDTQ =
+                  item.so_quyet_dinh || specialDecisionMapping.CSTDTQ?.so_quyet_dinh || null;
+                let filePdfCSTDTQ =
+                  item.file_quyet_dinh || specialDecisionMapping.CSTDTQ?.file_pdf || null;
+
+                updateData.nhan_cstdtq = true;
+                updateData.so_quyet_dinh_cstdtq = soQuyetDinhCSTDTQ;
+                updateData.file_quyet_dinh_cstdtq = filePdfCSTDTQ;
+
+                console.log(
+                  `📝 Cập nhật CSTDTQ cho quân nhân ${quanNhan.ho_ten} (ID: ${quanNhan.id}, năm: ${namLuu})`
+                );
+              }
+
+              // Update record
+              await prisma.danhHieuHangNam.update({
+                where: {
+                  quan_nhan_id_nam: {
+                    quan_nhan_id: quanNhan.id,
+                    nam: namLuu,
+                  },
+                },
+                data: updateData,
+              });
+
+              importedDanhHieu++;
+              affectedPersonnelIds.add(quanNhan.id);
+              console.log(
+                `✅ Đã cập nhật ${item.danh_hieu} cho quân nhân ${quanNhan.ho_ten} (ID: ${quanNhan.id}, năm: ${namLuu})`
+              );
+              console.log(
+                `📝 Đã add quân nhân ${quanNhan.id} vào affectedPersonnelIds. Tổng số: ${affectedPersonnelIds.size}`
+              );
+              continue; // Skip to next item
+            }
+
+            // ============================================
+            // XỬ LÝ BÌNH THƯỜNG CHO CSTDCS VÀ CSTT
+            // ============================================
             // Tự động gán số quyết định và file PDF dựa trên danh_hieu
             // Ưu tiên lấy từ item (đã được Admin chỉnh sửa), sau đó mới fallback về decisionMapping
             let soQuyetDinhDanhHieu = null;
@@ -3106,9 +3306,6 @@ class ProposalService {
               soQuyetDinhCSTDTQ = soQuyetDinhCSTDTQ || specialDecisionMapping.CSTDTQ.so_quyet_dinh;
               filePdfCSTDTQ = filePdfCSTDTQ || specialDecisionMapping.CSTDTQ.file_pdf;
             }
-
-            // Lưu vào cùng năm đề xuất (không phải năm trong item.nam)
-            const namLuu = proposal.nam;
 
             // Upsert vào bảng DanhHieuHangNam
             const savedDanhHieu = await prisma.danhHieuHangNam.upsert({
@@ -3185,16 +3382,13 @@ class ProposalService {
               continue;
             }
 
-            // Lấy số quyết định và file PDF cho niên hạn
-            let soQuyetDinhNienHan = item.so_quyet_dinh || decisions.so_quyet_dinh_nien_han || null;
-            let filePdfNienHan = item.file_quyet_dinh || pdfPaths.file_pdf_nien_han || null;
-
             // Chỉ xử lý các hạng HCCSVV
             const allowedDanhHieus = ['HCCSVV_HANG_BA', 'HCCSVV_HANG_NHI', 'HCCSVV_HANG_NHAT'];
             if (allowedDanhHieus.includes(item.danh_hieu)) {
-              // Lấy số quyết định và file PDF
-              let soQuyetDinh = item.so_quyet_dinh || decisions.so_quyet_dinh_nien_han || null;
-              let filePdf = item.file_quyet_dinh || pdfPaths.file_pdf_nien_han || null;
+              // Lấy số quyết định và file PDF từ decisionMapping
+              const danhHieuDecision = decisionMapping[item.danh_hieu] || {};
+              let soQuyetDinh = item.so_quyet_dinh || danhHieuDecision.so_quyet_dinh || null;
+              let filePdf = item.file_quyet_dinh || danhHieuDecision.file_pdf || null;
 
               const namLuu = proposal.nam;
 
@@ -3240,6 +3434,9 @@ class ProposalService {
                 },
                 update: {
                   nam: namLuu,
+                  cap_bac: item.cap_bac || null,
+                  chuc_vu: item.chuc_vu || null,
+                  ghi_chu: item.ghi_chu || null,
                   so_quyet_dinh: soQuyetDinh,
                   file_quyet_dinh: filePdf,
                   thoi_gian: thoiGian,
@@ -3248,6 +3445,9 @@ class ProposalService {
                   quan_nhan_id: quanNhan.id,
                   danh_hieu: item.danh_hieu,
                   nam: namLuu,
+                  cap_bac: item.cap_bac || null,
+                  chuc_vu: item.chuc_vu || null,
+                  ghi_chu: item.ghi_chu || null,
                   so_quyet_dinh: soQuyetDinh,
                   file_quyet_dinh: filePdf,
                   thoi_gian: thoiGian,
@@ -3285,17 +3485,10 @@ class ProposalService {
               continue;
             }
 
-            // Lấy số quyết định và file PDF
-            let soQuyetDinh =
-              item.so_quyet_dinh ||
-              decisions.so_quyet_dinh_hc_qkqt ||
-              decisions.so_quyet_dinh_nien_han ||
-              null;
-            let filePdf =
-              item.file_quyet_dinh ||
-              pdfPaths.file_pdf_hc_qkqt ||
-              pdfPaths.file_pdf_nien_han ||
-              null;
+            // Lấy số quyết định và file PDF từ item hoặc decisionMapping
+            const danhHieuDecision = decisionMapping['HC_QKQT'] || {};
+            let soQuyetDinh = item.so_quyet_dinh || danhHieuDecision.so_quyet_dinh || null;
+            let filePdf = item.file_quyet_dinh || danhHieuDecision.file_pdf || null;
 
             const namLuu = proposal.nam;
 
@@ -3344,6 +3537,9 @@ class ProposalService {
                 where: { id: existingHC_QKQT.id },
                 data: {
                   nam: namLuu,
+                  cap_bac: item.cap_bac || null,
+                  chuc_vu: item.chuc_vu || null,
+                  ghi_chu: item.ghi_chu || null,
                   so_quyet_dinh: soQuyetDinh,
                   file_quyet_dinh: filePdf,
                   thoi_gian: thoiGian,
@@ -3355,6 +3551,9 @@ class ProposalService {
                 data: {
                   quan_nhan_id: quanNhan.id,
                   nam: namLuu,
+                  cap_bac: item.cap_bac || null,
+                  chuc_vu: item.chuc_vu || null,
+                  ghi_chu: item.ghi_chu || null,
                   so_quyet_dinh: soQuyetDinh,
                   file_quyet_dinh: filePdf,
                   thoi_gian: thoiGian,
@@ -3391,17 +3590,10 @@ class ProposalService {
               continue;
             }
 
-            // Lấy số quyết định và file PDF
-            let soQuyetDinh =
-              item.so_quyet_dinh ||
-              decisions.so_quyet_dinh_knc_vsnxd ||
-              decisions.so_quyet_dinh_nien_han ||
-              null;
-            let filePdf =
-              item.file_quyet_dinh ||
-              pdfPaths.file_pdf_knc_vsnxd ||
-              pdfPaths.file_pdf_nien_han ||
-              null;
+            // Lấy số quyết định và file PDF từ item hoặc decisionMapping
+            const danhHieuDecision = decisionMapping['KNC_VSNXD_QDNDVN'] || {};
+            let soQuyetDinh = item.so_quyet_dinh || danhHieuDecision.so_quyet_dinh || null;
+            let filePdf = item.file_quyet_dinh || danhHieuDecision.file_pdf || null;
 
             const namLuu = proposal.nam;
 
@@ -3450,6 +3642,9 @@ class ProposalService {
                 where: { id: existingKNC.id },
                 data: {
                   nam: namLuu,
+                  cap_bac: item.cap_bac || null,
+                  chuc_vu: item.chuc_vu || null,
+                  ghi_chu: item.ghi_chu || null,
                   so_quyet_dinh: soQuyetDinh,
                   file_quyet_dinh: filePdf,
                   thoi_gian: thoiGian,
@@ -3461,6 +3656,9 @@ class ProposalService {
                 data: {
                   quan_nhan_id: quanNhan.id,
                   nam: namLuu,
+                  cap_bac: item.cap_bac || null,
+                  chuc_vu: item.chuc_vu || null,
+                  ghi_chu: item.ghi_chu || null,
                   so_quyet_dinh: soQuyetDinh,
                   file_quyet_dinh: filePdf,
                   thoi_gian: thoiGian,

@@ -322,6 +322,9 @@ export const apiClient = {
     personnel_ids: number[];
     nam: number;
     danh_hieu: string;
+    cap_bac?: string;
+    chuc_vu?: string;
+    ghi_chu?: string;
     so_quyet_dinh?: string;
     file_quyet_dinh?: File;
   }): Promise<ApiResponse> {
@@ -332,6 +335,15 @@ export const apiClient = {
         formData.append('personnel_ids', JSON.stringify(body.personnel_ids));
         formData.append('nam', body.nam.toString());
         formData.append('danh_hieu', body.danh_hieu);
+        if (body.cap_bac) {
+          formData.append('cap_bac', body.cap_bac);
+        }
+        if (body.chuc_vu) {
+          formData.append('chuc_vu', body.chuc_vu);
+        }
+        if (body.ghi_chu) {
+          formData.append('ghi_chu', body.ghi_chu);
+        }
         if (body.so_quyet_dinh) {
           formData.append('so_quyet_dinh', body.so_quyet_dinh);
         }
@@ -672,19 +684,12 @@ export const apiClient = {
   },
 
   // Profiles
-  async getAnnualProfile(
-    personnelId: string,
-    year?: number,
-    forceRecalculate?: boolean
-  ): Promise<ApiResponse> {
+  async getAnnualProfile(personnelId: string, year?: number): Promise<ApiResponse> {
     try {
+      // If year is provided, API will auto-recalculate before returning
       let url = year
         ? `/api/profiles/annual/${personnelId}?year=${year}`
         : `/api/profiles/annual/${personnelId}`;
-
-      if (forceRecalculate) {
-        url += year ? '&recalculate=true' : '?recalculate=true';
-      }
 
       const res = await axiosInstance.get(url);
       return { success: true, data: res.data?.data || res.data };
@@ -693,17 +698,34 @@ export const apiClient = {
     }
   },
 
-  async getServiceProfile(personnelId: string, forceRecalculate?: boolean): Promise<ApiResponse> {
+  async getTenureProfile(personnelId: string): Promise<ApiResponse> {
     try {
-      let url = `/api/profiles/service/${personnelId}`;
-      if (forceRecalculate) {
-        url += '?recalculate=true';
-      }
+      // Auto-recalculates on every call
+      const url = `/api/profiles/tenure/${personnelId}`;
       const res = await axiosInstance.get(url);
       return { success: true, data: res.data?.data || res.data };
     } catch (e: any) {
       return { success: false, message: e?.response?.data?.message || e.message };
     }
+  },
+
+  async getContributionProfile(personnelId: string): Promise<ApiResponse> {
+    try {
+      // Auto-recalculates on every call
+      const url = `/api/profiles/contribution/${personnelId}`;
+      const res = await axiosInstance.get(url);
+      return { success: true, data: res.data?.data || res.data };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  // Deprecated: kept for backward compatibility
+  async getServiceProfile(personnelId: string, forceRecalculate?: boolean): Promise<ApiResponse> {
+    console.warn(
+      'getServiceProfile is deprecated, use getTenureProfile or getContributionProfile instead'
+    );
+    return this.getTenureProfile(personnelId);
   },
 
   async recalculateProfile(personnelId: string, year?: number): Promise<ApiResponse> {
@@ -870,19 +892,12 @@ export const apiClient = {
     }
   },
 
-  async getUnitAnnualProfile(
-    donViId: string,
-    year?: number,
-    forceRecalculate?: boolean
-  ): Promise<ApiResponse> {
+  async getUnitAnnualProfile(donViId: string, year?: number): Promise<ApiResponse> {
     try {
+      // If year is provided, API will auto-recalculate before returning
       let url = year
         ? `/api/awards/units/annual/profile/${donViId}?year=${year}`
         : `/api/awards/units/annual/profile/${donViId}`;
-
-      if (forceRecalculate) {
-        url += year ? '&recalculate=true' : '?recalculate=true';
-      }
 
       const res = await axiosInstance.get(url);
       return { success: true, data: res.data?.data || res.data };

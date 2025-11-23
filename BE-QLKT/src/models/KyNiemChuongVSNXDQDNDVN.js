@@ -1,17 +1,18 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('./database');
 
-const DanhHieuHangNam = sequelize.define(
-  'DanhHieuHangNam',
+const KyNiemChuongVSNXDQDNDVN = sequelize.define(
+  'KyNiemChuongVSNXDQDNDVN',
   {
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING(30),
       primaryKey: true,
-      autoIncrement: true,
+      defaultValue: DataTypes.UUIDV4,
     },
     quan_nhan_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING(30),
       allowNull: false,
+      unique: true,
       references: {
         model: 'quan_nhan',
         key: 'id',
@@ -21,11 +22,7 @@ const DanhHieuHangNam = sequelize.define(
     nam: {
       type: DataTypes.INTEGER,
       allowNull: false,
-    },
-    danh_hieu: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
-      comment: 'CSTDCS, CSTT (null = không đạt)',
+      comment: 'Năm được trao',
     },
     cap_bac: {
       type: DataTypes.STRING(50),
@@ -40,23 +37,20 @@ const DanhHieuHangNam = sequelize.define(
     ghi_chu: {
       type: DataTypes.TEXT,
       allowNull: true,
-      comment: 'Ghi chú bổ sung (vd: Phó giám đốc tại đơn vị A)',
+      comment: 'Ghi chú bổ sung',
     },
-    nhan_bkbqp: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-    },
-    so_quyet_dinh_bkbqp: {
+    so_quyet_dinh: {
       type: DataTypes.STRING(100),
       allowNull: true,
     },
-    nhan_cstdtq: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-    },
-    so_quyet_dinh_cstdtq: {
-      type: DataTypes.STRING(100),
+    file_quyet_dinh: {
+      type: DataTypes.STRING(500),
       allowNull: true,
+    },
+    thoi_gian: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      comment: '{ total_months, years, months, display }',
     },
     createdAt: {
       type: DataTypes.DATE,
@@ -70,15 +64,9 @@ const DanhHieuHangNam = sequelize.define(
     },
   },
   {
-    tableName: 'danh_hieu_hang_nam',
+    tableName: 'ky_niem_chuong_vsnxd_qdndvn',
     timestamps: true,
-    indexes: [
-      {
-        unique: true,
-        fields: ['quan_nhan_id', 'nam'],
-      },
-    ],
   }
 );
 
-module.exports = DanhHieuHangNam;
+module.exports = KyNiemChuongVSNXDQDNDVN;

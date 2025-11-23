@@ -60,9 +60,9 @@ class ProfileService {
   }
 
   /**
-   * Lấy hồ sơ gợi ý niên hạn
+   * Lấy hồ sơ gợi ý niên hạn (HCCSVV - Huân chương Chiến sỹ Vẻ vang)
    */
-  async getServiceProfile(personnelId) {
+  async getTenureProfile(personnelId) {
     try {
       const personnel = await prisma.quanNhan.findUnique({
         where: { id: personnelId },
@@ -97,6 +97,69 @@ class ProfileService {
             hccsvv_hang_ba_status: 'CHUA_DU',
             hccsvv_hang_nhi_status: 'CHUA_DU',
             hccsvv_hang_nhat_status: 'CHUA_DU',
+            hcbvtq_total_months: 0,
+            hcbvtq_hang_ba_status: 'CHUA_DU',
+            hcbvtq_hang_nhi_status: 'CHUA_DU',
+            hcbvtq_hang_nhat_status: 'CHUA_DU',
+            goi_y: 'Chưa có dữ liệu để tính toán. Vui lòng nhập lịch sử chức vụ.',
+          },
+          include: {
+            QuanNhan: {
+              include: {
+                CoQuanDonVi: true,
+                DonViTrucThuoc: {
+                  include: {
+                    CoQuanDonVi: true,
+                  },
+                },
+                ChucVu: true,
+              },
+            },
+          },
+        });
+      }
+
+      return profile;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Lấy hồ sơ gợi ý cống hiến (HCBVTQ - Huân chương Bảo vệ Tổ quốc)
+   */
+  async getContributionProfile(personnelId) {
+    try {
+      const personnel = await prisma.quanNhan.findUnique({
+        where: { id: personnelId },
+      });
+
+      if (!personnel) {
+        throw new Error('Quân nhân không tồn tại');
+      }
+
+      let profile = await prisma.hoSoCongHien.findUnique({
+        where: { quan_nhan_id: personnelId },
+        include: {
+          QuanNhan: {
+            include: {
+              CoQuanDonVi: true,
+              DonViTrucThuoc: {
+                include: {
+                  CoQuanDonVi: true,
+                },
+              },
+              ChucVu: true,
+            },
+          },
+        },
+      });
+
+      // Nếu chưa có hồ sơ, tạo mới với giá trị mặc định
+      if (!profile) {
+        profile = await prisma.hoSoCongHien.create({
+          data: {
+            quan_nhan_id: personnelId,
             hcbvtq_total_months: 0,
             hcbvtq_hang_ba_status: 'CHUA_DU',
             hcbvtq_hang_nhi_status: 'CHUA_DU',
@@ -542,15 +605,9 @@ class ProfileService {
       let du_dieu_kien_cstdtq = false;
       // Lưu lại 2 năm đã đủ điều kiện BKBQP để tạo gợi ý (nếu có)
       let nam_bkbqp_sequence = [];
-      // Lưu TẤT CẢ danh hiệu cá nhân hằng năm dạng JSON (CSTT, CSTDCS, BKBQP, CSTDTQ)
+      // Chỉ lưu CSTDCS và CSTT trong JSON, BKBQP và CSTDTQ là trường đánh dấu boolean
       const tong_cstdcs_json = danhHieuList
-        .filter(
-          dh =>
-            dh.danh_hieu === 'CSTDCS' ||
-            dh.danh_hieu === 'CSTT' ||
-            dh.danh_hieu === 'BKBQP' ||
-            dh.danh_hieu === 'CSTDTQ'
-        )
+        .filter(dh => dh.danh_hieu === 'CSTDCS' || dh.danh_hieu === 'CSTT')
         .map(dh => ({
           nam: dh.nam,
           danh_hieu: dh.danh_hieu,
@@ -1084,11 +1141,7 @@ class ProfileService {
       // Lưu ý: recalculateAnnualProfile đã tính toán và lưu đúng, nên không cần tính lại ở đây
       // Chỉ cần lấy từ kết quả đã tính
       const tong_cstdcs_json = personnel.DanhHieuHangNam.filter(
-        dh =>
-          dh.danh_hieu === 'CSTDCS' ||
-          dh.danh_hieu === 'CSTT' ||
-          dh.danh_hieu === 'BKBQP' ||
-          dh.danh_hieu === 'CSTDTQ'
+        dh => dh.danh_hieu === 'CSTDCS' || dh.danh_hieu === 'CSTT'
       )
         .map(dh => ({
           nam: dh.nam,
@@ -1582,7 +1635,7 @@ class ProfileService {
   /**
    * Lấy danh sách tất cả hồ sơ niên hạn (cho admin)
    */
-  async getAllServiceProfiles() {
+  async getAllTenureProfiles() {
     try {
       const profiles = await prisma.hoSoNienHan.findMany({
         include: {
@@ -1612,7 +1665,7 @@ class ProfileService {
   /**
    * Cập nhật trạng thái hồ sơ niên hạn (ADMIN duyệt huân chương)
    */
-  async updateServiceProfile(personnelId, updates) {
+  async updateTenureProfile(personnelId, updates) {
     try {
       const profile = await prisma.hoSoNienHan.findUnique({
         where: { quan_nhan_id: personnelId },

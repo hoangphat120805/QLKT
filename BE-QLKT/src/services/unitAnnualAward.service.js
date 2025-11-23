@@ -3,7 +3,7 @@ const { prisma } = require('../models');
 class UnitAnnualAwardService {
   /**
    * Tính số năm liên tục được danh hiệu DVQT (Đơn vị Quyết thắng)
-   * Quy ước: có bản ghi DanhHieuDonViHangNam năm X với danh_hieu không null và không rỗng thì tính là đạt năm đó
+   * Quy ước: có bản ghi DanhHieuDonViHangNam năm X với danh_hieu = "ĐVQT" thì được tính là đạt danh hiệu năm đó
    */
   async calculateContinuousYears(donViId, year) {
     // Check awarded records (danh hieu) in DanhHieuDonViHangNam table
@@ -11,7 +11,7 @@ class UnitAnnualAwardService {
       where: {
         OR: [{ co_quan_don_vi_id: donViId }, { don_vi_truc_thuoc_id: donViId }],
         nam: { lte: year },
-        status: 'APPROVED', // Chỉ tính những danh hiệu đã được duyệt
+        danh_hieu: 'ĐVQT',
       },
       orderBy: { nam: 'desc' },
       select: { nam: true, danh_hieu: true },
@@ -43,14 +43,39 @@ class UnitAnnualAwardService {
         status: 'APPROVED',
         danh_hieu: { not: null },
       },
-      select: { nam: true, danh_hieu: true },
+      select: {
+        nam: true,
+        danh_hieu: true,
+        so_quyet_dinh: true,
+        file_quyet_dinh: true,
+        nhan_bkbqp: true,
+        nhan_bkttcp: true,
+        so_quyet_dinh_bkbqp: true,
+        file_quyet_dinh_bkbqp: true,
+        so_quyet_dinh_bkttcp: true,
+        file_quyet_dinh_bkttcp: true,
+      },
     });
 
-    // Lọc những record có danh_hieu không rỗng
-    const validRecords = records.filter(r => r.danh_hieu && r.danh_hieu.trim() !== '');
+    // Chỉ lưu ĐVQT và ĐVTT trong JSON, BKBQP và BKTTCP là trường đánh dấu boolean
+    // Tương tự như cá nhân: chỉ lưu CSTDCS và CSTT, BKBQP và CSTDTQ là boolean
+    const validRecords = records.filter(
+      r => r.danh_hieu && (r.danh_hieu === 'ĐVQT' || r.danh_hieu === 'ĐVTT')
+    );
     return {
       total: validRecords.length,
-      details: validRecords.map(r => ({ nam: r.nam, danh_hieu: r.danh_hieu })),
+      details: validRecords.map(r => ({
+        nam: r.nam,
+        danh_hieu: r.danh_hieu,
+        so_quyet_dinh: r.so_quyet_dinh || null,
+        file_quyet_dinh: r.file_quyet_dinh || null,
+        nhan_bkbqp: r.nhan_bkbqp || false,
+        nhan_bkttcp: r.nhan_bkttcp || false,
+        so_quyet_dinh_bkbqp: r.so_quyet_dinh_bkbqp || null,
+        file_quyet_dinh_bkbqp: r.file_quyet_dinh_bkbqp || null,
+        so_quyet_dinh_bkttcp: r.so_quyet_dinh_bkttcp || null,
+        file_quyet_dinh_bkttcp: r.file_quyet_dinh_bkttcp || null,
+      })),
     };
   }
 
@@ -113,17 +138,55 @@ class UnitAnnualAwardService {
   }
 
   /** Admin duyệt danh hiệu */
-  async approve(id, { so_quyet_dinh, file_quyet_dinh, nguoi_duyet_id }) {
+  async approve(
+    id,
+    {
+      so_quyet_dinh,
+      file_quyet_dinh,
+      nhan_bkbqp,
+      so_quyet_dinh_bkbqp,
+      file_quyet_dinh_bkbqp,
+      nhan_bkttcp,
+      so_quyet_dinh_bkttcp,
+      file_quyet_dinh_bkttcp,
+      nguoi_duyet_id,
+    }
+  ) {
+    // Chuẩn bị dữ liệu update
+    const updateData = {
+      status: 'APPROVED',
+      nguoi_duyet_id: nguoi_duyet_id,
+      ngay_duyet: new Date(),
+      so_quyet_dinh: so_quyet_dinh || null,
+      file_quyet_dinh: file_quyet_dinh || null,
+    };
+
+    // Xử lý BKBQP nếu có
+    if (nhan_bkbqp !== undefined) {
+      updateData.nhan_bkbqp = nhan_bkbqp;
+    }
+    if (so_quyet_dinh_bkbqp !== undefined) {
+      updateData.so_quyet_dinh_bkbqp = so_quyet_dinh_bkbqp || null;
+    }
+    if (file_quyet_dinh_bkbqp !== undefined) {
+      updateData.file_quyet_dinh_bkbqp = file_quyet_dinh_bkbqp || null;
+    }
+
+    // Xử lý BKTTCP nếu có
+    if (nhan_bkttcp !== undefined) {
+      updateData.nhan_bkttcp = nhan_bkttcp;
+    }
+    if (so_quyet_dinh_bkttcp !== undefined) {
+      updateData.so_quyet_dinh_bkttcp = so_quyet_dinh_bkttcp || null;
+    }
+    if (file_quyet_dinh_bkttcp !== undefined) {
+      updateData.file_quyet_dinh_bkttcp = file_quyet_dinh_bkttcp || null;
+    }
+
     // Update DanhHieuDonViHangNam status to APPROVED
     const updatedDanhHieu = await prisma.danhHieuDonViHangNam.update({
       where: { id: String(id) },
-      data: {
-        status: 'APPROVED',
-        nguoi_duyet_id: nguoi_duyet_id,
-        ngay_duyet: new Date(),
-        so_quyet_dinh: so_quyet_dinh || null,
-        file_quyet_dinh: file_quyet_dinh || null,
-      },
+      data: updateData,
       include: { CoQuanDonVi: true, DonViTrucThuoc: true },
     });
 

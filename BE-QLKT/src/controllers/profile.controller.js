@@ -3,16 +3,16 @@ const profileService = require('../services/profile.service');
 class ProfileController {
   /**
    * GET /api/profiles/annual/:personnel_id
-   * Lấy hồ sơ gợi ý hằng năm
-   * Query params: ?year=2025 (optional, nếu có sẽ tính toán lại với năm đó)
+   * Lấy hồ sơ đề xuất khen thưởng hằng năm (CSTT, CSTDCS, BKBQP, CSTDTQ)
+   * Query params: ?year=2025 (nếu có năm, tự động recalculate trước khi trả về)
    */
   async getAnnualProfile(req, res) {
     try {
       const { personnel_id } = req.params;
-      const { year } = req.query; // Lấy năm từ query params
+      const { year } = req.query;
       const yearNumber = year ? parseInt(year, 10) : null;
 
-      // Nếu có năm, tính toán lại hồ sơ với năm đó trước khi lấy
+      // Nếu có năm, tự động tính toán lại hồ sơ với năm đó trước khi lấy
       if (yearNumber) {
         await profileService.recalculateAnnualProfile(personnel_id, yearNumber);
       }
@@ -34,14 +34,17 @@ class ProfileController {
   }
 
   /**
-   * GET /api/profiles/service/:personnel_id
-   * Lấy hồ sơ gợi ý niên hạn
+   * GET /api/profiles/tenure/:personnel_id
+   * Lấy hồ sơ đề xuất Huân chương Chiến sỹ Vẻ vang (HCCSVV) theo niên hạn
+   * Tự động tính toán khi gọi API
    */
-  async getServiceProfile(req, res) {
+  async getTenureProfile(req, res) {
     try {
       const { personnel_id } = req.params;
 
-      const result = await profileService.getServiceProfile(personnel_id);
+      // Tự động recalculate khi lấy hồ sơ niên hạn
+      await profileService.recalculateTenureProfile(personnel_id);
+      const result = await profileService.getTenureProfile(personnel_id);
 
       return res.status(200).json({
         success: true,
@@ -49,10 +52,37 @@ class ProfileController {
         data: result,
       });
     } catch (error) {
-      console.error('Get service profile error:', error);
+      console.error('Get tenure profile error:', error);
       return res.status(500).json({
         success: false,
         message: error.message || 'Lấy hồ sơ niên hạn thất bại',
+      });
+    }
+  }
+
+  /**
+   * GET /api/profiles/contribution/:personnel_id
+   * Lấy hồ sơ đề xuất Huân chương Bảo vệ Tổ quốc (HCBVTQ) theo cống hiến
+   * Tự động tính toán khi gọi API
+   */
+  async getContributionProfile(req, res) {
+    try {
+      const { personnel_id } = req.params;
+
+      // Tự động recalculate khi lấy hồ sơ cống hiến
+      await profileService.recalculateContributionProfile(personnel_id);
+      const result = await profileService.getContributionProfile(personnel_id);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Lấy hồ sơ cống hiến thành công',
+        data: result,
+      });
+    } catch (error) {
+      console.error('Get contribution profile error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Lấy hồ sơ cống hiến thất bại',
       });
     }
   }
@@ -109,12 +139,12 @@ class ProfileController {
   }
 
   /**
-   * GET /api/profiles/service
+   * GET /api/profiles/tenure
    * Lấy danh sách tất cả hồ sơ niên hạn (cho admin)
    */
-  async getAllServiceProfiles(req, res) {
+  async getAllTenureProfiles(req, res) {
     try {
-      const result = await profileService.getAllServiceProfiles();
+      const result = await profileService.getAllTenureProfiles();
 
       return res.status(200).json({
         success: true,
@@ -122,7 +152,7 @@ class ProfileController {
         data: result,
       });
     } catch (error) {
-      console.error('Get all service profiles error:', error);
+      console.error('Get all tenure profiles error:', error);
       return res.status(500).json({
         success: false,
         message: error.message || 'Lấy danh sách hồ sơ niên hạn thất bại',
@@ -131,15 +161,15 @@ class ProfileController {
   }
 
   /**
-   * PUT /api/profiles/service/:personnel_id
+   * PUT /api/profiles/tenure/:personnel_id
    * Cập nhật trạng thái hồ sơ niên hạn (ADMIN duyệt huân chương)
    */
-  async updateServiceProfile(req, res) {
+  async updateTenureProfile(req, res) {
     try {
       const { personnel_id } = req.params;
       const updates = req.body;
 
-      const result = await profileService.updateServiceProfile(personnel_id, updates);
+      const result = await profileService.updateTenureProfile(personnel_id, updates);
 
       return res.status(200).json({
         success: true,
@@ -147,7 +177,7 @@ class ProfileController {
         data: result,
       });
     } catch (error) {
-      console.error('Update service profile error:', error);
+      console.error('Update tenure profile error:', error);
       return res.status(500).json({
         success: false,
         message: error.message || 'Cập nhật hồ sơ niên hạn thất bại',

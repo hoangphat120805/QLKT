@@ -2,12 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { Table, Alert, Typography, Space, message, Button } from 'antd';
-import { EditOutlined, HistoryOutlined, ReloadOutlined } from '@ant-design/icons';
+import { EditOutlined, ReloadOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import axiosInstance from '@/utils/axiosInstance';
 import { formatDate } from '@/lib/utils';
-import { apiClient } from '@/lib/api-client';
-import PersonnelRewardHistoryModal from './PersonnelRewardHistoryModal';
 
 const { Text } = Typography;
 
@@ -57,10 +55,6 @@ export default function Step3SetTitlesKNCVSNXD({
 }: Step3SetTitlesKNCVSNXDProps) {
   const [loading, setLoading] = useState(false);
   const [personnel, setPersonnel] = useState<Personnel[]>([]);
-  const [historyModalVisible, setHistoryModalVisible] = useState(false);
-  const [selectedPersonnel, setSelectedPersonnel] = useState<Personnel | null>(null);
-  const [annualProfile, setAnnualProfile] = useState<any>(null);
-  const [loadingModal, setLoadingModal] = useState(false);
 
   useEffect(() => {
     if (selectedPersonnelIds.length > 0) {
@@ -147,27 +141,6 @@ export default function Step3SetTitlesKNCVSNXD({
       };
     } catch {
       return null;
-    }
-  };
-
-  const handleViewHistory = async (record: Personnel) => {
-    setSelectedPersonnel(record);
-    setLoadingModal(true);
-    setHistoryModalVisible(true);
-
-    try {
-      const profileRes = await apiClient.getAnnualProfile(record.id, nam);
-      if (profileRes.success && profileRes.data) {
-        setAnnualProfile(profileRes.data);
-      } else {
-        setAnnualProfile(null);
-      }
-    } catch (error: any) {
-      console.error('Error fetching history:', error);
-      message.error('Không thể tải lịch sử khen thưởng');
-      setAnnualProfile(null);
-    } finally {
-      setLoadingModal(false);
     }
   };
 
@@ -280,22 +253,6 @@ export default function Step3SetTitlesKNCVSNXD({
       align: 'center',
       render: () => <Text>Kỷ niệm chương Vì sự nghiệp xây dựng QĐNDVN</Text>,
     },
-    {
-      title: 'Xem lịch sử khen thưởng',
-      key: 'history',
-      width: 180,
-      align: 'center',
-      render: (_, record) => (
-        <Button
-          type="link"
-          icon={<HistoryOutlined />}
-          onClick={() => handleViewHistory(record)}
-          size="small"
-        >
-          Xem lịch sử
-        </Button>
-      ),
-    },
   ];
 
   const allTitlesSet = personnel.every(p => {
@@ -362,18 +319,6 @@ export default function Step3SetTitlesKNCVSNXD({
         bordered
         locale={{
           emptyText: 'Không có dữ liệu',
-        }}
-      />
-
-      <PersonnelRewardHistoryModal
-        visible={historyModalVisible}
-        personnel={selectedPersonnel}
-        annualProfile={annualProfile}
-        loading={loadingModal}
-        onClose={() => {
-          setHistoryModalVisible(false);
-          setSelectedPersonnel(null);
-          setAnnualProfile(null);
         }}
       />
     </div>

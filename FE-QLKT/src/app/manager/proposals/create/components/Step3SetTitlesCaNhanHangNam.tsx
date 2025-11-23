@@ -89,6 +89,7 @@ export default function Step3SetTitlesCaNhanHangNam({
   useEffect(() => {
     if (selectedPersonnelIds.length > 0) {
       fetchPersonnelDetails();
+      fetchAnnualProfiles();
     } else {
       setPersonnel([]);
       onTitleDataChange([]);
@@ -119,6 +120,7 @@ export default function Step3SetTitlesCaNhanHangNam({
 
   const fetchAnnualProfiles = async () => {
     if (!selectedPersonnelIds || selectedPersonnelIds.length === 0) return;
+    const hideMessage = message.loading('Đang tính toán lại hồ sơ hằng năm...', 0);
     try {
       setLoadingProfiles(true);
       const promises = selectedPersonnelIds.map(id =>
@@ -138,48 +140,14 @@ export default function Step3SetTitlesCaNhanHangNam({
       });
       console.log('Prefetched annual profiles:', map);
       setAnnualProfiles(prev => ({ ...prev, ...map }));
+      hideMessage();
+      message.success('Tính toán hồ sơ hoàn tất!');
     } catch (error) {
       console.error('Error prefetching annual profiles:', error);
+      hideMessage();
+      message.error('Có lỗi khi tính toán hồ sơ');
     } finally {
       setLoadingProfiles(false);
-    }
-  };
-
-  const handleRecalculate = async () => {
-    if (!selectedPersonnelIds || selectedPersonnelIds.length === 0) {
-      message.warning('Không có quân nhân nào được chọn');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      message.loading({ content: 'Đang tính toán lại...', key: 'recalculate', duration: 0 });
-
-      const promises = selectedPersonnelIds.map(id =>
-        apiClient
-          .getAnnualProfile(id, nam, true) // force recalculate
-          .then(res => ({ id, res }))
-          .catch(err => ({ id, res: null }))
-      );
-
-      const results = await Promise.all(promises);
-      const map: Record<string, any> = {};
-
-      results.forEach((r: any) => {
-        if (r && r.res && r.res.success && r.res.data) {
-          map[r.id] = r.res.data;
-        } else {
-          map[r.id] = null;
-        }
-      });
-
-      setAnnualProfiles(map);
-      message.success({ content: 'Tính toán lại thành công!', key: 'recalculate', duration: 2 });
-    } catch (error) {
-      console.error('Error recalculating profiles:', error);
-      message.error({ content: 'Có lỗi khi tính toán lại', key: 'recalculate', duration: 2 });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -475,7 +443,8 @@ export default function Step3SetTitlesCaNhanHangNam({
             <Text type="secondary">
               Tổng số quân nhân: <strong>{personnel.length}</strong>
             </Text>
-            <br />
+          </div>
+          <div>
             <Text type={allTitlesSet ? 'success' : 'warning'}>
               Đã set danh hiệu:{' '}
               <strong>
@@ -485,14 +454,6 @@ export default function Step3SetTitlesCaNhanHangNam({
               {allTitlesSet && ' ✓'}
             </Text>
           </div>
-          <Button
-            type="primary"
-            icon={<ReloadOutlined />}
-            onClick={handleRecalculate}
-            loading={loading}
-          >
-            Tính toán lại
-          </Button>
         </div>
       </Space>
       <Table<Personnel>
@@ -609,20 +570,28 @@ export default function Step3SetTitlesCaNhanHangNam({
                               value ? <Tag color="green">Có</Tag> : <Tag>Không</Tag>,
                           },
                           {
-                            title: 'Số QĐ BKBQP',
-                            dataIndex: 'so_quyet_dinh_bkbqp',
-                            key: 'so_quyet_dinh_bkbqp',
-                            width: 150,
+                            title: 'Số quyết định',
+                            key: 'so_quyet_dinh',
+                            width: 200,
                             align: 'center',
-                            render: text => text || '-',
-                          },
-                          {
-                            title: 'Số QĐ CSTDTQ',
-                            dataIndex: 'so_quyet_dinh_cstdtq',
-                            key: 'so_quyet_dinh_cstdtq',
-                            width: 150,
-                            align: 'center',
-                            render: text => text || '-',
+                            render: (_, record) => {
+                              const decisions = [];
+                              if (record.so_quyet_dinh_bkbqp) {
+                                decisions.push(`BKBQP: ${record.so_quyet_dinh_bkbqp}`);
+                              }
+                              if (record.so_quyet_dinh_cstdtq) {
+                                decisions.push(`CSTDTQ: ${record.so_quyet_dinh_cstdtq}`);
+                              }
+                              return decisions.length > 0 ? (
+                                <div style={{ textAlign: 'left' }}>
+                                  {decisions.map((d, i) => (
+                                    <div key={i}>{d}</div>
+                                  ))}
+                                </div>
+                              ) : (
+                                '-'
+                              );
+                            },
                           },
                         ]}
                       />

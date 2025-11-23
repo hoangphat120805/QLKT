@@ -93,6 +93,7 @@ export default function Step3SetTitlesNienHan({
   };
 
   const fetchServiceProfiles = async (personnelList: Personnel[]) => {
+    const hideMessage = message.loading('Đang tính toán lại hồ sơ niên hạn...', 0);
     try {
       const profilesMap: Record<string, any> = {};
 
@@ -100,7 +101,7 @@ export default function Step3SetTitlesNienHan({
         personnelList.map(async p => {
           if (p.id) {
             try {
-              const res = await apiClient.getServiceProfile(p.id);
+              const res = await apiClient.getTenureProfile(p.id);
               if (res.success && res.data) {
                 profilesMap[p.id] = res.data;
               }
@@ -112,44 +113,12 @@ export default function Step3SetTitlesNienHan({
       );
 
       setServiceProfilesMap(profilesMap);
+      hideMessage();
+      message.success('Tính toán hồ sơ hoàn tất!');
     } catch (error) {
       console.error('Error fetching service profiles:', error);
-    }
-  };
-
-  const handleRecalculate = async () => {
-    if (!personnel || personnel.length === 0) {
-      message.warning('Không có quân nhân nào được chọn');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      message.loading({ content: 'Đang tính toán lại...', key: 'recalculate', duration: 0 });
-
-      const profilesMap: Record<string, any> = {};
-      await Promise.all(
-        personnel.map(async p => {
-          if (p.id) {
-            try {
-              const res = await apiClient.getServiceProfile(p.id, true); // force recalculate
-              if (res.success && res.data) {
-                profilesMap[p.id] = res.data;
-              }
-            } catch (error) {
-              profilesMap[p.id] = null;
-            }
-          }
-        })
-      );
-
-      setServiceProfilesMap(profilesMap);
-      message.success({ content: 'Tính toán lại thành công!', key: 'recalculate', duration: 2 });
-    } catch (error) {
-      console.error('Error recalculating profiles:', error);
-      message.error({ content: 'Có lỗi khi tính toán lại', key: 'recalculate', duration: 2 });
-    } finally {
-      setLoading(false);
+      hideMessage();
+      message.error('Có lỗi khi tính toán hồ sơ');
     }
   };
 
@@ -364,7 +333,7 @@ export default function Step3SetTitlesNienHan({
     setServiceHistoryModalVisible(true);
 
     try {
-      const profileRes = await apiClient.getServiceProfile(record.id);
+      const profileRes = await apiClient.getTenureProfile(record.id);
       if (profileRes.success && profileRes.data) {
         setServiceProfile(profileRes.data);
       } else {
@@ -599,14 +568,6 @@ export default function Step3SetTitlesNienHan({
               {allTitlesSet && ' ✓'}
             </Text>
           </div>
-          <Button
-            type="primary"
-            icon={<ReloadOutlined />}
-            onClick={handleRecalculate}
-            loading={loading}
-          >
-            Tính toán lại
-          </Button>
         </div>
       </Space>
 

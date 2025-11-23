@@ -102,12 +102,12 @@ export default function Step2SelectPersonnelNienHan({
     try {
       const profilesMap: Record<string, any> = {};
 
-      // Fetch service profile cho mỗi quân nhân
+      // Fetch tenure profile cho mỗi quân nhân
       await Promise.all(
         personnelList.map(async p => {
           if (p.id) {
             try {
-              const res = await apiClient.getServiceProfile(p.id);
+              const res = await apiClient.getTenureProfile(p.id);
               if (res.success && res.data) {
                 profilesMap[p.id] = res.data;
               }

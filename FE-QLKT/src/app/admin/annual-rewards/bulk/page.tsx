@@ -126,6 +126,9 @@ export default function BulkAddAnnualRewardsPage() {
         personnel_ids: selectedRowKeys.map(k => Number(k)),
         nam: values.nam,
         danh_hieu: values.danh_hieu,
+        cap_bac: values.cap_bac,
+        chuc_vu: values.chuc_vu,
+        ghi_chu: values.ghi_chu,
         so_quyet_dinh: values.so_quyet_dinh,
         file_quyet_dinh: file,
       });
@@ -270,6 +273,25 @@ export default function BulkAddAnnualRewardsPage() {
               </Select>
             </Form.Item>
 
+            <Form.Item name="cap_bac" label="Cấp bậc (tại thời điểm đề nghị)">
+              <Select placeholder="Chọn cấp bậc" size="large" allowClear>
+                <Select.Option value="Thượng tá">Thượng tá</Select.Option>
+                <Select.Option value="Trung tá">Trung tá</Select.Option>
+                <Select.Option value="Thiếu tá">Thiếu tá</Select.Option>
+                <Select.Option value="Đại úy">Đại úy</Select.Option>
+                <Select.Option value="Thượng úy">Thượng úy</Select.Option>
+                <Select.Option value="Trung úy">Trung úy</Select.Option>
+                <Select.Option value="Thiếu úy">Thiếu úy</Select.Option>
+                <Select.Option value="Thượng sĩ">Thượng sĩ</Select.Option>
+                <Select.Option value="Trung sĩ">Trung sĩ</Select.Option>
+                <Select.Option value="Hạ sĩ">Hạ sĩ</Select.Option>
+              </Select>
+            </Form.Item>
+
+            <Form.Item name="chuc_vu" label="Chức vụ (tại thời điểm đề nghị)">
+              <Input placeholder="Nhập chức vụ" size="large" />
+            </Form.Item>
+
             <Form.Item name="so_quyet_dinh" label="Số quyết định" rules={[{ required: false }]}>
               <Input placeholder="VD: 123/QĐ-HVKHQS" size="large" prefix={<FilePdfOutlined />} />
             </Form.Item>
@@ -292,6 +314,15 @@ export default function BulkAddAnnualRewardsPage() {
               </Upload>
             </Form.Item>
           </div>
+
+          <Form.Item name="ghi_chu" label="Ghi chú">
+            <Input.TextArea
+              placeholder="Ghi chú chung cho tất cả quân nhân (ví dụ: chuyển từ đơn vị khác)"
+              rows={3}
+              size="large"
+            />
+          </Form.Item>
+
           <div className="text-gray-500 text-sm mt-2">
             <FilePdfOutlined className="mr-2" />
             Số quyết định và file PDF sẽ được lưu chung cho tất cả quân nhân được chọn
