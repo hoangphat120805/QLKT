@@ -399,6 +399,14 @@ export default function Step2SelectPersonnelHCQKQT({
       onPersonnelChange(selectedRowKeys as string[]);
     },
     getCheckboxProps: (record: Personnel) => {
+      // Disable all checkboxes while checking eligibility
+      if (checkingReceived) {
+        return {
+          disabled: true,
+          title: 'Đang kiểm tra tính đủ điều kiện, vui lòng chờ...',
+        };
+      }
+
       const eligibility = checkEligibleForHCQKQT(record);
       const isDisabled = !eligibility.eligible;
 
@@ -554,12 +562,12 @@ export default function Step2SelectPersonnelHCQKQT({
         dataSource={filteredPersonnel}
         rowKey="id"
         rowSelection={rowSelection}
-        loading={loading}
+        loading={loading || checkingReceived}
         rowClassName={record => {
           // Tô màu dòng quân nhân không đủ điều kiện
           const eligibility = checkEligibleForHCQKQT(record);
           if (!eligibility.eligible) {
-            return 'row-missing-gender';
+            return 'row-ineligible';
           }
           return '';
         }}

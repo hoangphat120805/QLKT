@@ -17,6 +17,18 @@ const upload = multer({ storage: multer.memoryStorage() });
 router.get('/', verifyToken, requireManager, personnelController.getPersonnel);
 
 /**
+ * @route   POST /api/personnel/check-contribution-eligibility
+ * @desc    Kiểm tra tính đủ điều kiện nhận danh hiệu cống hiến
+ * @access  Private - MANAGER
+ */
+router.post(
+  '/check-contribution-eligibility',
+  verifyToken,
+  requireManager,
+  personnelController.checkContributionEligibility
+);
+
+/**
  * @route   GET /api/personnel/:id
  * @desc    Lấy chi tiết 1 quân nhân
  * @access  Private - ADMIN, MANAGER, USER (chỉ xem của mình)

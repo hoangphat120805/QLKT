@@ -48,6 +48,16 @@ interface Step2SelectPersonnelCongHienProps {
   onNamChange: (nam: number) => void;
 }
 
+interface IneligiblePersonnel {
+  personnelId: string;
+  reason: string;
+  status: string;
+  awardYear?: number;
+  awardTitle?: string;
+  proposalId?: string;
+  proposalYear?: number;
+}
+
 export default function Step2SelectPersonnelCongHien({
   selectedPersonnelIds,
   onPersonnelChange,
@@ -55,11 +65,13 @@ export default function Step2SelectPersonnelCongHien({
   onNamChange,
 }: Step2SelectPersonnelCongHienProps) {
   const [loading, setLoading] = useState(false);
+  const [checkingEligibility, setCheckingEligibility] = useState(false);
   const [personnel, setPersonnel] = useState<Personnel[]>([]);
   const [searchText, setSearchText] = useState('');
   const [unitFilter, setUnitFilter] = useState<string>('ALL');
   const [positionHistoriesMap, setPositionHistoriesMap] = useState<Record<string, any[]>>({});
   const [localNam, setLocalNam] = useState<number | null>(nam);
+  const [ineligiblePersonnel, setIneligiblePersonnel] = useState<IneligiblePersonnel[]>([]);
 
   useEffect(() => {
     fetchPersonnel();
@@ -69,6 +81,7 @@ export default function Step2SelectPersonnelCongHien({
     // Fetch lịch sử chức vụ cho tất cả quân nhân khi personnel thay đổi
     if (personnel.length > 0) {
       fetchPositionHistories(personnel);
+      checkContributionEligibility(personnel.map(p => p.id));
     }
   }, [personnel.length]);
 
@@ -122,6 +135,24 @@ export default function Step2SelectPersonnelCongHien({
       setPositionHistoriesMap(historiesMap);
     } catch (error) {
       console.error('Error fetching position histories:', error);
+    }
+  };
+
+  const checkContributionEligibility = async (personnelIds: string[]) => {
+    try {
+      setCheckingEligibility(true);
+      const response = await axiosInstance.post('/api/personnel/check-contribution-eligibility', {
+        personnelIds,
+      });
+
+      if (response.data.success) {
+        setIneligiblePersonnel(response.data.data.ineligiblePersonnel || []);
+      }
+    } catch (error: any) {
+      console.error('Error checking contribution eligibility:', error);
+      message.error('Không thể kiểm tra tính đủ điều kiện nhận khen thưởng');
+    } finally {
+      setCheckingEligibility(false);
     }
   };
 
@@ -282,6 +313,36 @@ export default function Step2SelectPersonnelCongHien({
       align: 'center',
       render: (_, record) => calculateTotalTimeByGroup(record.id, '0.9-1.0'),
     },
+    {
+      title: 'Trạng thái',
+      key: 'eligibility_status',
+      width: 180,
+      align: 'center',
+      fixed: 'right',
+      render: (_, record) => {
+        const ineligible = ineligiblePersonnel.find(i => i.personnelId === record.id);
+        if (ineligible) {
+          if (ineligible.status === 'APPROVED') {
+            return (
+              <Text type="danger" strong>
+                Đã nhận ({ineligible.awardYear})
+              </Text>
+            );
+          } else if (ineligible.status === 'PENDING') {
+            return (
+              <Text type="warning" strong>
+                Đang chờ duyệt
+              </Text>
+            );
+          }
+        }
+        return (
+          <Text type="success" strong>
+            Đủ điều kiện
+          </Text>
+        );
+      },
+    },
   ];
 
   const rowSelection = {
@@ -290,14 +351,37 @@ export default function Step2SelectPersonnelCongHien({
       onPersonnelChange(selectedRowKeys as string[]);
     },
     getCheckboxProps: (record: Personnel) => {
+      // Disable all checkboxes while checking eligibility
+      if (checkingEligibility) {
+        return {
+          disabled: true,
+          title: 'Đang kiểm tra tính đủ điều kiện, vui lòng chờ...',
+        };
+      }
+
       const missingGender =
         !record.gioi_tinh || (record.gioi_tinh !== 'NAM' && record.gioi_tinh !== 'NU');
+      
+      const ineligible = ineligiblePersonnel.find(i => i.personnelId === record.id);
+      
+      let disabled = false;
+      let title = '';
+      
+      if (missingGender) {
+        disabled = true;
+        title = 'Quân nhân này chưa cập nhật giới tính. Vui lòng cập nhật trước khi đề xuất.';
+      } else if (ineligible) {
+        disabled = true;
+        if (ineligible.status === 'APPROVED') {
+          title = `Quân nhân đã nhận danh hiệu cống hiến năm ${ineligible.awardYear}`;
+        } else if (ineligible.status === 'PENDING') {
+          title = 'Quân nhân đang có đề xuất cống hiến chờ duyệt';
+        }
+      }
 
       return {
-        disabled: missingGender,
-        title: missingGender
-          ? 'Quân nhân này chưa cập nhật giới tính. Vui lòng cập nhật trước khi đề xuất.'
-          : '',
+        disabled,
+        title,
       };
     },
     onSelect: (record: Personnel, selected: boolean) => {
@@ -308,6 +392,20 @@ export default function Step2SelectPersonnelCongHien({
           message.warning(
             `Quân nhân ${record.ho_ten} chưa cập nhật giới tính. Vui lòng cập nhật trước khi đề xuất.`
           );
+          return false;
+        }
+        
+        const ineligible = ineligiblePersonnel.find(i => i.personnelId === record.id);
+        if (ineligible) {
+          if (ineligible.status === 'APPROVED') {
+            message.warning(
+              `Quân nhân ${record.ho_ten} đã nhận danh hiệu cống hiến năm ${ineligible.awardYear}`
+            );
+          } else if (ineligible.status === 'PENDING') {
+            message.warning(
+              `Quân nhân ${record.ho_ten} đang có đề xuất cống hiến chờ duyệt`
+            );
+          }
           return false;
         }
       }
@@ -417,15 +515,22 @@ export default function Step2SelectPersonnelCongHien({
         </Text>
       </div>
 
-      {/* Cảnh báo về quân nhân chưa có giới tính */}
+      {/* Cảnh báo về quân nhân chưa có giới tính và không đủ điều kiện */}
       {(() => {
         const missingGenderCount = filteredPersonnel.filter(
           p => !p.gioi_tinh || (p.gioi_tinh !== 'NAM' && p.gioi_tinh !== 'NU')
         ).length;
+        
+        const ineligibleCount = filteredPersonnel.filter(p => 
+          ineligiblePersonnel.some(i => i.personnelId === p.id)
+        ).length;
 
+        const warnings = [];
+        
         if (missingGenderCount > 0) {
-          return (
+          warnings.push(
             <Alert
+              key="gender-warning"
               message="Cảnh báo"
               description={`Có ${missingGenderCount} quân nhân chưa cập nhật giới tính. Vui lòng cập nhật trước khi đề xuất.`}
               type="warning"
@@ -434,7 +539,21 @@ export default function Step2SelectPersonnelCongHien({
             />
           );
         }
-        return null;
+        
+        if (ineligibleCount > 0) {
+          warnings.push(
+            <Alert
+              key="eligibility-warning"
+              message="Thông báo"
+              description={`Có ${ineligibleCount} quân nhân đã nhận hoặc đang chờ duyệt khen thưởng cống hiến, không được phép chọn lại.`}
+              type="info"
+              showIcon
+              style={{ marginBottom: 16 }}
+            />
+          );
+        }
+        
+        return warnings.length > 0 ? <>{warnings}</> : null;
       })()}
 
       <Table
@@ -442,13 +561,18 @@ export default function Step2SelectPersonnelCongHien({
         dataSource={filteredPersonnel}
         rowKey="id"
         rowSelection={rowSelection}
-        loading={loading}
+        loading={loading || checkingEligibility}
         rowClassName={record => {
-          // Tô màu dòng quân nhân chưa có giới tính
+          // Tô màu dòng quân nhân chưa có giới tính hoặc không đủ điều kiện
           const missingGender =
             !record.gioi_tinh || (record.gioi_tinh !== 'NAM' && record.gioi_tinh !== 'NU');
+          const ineligible = ineligiblePersonnel.some(i => i.personnelId === record.id);
+          
           if (missingGender) {
             return 'row-missing-gender';
+          }
+          if (ineligible) {
+            return 'row-ineligible';
           }
           return '';
         }}

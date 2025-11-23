@@ -57,6 +57,7 @@ export default function Step2SelectPersonnelNienHan({
   onNamChange,
 }: Step2SelectPersonnelNienHanProps) {
   const [loading, setLoading] = useState(false);
+  const [checkingProfiles, setCheckingProfiles] = useState(false);
   const [personnel, setPersonnel] = useState<Personnel[]>([]);
   const [searchText, setSearchText] = useState('');
   const [unitFilter, setUnitFilter] = useState<string>('ALL');
@@ -100,6 +101,7 @@ export default function Step2SelectPersonnelNienHan({
 
   const fetchServiceProfiles = async (personnelList: Personnel[]) => {
     try {
+      setCheckingProfiles(true);
       const profilesMap: Record<string, any> = {};
 
       // Fetch tenure profile cho mỗi quân nhân
@@ -122,6 +124,8 @@ export default function Step2SelectPersonnelNienHan({
       setServiceProfilesMap(profilesMap);
     } catch (error) {
       console.error('Error fetching service profiles:', error);
+    } finally {
+      setCheckingProfiles(false);
     }
   };
 
@@ -526,6 +530,14 @@ export default function Step2SelectPersonnelNienHan({
       onPersonnelChange(selectedRowKeys as string[]);
     },
     getCheckboxProps: (record: Personnel) => {
+      // Disable all checkboxes while checking profiles
+      if (checkingProfiles) {
+        return {
+          disabled: true,
+          title: 'Đang kiểm tra tính đủ điều kiện, vui lòng chờ...',
+        };
+      }
+
       const missingGender =
         !record.gioi_tinh || (record.gioi_tinh !== 'NAM' && record.gioi_tinh !== 'NU');
       const missingNgayNhapNgu = !record.ngay_nhap_ngu;
@@ -743,7 +755,7 @@ export default function Step2SelectPersonnelNienHan({
         dataSource={filteredPersonnel}
         rowKey="id"
         rowSelection={rowSelection}
-        loading={loading}
+        loading={loading || checkingProfiles}
         rowClassName={record => {
           // Tô màu dòng quân nhân chưa có giới tính
           const missingGender =

@@ -312,6 +312,38 @@ class PersonnelController {
       });
     }
   }
+
+  /**
+   * POST /api/personnel/check-contribution-eligibility
+   * Kiểm tra tính đủ điều kiện nhận danh hiệu cống hiến cho danh sách quân nhân
+   * Returns array of personnel IDs that are ineligible (already received or pending approval)
+   */
+  async checkContributionEligibility(req, res) {
+    try {
+      const { personnelIds } = req.body;
+
+      if (!personnelIds || !Array.isArray(personnelIds)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Danh sách quân nhân không hợp lệ',
+        });
+      }
+
+      const result = await personnelService.checkContributionEligibility(personnelIds);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Kiểm tra tính đủ điều kiện thành công',
+        data: result,
+      });
+    } catch (error) {
+      console.error('Check contribution eligibility error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Kiểm tra tính đủ điều kiện thất bại',
+      });
+    }
+  }
 }
 
 module.exports = new PersonnelController();

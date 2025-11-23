@@ -20,6 +20,25 @@
   background-color: #4a3a2a !important;
 }
 
+/* Tô màu dòng quân nhân không đủ điều kiện (đã nhận hoặc đang chờ duyệt) */
+.ant-table-tbody > tr.row-ineligible > td {
+  background-color: #f5f5f5 !important;
+  opacity: 0.7;
+}
+
+.dark .ant-table-tbody > tr.row-ineligible > td {
+  background-color: #2a2a2a !important;
+  opacity: 0.7;
+}
+
+.ant-table-tbody > tr.row-ineligible:hover > td {
+  background-color: #e8e8e8 !important;
+}
+
+.dark .ant-table-tbody > tr.row-ineligible:hover > td {
+  background-color: #333333 !important;
+}
+
 /* Tô màu dòng quân nhân chưa có ngày nhập ngũ */
 .ant-table-tbody > tr.row-missing-ngay-nhap-ngu > td {
   background-color: #fff1f0 !important;

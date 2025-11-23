@@ -2886,7 +2886,8 @@ class ProposalService {
               item.so_quyet_dinh_bkbqp ||
               (nhanBKBQP ? specialDecisionMapping.BKBQP?.so_quyet_dinh : null);
             const fileQuyetDinhBKBQP =
-              item.file_quyet_dinh_bkbqp || (nhanBKBQP ? specialDecisionMapping.BKBQP?.file_pdf : null);
+              item.file_quyet_dinh_bkbqp ||
+              (nhanBKBQP ? specialDecisionMapping.BKBQP?.file_pdf : null);
 
             const nhanBKTTCP = item.nhan_bkttcp || false;
             const soQuyetDinhBKTTCP =

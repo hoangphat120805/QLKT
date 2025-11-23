@@ -1123,6 +1123,82 @@ class PersonnelService {
       throw error;
     }
   }
+
+  /**
+   * Kiểm tra tính đủ điều kiện nhận danh hiệu cống hiến
+   * Trả về danh sách các quân nhân không đủ điều kiện (đã nhận hoặc đang chờ duyệt)
+   * @param {string[]} personnelIds - Danh sách ID quân nhân cần kiểm tra
+   * @returns {Object} - { ineligiblePersonnel: Array<{ personnelId, reason, status }> }
+   */
+  async checkContributionEligibility(personnelIds) {
+    try {
+      const ineligiblePersonnel = [];
+
+      // Kiểm tra từng quân nhân
+      for (const personnelId of personnelIds) {
+        // 1. Kiểm tra trong bảng KhenThuongCongHien (đã được approved)
+        const existingAward = await prisma.khenThuongCongHien.findUnique({
+          where: { quan_nhan_id: personnelId },
+        });
+
+        if (existingAward) {
+          ineligiblePersonnel.push({
+            personnelId,
+            reason: 'Đã nhận danh hiệu cống hiến',
+            status: 'APPROVED',
+            awardYear: existingAward.nam,
+            awardTitle: existingAward.danh_hieu,
+          });
+          continue;
+        }
+
+        // 2. Kiểm tra trong bảng BangDeXuat có đề xuất CONG_HIEN đang PENDING không
+        const pendingProposals = await prisma.bangDeXuat.findMany({
+          where: {
+            loai_de_xuat: 'CONG_HIEN',
+            status: 'PENDING',
+          },
+          select: {
+            id: true,
+            data_cong_hien: true,
+            nam: true,
+          },
+        });
+
+        // Kiểm tra xem quân nhân có trong data_cong_hien của đề xuất nào không
+        for (const proposal of pendingProposals) {
+          if (proposal.data_cong_hien) {
+            const congHienList = Array.isArray(proposal.data_cong_hien)
+              ? proposal.data_cong_hien
+              : [];
+
+            const found = congHienList.some(
+              item => item.quan_nhan_id === personnelId
+            );
+
+            if (found) {
+              ineligiblePersonnel.push({
+                personnelId,
+                reason: 'Đang chờ duyệt đề xuất cống hiến',
+                status: 'PENDING',
+                proposalId: proposal.id,
+                proposalYear: proposal.nam,
+              });
+              break;
+            }
+          }
+        }
+      }
+
+      return {
+        ineligiblePersonnel,
+        eligibleCount: personnelIds.length - ineligiblePersonnel.length,
+        totalChecked: personnelIds.length,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = new PersonnelService();
