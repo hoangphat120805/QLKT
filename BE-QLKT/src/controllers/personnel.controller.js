@@ -46,11 +46,7 @@ class PersonnelController {
         });
       }
 
-      const result = await personnelService.getPersonnelById(
-        id,
-        userRole,
-        userQuanNhanId
-      );
+      const result = await personnelService.getPersonnelById(id, userRole, userQuanNhanId);
 
       return res.status(200).json({
         success: true,

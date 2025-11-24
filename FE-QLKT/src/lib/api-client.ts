@@ -364,12 +364,9 @@ export const apiClient = {
   },
 
   // Position History
-  async getPositionHistory(personnelId: string, forceRecalculate?: boolean): Promise<ApiResponse> {
+  async getPositionHistory(personnelId: string): Promise<ApiResponse> {
     try {
       let url = `/api/personnel/${personnelId}/position-history`;
-      if (forceRecalculate) {
-        url += '?recalculate=true';
-      }
       const res = await axiosInstance.get(url);
       return { success: true, data: res.data?.data?.history || res.data?.data || res.data };
     } catch (e: any) {
@@ -721,7 +718,7 @@ export const apiClient = {
   },
 
   // Deprecated: kept for backward compatibility
-  async getServiceProfile(personnelId: string, forceRecalculate?: boolean): Promise<ApiResponse> {
+  async getServiceProfile(personnelId: string): Promise<ApiResponse> {
     console.warn(
       'getServiceProfile is deprecated, use getTenureProfile or getContributionProfile instead'
     );

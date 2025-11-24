@@ -832,190 +832,19 @@ class ProfileService {
       }
 
       // ==============================================
-      // BƯỚC 4: Logic Tạo Gợi ý (Suggestion)
+      // BƯỚC 4: Logic Tạo Gợi ý (Suggestion) - CHỈ GỢI Ý BKBQP VÀ CSTDTQ
       // ==============================================
       let goi_y = '';
 
       if (du_dieu_kien_cstdtq === true) {
-        goi_y =
-          'Đã đủ điều kiện đề nghị xét Chiến sĩ thi đua Toàn quân (3 năm CSTDCS liên tục, mỗi năm đều có NCKH, và có BKBQP).';
-      } else if (cstdcs_lien_tuc >= 3) {
-        // Đã có 3 năm CSTDCS nhưng chưa đủ điều kiện CSTDTQ
-        const nam_1 = nam_cstdcs_lien_tuc[nam_cstdcs_lien_tuc.length - 3];
-        const nam_2 = nam_cstdcs_lien_tuc[nam_cstdcs_lien_tuc.length - 2];
-        const nam_3 = nam_cstdcs_lien_tuc[nam_cstdcs_lien_tuc.length - 1];
-
-        const hasNCKH_Nam1 = thanhTichList.some(tt => tt.nam === nam_1);
-        const hasNCKH_Nam2 = thanhTichList.some(tt => tt.nam === nam_2);
-        const hasNCKH_Nam3 = thanhTichList.some(tt => tt.nam === nam_3);
-        const hasBKBQP = danhHieuList.some(
-          dh => dh.nhan_bkbqp === true && (dh.nam === nam_1 || dh.nam === nam_2)
-        );
-
-        const missing = [];
-        if (!hasNCKH_Nam1) missing.push(`NCKH vào năm ${nam_1}`);
-        if (!hasNCKH_Nam2) missing.push(`NCKH vào năm ${nam_2}`);
-        if (!hasNCKH_Nam3) missing.push(`NCKH vào năm ${nam_3}`);
-        if (!hasBKBQP) {
-          // Tìm năm nào nên có BKBQP (thường là năm thứ 2 hoặc thứ 3)
-          missing.push(`BKBQP vào năm ${nam_2} hoặc ${nam_3}`);
-        }
-
-        if (missing.length > 0) {
-          goi_y = `Đã có CSTDCS vào năm ${nam_1}, ${nam_2}, ${nam_3}.\nCần:\n${missing.join(
-            '\n'
-          )} để đủ điều kiện CSTDTQ.`;
-        }
+        // Đã đủ điều kiện CSTDTQ
+        goi_y = 'Đã đủ điều kiện đề nghị xét Chiến sĩ thi đua Toàn quân.';
       } else if (du_dieu_kien_bkbqp === true) {
-        // Tìm 2 năm CSTDCS liên tục đã đủ điều kiện BKBQP
-        // Sử dụng nam_bkbqp_sequence nếu có (đã lưu trước khi reset), nếu không thì lấy từ nam_cstdcs_lien_tuc
-        let nam_1, nam_2;
-        if (nam_bkbqp_sequence.length >= 2) {
-          nam_1 = nam_bkbqp_sequence[0];
-          nam_2 = nam_bkbqp_sequence[1];
-        } else if (nam_cstdcs_lien_tuc.length >= 2) {
-          nam_1 = nam_cstdcs_lien_tuc[nam_cstdcs_lien_tuc.length - 2];
-          nam_2 = nam_cstdcs_lien_tuc[nam_cstdcs_lien_tuc.length - 1];
-        } else {
-          // Fallback: không thể xác định năm, bỏ qua gợi ý này
-          goi_y = 'Đã đủ điều kiện BKBQP nhưng không thể xác định năm cụ thể.';
-        }
-
-        // Chỉ tiếp tục nếu đã xác định được nam_1 và nam_2
-        if (nam_1 && nam_2) {
-          const nam_3 = nam_2 + 1; // Năm thứ 3 - đề xuất BKBQP
-          const nam_4 = nam_3 + 1; // Năm thứ 4 - đề xuất CSTDTQ (nếu năm 3 có CSTDCS + NCKH)
-          const currentYear = year;
-
-          // Kiểm tra xem BKBQP đã được trao chưa
-          const hasBKBQP = danhHieuList.some(
-            dh =>
-              dh.nhan_bkbqp === true && (dh.nam === nam_1 || dh.nam === nam_2 || dh.nam === nam_3)
-          );
-
-          // Kiểm tra năm thứ 3 có CSTDCS và NCKH chưa
-          const hasCSTDCS_Nam3 = danhHieuList.some(
-            dh => dh.danh_hieu === 'CSTDCS' && dh.nam === nam_3
-          );
-          const hasNCKH_Nam3 = thanhTichList.some(tt => tt.nam === nam_3);
-
-          // Nếu năm thứ 3 đã qua (nam_3 < currentYear) và chưa có đủ điều kiện, báo đã qua đợt đề xuất
-          if (nam_3 < currentYear && !(hasCSTDCS_Nam3 && hasNCKH_Nam3 && hasBKBQP)) {
-            goi_y = `Đã đủ điều kiện BKBQP (CSTDCS vào năm ${nam_1}, ${nam_2} và mỗi năm đều có NCKH).\nNăm ${nam_3} đã qua đợt đề xuất nhưng chưa được đề xuất BKBQP.`;
-          } else if (hasCSTDCS_Nam3 && hasNCKH_Nam3 && hasBKBQP) {
-            // Năm thứ 3 đã có CSTDCS + NCKH + BKBQP → đề xuất CSTDTQ vào năm thứ 4
-            const missing = [];
-            missing.push(`CSTDTQ vào năm ${nam_4}`);
-            goi_y = `Đã đủ điều kiện BKBQP (CSTDCS vào năm ${nam_1}, ${nam_2} và mỗi năm đều có NCKH).\nNăm ${nam_3} đã có CSTDCS, NCKH và BKBQP.\nCần:\n${missing.join(
-              '\n'
-            )}.`;
-          } else {
-            // Năm thứ 3 chưa đủ điều kiện - chỉ gợi ý hoàn thành năm thứ 3, KHÔNG đề xuất CSTDTQ
-            const missing = [];
-            if (!hasBKBQP) {
-              missing.push(`BKBQP vào năm ${nam_3}`);
-            }
-            if (!hasCSTDCS_Nam3) {
-              missing.push(`CSTDCS vào năm ${nam_3}`);
-            }
-            if (!hasNCKH_Nam3) {
-              missing.push(`NCKH vào năm ${nam_3}`);
-            }
-            // KHÔNG đề xuất CSTDTQ vào năm thứ 4 nếu năm thứ 3 chưa đủ điều kiện
-            // Chỉ gợi ý hoàn thành năm thứ 3 để đủ điều kiện BKBQP
-            // Chỉ khi đủ chuỗi 3 năm (năm 1, 2, 3) mới đề xuất CSTDTQ
-
-            goi_y = `Đã đủ điều kiện BKBQP (CSTDCS vào năm ${nam_1}, ${nam_2} và mỗi năm đều có NCKH).\nCần:\n${missing.join(
-              '\n'
-            )}.`;
-          }
-        }
-      } else if (cstdcs_lien_tuc === 2) {
-        // Đã có 2 năm CSTDCS
-        const nam_1 = nam_cstdcs_lien_tuc[nam_cstdcs_lien_tuc.length - 2];
-        const nam_2 = nam_cstdcs_lien_tuc[nam_cstdcs_lien_tuc.length - 1];
-        const hasNCKH_Nam1 = thanhTichList.some(tt => tt.nam === nam_1);
-        const hasNCKH_Nam2 = thanhTichList.some(tt => tt.nam === nam_2);
-
-        const missing = [];
-        if (!hasNCKH_Nam1) missing.push(`NCKH vào năm ${nam_1}`);
-        if (!hasNCKH_Nam2) missing.push(`NCKH vào năm ${nam_2}`);
-
-        if (missing.length > 0) {
-          goi_y = `Đã có CSTDCS vào năm ${nam_1}, ${nam_2}.\nCần:\n${missing.join(
-            '\n'
-          )} để đủ điều kiện BKBQP.`;
-        } else {
-          const nam_3 = nam_2 + 1; // Năm thứ 3 - đề xuất BKBQP
-          const nam_4 = nam_3 + 1; // Năm thứ 4 - đề xuất CSTDTQ (nếu năm 3 có CSTDCS + NCKH)
-          const currentYear = year;
-
-          // Kiểm tra xem BKBQP đã được trao chưa
-          const hasBKBQP = danhHieuList.some(
-            dh =>
-              dh.nhan_bkbqp === true && (dh.nam === nam_1 || dh.nam === nam_2 || dh.nam === nam_3)
-          );
-
-          // Kiểm tra năm thứ 3 có CSTDCS và NCKH chưa
-          const hasCSTDCS_Nam3 = danhHieuList.some(
-            dh => dh.danh_hieu === 'CSTDCS' && dh.nam === nam_3
-          );
-          const hasNCKH_Nam3 = thanhTichList.some(tt => tt.nam === nam_3);
-
-          // Nếu năm thứ 3 đã qua (nam_3 < currentYear) và chưa có đủ điều kiện, báo đã qua đợt đề xuất
-          if (nam_3 < currentYear && !(hasCSTDCS_Nam3 && hasNCKH_Nam3 && hasBKBQP)) {
-            goi_y = `Đã đủ điều kiện BKBQP (CSTDCS vào năm ${nam_1}, ${nam_2} và mỗi năm đều có NCKH).\nNăm ${nam_3} đã qua đợt đề xuất nhưng chưa có đủ điều kiện (CSTDCS, NCKH, BKBQP).`;
-          } else if (hasCSTDCS_Nam3 && hasNCKH_Nam3 && hasBKBQP) {
-            // Năm thứ 3 đã có CSTDCS + NCKH + BKBQP → đề xuất CSTDTQ vào năm thứ 4
-            const missing = [];
-            missing.push(`CSTDTQ vào năm ${nam_4}`);
-            goi_y = `Đã đủ điều kiện BKBQP (CSTDCS vào năm ${nam_1}, ${nam_2} và mỗi năm đều có NCKH).\nNăm ${nam_3} đã có CSTDCS, NCKH và BKBQP.\nCần:\n${missing.join(
-              '\n'
-            )}.`;
-          } else {
-            // Năm thứ 3 chưa đủ điều kiện - chỉ gợi ý hoàn thành năm thứ 3, KHÔNG đề xuất CSTDTQ
-            const missing = [];
-            if (!hasBKBQP) {
-              missing.push(`BKBQP vào năm ${nam_3}`);
-            }
-            if (!hasCSTDCS_Nam3) {
-              missing.push(`CSTDCS vào năm ${nam_3}`);
-            }
-            if (!hasNCKH_Nam3) {
-              missing.push(`NCKH vào năm ${nam_3}`);
-            }
-            // KHÔNG đề xuất CSTDTQ vào năm thứ 4 nếu năm thứ 3 chưa đủ điều kiện
-            // Chỉ gợi ý hoàn thành năm thứ 3 để đủ điều kiện BKBQP
-            // Chỉ khi đủ chuỗi 3 năm (năm 1, 2, 3) mới đề xuất CSTDTQ
-
-            goi_y = `Đã đủ điều kiện BKBQP (CSTDCS vào năm ${nam_1}, ${nam_2} và mỗi năm đều có NCKH).\nCần:\n${missing.join(
-              '\n'
-            )}.`;
-          }
-        }
-      } else if (cstdcs_lien_tuc === 1) {
-        const nam_hien_tai = nam_cstdcs_lien_tuc[nam_cstdcs_lien_tuc.length - 1];
-        const nam_tiep_theo = nam_hien_tai + 1;
-
-        // Kiểm tra NCKH năm hiện tại
-        const hasNCKH_NamHienTai = thanhTichList.some(tt => tt.nam === nam_hien_tai);
-
-        const missing = [];
-        if (!hasNCKH_NamHienTai) {
-          missing.push(`NCKH vào năm ${nam_hien_tai}`);
-        }
-        missing.push(`CSTDCS vào năm ${nam_tiep_theo}`);
-        missing.push(`NCKH vào năm ${nam_tiep_theo}`);
-        missing.push(
-          `BKBQP vào năm ${nam_tiep_theo} (sau khi có đủ 2 năm CSTDCS liên tục: ${nam_hien_tai} và ${nam_tiep_theo})`
-        );
-
-        const missingText = missing.length > 0 ? `Cần:\n${missing.join('\n')}.` : '';
-        goi_y = `Đã có CSTDCS vào năm ${nam_hien_tai}.\n${missingText}`;
-      } else if (cstdcs_lien_tuc === 0) {
-        goi_y = 'Chưa có CSTDCS liên tục. Cần đạt CSTDCS để bắt đầu tính điều kiện khen thưởng.';
+        // Đã đủ điều kiện BKBQP nhưng chưa đủ CSTDTQ
+        goi_y = 'Đã đủ điều kiện đề nghị xét Bằng khen Bộ Quốc phòng.';
       } else {
-        goi_y = 'Chưa có dữ liệu để tính toán. Vui lòng nhập danh hiệu và thành tích.';
+        // Chưa đủ điều kiện
+        goi_y = 'Chưa đủ điều kiện đề nghị xét Bằng khen Bộ Quốc phòng hoặc Chiến sĩ thi đua Toàn quân.';
       }
 
       // ==============================================

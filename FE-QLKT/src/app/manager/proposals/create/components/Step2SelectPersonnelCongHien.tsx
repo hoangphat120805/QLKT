@@ -361,12 +361,12 @@ export default function Step2SelectPersonnelCongHien({
 
       const missingGender =
         !record.gioi_tinh || (record.gioi_tinh !== 'NAM' && record.gioi_tinh !== 'NU');
-      
+
       const ineligible = ineligiblePersonnel.find(i => i.personnelId === record.id);
-      
+
       let disabled = false;
       let title = '';
-      
+
       if (missingGender) {
         disabled = true;
         title = 'Quân nhân này chưa cập nhật giới tính. Vui lòng cập nhật trước khi đề xuất.';
@@ -394,7 +394,7 @@ export default function Step2SelectPersonnelCongHien({
           );
           return false;
         }
-        
+
         const ineligible = ineligiblePersonnel.find(i => i.personnelId === record.id);
         if (ineligible) {
           if (ineligible.status === 'APPROVED') {
@@ -402,9 +402,7 @@ export default function Step2SelectPersonnelCongHien({
               `Quân nhân ${record.ho_ten} đã nhận danh hiệu cống hiến năm ${ineligible.awardYear}`
             );
           } else if (ineligible.status === 'PENDING') {
-            message.warning(
-              `Quân nhân ${record.ho_ten} đang có đề xuất cống hiến chờ duyệt`
-            );
+            message.warning(`Quân nhân ${record.ho_ten} đang có đề xuất cống hiến chờ duyệt`);
           }
           return false;
         }
@@ -520,13 +518,13 @@ export default function Step2SelectPersonnelCongHien({
         const missingGenderCount = filteredPersonnel.filter(
           p => !p.gioi_tinh || (p.gioi_tinh !== 'NAM' && p.gioi_tinh !== 'NU')
         ).length;
-        
-        const ineligibleCount = filteredPersonnel.filter(p => 
+
+        const ineligibleCount = filteredPersonnel.filter(p =>
           ineligiblePersonnel.some(i => i.personnelId === p.id)
         ).length;
 
         const warnings = [];
-        
+
         if (missingGenderCount > 0) {
           warnings.push(
             <Alert
@@ -539,7 +537,7 @@ export default function Step2SelectPersonnelCongHien({
             />
           );
         }
-        
+
         if (ineligibleCount > 0) {
           warnings.push(
             <Alert
@@ -552,7 +550,7 @@ export default function Step2SelectPersonnelCongHien({
             />
           );
         }
-        
+
         return warnings.length > 0 ? <>{warnings}</> : null;
       })()}
 
@@ -567,7 +565,7 @@ export default function Step2SelectPersonnelCongHien({
           const missingGender =
             !record.gioi_tinh || (record.gioi_tinh !== 'NAM' && record.gioi_tinh !== 'NU');
           const ineligible = ineligiblePersonnel.some(i => i.personnelId === record.id);
-          
+
           if (missingGender) {
             return 'row-missing-gender';
           }

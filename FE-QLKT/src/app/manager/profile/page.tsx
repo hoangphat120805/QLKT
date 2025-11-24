@@ -52,6 +52,7 @@ export default function UserProfilePage() {
         }
 
         setPersonnelId(user.quan_nhan_id);
+        const currentYear = new Date().getFullYear();
 
         // Lấy dữ liệu song song
         const [personnelRes, annualRes, scientificRes, positionRes, serviceRes, annualProfileRes] =
@@ -61,7 +62,7 @@ export default function UserProfilePage() {
             apiClient.getScientificAchievements(user.quan_nhan_id),
             apiClient.getPositionHistory(user.quan_nhan_id),
             apiClient.getServiceProfile(user.quan_nhan_id),
-            apiClient.getAnnualProfile(user.quan_nhan_id),
+            apiClient.getAnnualProfile(user.quan_nhan_id, currentYear),
           ]);
 
         if (personnelRes.success) {
