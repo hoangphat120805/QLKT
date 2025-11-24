@@ -146,7 +146,7 @@ export default function Step3SetTitlesNCKH({
     setScientificAchievementHistoryModalVisible(true);
 
     try {
-      const achievementsRes = await apiClient.getScientificAchievements(record.id);
+      const achievementsRes = await apiClient.getPersonnelScientificAchievements(record.id);
       if (achievementsRes.success && achievementsRes.data) {
         setScientificAchievements(Array.isArray(achievementsRes.data) ? achievementsRes.data : []);
       } else {

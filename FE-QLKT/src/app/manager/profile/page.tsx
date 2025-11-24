@@ -59,7 +59,7 @@ export default function UserProfilePage() {
           await Promise.all([
             apiClient.getPersonnelById(user.quan_nhan_id),
             apiClient.getAnnualRewards(user.quan_nhan_id),
-            apiClient.getScientificAchievements(user.quan_nhan_id),
+            apiClient.getPersonnelScientificAchievements(user.quan_nhan_id),
             apiClient.getPositionHistory(user.quan_nhan_id),
             apiClient.getServiceProfile(user.quan_nhan_id),
             apiClient.getAnnualProfile(user.quan_nhan_id, currentYear),

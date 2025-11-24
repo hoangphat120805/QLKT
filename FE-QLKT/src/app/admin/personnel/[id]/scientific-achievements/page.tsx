@@ -28,7 +28,7 @@ import {
 } from '@ant-design/icons';
 import { apiClient } from '@/lib/api-client';
 
-const { Title, Paragraph, TextArea } = Typography;
+const { Title, Paragraph } = Typography;
 
 interface AchievementRecord {
   id: string;
@@ -60,7 +60,7 @@ export default function ScientificAchievementsPage() {
       setLoading(true);
       const [personnelRes, achievementsRes] = await Promise.all([
         apiClient.getPersonnelById(personnelId),
-        apiClient.getScientificAchievements(personnelId),
+        apiClient.getPersonnelScientificAchievements(personnelId),
       ]);
 
       if (personnelRes.success) {
@@ -83,6 +83,7 @@ export default function ScientificAchievementsPage() {
         nam: achievement.nam?.toString() || new Date().getFullYear().toString(),
         loai: achievement.loai || '',
         mo_ta: achievement.mo_ta || '',
+        ghi_chu: achievement.ghi_chu || '',
       });
     } else {
       setEditingAchievement(null);
@@ -90,6 +91,7 @@ export default function ScientificAchievementsPage() {
         nam: new Date().getFullYear().toString(),
         loai: '',
         mo_ta: '',
+        ghi_chu: '',
       });
     }
     setDialogOpen(true);
@@ -105,12 +107,25 @@ export default function ScientificAchievementsPage() {
     try {
       setSubmitting(true);
 
+      // Lấy chức vụ và cấp bậc từ thông tin quân nhân
+      const chucVu = personnel?.ChucVu?.ten_chuc_vu || null;
+      const capBac = personnel?.cap_bac || null;
+
+      console.log('Personnel data:', personnel);
+      console.log('Cap bac:', capBac);
+      console.log('Chuc vu:', chucVu);
+
       const payload = {
         nam: parseInt(values.nam),
         loai: values.loai,
         mo_ta: values.mo_ta,
+        cap_bac: capBac,
+        chuc_vu: chucVu,
+        ghi_chu: values.ghi_chu || null,
         status: 'PENDING',
       };
+
+      console.log('Payload:', payload);
 
       const res = editingAchievement
         ? await apiClient.updateScientificAchievement(editingAchievement.id, payload)

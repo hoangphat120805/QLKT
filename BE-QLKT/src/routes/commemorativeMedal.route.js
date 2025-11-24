@@ -1,0 +1,83 @@
+const router = require('express').Router();
+const multer = require('multer');
+const commemorativeMedalController = require('../controllers/commemorativeMedal.controller');
+const { verifyToken, checkRole } = require('../middlewares/auth');
+
+// Cấu hình multer cho file upload
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter: (req, file, cb) => {
+    const allowedMimeTypes = [
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel',
+    ];
+    if (allowedMimeTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Chỉ chấp nhận file Excel (.xlsx, .xls)'));
+    }
+  },
+});
+
+// ============================================
+// ROUTES - QUẢN LÝ KỶ NIỆM CHƯƠNG VÌ SỰ NGHIỆP XÂY DỰNG QĐNDVN
+// ============================================
+
+/**
+ * @route   GET /api/commemorative-medals/template
+ * @desc    Tải file mẫu Excel để import Kỷ niệm chương
+ * @access  ADMIN
+ */
+router.get(
+  '/template',
+  verifyToken,
+  checkRole(['ADMIN']),
+  commemorativeMedalController.getTemplate
+);
+
+/**
+ * @route   POST /api/commemorative-medals/import
+ * @desc    Import Kỷ niệm chương từ file Excel
+ * @access  ADMIN
+ */
+router.post(
+  '/import',
+  verifyToken,
+  checkRole(['ADMIN']),
+  upload.single('file'),
+  commemorativeMedalController.importFromExcel
+);
+
+/**
+ * @route   GET /api/commemorative-medals
+ * @desc    Lấy danh sách Kỷ niệm chương (Admin: tất cả, Manager: đơn vị mình)
+ * @access  ADMIN, MANAGER
+ */
+router.get('/', verifyToken, checkRole(['ADMIN', 'MANAGER']), commemorativeMedalController.getAll);
+
+/**
+ * @route   GET /api/commemorative-medals/export
+ * @desc    Xuất file Excel Kỷ niệm chương (Admin: tất cả, Manager: đơn vị mình)
+ * @access  ADMIN, MANAGER
+ */
+router.get(
+  '/export',
+  verifyToken,
+  checkRole(['ADMIN', 'MANAGER']),
+  commemorativeMedalController.exportToExcel
+);
+
+/**
+ * @route   GET /api/commemorative-medals/statistics
+ * @desc    Thống kê Kỷ niệm chương
+ * @access  ADMIN, MANAGER
+ */
+router.get(
+  '/statistics',
+  verifyToken,
+  checkRole(['ADMIN', 'MANAGER']),
+  commemorativeMedalController.getStatistics
+);
+
+module.exports = router;

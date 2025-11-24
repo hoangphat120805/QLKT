@@ -189,3 +189,114 @@ exports.getUnitAnnualProfile = async (req, res) => {
     return res.status(500).json({ success: false, message: msg });
   }
 };
+
+exports.getTemplate = async (req, res) => {
+  try {
+    const workbook = await service.exportTemplate();
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="mau_import_don_vi_hang_nam_${new Date()
+        .toISOString()
+        .slice(0, 10)}.xlsx"`
+    );
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error('Export template error:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Xuất file mẫu thất bại',
+    });
+  }
+};
+
+exports.importFromExcel = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vui lòng upload file Excel',
+      });
+    }
+
+    const result = await service.importFromExcel(req.file.buffer);
+
+    return res.status(200).json({
+      success: true,
+      message: `Import thành công ${result.imported}/${result.total} bản ghi`,
+      data: result,
+    });
+  } catch (error) {
+    console.error('Import unit annual awards error:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Import thất bại',
+    });
+  }
+};
+
+exports.exportToExcel = async (req, res) => {
+  try {
+    const { nam, danh_hieu } = req.query;
+    const role = req.user?.role;
+    const userQuanNhanId = req.user?.quan_nhan_id;
+
+    const filters = {
+      nam: nam ? parseInt(nam) : undefined,
+      danh_hieu: danh_hieu || undefined,
+    };
+
+    const workbook = await service.exportToExcel(filters, role, userQuanNhanId);
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="danh_sach_don_vi_hang_nam_${new Date()
+        .toISOString()
+        .slice(0, 10)}.xlsx"`
+    );
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error('Export unit annual awards error:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Xuất danh sách thất bại',
+    });
+  }
+};
+
+exports.getStatistics = async (req, res) => {
+  try {
+    const { nam } = req.query;
+    const role = req.user?.role;
+    const userQuanNhanId = req.user?.quan_nhan_id;
+
+    const filters = {
+      nam: nam ? parseInt(nam) : undefined,
+    };
+
+    const statistics = await service.getStatistics(filters, role, userQuanNhanId);
+
+    return res.status(200).json({
+      success: true,
+      data: statistics,
+    });
+  } catch (error) {
+    console.error('Get statistics error:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Lấy thống kê thất bại',
+    });
+  }
+};

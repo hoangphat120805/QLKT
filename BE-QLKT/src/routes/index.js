@@ -17,8 +17,13 @@ const proposalRoute = require('./proposal.route');
 const decisionRoute = require('./decision.route');
 const awardsRoute = require('./awards.route');
 const notificationRoute = require('./notification.route');
-const unitAnnualAwardRoute = require('./unitAnnualAward.routes');
+const unitAnnualAwardRoute = require('./unitAnnualAward.route');
 const dashboardRoute = require('./dashboard.route');
+const adhocAwardRoute = require('./adhocAward.route');
+const hccsvvRoute = require('./hccsvv.route');
+const contributionAwardRoute = require('./contributionAward.route');
+const commemorativeMedalRoute = require('./commemorativeMedal.route');
+const militaryFlagRoute = require('./militaryFlag.route');
 
 // API Routes
 // 1. Authentication
@@ -54,10 +59,20 @@ router.use('/api/proposals', proposalRoute);
 // 5.1.1. Decision Management (Quản lý quyết định khen thưởng)
 router.use('/api/decisions', decisionRoute);
 
-// 5.2. Awards Management (Quản lý khen thưởng tổng hợp)
-router.use('/api/awards', awardsRoute);
-// 5.3. Unit Annual Awards (Khen thưởng đơn vị hằng năm)
+// 5.2. Unit Annual Awards (Khen thưởng đơn vị hằng năm) - Must come before /api/awards
 router.use('/api/awards/units/annual', unitAnnualAwardRoute);
+
+// 5.3. Specialized Award Types
+router.use('/api/hccsvv', hccsvvRoute);
+router.use('/api/contribution-awards', contributionAwardRoute);
+router.use('/api/commemorative-medals', commemorativeMedalRoute);
+router.use('/api/military-flag', militaryFlagRoute);
+
+// 5.4. Awards Management (Quản lý khen thưởng tổng hợp)
+router.use('/api/awards', awardsRoute);
+
+// 5.5. Ad-hoc Awards Management (Khen thưởng đột xuất - ADMIN only)
+router.use('/api/adhoc-awards', adhocAwardRoute);
 
 // 6. Profile & Calculation (Output)
 router.use('/api/profiles', profileRoute);

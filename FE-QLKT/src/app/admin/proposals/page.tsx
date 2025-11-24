@@ -22,6 +22,7 @@ import {
   HomeOutlined,
   SearchOutlined,
   FilterOutlined,
+  TrophyOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import Link from 'next/link';
@@ -77,6 +78,7 @@ export default function AdminProposalsPage() {
   const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [selectedDecision, setSelectedDecision] = useState<any>(null);
+  const [extraordinaryRewardModalVisible, setExtraordinaryRewardModalVisible] = useState(false);
 
   useEffect(() => {
     fetchProposals();
@@ -368,9 +370,26 @@ export default function AdminProposalsPage() {
       />
 
       {/* Header */}
-      <div style={{ marginBottom: 24 }}>
-        <Title level={2}>Quản lý Đề xuất Khen thưởng</Title>
-        <Text type="secondary">Xem, phê duyệt hoặc từ chối các đề xuất khen thưởng</Text>
+      <div
+        style={{
+          marginBottom: 24,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
+        <div>
+          <Title level={2}>Quản lý Đề xuất Khen thưởng</Title>
+          <Text type="secondary">Xem, phê duyệt hoặc từ chối các đề xuất khen thưởng</Text>
+        </div>
+        <Button
+          type="primary"
+          icon={<TrophyOutlined />}
+          size="large"
+          onClick={() => setExtraordinaryRewardModalVisible(true)}
+        >
+          Thêm Đột xuất
+        </Button>
       </div>
 
       <Card>

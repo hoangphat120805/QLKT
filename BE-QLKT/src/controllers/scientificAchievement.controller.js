@@ -1,24 +1,61 @@
 const scientificAchievementService = require('../services/scientificAchievement.service');
 const profileService = require('../services/profile.service');
+const { prisma } = require('../models');
 
 class ScientificAchievementController {
   async getAchievements(req, res) {
     try {
-      const { personnel_id } = req.query;
+      const { personnel_id, page, limit, nam, loai } = req.query;
 
-      if (!personnel_id) {
-        return res.status(400).json({
-          success: false,
-          message: 'Tham số personnel_id là bắt buộc',
+      // Nếu có personnel_id, lấy thành tích của 1 người
+      if (personnel_id) {
+        const result = await scientificAchievementService.getAchievements(personnel_id);
+        return res.status(200).json({
+          success: true,
+          message: 'Lấy danh sách thành tích khoa học thành công',
+          data: result,
         });
       }
 
-      const result = await scientificAchievementService.getAchievements(personnel_id);
+      // Nếu không có personnel_id, lấy danh sách tất cả với phân trang
+      const pageNum = parseInt(page) || 1;
+      const limitNum = parseInt(limit) || 1000;
+      const where = {};
+
+      if (nam) where.nam = parseInt(nam);
+      if (loai) where.loai = loai;
+
+      const [achievements, total] = await Promise.all([
+        prisma.thanhTichKhoaHoc.findMany({
+          where,
+          include: {
+            QuanNhan: {
+              include: {
+                CoQuanDonVi: true,
+                DonViTrucThuoc: true,
+                ChucVu: true,
+              },
+            },
+          },
+          orderBy: [{ nam: 'desc' }, { createdAt: 'desc' }],
+          skip: (pageNum - 1) * limitNum,
+          take: limitNum,
+        }),
+        prisma.thanhTichKhoaHoc.count({ where }),
+      ]);
 
       return res.status(200).json({
         success: true,
         message: 'Lấy danh sách thành tích khoa học thành công',
-        data: result,
+        data: {
+          awards: achievements,
+          pagination: {
+            total,
+            page: pageNum,
+            limit: limitNum,
+            totalPages: Math.ceil(total / limitNum),
+          },
+        },
       });
     } catch (error) {
       console.error('Get achievements error:', error);
@@ -31,7 +68,7 @@ class ScientificAchievementController {
 
   async createAchievement(req, res) {
     try {
-      const { personnel_id, nam, loai, mo_ta, status } = req.body;
+      const { personnel_id, nam, loai, mo_ta, cap_bac, chuc_vu, ghi_chu, status } = req.body;
 
       if (!personnel_id || !nam || !loai || !mo_ta) {
         return res.status(400).json({
@@ -45,6 +82,9 @@ class ScientificAchievementController {
         nam,
         loai,
         mo_ta,
+        cap_bac,
+        chuc_vu,
+        ghi_chu,
         status,
       });
 
@@ -73,12 +113,15 @@ class ScientificAchievementController {
   async updateAchievement(req, res) {
     try {
       const { id } = req.params;
-      const { nam, loai, mo_ta, status } = req.body;
+      const { nam, loai, mo_ta, cap_bac, chuc_vu, ghi_chu, status } = req.body;
 
       const result = await scientificAchievementService.updateAchievement(id, {
         nam,
         loai,
         mo_ta,
+        cap_bac,
+        chuc_vu,
+        ghi_chu,
         status,
       });
 
@@ -129,6 +172,39 @@ class ScientificAchievementController {
       return res.status(400).json({
         success: false,
         message: error.message || 'Xóa thành tích thất bại',
+      });
+    }
+  }
+
+  async exportToExcel(req, res) {
+    try {
+      const { nam, loai } = req.query;
+
+      const filters = {
+        nam: nam ? parseInt(nam) : undefined,
+        loai: loai || undefined,
+      };
+
+      const workbook = await scientificAchievementService.exportToExcel(filters);
+
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      );
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="danh_sach_thanh_tich_khoa_hoc_${new Date()
+          .toISOString()
+          .slice(0, 10)}.xlsx"`
+      );
+
+      await workbook.xlsx.write(res);
+      res.end();
+    } catch (error) {
+      console.error('Export scientific achievements error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Xuất danh sách thất bại',
       });
     }
   }

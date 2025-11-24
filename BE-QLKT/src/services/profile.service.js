@@ -844,7 +844,8 @@ class ProfileService {
         goi_y = 'Đã đủ điều kiện đề nghị xét Bằng khen Bộ Quốc phòng.';
       } else {
         // Chưa đủ điều kiện
-        goi_y = 'Chưa đủ điều kiện đề nghị xét Bằng khen Bộ Quốc phòng hoặc Chiến sĩ thi đua Toàn quân.';
+        goi_y =
+          'Chưa đủ điều kiện đề nghị xét Bằng khen Bộ Quốc phòng hoặc Chiến sĩ thi đua Toàn quân.';
       }
 
       // ==============================================

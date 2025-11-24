@@ -1,0 +1,262 @@
+const adhocAwardService = require('../services/adhocAward.service');
+
+class AdhocAwardController {
+  /**
+   * POST /api/adhoc-awards
+   * Create ad-hoc award (for individual or unit)
+   * Body: { type, year, awardForm, personnelId?, unitId?, unitType?, rank?, position?, note?, decisionNumber?, files[] }
+   */
+  async createAdhocAward(req, res) {
+    try {
+      const adminId = req.user.id;
+      const {
+        type, // CA_NHAN or TAP_THE
+        year,
+        awardForm, // e.g., "Giấy khen của abc", "Bằng khen của def"
+        personnelId, // Required if type = CA_NHAN
+        unitId, // Required if type = TAP_THE
+        unitType, // CO_QUAN_DON_VI or DON_VI_TRUC_THUOC (required if type = TAP_THE)
+        rank, // For CA_NHAN
+        position, // For CA_NHAN
+        note,
+        decisionNumber,
+      } = req.body;
+
+      // Validate type
+      if (!['CA_NHAN', 'TAP_THE'].includes(type)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Loại khen thưởng không hợp lệ. Chỉ chấp nhận: CA_NHAN, TAP_THE',
+        });
+      }
+
+      // Validate required fields based on type
+      if (type === 'CA_NHAN' && !personnelId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Thiếu thông tin quân nhân (personnelId)',
+        });
+      }
+
+      if (type === 'TAP_THE' && (!unitId || !unitType)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Thiếu thông tin đơn vị (unitId và unitType)',
+        });
+      }
+
+      if (!awardForm || !year) {
+        return res.status(400).json({
+          success: false,
+          message: 'Thiếu thông tin bắt buộc (awardForm, year)',
+        });
+      }
+
+      // Handle uploaded files
+      const files = req.files || [];
+
+      const result = await adhocAwardService.createAdhocAward({
+        adminId,
+        type,
+        year: parseInt(year),
+        awardForm,
+        personnelId,
+        unitId,
+        unitType,
+        rank,
+        position,
+        note,
+        decisionNumber,
+        files,
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: 'Tạo khen thưởng đột xuất thành công',
+        data: result,
+      });
+    } catch (error) {
+      console.error('Create ad-hoc award error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Tạo khen thưởng đột xuất thất bại',
+      });
+    }
+  }
+
+  /**
+   * GET /api/adhoc-awards
+   * Get all ad-hoc awards with filters
+   * Query: type?, year?, personnelId?, unitId?
+   */
+  async getAdhocAwards(req, res) {
+    try {
+      const { type, year, personnelId, unitId, page = 1, limit = 20 } = req.query;
+
+      const result = await adhocAwardService.getAdhocAwards({
+        type,
+        year: year ? parseInt(year) : undefined,
+        personnelId,
+        unitId,
+        page: parseInt(page),
+        limit: parseInt(limit),
+      });
+
+      return res.status(200).json({
+        success: true,
+        data: result.data,
+        pagination: result.pagination,
+      });
+    } catch (error) {
+      console.error('Get ad-hoc awards error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Lấy danh sách khen thưởng đột xuất thất bại',
+      });
+    }
+  }
+
+  /**
+   * GET /api/adhoc-awards/:id
+   * Get single ad-hoc award by ID
+   */
+  async getAdhocAwardById(req, res) {
+    try {
+      const { id } = req.params;
+
+      const result = await adhocAwardService.getAdhocAwardById(id);
+
+      return res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      console.error('Get ad-hoc award by ID error:', error);
+      return res.status(error.message === 'Khen thưởng đột xuất không tồn tại' ? 404 : 500).json({
+        success: false,
+        message: error.message || 'Lấy thông tin khen thưởng đột xuất thất bại',
+      });
+    }
+  }
+
+  /**
+   * PUT /api/adhoc-awards/:id
+   * Update ad-hoc award
+   * Body: { awardForm?, year?, rank?, position?, note?, decisionNumber?, files[]? }
+   */
+  async updateAdhocAward(req, res) {
+    try {
+      const { id } = req.params;
+      const adminId = req.user.id;
+      const { awardForm, year, rank, position, note, decisionNumber, removeFileIndexes } = req.body;
+
+      // Handle uploaded files
+      const files = req.files || [];
+
+      const result = await adhocAwardService.updateAdhocAward({
+        id,
+        adminId,
+        awardForm,
+        year: year ? parseInt(year) : undefined,
+        rank,
+        position,
+        note,
+        decisionNumber,
+        files,
+        removeFileIndexes: removeFileIndexes ? JSON.parse(removeFileIndexes) : [], // Array of indexes to remove
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: 'Cập nhật khen thưởng đột xuất thành công',
+        data: result,
+      });
+    } catch (error) {
+      console.error('Update ad-hoc award error:', error);
+      return res.status(error.message === 'Khen thưởng đột xuất không tồn tại' ? 404 : 500).json({
+        success: false,
+        message: error.message || 'Cập nhật khen thưởng đột xuất thất bại',
+      });
+    }
+  }
+
+  /**
+   * DELETE /api/adhoc-awards/:id
+   * Delete ad-hoc award
+   */
+  async deleteAdhocAward(req, res) {
+    try {
+      const { id } = req.params;
+
+      await adhocAwardService.deleteAdhocAward(id);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Xóa khen thưởng đột xuất thành công',
+      });
+    } catch (error) {
+      console.error('Delete ad-hoc award error:', error);
+      return res.status(error.message === 'Khen thưởng đột xuất không tồn tại' ? 404 : 500).json({
+        success: false,
+        message: error.message || 'Xóa khen thưởng đột xuất thất bại',
+      });
+    }
+  }
+
+  /**
+   * GET /api/adhoc-awards/personnel/:personnelId
+   * Get all ad-hoc awards for a specific personnel
+   */
+  async getAdhocAwardsByPersonnel(req, res) {
+    try {
+      const { personnelId } = req.params;
+
+      const result = await adhocAwardService.getAdhocAwardsByPersonnel(personnelId);
+
+      return res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      console.error('Get ad-hoc awards by personnel error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Lấy danh sách khen thưởng đột xuất của quân nhân thất bại',
+      });
+    }
+  }
+
+  /**
+   * GET /api/adhoc-awards/unit/:unitId
+   * Get all ad-hoc awards for a specific unit
+   * Query: unitType=CO_QUAN_DON_VI|DON_VI_TRUC_THUOC
+   */
+  async getAdhocAwardsByUnit(req, res) {
+    try {
+      const { unitId } = req.params;
+      const { unitType } = req.query;
+
+      if (!unitType || !['CO_QUAN_DON_VI', 'DON_VI_TRUC_THUOC'].includes(unitType)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Thiếu hoặc sai loại đơn vị (unitType)',
+        });
+      }
+
+      const result = await adhocAwardService.getAdhocAwardsByUnit(unitId, unitType);
+
+      return res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      console.error('Get ad-hoc awards by unit error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Lấy danh sách khen thưởng đột xuất của đơn vị thất bại',
+      });
+    }
+  }
+}
+
+module.exports = new AdhocAwardController();

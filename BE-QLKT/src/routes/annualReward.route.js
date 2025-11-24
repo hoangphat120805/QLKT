@@ -4,7 +4,13 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const annualRewardController = require('../controllers/annualReward.controller');
-const { verifyToken, requireManager, requireAuth, requireAdmin } = require('../middlewares/auth');
+const {
+  verifyToken,
+  requireManager,
+  requireAuth,
+  requireAdmin,
+  checkRole,
+} = require('../middlewares/auth');
 const { auditLog } = require('../middlewares/auditLog');
 const { getLogDescription, getResourceId } = require('../helpers/auditLogHelper');
 
@@ -123,6 +129,25 @@ router.post(
     getResourceId: () => null, // Import operation không có single resource ID
   }),
   annualRewardController.importAnnualRewards
+);
+
+// Tải file mẫu Excel
+router.get('/template', verifyToken, checkRole(['ADMIN']), annualRewardController.getTemplate);
+
+// Xuất danh sách ra Excel
+router.get(
+  '/export',
+  verifyToken,
+  checkRole(['ADMIN', 'MANAGER']),
+  annualRewardController.exportToExcel
+);
+
+// Thống kê khen thưởng cá nhân hằng năm
+router.get(
+  '/statistics',
+  verifyToken,
+  checkRole(['ADMIN', 'MANAGER']),
+  annualRewardController.getStatistics
 );
 
 // Serve file PDF quyết định

@@ -253,9 +253,9 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
           label: <Link href="/admin/awards">Quản lý Khen Thưởng</Link>,
         },
         {
-          key: 'service-awards',
+          key: 'adhoc-awards',
           icon: <TrophyOutlined />,
-          label: <Link href="/admin/service-awards">Quản lý Niên hạn</Link>,
+          label: <Link href="/admin/adhoc-awards">Khen thưởng Đột xuất</Link>,
         },
       ];
     }

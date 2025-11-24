@@ -4,7 +4,13 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const ctrl = require('../controllers/unitAnnualAward.controller');
-const { verifyToken, requireManager, requireAuth, requireAdmin } = require('../middlewares/auth');
+const {
+  verifyToken,
+  requireManager,
+  requireAuth,
+  requireAdmin,
+  checkRole,
+} = require('../middlewares/auth');
 const { auditLog } = require('../middlewares/auditLog');
 const { getLogDescription, getResourceId } = require('../helpers/auditLogHelper');
 
@@ -45,6 +51,46 @@ const pdfUpload = multer({
  * @access  ADMIN, MANAGER, USER
  */
 router.get('/', verifyToken, requireAuth, ctrl.list);
+
+/**
+ * @route   GET /api/awards/units/annual/template
+ * @desc    Tải file mẫu Excel để import khen thưởng đơn vị hằng năm
+ * @access  ADMIN
+ */
+router.get('/template', verifyToken, checkRole(['ADMIN']), ctrl.getTemplate);
+
+/**
+ * @route   POST /api/awards/units/annual/import
+ * @desc    Import khen thưởng đơn vị hằng năm từ file Excel
+ * @access  ADMIN
+ */
+router.post(
+  '/import',
+  verifyToken,
+  checkRole(['ADMIN']),
+  upload.single('file'),
+  auditLog({
+    action: 'IMPORT',
+    resource: 'unit-annual-awards',
+    getDescription: getLogDescription('unit-annual-awards', 'IMPORT'),
+    getResourceId: () => null,
+  }),
+  ctrl.importFromExcel
+);
+
+/**
+ * @route   GET /api/awards/units/annual/export
+ * @desc    Xuất danh sách khen thưởng đơn vị hằng năm ra Excel
+ * @access  ADMIN, MANAGER
+ */
+router.get('/export', verifyToken, checkRole(['ADMIN', 'MANAGER']), ctrl.exportToExcel);
+
+/**
+ * @route   GET /api/awards/units/annual/statistics
+ * @desc    Thống kê khen thưởng đơn vị hằng năm
+ * @access  ADMIN, MANAGER
+ */
+router.get('/statistics', verifyToken, checkRole(['ADMIN', 'MANAGER']), ctrl.getStatistics);
 
 /**
  * @route   GET /api/awards/units/annual/history

@@ -2,6 +2,95 @@ const { prisma } = require('../models');
 
 class UnitAnnualAwardService {
   /**
+   * Lấy danh sách khen thưởng đơn vị hằng năm với phân trang
+   */
+  async list({ page = 1, limit = 10, year, donViId, userRole, userQuanNhanId }) {
+    const skip = (page - 1) * limit;
+    const where = { status: 'APPROVED' };
+
+    if (year) {
+      where.nam = parseInt(year);
+    }
+
+    if (donViId) {
+      where.OR = [{ co_quan_don_vi_id: donViId }, { don_vi_truc_thuoc_id: donViId }];
+    }
+
+    // Role-based filtering
+    if (userRole === 'MANAGER' && userQuanNhanId) {
+      const user = await prisma.quanNhan.findUnique({
+        where: { id: userQuanNhanId },
+        select: { co_quan_don_vi_id: true, don_vi_truc_thuoc_id: true },
+      });
+
+      if (user?.co_quan_don_vi_id) {
+        where.co_quan_don_vi_id = user.co_quan_don_vi_id;
+      } else if (user?.don_vi_truc_thuoc_id) {
+        where.don_vi_truc_thuoc_id = user.don_vi_truc_thuoc_id;
+      }
+    }
+
+    const [awards, total] = await Promise.all([
+      prisma.danhHieuDonViHangNam.findMany({
+        where,
+        include: {
+          CoQuanDonVi: true,
+          DonViTrucThuoc: true,
+        },
+        orderBy: [{ nam: 'desc' }, { created_at: 'desc' }],
+        skip,
+        take: limit,
+      }),
+      prisma.danhHieuDonViHangNam.count({ where }),
+    ]);
+
+    return {
+      awards,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  /**
+   * Lấy chi tiết một khen thưởng đơn vị theo ID
+   */
+  async getById(id, userRole, userQuanNhanId) {
+    const award = await prisma.danhHieuDonViHangNam.findUnique({
+      where: { id: String(id) },
+      include: {
+        CoQuanDonVi: true,
+        DonViTrucThuoc: true,
+      },
+    });
+
+    if (!award) {
+      return null;
+    }
+
+    // Role-based access check
+    if (userRole === 'MANAGER' && userQuanNhanId) {
+      const user = await prisma.quanNhan.findUnique({
+        where: { id: userQuanNhanId },
+        select: { co_quan_don_vi_id: true, don_vi_truc_thuoc_id: true },
+      });
+
+      const hasAccess =
+        (user?.co_quan_don_vi_id && award.co_quan_don_vi_id === user.co_quan_don_vi_id) ||
+        (user?.don_vi_truc_thuoc_id && award.don_vi_truc_thuoc_id === user.don_vi_truc_thuoc_id);
+
+      if (!hasAccess) {
+        return null;
+      }
+    }
+
+    return award;
+  }
+
+  /**
    * Tính số năm liên tục được danh hiệu DVQT (Đơn vị Quyết thắng)
    * Quy ước: có bản ghi DanhHieuDonViHangNam năm X với danh_hieu = "ĐVQT" thì được tính là đạt danh hiệu năm đó
    */
@@ -88,6 +177,61 @@ class UnitAnnualAwardService {
       return 'Đủ điều kiện đề xuất Bằng khen Tổng cục (3 năm liên tục DVQT).';
     }
     return null;
+  }
+
+  /** Admin tạo/cập nhật khen thưởng đơn vị (status=APPROVED) */
+  async upsert({
+    don_vi_id,
+    nam,
+    danh_hieu,
+    so_quyet_dinh,
+    file_quyet_dinh,
+    ghi_chu,
+    nguoi_tao_id,
+  }) {
+    const year = Number(nam);
+    const unitId = don_vi_id;
+
+    // Xác định xem đơn vị là CoQuanDonVi hay DonViTrucThuoc
+    const coQuanDonVi = await prisma.coQuanDonVi.findUnique({ where: { id: unitId } });
+    const donViTrucThuoc = await prisma.donViTrucThuoc.findUnique({ where: { id: unitId } });
+
+    if (!coQuanDonVi && !donViTrucThuoc) {
+      throw new Error('Không tìm thấy đơn vị');
+    }
+
+    const isCoQuanDonVi = !!coQuanDonVi;
+
+    // Tạo/cập nhật bản ghi DanhHieuDonViHangNam với status APPROVED
+    const record = await prisma.danhHieuDonViHangNam.upsert({
+      where: isCoQuanDonVi
+        ? { co_quan_don_vi_id_nam: { co_quan_don_vi_id: unitId, nam: year } }
+        : { don_vi_truc_thuoc_id_nam: { don_vi_truc_thuoc_id: unitId, nam: year } },
+      update: {
+        danh_hieu: danh_hieu || null,
+        so_quyet_dinh: so_quyet_dinh || null,
+        file_quyet_dinh: file_quyet_dinh || null,
+        ghi_chu: ghi_chu || null,
+        status: 'APPROVED',
+      },
+      create: {
+        co_quan_don_vi_id: isCoQuanDonVi ? unitId : null,
+        don_vi_truc_thuoc_id: isCoQuanDonVi ? null : unitId,
+        nam: year,
+        danh_hieu: danh_hieu || null,
+        so_quyet_dinh: so_quyet_dinh || null,
+        file_quyet_dinh: file_quyet_dinh || null,
+        ghi_chu: ghi_chu || null,
+        nguoi_tao_id: nguoi_tao_id,
+        status: 'APPROVED',
+      },
+      include: { CoQuanDonVi: true, DonViTrucThuoc: true },
+    });
+
+    // Cập nhật hoặc tạo HoSoDonViHangNam
+    await this.updateHoSoDonVi(unitId, year, isCoQuanDonVi);
+
+    return record;
   }
 
   /** Manager đề xuất (status=PENDING) - Tạo bản ghi DanhHieuDonViHangNam */
@@ -697,6 +841,276 @@ class UnitAnnualAwardService {
     });
 
     return danhHieuRecords;
+  }
+
+  /**
+   * Xuất file mẫu Excel để import
+   */
+  async exportTemplate() {
+    const ExcelJS = require('exceljs');
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Khen thưởng đơn vị');
+
+    worksheet.columns = [
+      { header: 'Mã đơn vị (*)', key: 'ma_don_vi', width: 15 },
+      { header: 'Tên đơn vị (*)', key: 'ten_don_vi', width: 30 },
+      { header: 'Năm (*)', key: 'nam', width: 10 },
+      { header: 'Danh hiệu (*)', key: 'danh_hieu', width: 20 },
+      { header: 'Số quyết định', key: 'so_quyet_dinh', width: 20 },
+      { header: 'Ghi chú', key: 'ghi_chu', width: 30 },
+    ];
+
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFD3D3D3' },
+    };
+
+    worksheet.addRow({
+      ma_don_vi: 'DV001',
+      ten_don_vi: 'Đơn vị mẫu',
+      nam: 2024,
+      danh_hieu: 'ĐVQT',
+      so_quyet_dinh: '123/QĐ-BQP',
+      ghi_chu: 'Ghi chú mẫu',
+    });
+
+    worksheet.addRow([]);
+    worksheet.addRow(['Ghi chú:']);
+    worksheet.addRow(['- Các cột có dấu (*) là bắt buộc']);
+    worksheet.addRow(['- Danh hiệu hợp lệ: ĐVQT, ĐVTT, BKTTCP']);
+    worksheet.addRow(['- Năm phải là số nguyên dương']);
+
+    return workbook;
+  }
+
+  /**
+   * Import khen thưởng đơn vị từ Excel
+   */
+  async importFromExcel(buffer) {
+    const ExcelJS = require('exceljs');
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(buffer);
+    const worksheet = workbook.getWorksheet(1);
+
+    const errors = [];
+    const imported = [];
+    let total = 0;
+
+    for (let i = 2; i <= worksheet.rowCount; i++) {
+      const row = worksheet.getRow(i);
+      if (!row.getCell(1).value) break;
+
+      total++;
+      const maDonVi = row.getCell(1).value?.toString().trim();
+      const nam = parseInt(row.getCell(3).value);
+      const danhHieu = row.getCell(4).value?.toString().trim();
+      const soQuyetDinh = row.getCell(5).value?.toString().trim();
+      const ghiChu = row.getCell(6).value?.toString().trim();
+
+      try {
+        if (!maDonVi || !nam || !danhHieu) {
+          throw new Error('Thiếu thông tin bắt buộc');
+        }
+
+        if (!['ĐVQT', 'ĐVTT', 'BKTTCP'].includes(danhHieu)) {
+          throw new Error('Danh hiệu không hợp lệ');
+        }
+
+        const donVi = await prisma.coQuanDonVi.findFirst({
+          where: { ma_don_vi: maDonVi },
+        });
+
+        if (!donVi) {
+          const donViTrucThuoc = await prisma.donViTrucThuoc.findFirst({
+            where: { ma_don_vi: maDonVi },
+          });
+
+          if (!donViTrucThuoc) {
+            throw new Error(`Không tìm thấy đơn vị với mã ${maDonVi}`);
+          }
+
+          const award = await prisma.danhHieuDonViHangNam.upsert({
+            where: {
+              don_vi_truc_thuoc_id_nam: {
+                don_vi_truc_thuoc_id: donViTrucThuoc.id,
+                nam,
+              },
+            },
+            create: {
+              don_vi_truc_thuoc_id: donViTrucThuoc.id,
+              nam,
+              danh_hieu: danhHieu,
+              so_quyet_dinh: soQuyetDinh,
+              ghi_chu: ghiChu,
+              status: 'APPROVED',
+            },
+            update: {
+              danh_hieu: danhHieu,
+              so_quyet_dinh: soQuyetDinh,
+              ghi_chu: ghiChu,
+            },
+          });
+          imported.push(award);
+        } else {
+          const award = await prisma.danhHieuDonViHangNam.upsert({
+            where: {
+              co_quan_don_vi_id_nam: {
+                co_quan_don_vi_id: donVi.id,
+                nam,
+              },
+            },
+            create: {
+              co_quan_don_vi_id: donVi.id,
+              nam,
+              danh_hieu: danhHieu,
+              so_quyet_dinh: soQuyetDinh,
+              ghi_chu: ghiChu,
+              status: 'APPROVED',
+            },
+            update: {
+              danh_hieu: danhHieu,
+              so_quyet_dinh: soQuyetDinh,
+              ghi_chu: ghiChu,
+            },
+          });
+          imported.push(award);
+        }
+      } catch (error) {
+        errors.push(`Dòng ${i}: ${error.message}`);
+      }
+    }
+
+    return {
+      total,
+      imported: imported.length,
+      errors,
+    };
+  }
+
+  /**
+   * Xuất danh sách khen thưởng đơn vị ra Excel
+   */
+  async exportToExcel(filters = {}, userRole, userQuanNhanId) {
+    const ExcelJS = require('exceljs');
+    const { nam, danh_hieu } = filters;
+
+    const where = { status: 'APPROVED' };
+    if (nam) where.nam = nam;
+    if (danh_hieu) where.danh_hieu = danh_hieu;
+
+    // Filter theo role
+    if (userRole === 'MANAGER' && userQuanNhanId) {
+      const user = await prisma.quanNhan.findUnique({
+        where: { id: userQuanNhanId },
+        select: { co_quan_don_vi_id: true, don_vi_truc_thuoc_id: true },
+      });
+
+      if (user?.co_quan_don_vi_id) {
+        where.co_quan_don_vi_id = user.co_quan_don_vi_id;
+      } else if (user?.don_vi_truc_thuoc_id) {
+        where.don_vi_truc_thuoc_id = user.don_vi_truc_thuoc_id;
+      }
+    }
+
+    const awards = await prisma.danhHieuDonViHangNam.findMany({
+      where,
+      include: {
+        CoQuanDonVi: true,
+        DonViTrucThuoc: true,
+      },
+      orderBy: [{ nam: 'desc' }, { createdAt: 'desc' }],
+      take: 10000,
+    });
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Khen thưởng đơn vị');
+
+    worksheet.columns = [
+      { header: 'STT', key: 'stt', width: 8 },
+      { header: 'Mã đơn vị', key: 'ma_don_vi', width: 15 },
+      { header: 'Tên đơn vị', key: 'ten_don_vi', width: 30 },
+      { header: 'Năm', key: 'nam', width: 10 },
+      { header: 'Danh hiệu', key: 'danh_hieu', width: 20 },
+      { header: 'Số quyết định', key: 'so_quyet_dinh', width: 20 },
+      { header: 'Ghi chú', key: 'ghi_chu', width: 30 },
+    ];
+
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF4472C4' },
+    };
+    worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+
+    awards.forEach((award, index) => {
+      const donVi = award.CoQuanDonVi || award.DonViTrucThuoc;
+      worksheet.addRow({
+        stt: index + 1,
+        ma_don_vi: donVi?.ma_don_vi || '',
+        ten_don_vi: donVi?.ten || '',
+        nam: award.nam,
+        danh_hieu: award.danh_hieu,
+        so_quyet_dinh: award.so_quyet_dinh || '',
+        ghi_chu: award.ghi_chu || '',
+      });
+    });
+
+    return workbook;
+  }
+
+  /**
+   * Thống kê khen thưởng đơn vị
+   */
+  async getStatistics(filters = {}, userRole, userQuanNhanId) {
+    const { nam } = filters;
+
+    const where = { status: 'APPROVED' };
+    if (nam) where.nam = nam;
+
+    // Filter theo role
+    if (userRole === 'MANAGER' && userQuanNhanId) {
+      const user = await prisma.quanNhan.findUnique({
+        where: { id: userQuanNhanId },
+        select: { co_quan_don_vi_id: true, don_vi_truc_thuoc_id: true },
+      });
+
+      if (user?.co_quan_don_vi_id) {
+        where.co_quan_don_vi_id = user.co_quan_don_vi_id;
+      } else if (user?.don_vi_truc_thuoc_id) {
+        where.don_vi_truc_thuoc_id = user.don_vi_truc_thuoc_id;
+      }
+    }
+
+    const awards = await prisma.danhHieuDonViHangNam.findMany({
+      where,
+    });
+
+    const byDanhHieu = awards.reduce((acc, award) => {
+      const key = award.danh_hieu;
+      if (!acc[key]) {
+        acc[key] = { danh_hieu: key, count: 0 };
+      }
+      acc[key].count++;
+      return acc;
+    }, {});
+
+    const byNam = awards.reduce((acc, award) => {
+      const key = award.nam;
+      if (!acc[key]) {
+        acc[key] = { nam: key, count: 0 };
+      }
+      acc[key].count++;
+      return acc;
+    }, {});
+
+    return {
+      total: awards.length,
+      byDanhHieu: Object.values(byDanhHieu),
+      byNam: Object.values(byNam).sort((a, b) => b.nam - a.nam),
+    };
   }
 }
 

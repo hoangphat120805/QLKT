@@ -282,12 +282,64 @@ export const apiClient = {
   },
 
   // Annual Rewards
-  async getAnnualRewards(personnelId: string): Promise<ApiResponse> {
+  async getAnnualRewards(params?: {
+    page?: number;
+    limit?: number;
+    nam?: number;
+    danh_hieu?: string;
+  }): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.get('/api/annual-rewards', { params });
+      return { success: true, data: res.data?.data || res.data };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async getAnnualRewardsByPersonnel(personnelId: string): Promise<ApiResponse> {
     try {
       const res = await axiosInstance.get(`/api/personnel/${personnelId}/annual-rewards`);
       return { success: true, data: res.data?.data?.rewards || res.data?.data || res.data };
     } catch (e: any) {
       return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async getAnnualRewardsTemplate(): Promise<Blob> {
+    try {
+      const res = await axiosInstance.get('/api/annual-rewards/template', {
+        responseType: 'blob',
+      });
+      return res.data;
+    } catch (e: any) {
+      throw new Error(e?.response?.data?.message || e.message);
+    }
+  },
+
+  async importAnnualRewards(file: File): Promise<ApiResponse> {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await axiosInstance.post('/api/annual-rewards/import', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return { success: true, data: res.data?.data || res.data, message: res.data?.message };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async exportAnnualRewards(params?: { nam?: number; danh_hieu?: string }): Promise<Blob> {
+    try {
+      const res = await axiosInstance.get('/api/annual-rewards/export', {
+        params,
+        responseType: 'blob',
+      });
+      return res.data;
+    } catch (e: any) {
+      throw new Error(e?.response?.data?.message || e.message);
     }
   },
 
@@ -402,10 +454,24 @@ export const apiClient = {
   },
 
   // Scientific Achievements
-  async getScientificAchievements(personnelId: string): Promise<ApiResponse> {
+  async getPersonnelScientificAchievements(personnelId: string): Promise<ApiResponse> {
     try {
       const res = await axiosInstance.get(`/api/personnel/${personnelId}/scientific-achievements`);
       return { success: true, data: res.data?.data?.achievements || res.data?.data || res.data };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async getScientificAchievements(params?: {
+    page?: number;
+    limit?: number;
+    nam?: number;
+    loai?: string;
+  }): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.get('/api/scientific-achievements', { params });
+      return { success: true, data: res.data?.data || res.data };
     } catch (e: any) {
       return { success: false, message: e?.response?.data?.message || e.message };
     }
@@ -438,6 +504,18 @@ export const apiClient = {
       return { success: true, data: res.data?.data || res.data };
     } catch (e: any) {
       return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async exportScientificAchievements(params?: { nam?: number; loai?: string }): Promise<Blob> {
+    try {
+      const res = await axiosInstance.get('/api/scientific-achievements/export', {
+        params,
+        responseType: 'blob',
+      });
+      return res.data;
+    } catch (e: any) {
+      throw new Error(e?.response?.data?.message || e.message);
     }
   },
 
@@ -626,6 +704,273 @@ export const apiClient = {
       return res.data;
     } catch (e: any) {
       throw new Error(e?.response?.data?.message || e.message);
+    }
+  },
+
+  // HCCSVV (Huân chương Chiến sĩ Vẻ vang)
+  async getHCCSVVTemplate(): Promise<Blob> {
+    try {
+      const res = await axiosInstance.get('/api/hccsvv/template', {
+        responseType: 'blob',
+      });
+      return res.data;
+    } catch (e: any) {
+      throw new Error(e?.response?.data?.message || e.message);
+    }
+  },
+
+  async importHCCSVV(file: File): Promise<ApiResponse> {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await axiosInstance.post('/api/hccsvv/import', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return { success: true, data: res.data?.data || res.data, message: res.data?.message };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async getHCCSVV(params?: {
+    don_vi_id?: number;
+    nam?: number;
+    danh_hieu?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.get('/api/hccsvv', { params });
+      return { success: true, data: res.data?.data || res.data };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async exportHCCSVV(params?: {
+    don_vi_id?: number;
+    nam?: number;
+    danh_hieu?: string;
+  }): Promise<Blob> {
+    try {
+      const res = await axiosInstance.get('/api/hccsvv/export', {
+        params,
+        responseType: 'blob',
+      });
+      return res.data;
+    } catch (e: any) {
+      throw new Error(e?.response?.data?.message || e.message);
+    }
+  },
+
+  async getHCCSVVStatistics(params?: { don_vi_id?: number; nam?: number }): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.get('/api/hccsvv/statistics', { params });
+      return { success: true, data: res.data?.data || res.data };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  // Contribution Awards (Huân chương Bảo vệ Tổ quốc - Cống hiến)
+  async getContributionAwardsTemplate(): Promise<Blob> {
+    try {
+      const res = await axiosInstance.get('/api/contribution-awards/template', {
+        responseType: 'blob',
+      });
+      return res.data;
+    } catch (e: any) {
+      throw new Error(e?.response?.data?.message || e.message);
+    }
+  },
+
+  async importContributionAwards(file: File): Promise<ApiResponse> {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await axiosInstance.post('/api/contribution-awards/import', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return { success: true, data: res.data?.data || res.data, message: res.data?.message };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async getContributionAwards(params?: {
+    don_vi_id?: number;
+    nam?: number;
+    danh_hieu?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.get('/api/contribution-awards', { params });
+      return { success: true, data: res.data?.data || res.data };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async exportContributionAwards(params?: {
+    don_vi_id?: number;
+    nam?: number;
+    danh_hieu?: string;
+  }): Promise<Blob> {
+    try {
+      const res = await axiosInstance.get('/api/contribution-awards/export', {
+        params,
+        responseType: 'blob',
+      });
+      return res.data;
+    } catch (e: any) {
+      throw new Error(e?.response?.data?.message || e.message);
+    }
+  },
+
+  async getContributionAwardsStatistics(params?: {
+    don_vi_id?: number;
+    nam?: number;
+  }): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.get('/api/contribution-awards/statistics', { params });
+      return { success: true, data: res.data?.data || res.data };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  // Commemorative Medals (Kỷ niệm chương Vì sự nghiệp xây dựng QĐNDVN)
+  async getCommemorationMedalsTemplate(): Promise<Blob> {
+    try {
+      const res = await axiosInstance.get('/api/commemorative-medals/template', {
+        responseType: 'blob',
+      });
+      return res.data;
+    } catch (e: any) {
+      throw new Error(e?.response?.data?.message || e.message);
+    }
+  },
+
+  async importCommemorationMedals(file: File): Promise<ApiResponse> {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await axiosInstance.post('/api/commemorative-medals/import', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return { success: true, data: res.data?.data || res.data, message: res.data?.message };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async getCommemorationMedals(params?: {
+    don_vi_id?: number;
+    nam?: number;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.get('/api/commemorative-medals', { params });
+      return { success: true, data: res.data?.data || res.data };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async exportCommemorationMedals(params?: { don_vi_id?: number; nam?: number }): Promise<Blob> {
+    try {
+      const res = await axiosInstance.get('/api/commemorative-medals/export', {
+        params,
+        responseType: 'blob',
+      });
+      return res.data;
+    } catch (e: any) {
+      throw new Error(e?.response?.data?.message || e.message);
+    }
+  },
+
+  async getCommemorationMedalsStatistics(params?: {
+    don_vi_id?: number;
+    nam?: number;
+  }): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.get('/api/commemorative-medals/statistics', { params });
+      return { success: true, data: res.data?.data || res.data };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  // Military Flag (Huân chương Quân kỳ Quyết thắng)
+  async getMilitaryFlagTemplate(): Promise<Blob> {
+    try {
+      const res = await axiosInstance.get('/api/military-flag/template', {
+        responseType: 'blob',
+      });
+      return res.data;
+    } catch (e: any) {
+      throw new Error(e?.response?.data?.message || e.message);
+    }
+  },
+
+  async importMilitaryFlag(file: File): Promise<ApiResponse> {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await axiosInstance.post('/api/military-flag/import', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return { success: true, data: res.data?.data || res.data, message: res.data?.message };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async getMilitaryFlag(params?: {
+    don_vi_id?: number;
+    nam?: number;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.get('/api/military-flag', { params });
+      return { success: true, data: res.data?.data || res.data };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async exportMilitaryFlag(params?: { don_vi_id?: number; nam?: number }): Promise<Blob> {
+    try {
+      const res = await axiosInstance.get('/api/military-flag/export', {
+        params,
+        responseType: 'blob',
+      });
+      return res.data;
+    } catch (e: any) {
+      throw new Error(e?.response?.data?.message || e.message);
+    }
+  },
+
+  async getMilitaryFlagStatistics(params?: {
+    don_vi_id?: number;
+    nam?: number;
+  }): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.get('/api/military-flag/statistics', { params });
+      return { success: true, data: res.data?.data || res.data };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
     }
   },
 
@@ -874,11 +1219,24 @@ export const apiClient = {
   },
 
   // Unit Annual Awards
-  async getUnitAnnualAwards(donViId: string, year?: number): Promise<ApiResponse> {
+  async getUnitAnnualAwards(params?: {
+    page?: number;
+    limit?: number;
+    nam?: number;
+    danh_hieu?: string;
+  }): Promise<ApiResponse> {
     try {
-      const params: any = { don_vi_id: donViId, limit: 1000 }; // Lấy tất cả lịch sử
+      const res = await axiosInstance.get('/api/awards/units/annual', { params });
+      return { success: true, data: res.data?.data || res.data };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async getUnitAnnualAwardsByUnit(donViId: string, year?: number): Promise<ApiResponse> {
+    try {
+      const params: any = { don_vi_id: donViId, limit: 1000 };
       if (year) params.year = year;
-      // New dedicated endpoint that returns an array of records for the unit
       const res = await axiosInstance.get('/api/awards/units/annual/history', { params });
       return {
         success: true,
@@ -886,6 +1244,44 @@ export const apiClient = {
       };
     } catch (e: any) {
       return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async getUnitAnnualAwardsTemplate(): Promise<Blob> {
+    try {
+      const res = await axiosInstance.get('/api/awards/units/annual/template', {
+        responseType: 'blob',
+      });
+      return res.data;
+    } catch (e: any) {
+      throw new Error(e?.response?.data?.message || e.message);
+    }
+  },
+
+  async importUnitAnnualAwards(file: File): Promise<ApiResponse> {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await axiosInstance.post('/api/awards/units/annual/import', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return { success: true, data: res.data?.data || res.data, message: res.data?.message };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async exportUnitAnnualAwards(params?: { nam?: number; danh_hieu?: string }): Promise<Blob> {
+    try {
+      const res = await axiosInstance.get('/api/awards/units/annual/export', {
+        params,
+        responseType: 'blob',
+      });
+      return res.data;
+    } catch (e: any) {
+      throw new Error(e?.response?.data?.message || e.message);
     }
   },
 
@@ -897,6 +1293,86 @@ export const apiClient = {
         : `/api/awards/units/annual/profile/${donViId}`;
 
       const res = await axiosInstance.get(url);
+      return { success: true, data: res.data?.data || res.data };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  // Ad-hoc Awards (Khen thưởng đột xuất)
+  async getAdhocAwards(params?: {
+    type?: 'CA_NHAN' | 'TAP_THE';
+    year?: number;
+    personnelId?: string;
+    unitId?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.get('/api/adhoc-awards', { params });
+      return { success: true, data: res.data?.data || res.data };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async getAdhocAwardById(id: string): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.get(`/api/adhoc-awards/${id}`);
+      return { success: true, data: res.data?.data || res.data };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async createAdhocAward(formData: FormData): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.post('/api/adhoc-awards', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return { success: true, data: res.data?.data || res.data, message: res.data?.message };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async updateAdhocAward(id: string, formData: FormData): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.put(`/api/adhoc-awards/${id}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return { success: true, data: res.data?.data || res.data, message: res.data?.message };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async deleteAdhocAward(id: string): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.delete(`/api/adhoc-awards/${id}`);
+      return { success: true, data: res.data?.data || res.data, message: res.data?.message };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async getAdhocAwardsByPersonnel(personnelId: string): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.get(`/api/adhoc-awards/personnel/${personnelId}`);
+      return { success: true, data: res.data?.data || res.data };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async getAdhocAwardsByUnit(
+    unitId: string,
+    unitType: 'CO_QUAN_DON_VI' | 'DON_VI_TRUC_THUOC'
+  ): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.get(`/api/adhoc-awards/unit/${unitId}`, {
+        params: { unitType },
+      });
       return { success: true, data: res.data?.data || res.data };
     } catch (e: any) {
       return { success: false, message: e?.response?.data?.message || e.message };

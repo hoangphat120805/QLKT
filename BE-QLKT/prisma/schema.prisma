@@ -165,6 +165,9 @@ model ThanhTichKhoaHoc {
   nam             Int
   loai            String   @db.VarChar(10) // NCKH, SKKH
   mo_ta           String   @db.VarChar(500)
+  cap_bac         String?  @db.VarChar(50) // Cấp bậc tại thời điểm được đề xuất
+  chuc_vu         String?  @db.VarChar(255) // Chức vụ tại thời điểm được đề xuất (text tự do)
+  ghi_chu         String?  @db.Text // Ghi chú bổ sung
   status          String   @default("PENDING") @db.VarChar(20) // APPROVED, PENDING
   so_quyet_dinh   String?  @db.VarChar(100) // Số quyết định khen thưởng (nếu có)
   file_quyet_dinh String?  @db.VarChar(255) // Tên file PDF quyết định (nếu có)
@@ -307,7 +310,7 @@ model KhenThuongDotXuat {
   chuc_vu                String?  @db.VarChar(255) // Chức vụ tại thời điểm được đề xuất (cho CA_NHAN, text tự do)
   ghi_chu                String?  @db.Text // Ghi chú bổ sung (vd: Phó giám đốc tại đơn vị A)
   so_quyet_dinh          String?  @db.VarChar(100) // Số quyết định
-  file_quyet_dinh        String?  @db.VarChar(500) // Path to PDF file
+  files_quyet_dinh       Json?    
   createdAt              DateTime @default(now()) @db.Timestamptz(6)
   updatedAt              DateTime @updatedAt @db.Timestamptz(6)
 

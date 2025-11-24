@@ -3737,6 +3737,9 @@ class ProposalService {
               loai: item.loai,
               mo_ta: item.mo_ta.trim(),
               status: 'APPROVED', // Luôn luôn APPROVED khi approve đề xuất
+              chuc_vu: item.chuc_vu || null,
+              cap_bac: item.cap_bac || null,
+              ghi_chu: item.ghi_chu || null,
               so_quyet_dinh: soQuyetDinhThanhTich,
               file_quyet_dinh: filePdfThanhTich,
             },

@@ -5,21 +5,57 @@ const { prisma } = require('../models');
 class AnnualRewardController {
   async getAnnualRewards(req, res) {
     try {
-      const { personnel_id } = req.query;
+      const { personnel_id, page, limit, nam, danh_hieu, ho_ten } = req.query;
 
-      if (!personnel_id) {
-        return res.status(400).json({
-          success: false,
-          message: 'Tham số personnel_id là bắt buộc',
+      // Nếu có personnel_id, lấy danh hiệu của 1 người
+      if (personnel_id) {
+        const result = await annualRewardService.getAnnualRewards(personnel_id);
+        return res.status(200).json({
+          success: true,
+          message: 'Lấy danh sách danh hiệu thành công',
+          data: result,
         });
       }
 
-      const result = await annualRewardService.getAnnualRewards(personnel_id);
+      // Nếu không có personnel_id, lấy danh sách tất cả với phân trang
+      const pageNum = parseInt(page) || 1;
+      const limitNum = parseInt(limit) || 1000;
+      const where = {};
+
+      if (nam) where.nam = parseInt(nam);
+      if (danh_hieu) where.danh_hieu = danh_hieu;
+
+      const [awards, total] = await Promise.all([
+        prisma.danhHieuHangNam.findMany({
+          where,
+          include: {
+            QuanNhan: {
+              include: {
+                CoQuanDonVi: true,
+                DonViTrucThuoc: true,
+                ChucVu: true,
+              },
+            },
+          },
+          orderBy: [{ nam: 'desc' }, { createdAt: 'desc' }],
+          skip: (pageNum - 1) * limitNum,
+          take: limitNum,
+        }),
+        prisma.danhHieuHangNam.count({ where }),
+      ]);
 
       return res.status(200).json({
         success: true,
         message: 'Lấy danh sách danh hiệu thành công',
-        data: result,
+        data: {
+          awards,
+          pagination: {
+            total,
+            page: pageNum,
+            limit: limitNum,
+            totalPages: Math.ceil(total / limitNum),
+          },
+        },
       });
     } catch (error) {
       console.error('Get annual rewards error:', error);
@@ -363,6 +399,102 @@ class AnnualRewardController {
       return res.status(500).json({
         success: false,
         message: 'Lỗi khi kiểm tra trạng thái nhận KNC VSNXD QĐNDVN',
+      });
+    }
+  }
+
+  async getTemplate(req, res) {
+    try {
+      const workbook = await annualRewardService.exportTemplate();
+
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      );
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="mau_import_ca_nhan_hang_nam_${new Date()
+          .toISOString()
+          .slice(0, 10)}.xlsx"`
+      );
+
+      await workbook.xlsx.write(res);
+      res.end();
+    } catch (error) {
+      console.error('Export template error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Xuất file mẫu thất bại',
+      });
+    }
+  }
+
+  async exportToExcel(req, res) {
+    try {
+      const { nam, danh_hieu } = req.query;
+      const role = req.user?.role;
+      const userUnitId = req.user?.co_quan_don_vi_id || req.user?.don_vi_truc_thuoc_id;
+
+      const filters = {
+        nam: nam ? parseInt(nam) : undefined,
+        danh_hieu: danh_hieu || undefined,
+      };
+
+      // Manager chỉ được xuất dữ liệu đơn vị mình
+      if (role === 'MANAGER' && userUnitId) {
+        filters.don_vi_id = userUnitId;
+      }
+
+      const workbook = await annualRewardService.exportToExcel(filters);
+
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      );
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="danh_sach_ca_nhan_hang_nam_${new Date()
+          .toISOString()
+          .slice(0, 10)}.xlsx"`
+      );
+
+      await workbook.xlsx.write(res);
+      res.end();
+    } catch (error) {
+      console.error('Export annual rewards error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Xuất danh sách thất bại',
+      });
+    }
+  }
+
+  async getStatistics(req, res) {
+    try {
+      const { nam } = req.query;
+      const role = req.user?.role;
+      const userUnitId = req.user?.co_quan_don_vi_id || req.user?.don_vi_truc_thuoc_id;
+
+      const filters = {
+        nam: nam ? parseInt(nam) : undefined,
+      };
+
+      // Manager chỉ được xem thống kê đơn vị mình
+      if (role === 'MANAGER' && userUnitId) {
+        filters.don_vi_id = userUnitId;
+      }
+
+      const statistics = await annualRewardService.getStatistics(filters);
+
+      return res.status(200).json({
+        success: true,
+        data: statistics,
+      });
+    } catch (error) {
+      console.error('Get statistics error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Lấy thống kê thất bại',
       });
     }
   }

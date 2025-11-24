@@ -485,6 +485,194 @@ class AnnualRewardService {
       throw error;
     }
   }
+
+  /**
+   * Xuất file mẫu Excel để import
+   */
+  async exportTemplate() {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Danh hiệu hằng năm');
+
+    // Định nghĩa các cột
+    worksheet.columns = [
+      { header: 'CCCD (*)', key: 'cccd', width: 15 },
+      { header: 'Họ và tên (*)', key: 'ho_ten', width: 25 },
+      { header: 'Năm (*)', key: 'nam', width: 10 },
+      { header: 'Danh hiệu (*)', key: 'danh_hieu', width: 20 },
+      { header: 'Cấp bậc', key: 'cap_bac', width: 15 },
+      { header: 'Chức vụ', key: 'chuc_vu', width: 20 },
+      { header: 'Ghi chú', key: 'ghi_chu', width: 30 },
+      { header: 'Số quyết định', key: 'so_quyet_dinh', width: 20 },
+    ];
+
+    // Style cho header
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFD3D3D3' },
+    };
+
+    // Thêm hàng mẫu
+    worksheet.addRow({
+      cccd: '001234567890',
+      ho_ten: 'Nguyễn Văn A',
+      nam: 2024,
+      danh_hieu: 'CSTDCS',
+      cap_bac: 'Thượng tá',
+      chuc_vu: 'Phó Trưởng phòng',
+      ghi_chu: 'Ghi chú mẫu',
+      so_quyet_dinh: '123/QĐ-BQP',
+    });
+
+    // Thêm ghi chú
+    worksheet.addRow([]);
+    worksheet.addRow(['Ghi chú:']);
+    worksheet.addRow(['- Các cột có dấu (*) là bắt buộc']);
+    worksheet.addRow(['- Danh hiệu hợp lệ: CSTDCS, CSTT, BKBQP, CSTDTQ']);
+    worksheet.addRow(['- Năm phải là số nguyên dương']);
+
+    return workbook;
+  }
+
+  /**
+   * Xuất danh sách khen thưởng ra Excel
+   */
+  async exportToExcel(filters = {}) {
+    const { nam, danh_hieu, don_vi_id } = filters;
+
+    const where = {};
+    if (nam) where.nam = nam;
+    if (danh_hieu) where.danh_hieu = danh_hieu;
+
+    // Lấy dữ liệu với quan hệ
+    const awards = await prisma.danhHieuHangNam.findMany({
+      where,
+      include: {
+        QuanNhan: {
+          include: {
+            CoQuanDonVi: true,
+            DonViTrucThuoc: true,
+          },
+        },
+      },
+      orderBy: [{ nam: 'desc' }, { createdAt: 'desc' }],
+      take: 10000,
+    });
+
+    // Filter theo đơn vị nếu có
+    let filteredAwards = awards;
+    if (don_vi_id) {
+      filteredAwards = awards.filter(
+        award =>
+          award.QuanNhan?.co_quan_don_vi_id === don_vi_id ||
+          award.QuanNhan?.don_vi_truc_thuoc_id === don_vi_id
+      );
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Danh sách khen thưởng');
+
+    worksheet.columns = [
+      { header: 'STT', key: 'stt', width: 8 },
+      { header: 'CCCD', key: 'cccd', width: 15 },
+      { header: 'Họ và tên', key: 'ho_ten', width: 25 },
+      { header: 'Đơn vị', key: 'don_vi', width: 30 },
+      { header: 'Cấp bậc', key: 'cap_bac', width: 15 },
+      { header: 'Chức vụ', key: 'chuc_vu', width: 20 },
+      { header: 'Năm', key: 'nam', width: 10 },
+      { header: 'Danh hiệu', key: 'danh_hieu', width: 20 },
+      { header: 'Số quyết định', key: 'so_quyet_dinh', width: 20 },
+      { header: 'Ghi chú', key: 'ghi_chu', width: 30 },
+    ];
+
+    // Style header
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FF4472C4' },
+    };
+    worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+
+    // Thêm dữ liệu
+    filteredAwards.forEach((award, index) => {
+      const donVi = award.QuanNhan?.DonViTrucThuoc?.ten || award.QuanNhan?.CoQuanDonVi?.ten || '';
+
+      worksheet.addRow({
+        stt: index + 1,
+        cccd: award.QuanNhan?.cccd || '',
+        ho_ten: award.QuanNhan?.ho_ten || '',
+        don_vi: donVi,
+        cap_bac: award.cap_bac || '',
+        chuc_vu: award.chuc_vu || '',
+        nam: award.nam,
+        danh_hieu: award.danh_hieu,
+        so_quyet_dinh: award.so_quyet_dinh || '',
+        ghi_chu: award.ghi_chu || '',
+      });
+    });
+
+    return workbook;
+  }
+
+  /**
+   * Thống kê khen thưởng theo danh hiệu và năm
+   */
+  async getStatistics(filters = {}) {
+    const { nam, don_vi_id } = filters;
+
+    const where = {};
+    if (nam) where.nam = nam;
+
+    const awards = await prisma.danhHieuHangNam.findMany({
+      where,
+      include: {
+        QuanNhan: {
+          select: {
+            co_quan_don_vi_id: true,
+            don_vi_truc_thuoc_id: true,
+          },
+        },
+      },
+    });
+
+    // Filter theo đơn vị nếu có
+    let filteredAwards = awards;
+    if (don_vi_id) {
+      filteredAwards = awards.filter(
+        award =>
+          award.QuanNhan?.co_quan_don_vi_id === don_vi_id ||
+          award.QuanNhan?.don_vi_truc_thuoc_id === don_vi_id
+      );
+    }
+
+    // Thống kê theo danh hiệu
+    const byDanhHieu = filteredAwards.reduce((acc, award) => {
+      const key = award.danh_hieu;
+      if (!acc[key]) {
+        acc[key] = { danh_hieu: key, count: 0 };
+      }
+      acc[key].count++;
+      return acc;
+    }, {});
+
+    // Thống kê theo năm
+    const byNam = filteredAwards.reduce((acc, award) => {
+      const key = award.nam;
+      if (!acc[key]) {
+        acc[key] = { nam: key, count: 0 };
+      }
+      acc[key].count++;
+      return acc;
+    }, {});
+
+    return {
+      total: filteredAwards.length,
+      byDanhHieu: Object.values(byDanhHieu),
+      byNam: Object.values(byNam).sort((a, b) => b.nam - a.nam),
+    };
+  }
 }
 
 module.exports = new AnnualRewardService();
