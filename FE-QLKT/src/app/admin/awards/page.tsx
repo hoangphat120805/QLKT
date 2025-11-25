@@ -474,7 +474,11 @@ export default function AdminAwardsPage() {
           };
           return <Text>{loaiMap[record.loai] || record.loai || '-'}</Text>;
         }
-        if (activeTab === 'militaryFlag' || activeTab === 'hccsvv' || activeTab === 'commemoration') {
+        if (
+          activeTab === 'militaryFlag' ||
+          activeTab === 'hccsvv' ||
+          activeTab === 'commemoration'
+        ) {
           const thanhTich = record.thoi_gian?.display || '-';
           return <Text>{thanhTich}</Text>;
         }

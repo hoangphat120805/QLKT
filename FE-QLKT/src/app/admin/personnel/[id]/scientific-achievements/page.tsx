@@ -18,7 +18,7 @@ import {
   message,
   Spin,
 } from 'antd';
-import type { ColumnsType } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
 import {
   LeftOutlined,
   PlusOutlined,

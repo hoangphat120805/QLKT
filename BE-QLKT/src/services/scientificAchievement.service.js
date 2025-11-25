@@ -244,7 +244,12 @@ class ScientificAchievementService {
     achievements.forEach((achievement, index) => {
       const quanNhan = achievement.QuanNhan;
       const donVi = quanNhan?.DonViTrucThuoc?.ten_don_vi || quanNhan?.CoQuanDonVi?.ten_don_vi || '';
-      const loaiText = achievement.loai === 'NCKH' ? 'Nghiên cứu khoa học' : achievement.loai === 'SKKH' ? 'Sáng kiến khoa học' : achievement.loai;
+      const loaiText =
+        achievement.loai === 'NCKH'
+          ? 'Nghiên cứu khoa học'
+          : achievement.loai === 'SKKH'
+          ? 'Sáng kiến khoa học'
+          : achievement.loai;
 
       worksheet.addRow({
         stt: index + 1,
