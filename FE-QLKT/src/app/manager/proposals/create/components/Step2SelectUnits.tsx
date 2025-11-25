@@ -1,10 +1,23 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Table, Input, Select, Space, Alert, Typography, Tag, message, InputNumber } from 'antd';
+import {
+  Table,
+  Input,
+  Select,
+  Space,
+  Alert,
+  Typography,
+  Tag,
+  message,
+  InputNumber,
+  Divider,
+} from 'antd';
 import { SearchOutlined, TeamOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { apiClient } from '@/lib/api-client';
+import ExcelImportSection from './ExcelImportSection';
+import * as XLSX from 'xlsx';
 
 const { Text } = Typography;
 
@@ -25,6 +38,8 @@ interface Step2SelectUnitsProps {
   onUnitChange: (ids: string[]) => void;
   nam: number;
   onNamChange: (nam: number) => void;
+  onTitleDataChange?: (titleData: any[]) => void;
+  onNextStep?: () => void;
 }
 
 export default function Step2SelectUnits({
@@ -32,6 +47,8 @@ export default function Step2SelectUnits({
   onUnitChange,
   nam,
   onNamChange,
+  onTitleDataChange,
+  onNextStep,
 }: Step2SelectUnitsProps) {
   const [loading, setLoading] = useState(false);
   const [units, setUnits] = useState<Unit[]>([]);
@@ -110,7 +127,7 @@ export default function Step2SelectUnits({
   };
 
   // Filter units
-  const filteredUnits = units.filter((unit) => {
+  const filteredUnits = units.filter(unit => {
     // Search filter
     const matchesSearch =
       searchText === '' ||
@@ -151,7 +168,7 @@ export default function Step2SelectUnits({
       key: 'ma_don_vi',
       width: 150,
       align: 'center',
-      render: (text) => <Text code>{text}</Text>,
+      render: text => <Text code>{text}</Text>,
     },
     {
       title: 'Tên đơn vị',
@@ -159,9 +176,178 @@ export default function Step2SelectUnits({
       key: 'ten_don_vi',
       width: 250,
       align: 'center',
-      render: (text) => <Text strong>{text}</Text>,
+      render: text => <Text strong>{text}</Text>,
     },
   ];
+
+  const handleLocalExcelProcess = async (file: File): Promise<any> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = e => {
+        try {
+          const data = new Uint8Array(e.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: 'array' });
+
+          // Lấy sheet đầu tiên
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+
+          // Chuyển đổi sang JSON
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+          if (jsonData.length < 2) {
+            throw new Error('File Excel không có dữ liệu hoặc thiếu header');
+          }
+
+          // Bỏ qua header row
+          const dataRows = jsonData.slice(1);
+
+          const titleData: any[] = [];
+          const errors: string[] = [];
+          const processedUnitIds: string[] = [];
+
+          dataRows.forEach((row: any, index: number) => {
+            const rowNumber = index + 2; // +2 vì bỏ header và index từ 0
+
+            // Validate required fields - cho đơn vị có thể khác
+            const maDonVi = row[0]?.toString().trim();
+            const tenDonVi = row[1]?.toString().trim();
+            const nam = row[2]?.toString().trim();
+            const danhHieu = row[3]?.toString().trim();
+
+            if (!tenDonVi) {
+              errors.push(`Dòng ${rowNumber}: Thiếu tên đơn vị`);
+              return;
+            }
+
+            if (!nam) {
+              errors.push(`Dòng ${rowNumber}: Thiếu năm`);
+              return;
+            }
+
+            if (!danhHieu) {
+              errors.push(`Dòng ${rowNumber}: Thiếu danh hiệu`);
+              return;
+            }
+
+            // Validate năm
+            const namInt = parseInt(nam);
+
+            // Tìm unit ID dựa trên tên đơn vị
+            const matchingUnit = units.find(u => {
+              const unitCode = u.ma_don_vi.toLowerCase().trim();
+              const unitName = u.ten_don_vi.toLowerCase().trim();
+              const excelName = tenDonVi.toLowerCase().trim();
+              if (maDonVi) {
+                // So sánh cả mã đơn vị nếu có
+                return unitCode === maDonVi.toLowerCase() && unitName === excelName;
+              }
+
+              // So sánh tên chính xác
+              return unitName === excelName;
+            });
+
+            if (!matchingUnit) {
+              errors.push(`Dòng ${rowNumber}: Không tìm thấy đơn vị "${tenDonVi}"`);
+              return;
+            }
+
+            // Thêm vào danh sách
+            processedUnitIds.push(matchingUnit.id);
+
+            titleData.push({
+              don_vi_id: matchingUnit.id,
+              danh_hieu: danhHieu,
+              nam: namInt,
+            });
+          });
+
+          // Remove duplicates from unit IDs
+          const uniqueUnitIds = Array.from(new Set(processedUnitIds));
+
+          resolve({
+            imported: titleData.length,
+            total: dataRows.length,
+            errors,
+            selectedUnitIds: uniqueUnitIds,
+            titleData,
+          });
+        } catch (error: any) {
+          reject(new Error(`Lỗi xử lý file Excel: ${error.message}`));
+        }
+      };
+
+      reader.onerror = () => {
+        reject(new Error('Lỗi đọc file Excel'));
+      };
+
+      reader.readAsArrayBuffer(file);
+    });
+  };
+
+  const handleImportSuccess = async (result: any) => {
+    // Cập nhật danh sách đơn vị đã chọn
+    if (result.selectedUnitIds && result.selectedUnitIds.length > 0) {
+      onUnitChange(result.selectedUnitIds);
+    }
+
+    // Fetch the imported award data to populate titleData
+    if (result.selectedUnitIds && result.selectedUnitIds.length > 0) {
+      try {
+        // Fetch award data for the imported units for the current year
+        const awardPromises = result.selectedUnitIds.map(async (unitId: string) => {
+          try {
+            const response = await apiClient.getUnitAnnualAwardsByUnit(unitId);
+            if (response.success && response.data && response.data.length > 0) {
+              // The API returns an array of awards, find the one for the current year
+              const currentYearAward = response.data.find((award: any) => award.nam === nam);
+              if (currentYearAward && currentYearAward.danh_hieu) {
+                return {
+                  don_vi_id: unitId,
+                  danh_hieu: currentYearAward.danh_hieu,
+                  nam: currentYearAward.nam,
+                };
+              }
+            }
+          } catch (error) {
+            console.error(`Error fetching award data for unit ${unitId}:`, error);
+          }
+          return null;
+        });
+
+        const awardResults = await Promise.all(awardPromises);
+        const validAwards = awardResults.filter(award => award !== null);
+
+        // Update titleData through parent callback if available
+        if (validAwards.length > 0 && onTitleDataChange) {
+          onTitleDataChange(validAwards);
+        }
+        if (result.titleData[0].nam) {
+          onNamChange(result.titleData[0].nam);
+        }
+
+        if (onNextStep) {
+          setTimeout(() => {
+            onNextStep(); // Chuyển sang bước 3
+            setTimeout(() => {
+              onNextStep(); // Chuyển sang bước 4
+            }, 100);
+          }, 500);
+        }
+      } catch (error) {
+        console.error('Error fetching imported award data:', error);
+      }
+    }
+
+    // Tự động chuyển sang bước 4 (Upload file) sau khi import thành công
+    // Bỏ qua bước 3 vì dữ liệu đã được import từ Excel
+    if (onNextStep) {
+      setTimeout(() => {
+        onNextStep(); // Chuyển sang bước 4
+      }, 500);
+    }
+  };
 
   // Row selection config
   const rowSelection = {
@@ -190,6 +376,20 @@ export default function Step2SelectUnits({
         icon={<TeamOutlined />}
         style={{ marginBottom: 24 }}
       />
+
+      {/* Upload Excel Section */}
+      <ExcelImportSection
+        templateEndpoint="/api/awards/units/annual/template"
+        importEndpoint="/api/awards/units/annual/import"
+        templateFileName="mau_import_don_vi_hang_nam"
+        onImportSuccess={handleImportSuccess}
+        selectedCount={selectedUnitIds.length}
+        entityLabel="đơn vị"
+        localProcessing={true}
+        onLocalProcess={handleLocalExcelProcess}
+      />
+
+      <Divider>Hoặc chọn thủ công</Divider>
 
       {/* Filters */}
       <Space style={{ marginBottom: 16 }} size="middle">
@@ -245,7 +445,7 @@ export default function Step2SelectUnits({
           placeholder="Tìm theo tên hoặc mã đơn vị"
           prefix={<SearchOutlined />}
           value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
+          onChange={e => setSearchText(e.target.value)}
           style={{ width: 300 }}
           size="large"
           allowClear
@@ -282,7 +482,7 @@ export default function Step2SelectUnits({
         pagination={{
           pageSize: 20,
           showSizeChanger: true,
-          showTotal: (total) => `Tổng số ${total} đơn vị`,
+          showTotal: total => `Tổng số ${total} đơn vị`,
         }}
         bordered
         locale={{
@@ -292,4 +492,3 @@ export default function Step2SelectUnits({
     </div>
   );
 }
-

@@ -7,7 +7,8 @@ class HCCSVVController {
    */
   async getTemplate(req, res) {
     try {
-      const buffer = await hccsvvService.exportTemplate();
+      const userRole = req.user?.role || 'MANAGER';
+      const buffer = await hccsvvService.exportTemplate(userRole);
 
       const fileName = `mau_import_hccsvv_${new Date().toISOString().slice(0, 10)}.xlsx`;
       res.setHeader(

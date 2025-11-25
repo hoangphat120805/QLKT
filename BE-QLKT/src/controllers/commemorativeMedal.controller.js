@@ -7,7 +7,8 @@ class CommemorativeMedalController {
    */
   async getTemplate(req, res) {
     try {
-      const buffer = await commemorativeMedalService.exportTemplate();
+      const userRole = req.user?.role || 'MANAGER';
+      const buffer = await commemorativeMedalService.exportTemplate(userRole);
 
       const fileName = `mau_import_knc_vsnxd_${new Date().toISOString().slice(0, 10)}.xlsx`;
       res.setHeader(

@@ -267,6 +267,199 @@ class ScientificAchievementService {
 
     return workbook;
   }
+
+  /**
+   * Generate Excel template for importing scientific achievements
+   */
+  async generateTemplate(userRole = 'MANAGER') {
+    const ExcelJS = require('exceljs');
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Thành tích khoa học');
+
+    // Define columns - ADMIN có số quyết định, MANAGER không có
+    const columns = [
+      { header: 'STT', key: 'stt', width: 8 },
+      { header: 'Họ tên (*)', key: 'ho_ten', width: 25 },
+      { header: 'Ngày sinh', key: 'ngay_sinh', width: 15 },
+      { header: 'Năm (*)', key: 'nam', width: 10 },
+      { header: 'Loại (*)', key: 'loai', width: 30 },
+      { header: 'Mô tả (*)', key: 'mo_ta', width: 40 },
+      { header: 'Cấp bậc', key: 'cap_bac', width: 15 },
+      { header: 'Chức vụ', key: 'chuc_vu', width: 20 },
+      { header: 'Ghi chú', key: 'ghi_chu', width: 30 },
+    ];
+
+    // Chỉ ADMIN mới có cột số quyết định
+    if (userRole === 'ADMIN') {
+      columns.splice(8, 0, { header: 'Số quyết định', key: 'so_quyet_dinh', width: 20 });
+    }
+
+    worksheet.columns = columns;
+
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFD3D3D3' },
+    };
+
+    const sampleRow = {
+      stt: 1,
+      ho_ten: 'Nguyễn Văn A',
+      ngay_sinh: '15/05/1990',
+      nam: 2024,
+      loai: 'NCKH',
+      mo_ta: 'Nghiên cứu mẫu',
+      cap_bac: 'Trung úy',
+      chuc_vu: 'Phó phòng',
+      ghi_chu: 'Ghi chú mẫu',
+    };
+
+    // Chỉ ADMIN mới có trường số quyết định trong sample
+    if (userRole === 'ADMIN') {
+      sampleRow.so_quyet_dinh = '123/QĐ-BQP';
+    }
+
+    worksheet.addRow(sampleRow);
+
+    worksheet.addRow([]);
+    worksheet.addRow(['Ghi chú:']);
+    worksheet.addRow(['- Các cột có dấu (*) là bắt buộc']);
+    worksheet.addRow(['- Loại hợp lệ: NCKH (Nghiên cứu khoa học), SKKH (Sáng kiến khoa học)']);
+    worksheet.addRow(['- Năm phải là số nguyên dương']);
+    worksheet.addRow(['- Họ tên phải tồn tại trong hệ thống']);
+    worksheet.addRow([
+      '- Ngày sinh dùng để phân biệt khi có nhiều người trùng tên (định dạng: DD/MM/YYYY)',
+    ]);
+
+    return workbook;
+  }
+
+  /**
+   * Import scientific achievements from Excel
+   */
+  async importFromExcel(buffer) {
+    const ExcelJS = require('exceljs');
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(buffer);
+    const worksheet = workbook.getWorksheet(1);
+
+    const errors = [];
+    const imported = [];
+    let total = 0;
+    const selectedPersonnelIds = [];
+
+    for (let i = 2; i <= worksheet.rowCount; i++) {
+      const row = worksheet.getRow(i);
+      const ho_ten = row.getCell(2).value?.toString().trim();
+
+      if (!ho_ten) break;
+
+      total++;
+      const ngay_sinh_raw = row.getCell(3).value;
+      const nam = parseInt(row.getCell(4).value);
+      const loai = row.getCell(5).value?.toString().trim().toUpperCase();
+      const mo_ta = row.getCell(6).value?.toString().trim();
+      const cap_bac = row.getCell(7).value?.toString().trim();
+      const chuc_vu = row.getCell(8).value?.toString().trim();
+      const so_quyet_dinh = row.getCell(9).value?.toString().trim();
+      const ghi_chu = row.getCell(10).value?.toString().trim();
+
+      try {
+        if (!ho_ten || !nam || !loai || !mo_ta) {
+          throw new Error('Thiếu thông tin bắt buộc (họ tên, năm, loại, mô tả)');
+        }
+
+        if (!['NCKH', 'SKKH'].includes(loai)) {
+          throw new Error('Loại không hợp lệ (chỉ chấp nhận NCKH hoặc SKKH)');
+        }
+
+        if (!Number.isInteger(nam) || nam < 1900 || nam > 2100) {
+          throw new Error('Năm không hợp lệ');
+        }
+
+        // Tìm quân nhân theo tên
+        const personnelList = await prisma.quanNhan.findMany({
+          where: { ho_ten },
+        });
+
+        if (personnelList.length === 0) {
+          throw new Error(`Không tìm thấy quân nhân với tên ${ho_ten}`);
+        }
+
+        let personnel;
+        if (personnelList.length === 1) {
+          personnel = personnelList[0];
+        } else {
+          // Có nhiều người trùng tên, dùng ngày sinh để phân biệt
+          if (!ngay_sinh_raw) {
+            throw new Error(
+              `Có ${personnelList.length} người trùng tên "${ho_ten}". Vui lòng cung cấp ngày sinh để phân biệt`
+            );
+          }
+
+          // Parse ngày sinh
+          let ngay_sinh;
+          if (ngay_sinh_raw instanceof Date) {
+            ngay_sinh = ngay_sinh_raw;
+          } else {
+            const dateStr = String(ngay_sinh_raw).trim();
+            // Hỗ trợ format DD/MM/YYYY
+            const parts = dateStr.split('/');
+            if (parts.length === 3) {
+              const day = parseInt(parts[0]);
+              const month = parseInt(parts[1]) - 1;
+              const year = parseInt(parts[2]);
+              ngay_sinh = new Date(year, month, day);
+            } else {
+              throw new Error('Ngày sinh không đúng định dạng (DD/MM/YYYY)');
+            }
+          }
+
+          // Tìm quân nhân có cùng ngày sinh
+          personnel = personnelList.find(p => {
+            if (!p.ngay_sinh) return false;
+            const pDate = new Date(p.ngay_sinh);
+            return (
+              pDate.getDate() === ngay_sinh.getDate() &&
+              pDate.getMonth() === ngay_sinh.getMonth() &&
+              pDate.getFullYear() === ngay_sinh.getFullYear()
+            );
+          });
+
+          if (!personnel) {
+            throw new Error(`Không tìm thấy quân nhân tên "${ho_ten}" với ngày sinh ${dateStr}`);
+          }
+        }
+
+        const achievement = await prisma.thanhTichKhoaHoc.create({
+          data: {
+            quan_nhan_id: personnel.id,
+            nam,
+            loai,
+            mo_ta,
+            cap_bac: cap_bac || null,
+            chuc_vu: chuc_vu || null,
+            so_quyet_dinh: so_quyet_dinh || null,
+            ghi_chu: ghi_chu || null,
+            status: 'APPROVED',
+          },
+        });
+        imported.push(achievement);
+        selectedPersonnelIds.push(personnel.id);
+      } catch (error) {
+        errors.push(`Dòng ${i}: ${error.message}`);
+      }
+    }
+
+    return {
+      total,
+      imported: imported.length,
+      errors,
+      selectedPersonnelIds,
+      titleData: imported,
+    };
+  }
 }
 
 module.exports = new ScientificAchievementService();

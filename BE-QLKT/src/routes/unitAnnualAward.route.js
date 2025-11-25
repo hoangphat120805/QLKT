@@ -57,17 +57,17 @@ router.get('/', verifyToken, requireAuth, ctrl.list);
  * @desc    Tải file mẫu Excel để import khen thưởng đơn vị hằng năm
  * @access  ADMIN
  */
-router.get('/template', verifyToken, checkRole(['ADMIN']), ctrl.getTemplate);
+router.get('/template', verifyToken, requireManager, ctrl.getTemplate);
 
 /**
  * @route   POST /api/awards/units/annual/import
  * @desc    Import khen thưởng đơn vị hằng năm từ file Excel
- * @access  ADMIN
+ * @access  ADMIN, MANAGER
  */
 router.post(
   '/import',
   verifyToken,
-  checkRole(['ADMIN']),
+  checkRole(['ADMIN', 'MANAGER']),
   upload.single('file'),
   auditLog({
     action: 'IMPORT',

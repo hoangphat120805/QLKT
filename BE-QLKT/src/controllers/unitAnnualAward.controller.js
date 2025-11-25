@@ -192,7 +192,8 @@ exports.getUnitAnnualProfile = async (req, res) => {
 
 exports.getTemplate = async (req, res) => {
   try {
-    const workbook = await service.exportTemplate();
+    const userRole = req.user?.role || 'MANAGER';
+    const workbook = await service.exportTemplate(userRole);
 
     res.setHeader(
       'Content-Type',
@@ -205,8 +206,8 @@ exports.getTemplate = async (req, res) => {
         .slice(0, 10)}.xlsx"`
     );
 
-    await workbook.xlsx.write(res);
-    res.end();
+    const buffer = await workbook.xlsx.writeBuffer();
+    return res.send(buffer);
   } catch (error) {
     console.error('Export template error:', error);
     return res.status(500).json({
@@ -225,7 +226,7 @@ exports.importFromExcel = async (req, res) => {
       });
     }
 
-    const result = await service.importFromExcel(req.file.buffer);
+    const result = await service.importFromExcel(req.file.buffer, req.user.id);
 
     return res.status(200).json({
       success: true,
@@ -265,8 +266,8 @@ exports.exportToExcel = async (req, res) => {
         .slice(0, 10)}.xlsx"`
     );
 
-    await workbook.xlsx.write(res);
-    res.end();
+    const buffer = await workbook.xlsx.writeBuffer();
+    return res.send(buffer);
   } catch (error) {
     console.error('Export unit annual awards error:', error);
     return res.status(500).json({

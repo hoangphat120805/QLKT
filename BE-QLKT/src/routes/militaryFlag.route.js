@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const multer = require('multer');
 const militaryFlagController = require('../controllers/militaryFlag.controller');
-const { verifyToken, checkRole } = require('../middlewares/auth');
+const { verifyToken, checkRole, requireManager } = require('../middlewares/auth');
 
 // Cấu hình multer cho file upload
 const upload = multer({
@@ -29,17 +29,17 @@ const upload = multer({
  * @desc    Tải file mẫu Excel để import Huân chương Quân kỳ Quyết thắng
  * @access  ADMIN
  */
-router.get('/template', verifyToken, checkRole(['ADMIN']), militaryFlagController.getTemplate);
+router.get('/template', verifyToken, requireManager, militaryFlagController.getTemplate);
 
 /**
  * @route   POST /api/military-flag/import
  * @desc    Import Huân chương Quân kỳ Quyết thắng từ file Excel
- * @access  ADMIN
+ * @access  ADMIN, MANAGER
  */
 router.post(
   '/import',
   verifyToken,
-  checkRole(['ADMIN']),
+  checkRole(['ADMIN', 'MANAGER']),
   upload.single('file'),
   militaryFlagController.importFromExcel
 );

@@ -7,7 +7,8 @@ class ContributionAwardController {
    */
   async getTemplate(req, res) {
     try {
-      const buffer = await contributionAwardService.exportTemplate();
+      const userRole = req.user?.role || 'MANAGER';
+      const buffer = await contributionAwardService.exportTemplate(userRole);
 
       const fileName = `mau_import_hcbvtq_${new Date().toISOString().slice(0, 10)}.xlsx`;
       res.setHeader(

@@ -519,6 +519,32 @@ export const apiClient = {
     }
   },
 
+  async getScientificAchievementsTemplate(): Promise<Blob> {
+    try {
+      const res = await axiosInstance.get('/api/scientific-achievements/template', {
+        responseType: 'blob',
+      });
+      return res.data;
+    } catch (e: any) {
+      throw new Error(e?.response?.data?.message || e.message);
+    }
+  },
+
+  async importScientificAchievements(file: File): Promise<ApiResponse> {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await axiosInstance.post('/api/scientific-achievements/import', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return { success: true, data: res.data?.data || res.data, message: res.data?.message };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
   // Personnel Export/Import
   async exportPersonnel(): Promise<Blob> {
     try {

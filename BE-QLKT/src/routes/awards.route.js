@@ -29,7 +29,12 @@ const upload = multer({
  * @desc    Tải file mẫu Excel để import khen thưởng
  * @access  ADMIN
  */
-router.get('/template', verifyToken, checkRole(['ADMIN']), proposalController.getAwardsTemplate);
+router.get(
+  '/template',
+  verifyToken,
+  checkRole(['ADMIN', 'MANAGER']),
+  proposalController.getAwardsTemplate
+);
 
 /**
  * @route   POST /api/awards/import

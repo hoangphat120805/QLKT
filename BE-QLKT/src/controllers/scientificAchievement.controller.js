@@ -198,13 +198,65 @@ class ScientificAchievementController {
           .slice(0, 10)}.xlsx"`
       );
 
-      await workbook.xlsx.write(res);
-      res.end();
+      const buffer = await workbook.xlsx.writeBuffer();
+      return res.send(buffer);
     } catch (error) {
       console.error('Export scientific achievements error:', error);
       return res.status(500).json({
         success: false,
         message: error.message || 'Xuất danh sách thất bại',
+      });
+    }
+  }
+
+  async downloadTemplate(req, res) {
+    try {
+      const userRole = req.user?.role || 'MANAGER';
+      const workbook = await scientificAchievementService.generateTemplate(userRole);
+
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      );
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="mau_import_thanh_tich_khoa_hoc_${new Date()
+          .toISOString()
+          .slice(0, 10)}.xlsx"`
+      );
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      return res.send(buffer);
+    } catch (error) {
+      console.error('Download template error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Tải file mẫu thất bại',
+      });
+    }
+  }
+
+  async importFromExcel(req, res) {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          message: 'Vui lòng tải lên file Excel',
+        });
+      }
+
+      const result = await scientificAchievementService.importFromExcel(req.file.buffer);
+
+      return res.status(200).json({
+        success: true,
+        message: `Import thành công ${result.imported}/${result.total} bản ghi`,
+        data: result,
+      });
+    } catch (error) {
+      console.error('Import scientific achievements error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Import thất bại',
       });
     }
   }

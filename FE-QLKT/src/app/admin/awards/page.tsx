@@ -40,6 +40,7 @@ interface Award {
   id: number;
   cccd: string;
   ho_ten: string;
+  ngay_sinh?: string;
   don_vi: string;
   co_quan_don_vi?: string;
   don_vi_truc_thuoc?: string;
@@ -220,6 +221,10 @@ export default function AdminAwardsPage() {
           blob = await apiClient.getUnitAnnualAwardsTemplate();
           filename = `mau_import_don_vi_hang_nam`;
           break;
+        case 'scientific':
+          blob = await apiClient.getScientificAchievementsTemplate();
+          filename = `mau_import_thanh_tich_khoa_hoc`;
+          break;
         case 'hccsvv':
           blob = await apiClient.getHCCSVVTemplate();
           filename = `mau_import_hccsvv`;
@@ -273,6 +278,9 @@ export default function AdminAwardsPage() {
         case 'unit':
           result = await apiClient.importUnitAnnualAwards(file);
           break;
+        case 'scientific':
+          result = await apiClient.importScientificAchievements(file);
+          break;
         case 'hccsvv':
           result = await apiClient.importHCCSVV(file);
           break;
@@ -286,7 +294,8 @@ export default function AdminAwardsPage() {
           result = await apiClient.importMilitaryFlag(file);
           break;
         default:
-          result = await apiClient.importAwards(file);
+          message.error('Chức năng import chưa được hỗ trợ cho loại khen thưởng này');
+          return;
       }
 
       if (result.success) {
@@ -426,16 +435,38 @@ export default function AdminAwardsPage() {
       },
     },
     {
+      title: 'Ngày sinh',
+      key: 'ngay_sinh',
+      width: 120,
+      align: 'center',
+      render: (_: any, record: any) => {
+        // Get date from nested QuanNhan or direct field
+        const hasNestedQuanNhan =
+          activeTab === 'scientific' ||
+          activeTab === 'militaryFlag' ||
+          activeTab === 'contribution' ||
+          activeTab === 'annual' ||
+          activeTab === 'hccsvv' ||
+          activeTab === 'commemoration';
+
+        const ngaySinh = hasNestedQuanNhan ? record.QuanNhan?.ngay_sinh : record.ngay_sinh;
+
+        if (!ngaySinh) return <Text type="secondary">-</Text>;
+
+        try {
+          const date = new Date(ngaySinh);
+          return <Text>{date.toLocaleDateString('vi-VN')}</Text>;
+        } catch {
+          return <Text type="secondary">-</Text>;
+        }
+      },
+    },
+    {
       title: 'Cấp bậc / Chức vụ',
       key: 'cap_bac_chuc_vu',
       width: 150,
       align: 'center',
       render: (_: any, record: any) => {
-        // Hide this column for unit awards
-        if (activeTab === 'unit') {
-          return <Text>-</Text>;
-        }
-
         // Lấy trực tiếp từ record (dữ liệu đã lưu trong bảng)
         const capBac = record.cap_bac;
         const chucVu = record.chuc_vu;
@@ -725,6 +756,7 @@ export default function AdminAwardsPage() {
         {/* Import Section */}
         {(activeTab === 'annual' ||
           activeTab === 'unit' ||
+          activeTab === 'scientific' ||
           activeTab === 'hccsvv' ||
           activeTab === 'contribution' ||
           activeTab === 'commemoration' ||
@@ -869,7 +901,16 @@ export default function AdminAwardsPage() {
               </div>
             ) : (
               <Table
-                columns={columns}
+                columns={columns.filter(col => {
+                  // Filter out 'ngay_sinh' and 'cap_bac_chuc_vu' columns for unit tab
+                  if (
+                    activeTab === 'unit' &&
+                    (col.key === 'ngay_sinh' || col.key === 'cap_bac_chuc_vu')
+                  ) {
+                    return false;
+                  }
+                  return true;
+                })}
                 dataSource={awards}
                 rowKey="id"
                 pagination={{

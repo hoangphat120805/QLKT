@@ -1117,6 +1117,12 @@ class ProfileService {
         where: { quan_nhan_id: personnelId },
       });
 
+      //reset status huân chương nếu chưa có khen thưởng hccsvv
+      existingProfile.hccsvv_hang_ba_status = 'CHUA_DU';
+      existingProfile.hccsvv_hang_nhi_status = 'CHUA_DU';
+      existingProfile.hccsvv_hang_nhat_status = 'CHUA_DU';
+      
+
       // update status huân chương từ khen thưởng hccsvv
       for (const kt of khenthuonghccsvv) {
         if (kt.danh_hieu === 'HCCSVV_HANG_BA') {

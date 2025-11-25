@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const multer = require('multer');
 const contributionAwardController = require('../controllers/contributionAward.controller');
-const { verifyToken, checkRole } = require('../middlewares/auth');
+const { verifyToken, checkRole, requireManager } = require('../middlewares/auth');
 
 // Cấu hình multer cho file upload
 const upload = multer({
@@ -29,17 +29,17 @@ const upload = multer({
  * @desc    Tải file mẫu Excel để import Huân chương Bảo vệ Tổ quốc
  * @access  ADMIN
  */
-router.get('/template', verifyToken, checkRole(['ADMIN']), contributionAwardController.getTemplate);
+router.get('/template', verifyToken, requireManager, contributionAwardController.getTemplate);
 
 /**
  * @route   POST /api/contribution-awards/import
  * @desc    Import Huân chương Bảo vệ Tổ quốc từ file Excel
- * @access  ADMIN
+ * @access  ADMIN, MANAGER
  */
 router.post(
   '/import',
   verifyToken,
-  checkRole(['ADMIN']),
+  checkRole(['ADMIN', 'MANAGER']),
   upload.single('file'),
   contributionAwardController.importFromExcel
 );

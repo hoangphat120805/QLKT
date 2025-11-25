@@ -248,47 +248,93 @@ class AnnualRewardService {
       // Header map
       const headerRow = worksheet.getRow(1);
       const headerMap = {};
+
+      // Function to remove Vietnamese accents
+      const removeVietnameseAccents = str => {
+        return str
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/đ/g, 'd')
+          .replace(/Đ/g, 'D');
+      };
+
       headerRow.eachCell((cell, colNumber) => {
-        const key = String(cell.value || '')
+        const rawValue = String(cell.value || '')
           .trim()
           .toLowerCase();
+        // Normalize header: remove accents, special chars, and extra spaces
+        const key = removeVietnameseAccents(rawValue)
+          .replace(/\s+/g, '_') // Replace spaces with underscore
+          .replace(/[^a-z0-9_]/g, '') // Remove special characters
+          .replace(/_+/g, '_') // Replace multiple underscores with single
+          .replace(/^_|_$/g, ''); // Remove leading/trailing underscores
         if (key) headerMap[key] = colNumber;
       });
 
-      const required = ['cccd', 'nam', 'danh_hieu'];
-      for (const k of required) {
-        if (!headerMap[k]) throw new Error(`Thiếu cột bắt buộc: ${k}`);
+      console.log('=== DEBUG: Header Map ===');
+      console.log('Available headers:', Object.keys(headerMap));
+      console.log('Full headerMap:', headerMap);
+
+      // Try multiple variations of headers
+      const getHeaderCol = variations => {
+        for (const v of variations) {
+          if (headerMap[v]) return headerMap[v];
+        }
+        return null;
+      };
+
+      const hoTenCol = getHeaderCol(['ho_va_ten', 'ho_ten', 'hoten', 'hovaten', 'ten']);
+      const namCol = getHeaderCol(['nam', 'year']);
+      const danhHieuCol = getHeaderCol(['danh_hieu', 'danhhieu', 'danh_hiu']);
+      const ngaySinhCol = getHeaderCol(['ngay_sinh', 'ngaysinh', 'date_of_birth']);
+      const capBacCol = getHeaderCol(['cap_bac', 'capbac', 'cap_bc']);
+      const chucVuCol = getHeaderCol(['chuc_vu', 'chucvu', 'chc_vu']);
+      const ghiChuCol = getHeaderCol(['ghi_chu', 'ghichu', 'ghi_ch']);
+
+      console.log('=== DEBUG: Column Detection ===');
+      console.log('hoTenCol:', hoTenCol);
+      console.log('namCol:', namCol);
+      console.log('danhHieuCol:', danhHieuCol);
+
+      if (!hoTenCol || !namCol || !danhHieuCol) {
+        throw new Error(
+          `Thiếu cột bắt buộc: Họ và tên, Năm, Danh hiệu. Tìm thấy headers: ${Object.keys(
+            headerMap
+          ).join(', ')}`
+        );
       }
 
       const validDanhHieu = ['CSTDCS', 'CSTT'];
       const created = [];
       const updated = [];
       const errors = [];
+      const selectedPersonnelIds = [];
+      const titleData = [];
+      const importedData = [];
+      let total = 0;
 
       for (let rowNumber = 2; rowNumber <= worksheet.rowCount; rowNumber++) {
         const row = worksheet.getRow(rowNumber);
-        const cccd = String(row.getCell(headerMap['cccd']).value || '').trim();
-        const namVal = row.getCell(headerMap['nam']).value;
-        const danh_hieu_raw = String(row.getCell(headerMap['danh_hieu']).value || '').trim();
-        const cap_bac = headerMap['cap_bac']
-          ? String(row.getCell(headerMap['cap_bac']).value || '').trim()
-          : null;
-        const chuc_vu = headerMap['chuc_vu']
-          ? String(row.getCell(headerMap['chuc_vu']).value || '').trim()
-          : null;
-        const ghi_chu = headerMap['ghi_chu']
-          ? String(row.getCell(headerMap['ghi_chu']).value || '').trim()
-          : null;
+        const ho_ten = String(row.getCell(hoTenCol).value || '').trim();
+        const namVal = row.getCell(namCol).value;
+        const danh_hieu_raw = String(row.getCell(danhHieuCol).value || '').trim();
+        const ngay_sinh_raw = ngaySinhCol ? row.getCell(ngaySinhCol).value : null;
+        const cap_bac = capBacCol ? String(row.getCell(capBacCol).value || '').trim() : null;
+        const chuc_vu = chucVuCol ? String(row.getCell(chucVuCol).value || '').trim() : null;
+        const ghi_chu = ghiChuCol ? String(row.getCell(ghiChuCol).value || '').trim() : null;
 
-        if (!cccd && !namVal && !danh_hieu_raw) continue; // dòng trống
-        if (!cccd || !namVal) {
-          errors.push({ row: rowNumber, error: 'Thiếu CCCD hoặc nam' });
+        if (!ho_ten && !namVal && !danh_hieu_raw) continue; // dòng trống
+
+        total++; // Đếm tổng số dòng có data
+
+        if (!ho_ten || !namVal) {
+          errors.push(`Dòng ${rowNumber}: Thiếu họ tên hoặc năm`);
           continue;
         }
 
         const nam = parseInt(namVal);
         if (!Number.isInteger(nam)) {
-          errors.push({ row: rowNumber, error: 'Giá trị năm không hợp lệ' });
+          errors.push(`Dòng ${rowNumber}: Giá trị năm không hợp lệ`);
           continue;
         }
 
@@ -298,10 +344,7 @@ class AnnualRewardService {
           const danhHieuUpper = danh_hieu_raw.toUpperCase();
           if (danhHieuUpper !== 'KHONG_DAT') {
             if (!validDanhHieu.includes(danhHieuUpper)) {
-              errors.push({
-                row: rowNumber,
-                error: `Danh hiệu không hợp lệ: ${danh_hieu_raw}`,
-              });
+              errors.push(`Dòng ${rowNumber}: Danh hiệu không hợp lệ: ${danh_hieu_raw}`);
               continue;
             }
             danh_hieu = danhHieuUpper;
@@ -309,14 +352,58 @@ class AnnualRewardService {
           // Nếu là KHONG_DAT → để null
         }
 
-        // Tìm quân nhân theo CCCD
-        const personnel = await prisma.quanNhan.findUnique({ where: { cccd } });
-        if (!personnel) {
-          errors.push({
-            row: rowNumber,
-            error: `Không tìm thấy quân nhân với CCCD ${cccd}`,
-          });
+        // Tìm quân nhân theo tên
+        const personnelList = await prisma.quanNhan.findMany({ where: { ho_ten } });
+        if (personnelList.length === 0) {
+          errors.push(`Dòng ${rowNumber}: Không tìm thấy quân nhân với tên ${ho_ten}`);
           continue;
+        }
+
+        let personnel;
+        if (personnelList.length === 1) {
+          personnel = personnelList[0];
+        } else {
+          // Nhiều người trùng tên, dùng ngày sinh
+          if (!ngay_sinh_raw) {
+            errors.push(
+              `Dòng ${rowNumber}: Có ${personnelList.length} người trùng tên "${ho_ten}". Vui lòng cung cấp ngày sinh`
+            );
+            continue;
+          }
+
+          let ngay_sinh;
+          if (ngay_sinh_raw instanceof Date) {
+            ngay_sinh = ngay_sinh_raw;
+          } else {
+            const dateStr = String(ngay_sinh_raw).trim();
+            const parts = dateStr.split('/');
+            if (parts.length === 3) {
+              const day = parseInt(parts[0]);
+              const month = parseInt(parts[1]) - 1;
+              const year = parseInt(parts[2]);
+              ngay_sinh = new Date(year, month, day);
+            } else {
+              errors.push(`Dòng ${rowNumber}: Ngày sinh không đúng định dạng (DD/MM/YYYY)`);
+              continue;
+            }
+          }
+
+          personnel = personnelList.find(p => {
+            if (!p.ngay_sinh) return false;
+            const pDate = new Date(p.ngay_sinh);
+            return (
+              pDate.getDate() === ngay_sinh.getDate() &&
+              pDate.getMonth() === ngay_sinh.getMonth() &&
+              pDate.getFullYear() === ngay_sinh.getFullYear()
+            );
+          });
+
+          if (!personnel) {
+            errors.push(
+              `Dòng ${rowNumber}: Không tìm thấy quân nhân tên "${ho_ten}" với ngày sinh đã cung cấp`
+            );
+            continue;
+          }
         }
 
         // Tìm bản ghi danh hiệu theo khóa (quan_nhan_id + nam)
@@ -351,6 +438,23 @@ class AnnualRewardService {
           updated.push(existing.id);
         }
 
+        // Add to selectedPersonnelIds if not already added
+        if (!selectedPersonnelIds.includes(personnel.id)) {
+          selectedPersonnelIds.push(personnel.id);
+        }
+
+        // Add to titleData with full information from Excel
+        titleData.push({
+          personnelId: personnel.id,
+          quan_nhan_id: personnel.id,
+          danh_hieu: danh_hieu,
+          nam: nam,
+          cap_bac: cap_bac || null,
+          chuc_vu: chuc_vu || null,
+          ghi_chu: ghi_chu || null,
+          so_quyet_dinh: null, // Annual rewards don't have decision number
+        });
+
         // Tự động cập nhật lại hồ sơ hằng năm cho quân nhân này
         try {
           const profileService = require('./profile.service');
@@ -365,9 +469,11 @@ class AnnualRewardService {
       }
 
       return {
-        createdCount: created.length,
-        updatedCount: updated.length,
+        imported: created.length + updated.length,
+        total,
         errors,
+        selectedPersonnelIds,
+        titleData,
       };
     } catch (error) {
       throw error;
@@ -489,21 +595,29 @@ class AnnualRewardService {
   /**
    * Xuất file mẫu Excel để import
    */
-  async exportTemplate() {
+  async exportTemplate(userRole = 'MANAGER') {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Danh hiệu hằng năm');
 
-    // Định nghĩa các cột
-    worksheet.columns = [
-      { header: 'CCCD (*)', key: 'cccd', width: 15 },
+    // Định nghĩa các cột - MANAGER chỉ có các trường cơ bản
+    const columns = [
       { header: 'Họ và tên (*)', key: 'ho_ten', width: 25 },
+      { header: 'Ngày sinh', key: 'ngay_sinh', width: 15 },
       { header: 'Năm (*)', key: 'nam', width: 10 },
       { header: 'Danh hiệu (*)', key: 'danh_hieu', width: 20 },
-      { header: 'Cấp bậc', key: 'cap_bac', width: 15 },
-      { header: 'Chức vụ', key: 'chuc_vu', width: 20 },
-      { header: 'Ghi chú', key: 'ghi_chu', width: 30 },
-      { header: 'Số quyết định', key: 'so_quyet_dinh', width: 20 },
     ];
+
+    // ADMIN có thêm các cột chi tiết
+    if (userRole === 'ADMIN') {
+      columns.push(
+        { header: 'Cấp bậc', key: 'cap_bac', width: 15 },
+        { header: 'Chức vụ', key: 'chuc_vu', width: 20 },
+        { header: 'Ghi chú', key: 'ghi_chu', width: 30 },
+        { header: 'Số quyết định', key: 'so_quyet_dinh', width: 20 }
+      );
+    }
+
+    worksheet.columns = columns;
 
     // Style cho header
     worksheet.getRow(1).font = { bold: true };
@@ -514,16 +628,21 @@ class AnnualRewardService {
     };
 
     // Thêm hàng mẫu
-    worksheet.addRow({
-      cccd: '001234567890',
+    const sampleRow = {
       ho_ten: 'Nguyễn Văn A',
+      ngay_sinh: '15/05/1990',
       nam: 2024,
       danh_hieu: 'CSTDCS',
-      cap_bac: 'Thượng tá',
-      chuc_vu: 'Phó Trưởng phòng',
-      ghi_chu: 'Ghi chú mẫu',
-      so_quyet_dinh: '123/QĐ-BQP',
-    });
+    };
+
+    if (userRole === 'ADMIN') {
+      sampleRow.cap_bac = 'Thượng tá';
+      sampleRow.chuc_vu = 'Phó Trưởng phòng';
+      sampleRow.ghi_chu = 'Ghi chú mẫu';
+      sampleRow.so_quyet_dinh = '123/QĐ-BQP';
+    }
+
+    worksheet.addRow(sampleRow);
 
     // Thêm ghi chú
     worksheet.addRow([]);
@@ -531,6 +650,12 @@ class AnnualRewardService {
     worksheet.addRow(['- Các cột có dấu (*) là bắt buộc']);
     worksheet.addRow(['- Danh hiệu hợp lệ: CSTDCS, CSTT, BKBQP, CSTDTQ']);
     worksheet.addRow(['- Năm phải là số nguyên dương']);
+    worksheet.addRow([
+      '- Ngày sinh dùng để phân biệt khi có nhiều người trùng tên (định dạng: DD/MM/YYYY)',
+    ]);
+    if (userRole === 'ADMIN') {
+      worksheet.addRow(['- Số quyết định: Chỉ ADMIN mới có thể nhập']);
+    }
 
     return workbook;
   }

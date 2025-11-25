@@ -132,7 +132,7 @@ router.post(
 );
 
 // Tải file mẫu Excel
-router.get('/template', verifyToken, checkRole(['ADMIN']), annualRewardController.getTemplate);
+router.get('/template', verifyToken, requireManager, annualRewardController.getTemplate);
 
 // Xuất danh sách ra Excel
 router.get(

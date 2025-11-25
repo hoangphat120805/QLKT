@@ -5,24 +5,33 @@ class ContributionAwardService {
   /**
    * Export template Excel for Contribution Awards (HCBVTQ) import
    */
-  async exportTemplate() {
+  async exportTemplate(userRole = 'MANAGER') {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('HCBVTQ');
 
-    worksheet.columns = [
-      { header: 'CCCD', key: 'cccd', width: 15 },
+    // Define columns - MANAGER chỉ có các trường cơ bản
+    const columns = [
       { header: 'Họ tên', key: 'ho_ten', width: 25 },
+      { header: 'Ngày sinh', key: 'ngay_sinh', width: 15 },
       { header: 'Năm', key: 'nam', width: 10 },
       {
-        header: 'Danh hiệu (HCBVTQ_HANG_BA/HCBVTQ_HANG_NHI/HCBVTQ_HANG_NHAT)',
+        header: 'Danh hiệu',
         key: 'danh_hieu',
         width: 40,
       },
-      { header: 'Cấp bậc', key: 'cap_bac', width: 15 },
-      { header: 'Chức vụ', key: 'chuc_vu', width: 30 },
-      { header: 'Ghi chú', key: 'ghi_chu', width: 30 },
-      { header: 'Số quyết định', key: 'so_quyet_dinh', width: 20 },
     ];
+
+    // ADMIN có thêm các cột chi tiết
+    if (userRole === 'ADMIN') {
+      columns.push(
+        { header: 'Cấp bậc', key: 'cap_bac', width: 15 },
+        { header: 'Chức vụ', key: 'chuc_vu', width: 30 },
+        { header: 'Ghi chú', key: 'ghi_chu', width: 30 },
+        { header: 'Số quyết định', key: 'so_quyet_dinh', width: 20 }
+      );
+    }
+
+    worksheet.columns = columns;
 
     worksheet.getRow(1).font = { bold: true };
     worksheet.getRow(1).fill = {
@@ -32,15 +41,25 @@ class ContributionAwardService {
     };
 
     worksheet.addRow({
-      cccd: '001234567890',
       ho_ten: 'Nguyễn Văn A',
+      ngay_sinh: '15/05/1990',
       nam: 2024,
       danh_hieu: 'HCBVTQ_HANG_BA',
-      cap_bac: 'Thiếu tá',
-      chuc_vu: 'Phó Chỉ huy trưởng',
-      ghi_chu: 'Ghi chú mẫu',
-      so_quyet_dinh: '123/QĐ-BQP',
     });
+
+    // Thêm sample data cho ADMIN
+    if (userRole === 'ADMIN') {
+      worksheet.addRow({
+        ho_ten: 'Trần Thị B',
+        ngay_sinh: '20/08/1985',
+        nam: 2024,
+        danh_hieu: 'HCBVTQ_HANG_NHI',
+        cap_bac: 'Thiếu tá',
+        chuc_vu: 'Phó Chỉ huy trưởng',
+        ghi_chu: 'Ghi chú mẫu',
+        so_quyet_dinh: '123/QĐ-BQP',
+      });
+    }
 
     return await workbook.xlsx.writeBuffer();
   }
@@ -61,6 +80,8 @@ class ContributionAwardService {
       success: 0,
       failed: 0,
       errors: [],
+      selectedPersonnelIds: [],
+      titleData: [],
     };
 
     const rows = [];
@@ -72,11 +93,12 @@ class ContributionAwardService {
 
     for (const { row, rowNumber } of rows) {
       try {
-        const cccd = row.getCell(1).value?.toString().trim();
+        const ho_ten = row.getCell(1).value?.toString().trim();
+        const ngay_sinh_raw = row.getCell(2).value;
         const nam = parseInt(row.getCell(3).value);
         const danh_hieu = row.getCell(4).value?.toString().trim();
 
-        if (!cccd || !nam || !danh_hieu) {
+        if (!ho_ten || !nam || !danh_hieu) {
           results.errors.push(`Dòng ${rowNumber}: Thiếu thông tin bắt buộc`);
           results.failed++;
           continue;
@@ -92,15 +114,62 @@ class ContributionAwardService {
           continue;
         }
 
-        const personnel = await prisma.quanNhan.findUnique({ where: { cccd } });
-        if (!personnel) {
-          results.errors.push(`Dòng ${rowNumber}: Không tìm thấy quân nhân CCCD ${cccd}`);
+        // Tìm quân nhân theo tên
+        const personnelList = await prisma.quanNhan.findMany({ where: { ho_ten } });
+        if (personnelList.length === 0) {
+          results.errors.push(`Dòng ${rowNumber}: Không tìm thấy quân nhân với tên ${ho_ten}`);
           results.failed++;
           continue;
         }
 
+        let personnel;
+        if (personnelList.length === 1) {
+          personnel = personnelList[0];
+        } else {
+          if (!ngay_sinh_raw) {
+            results.errors.push(
+              `Dòng ${rowNumber}: Có ${personnelList.length} người trùng tên "${ho_ten}". Vui lòng cung cấp ngày sinh`
+            );
+            results.failed++;
+            continue;
+          }
+
+          let ngay_sinh;
+          if (ngay_sinh_raw instanceof Date) {
+            ngay_sinh = ngay_sinh_raw;
+          } else {
+            const dateStr = String(ngay_sinh_raw).trim();
+            const parts = dateStr.split('/');
+            if (parts.length === 3) {
+              ngay_sinh = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+            } else {
+              results.errors.push(`Dòng ${rowNumber}: Ngày sinh không đúng định dạng (DD/MM/YYYY)`);
+              results.failed++;
+              continue;
+            }
+          }
+
+          personnel = personnelList.find(p => {
+            if (!p.ngay_sinh) return false;
+            const pDate = new Date(p.ngay_sinh);
+            return (
+              pDate.getDate() === ngay_sinh.getDate() &&
+              pDate.getMonth() === ngay_sinh.getMonth() &&
+              pDate.getFullYear() === ngay_sinh.getFullYear()
+            );
+          });
+
+          if (!personnel) {
+            results.errors.push(
+              `Dòng ${rowNumber}: Không tìm thấy quân nhân tên "${ho_ten}" với ngày sinh đã cung cấp`
+            );
+            results.failed++;
+            continue;
+          }
+        }
+
         // Upsert (mỗi quân nhân chỉ có 1 bản ghi)
-        await prisma.khenThuongCongHien.upsert({
+        const upsertedRecord = await prisma.khenThuongCongHien.upsert({
           where: { quan_nhan_id: personnel.id },
           create: {
             quan_nhan_id: personnel.id,
@@ -122,6 +191,17 @@ class ContributionAwardService {
         });
 
         results.success++;
+        results.selectedPersonnelIds.push(personnel.id);
+        results.titleData.push({
+          personnelId: personnel.id,
+          quan_nhan_id: personnel.id,
+          danh_hieu: upsertedRecord.danh_hieu,
+          nam: upsertedRecord.nam,
+          cap_bac: upsertedRecord.cap_bac,
+          chuc_vu: upsertedRecord.chuc_vu,
+          ghi_chu: upsertedRecord.ghi_chu,
+          so_quyet_dinh: upsertedRecord.so_quyet_dinh,
+        });
       } catch (error) {
         results.errors.push(`Dòng ${rowNumber}: ${error.message}`);
         results.failed++;

@@ -1,11 +1,25 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Table, Input, Select, Space, Alert, Typography, InputNumber, message, Tag } from 'antd';
+import {
+  Table,
+  Input,
+  Select,
+  Space,
+  Alert,
+  Typography,
+  InputNumber,
+  message,
+  Tag,
+  Divider,
+} from 'antd';
 import { SearchOutlined, TrophyOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import axiosInstance from '@/utils/axiosInstance';
 import { formatDate } from '@/lib/utils';
+import { apiClient } from '@/lib/api-client';
+import ExcelImportSection from './ExcelImportSection';
+import * as XLSX from 'xlsx';
 
 const { Text } = Typography;
 
@@ -46,6 +60,8 @@ interface Step2SelectPersonnelHCQKQTProps {
   onPersonnelChange: (ids: string[]) => void;
   nam: number;
   onNamChange: (nam: number) => void;
+  onTitleDataChange?: (titleData: any[]) => void;
+  onNextStep?: () => void;
 }
 
 export default function Step2SelectPersonnelHCQKQT({
@@ -53,6 +69,8 @@ export default function Step2SelectPersonnelHCQKQT({
   onPersonnelChange,
   nam,
   onNamChange,
+  onTitleDataChange,
+  onNextStep,
 }: Step2SelectPersonnelHCQKQTProps) {
   const [loading, setLoading] = useState(false);
   const [personnel, setPersonnel] = useState<Personnel[]>([]);
@@ -393,6 +411,174 @@ export default function Step2SelectPersonnelHCQKQT({
     },
   ];
 
+  const handleLocalExcelProcess = async (file: File): Promise<any> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = e => {
+        try {
+          const data = new Uint8Array(e.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: 'array' });
+
+          // Lấy sheet đầu tiên
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+
+          // Chuyển đổi sang JSON
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+          if (jsonData.length < 2) {
+            throw new Error('File Excel không có dữ liệu hoặc thiếu header');
+          }
+
+          // Bỏ qua header row
+          const dataRows = jsonData.slice(1);
+
+          const titleData: any[] = [];
+          const errors: string[] = [];
+          const processedPersonnelIds: string[] = [];
+
+          dataRows.forEach((row: any, index: number) => {
+            const rowNumber = index + 2; // +2 vì bỏ header và index từ 0
+
+            // Validate required fields
+            const hoTen = row[0]?.toString().trim();
+            const ngaySinh = row[1]?.toString().trim();
+            const nam = row[2]?.toString().trim();
+            const danhHieu = row[3]?.toString().trim();
+
+            if (!hoTen) {
+              errors.push(`Dòng ${rowNumber}: Thiếu họ tên`);
+              return;
+            }
+
+            if (!nam) {
+              errors.push(`Dòng ${rowNumber}: Thiếu năm`);
+              return;
+            }
+
+            if (!danhHieu) {
+              errors.push(`Dòng ${rowNumber}: Thiếu danh hiệu`);
+              return;
+            }
+
+            // Validate năm
+            const namInt = parseInt(nam);
+
+            // Tìm personnel ID dựa trên họ tên và ngày sinh (ngày sinh optional)
+            let matchingPersonnel;
+            if (ngaySinh) {
+              // Nếu có ngày sinh, so sánh cả tên và ngày sinh
+              matchingPersonnel = personnel.find(p => {
+                const personnelName = p.ho_ten.toLowerCase().trim();
+                const excelName = hoTen.toLowerCase().trim();
+
+                // So sánh tên chính xác
+                const nameMatch = personnelName === excelName;
+
+                // So sánh ngày sinh
+                const personnelBirth = p.ngay_sinh
+                  ? new Date(p.ngay_sinh).toLocaleDateString('vi-VN')
+                  : '';
+                const excelBirth = ngaySinh;
+
+                return nameMatch && personnelBirth === excelBirth;
+              });
+            } else {
+              // Nếu không có ngày sinh, chỉ so sánh tên và lấy kết quả đầu tiên
+              matchingPersonnel = personnel.find(p => {
+                const personnelName = p.ho_ten.toLowerCase().trim();
+                const excelName = hoTen.toLowerCase().trim();
+
+                // So sánh tên chính xác
+                return personnelName === excelName;
+              });
+            }
+
+            if (!matchingPersonnel) {
+              const errorMsg = ngaySinh
+                ? `Dòng ${rowNumber}: Không tìm thấy quân nhân "${hoTen}" sinh ngày ${ngaySinh}`
+                : `Dòng ${rowNumber}: Không tìm thấy quân nhân "${hoTen}"`;
+              errors.push(errorMsg);
+              return;
+            }
+
+            // Thêm vào danh sách
+            processedPersonnelIds.push(matchingPersonnel.id);
+
+            titleData.push({
+              personnelId: matchingPersonnel.id,
+              danh_hieu: danhHieu,
+              nam: namInt,
+              ghi_chu: '', // Không có ghi chú trong Excel
+            });
+          });
+
+          // Remove duplicates from personnel IDs
+          const uniquePersonnelIds = Array.from(new Set(processedPersonnelIds));
+
+          resolve({
+            imported: titleData.length,
+            total: dataRows.length,
+            errors,
+            selectedPersonnelIds: uniquePersonnelIds,
+            titleData,
+          });
+        } catch (error: any) {
+          reject(new Error(`Lỗi xử lý file Excel: ${error.message}`));
+        }
+      };
+
+      reader.onerror = () => {
+        reject(new Error('Lỗi đọc file Excel'));
+      };
+
+      reader.readAsArrayBuffer(file);
+    });
+  };
+
+  const handleImportSuccess = async (result: any) => {
+    // Cập nhật danh sách quân nhân đã chọn
+    if (result.selectedPersonnelIds && result.selectedPersonnelIds.length > 0) {
+      onPersonnelChange(result.selectedPersonnelIds);
+
+      // Populate titleData from imported data
+      if (result.titleData && result.titleData.length > 0) {
+        // Transform to titleData format
+        const titleData = result.titleData.map((award: any) => ({
+          personnelId: String(
+            award.quan_nhan_id ??
+              award.personnelId ??
+              award.co_quan_don_vi_id ??
+              award.don_vi_truc_thuoc_id ??
+              '' // fallback nếu tất cả đều null/undefined
+          ),
+          danh_hieu: 'HC_QKQT',
+          nam: award.nam,
+          ghi_chu: award.ghi_chu,
+        }));
+
+        onTitleDataChange(titleData);
+
+        // Update nam from imported data if available
+        if (result.titleData[0].nam) {
+          onNamChange(result.titleData[0].nam);
+        }
+      }
+    }
+
+    // Tự động chuyển sang bước 4 (Upload file) sau khi import thành công
+    // Bỏ qua bước 3 vì dữ liệu đã được import từ Excel
+    if (onNextStep) {
+      setTimeout(() => {
+        onNextStep(); // Chuyển sang bước 3
+        setTimeout(() => {
+          onNextStep(); // Chuyển sang bước 4
+        }, 100);
+      }, 500);
+    }
+  };
+
   const rowSelection = {
     selectedRowKeys: selectedPersonnelIds,
     onChange: (selectedRowKeys: React.Key[]) => {
@@ -449,6 +635,20 @@ export default function Step2SelectPersonnelHCQKQT({
         icon={<TrophyOutlined />}
         style={{ marginBottom: 24 }}
       />
+
+      {/* Upload Excel Section */}
+      <ExcelImportSection
+        templateEndpoint="/api/military-flag/template"
+        importEndpoint="/api/military-flag/import"
+        templateFileName="mau_import_hcqkqt"
+        onImportSuccess={handleImportSuccess}
+        selectedCount={selectedPersonnelIds.length}
+        entityLabel="quân nhân"
+        localProcessing={true}
+        onLocalProcess={handleLocalExcelProcess}
+      />
+
+      <Divider>Hoặc chọn thủ công</Divider>
 
       <Space style={{ marginBottom: 16 }} size="middle">
         <div>

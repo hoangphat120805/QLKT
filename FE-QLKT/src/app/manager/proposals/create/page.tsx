@@ -648,6 +648,8 @@ export default function CreateProposalPage() {
               onUnitChange={setSelectedUnitIds}
               nam={nam}
               onNamChange={setNam}
+              onTitleDataChange={setTitleData}
+              onNextStep={() => setCurrentStep(prev => prev + 1)}
             />
           );
         }
@@ -660,6 +662,9 @@ export default function CreateProposalPage() {
                 onPersonnelChange={setSelectedPersonnelIds}
                 nam={nam}
                 onNamChange={setNam}
+                titleData={titleData}
+                onTitleDataChange={setTitleData}
+                onNextStep={() => setCurrentStep(prev => prev + 1)}
               />
             );
           case 'NIEN_HAN':
@@ -669,6 +674,8 @@ export default function CreateProposalPage() {
                 onPersonnelChange={setSelectedPersonnelIds}
                 nam={nam}
                 onNamChange={setNam}
+                onTitleDataChange={setTitleData}
+                onNextStep={() => setCurrentStep(prev => prev + 1)}
               />
             );
           case 'HC_QKQT':
@@ -678,6 +685,8 @@ export default function CreateProposalPage() {
                 onPersonnelChange={setSelectedPersonnelIds}
                 nam={nam}
                 onNamChange={setNam}
+                onTitleDataChange={setTitleData}
+                onNextStep={() => setCurrentStep(prev => prev + 1)}
               />
             );
           case 'KNC_VSNXD_QDNDVN':
@@ -687,6 +696,8 @@ export default function CreateProposalPage() {
                 onPersonnelChange={setSelectedPersonnelIds}
                 nam={nam}
                 onNamChange={setNam}
+                onTitleDataChange={setTitleData}
+                onNextStep={() => setCurrentStep(prev => prev + 1)}
               />
             );
           case 'CONG_HIEN':
@@ -696,6 +707,8 @@ export default function CreateProposalPage() {
                 onPersonnelChange={setSelectedPersonnelIds}
                 nam={nam}
                 onNamChange={setNam}
+                onTitleDataChange={setTitleData}
+                onNextStep={() => setCurrentStep(prev => prev + 1)}
               />
             );
           case 'NCKH':
@@ -705,6 +718,8 @@ export default function CreateProposalPage() {
                 onPersonnelChange={setSelectedPersonnelIds}
                 nam={nam}
                 onNamChange={setNam}
+                onTitleDataChange={setTitleData}
+                onNextStep={() => setCurrentStep(prev => prev + 1)}
               />
             );
           default:
@@ -770,7 +785,7 @@ export default function CreateProposalPage() {
           });
         } else {
           reviewTableData = personnelDetails.map(p => {
-            const titleInfo = titleData.find(t => t.personnel_id === p.id);
+            const titleInfo = titleData.find(t => String(t.personnelId) === String(p.id));
             return {
               ...p,
               ...titleInfo,
@@ -873,7 +888,7 @@ export default function CreateProposalPage() {
               render: (_, record: any) => {
                 // Lấy thông tin từ personnel details nếu có
                 const personnelDetail = personnelDetails.find(
-                  (p: any) => p.id === record.personnel_id || p.id === record.id
+                  (p: any) => p.id === record.personnelId || p.id === record.id
                 );
                 const capBac = personnelDetail?.cap_bac || record.cap_bac;
                 const chucVu = personnelDetail?.ChucVu?.ten_chuc_vu || record.ChucVu?.ten_chuc_vu;
@@ -1011,7 +1026,16 @@ export default function CreateProposalPage() {
             key: 'danh_hieu',
             width: 250,
             align: 'center',
-            render: (danh_hieu: string) => {
+            render: (_, record) => {
+              // Lấy danh_hieu trực tiếp từ titleData để đảm bảo chính xác
+              const titleInfo = titleData.find(
+                t =>
+                  String(t.personnelId) === String(record.id) ||
+                  String(t.don_vi_id) === String(record.id)
+              );
+              const danh_hieu = titleInfo?.danh_hieu;
+              console.log('Rendering danh_hieu for record:', titleData);
+
               // Map mã danh hiệu sang tên đầy đủ
               const danhHieuMap: Record<string, string> = {
                 // Cá nhân Hằng năm
@@ -1039,7 +1063,7 @@ export default function CreateProposalPage() {
               };
 
               const fullName = danhHieuMap[danh_hieu] || danh_hieu;
-              return <Text>{fullName}</Text>;
+              return <Text>{fullName || '-'}</Text>;
             },
           });
         }

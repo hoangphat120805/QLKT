@@ -27,24 +27,24 @@ const upload = multer({
 /**
  * @route   GET /api/commemorative-medals/template
  * @desc    Tải file mẫu Excel để import Kỷ niệm chương
- * @access  ADMIN
+ * @access  ADMIN, MANAGER
  */
 router.get(
   '/template',
   verifyToken,
-  checkRole(['ADMIN']),
+  checkRole(['ADMIN', 'MANAGER']),
   commemorativeMedalController.getTemplate
 );
 
 /**
  * @route   POST /api/commemorative-medals/import
  * @desc    Import Kỷ niệm chương từ file Excel
- * @access  ADMIN
+ * @access  ADMIN, MANAGER
  */
 router.post(
   '/import',
   verifyToken,
-  checkRole(['ADMIN']),
+  checkRole(['ADMIN', 'MANAGER']),
   upload.single('file'),
   commemorativeMedalController.importFromExcel
 );

@@ -7,7 +7,8 @@ class MilitaryFlagController {
    */
   async getTemplate(req, res) {
     try {
-      const buffer = await militaryFlagService.exportTemplate();
+      const userRole = req.user?.role || 'MANAGER';
+      const buffer = await militaryFlagService.exportTemplate(userRole);
 
       const fileName = `mau_import_hcqkqt_${new Date().toISOString().slice(0, 10)}.xlsx`;
       res.setHeader(

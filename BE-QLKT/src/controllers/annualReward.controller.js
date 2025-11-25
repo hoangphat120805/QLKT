@@ -311,7 +311,7 @@ class AnnualRewardController {
       const { personnelId } = req.params;
 
       // Kiểm tra đang trong đề xuất PENDING hoặc APPROVED
-      const pendingOrApprovedProposal = await prisma.bangDeXuat.findFirst({
+      const pendingOrApprovedProposal = await prisma.huanChuongQuanKyQuyetThang.findFirst({
         where: {
           loai_de_xuat: 'HC_QKQT',
           status: {
@@ -405,7 +405,11 @@ class AnnualRewardController {
 
   async getTemplate(req, res) {
     try {
-      const workbook = await annualRewardService.exportTemplate();
+      const userRole = req.user.role; // Lấy role từ token
+      const workbook = await annualRewardService.exportTemplate(userRole);
+
+      // Chuyển workbook thành buffer
+      const buffer = await workbook.xlsx.writeBuffer();
 
       res.setHeader(
         'Content-Type',
@@ -418,8 +422,7 @@ class AnnualRewardController {
           .slice(0, 10)}.xlsx"`
       );
 
-      await workbook.xlsx.write(res);
-      res.end();
+      return res.send(buffer);
     } catch (error) {
       console.error('Export template error:', error);
       return res.status(500).json({
@@ -458,8 +461,8 @@ class AnnualRewardController {
           .slice(0, 10)}.xlsx"`
       );
 
-      await workbook.xlsx.write(res);
-      res.end();
+      const buffer = await workbook.xlsx.writeBuffer();
+      return res.send(buffer);
     } catch (error) {
       console.error('Export annual rewards error:', error);
       return res.status(500).json({

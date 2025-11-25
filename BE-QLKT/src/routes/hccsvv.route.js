@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const multer = require('multer');
 const hccsvvController = require('../controllers/hccsvv.controller');
-const { verifyToken, checkRole } = require('../middlewares/auth');
+const { verifyToken, checkRole, requireManager } = require('../middlewares/auth');
 
 // Cấu hình multer cho file upload
 const upload = multer({
@@ -29,17 +29,17 @@ const upload = multer({
  * @desc    Tải file mẫu Excel để import Huân chương Chiến sĩ Vẻ vang
  * @access  ADMIN
  */
-router.get('/template', verifyToken, checkRole(['ADMIN']), hccsvvController.getTemplate);
+router.get('/template', verifyToken, requireManager, hccsvvController.getTemplate);
 
 /**
  * @route   POST /api/hccsvv/import
  * @desc    Import Huân chương Chiến sĩ Vẻ vang từ file Excel
- * @access  ADMIN
+ * @access  ADMIN, MANAGER
  */
 router.post(
   '/import',
   verifyToken,
-  checkRole(['ADMIN']),
+  checkRole(['ADMIN', 'MANAGER']),
   upload.single('file'),
   hccsvvController.importFromExcel
 );
