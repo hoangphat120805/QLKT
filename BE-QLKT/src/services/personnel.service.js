@@ -1172,7 +1172,7 @@ class PersonnelService {
               ? proposal.data_cong_hien
               : [];
 
-            const found = congHienList.some(item => item.quan_nhan_id === personnelId);
+            const found = congHienList.some(item => item.personnel_id === personnelId);
 
             if (found) {
               ineligiblePersonnel.push({

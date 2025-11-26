@@ -308,27 +308,27 @@ export default function Step2SelectPersonnelCongHien({
         return <Text>{record.gioi_tinh === 'NAM' ? 'Nam' : 'Nữ'}</Text>;
       },
     },
-    {
-      title: 'Tổng thời gian (0.7)',
-      key: 'total_time_0_7',
-      width: 150,
-      align: 'center',
-      render: (_, record) => calculateTotalTimeByGroup(record.id, '0.7'),
-    },
-    {
-      title: 'Tổng thời gian (0.8)',
-      key: 'total_time_0_8',
-      width: 150,
-      align: 'center',
-      render: (_, record) => calculateTotalTimeByGroup(record.id, '0.8'),
-    },
-    {
-      title: 'Tổng thời gian (0.9-1.0)',
-      key: 'total_time_0_9_1_0',
-      width: 150,
-      align: 'center',
-      render: (_, record) => calculateTotalTimeByGroup(record.id, '0.9-1.0'),
-    },
+    // {
+    //   title: 'Tổng thời gian (0.7)',
+    //   key: 'total_time_0_7',
+    //   width: 150,
+    //   align: 'center',
+    //   render: (_, record) => calculateTotalTimeByGroup(record.id, '0.7'),
+    // },
+    // {
+    //   title: 'Tổng thời gian (0.8)',
+    //   key: 'total_time_0_8',
+    //   width: 150,
+    //   align: 'center',
+    //   render: (_, record) => calculateTotalTimeByGroup(record.id, '0.8'),
+    // },
+    // {
+    //   title: 'Tổng thời gian (0.9-1.0)',
+    //   key: 'total_time_0_9_1_0',
+    //   width: 150,
+    //   align: 'center',
+    //   render: (_, record) => calculateTotalTimeByGroup(record.id, '0.9-1.0'),
+    // },
     {
       title: 'Trạng thái',
       key: 'eligibility_status',
@@ -337,6 +337,7 @@ export default function Step2SelectPersonnelCongHien({
       fixed: 'right',
       render: (_, record) => {
         const ineligible = ineligiblePersonnel.find(i => i.personnelId === record.id);
+
         if (ineligible) {
           if (ineligible.status === 'APPROVED') {
             return (

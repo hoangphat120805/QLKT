@@ -1,4 +1,5 @@
 const { prisma } = require('../models');
+const positionHistoryService = require('../services/positionHistory.service');
 
 class ProfileService {
   /**
@@ -517,7 +518,7 @@ class ProfileService {
    * @param {string} hangName - Tên hạng (Ba, Nhì, Nhất)
    * @returns {Object} { status: string, goiY: string }
    */
-  calculateHCBVTQ(totalMonths, requiredMonths, currentStatus, hangName) {
+  calculateHCBVTQ(isLegal, currentStatus, hangName) {
     // Trường hợp 17: Admin đã cập nhật DA_NHAN
     if (currentStatus === 'DA_NHAN') {
       return {
@@ -527,7 +528,7 @@ class ProfileService {
     }
 
     // Trường hợp 16: Đã đủ điều kiện
-    if (totalMonths >= requiredMonths) {
+    if (isLegal) {
       return {
         status: 'DU_DIEU_KIEN',
         goiY: '', // Không tạo gợi ý cho HCBVTQ
@@ -1121,7 +1122,6 @@ class ProfileService {
       existingProfile.hccsvv_hang_ba_status = 'CHUA_DU';
       existingProfile.hccsvv_hang_nhi_status = 'CHUA_DU';
       existingProfile.hccsvv_hang_nhat_status = 'CHUA_DU';
-      
 
       // update status huân chương từ khen thưởng hccsvv
       for (const kt of khenthuonghccsvv) {
@@ -1228,6 +1228,59 @@ class ProfileService {
     console.log(
       `[recalculateContributionProfile] Bắt đầu tính toán hồ sơ cống hiến cho quân nhân ID: ${personnelId}`
     );
+    const checkEligibleForRank = async (personnelId, rank) => {
+      const months0_9_1_0 = getTotalMonthsByGroup(personnelId, '0.9-1.0');
+      const months0_8 = getTotalMonthsByGroup(personnelId, '0.8');
+      const months0_7 = getTotalMonthsByGroup(personnelId, '0.7');
+
+      // Tính số tháng yêu cầu dựa trên giới tính
+      const baseRequiredMonths = 10 * 12; // 10 năm = 120 tháng (cho nam)
+      const femaleRequiredMonths = Math.round(baseRequiredMonths * (2 / 3)); // Nữ: 80 tháng (làm tròn)
+
+      // Lấy thông tin quân nhân để biết giới tính
+      const personnelDetail = await prisma.quanNhan.findUnique({
+        where: { id: personnelId },
+      });
+      const requiredMonths =
+        personnelDetail?.gioi_tinh === 'NU' ? femaleRequiredMonths : baseRequiredMonths;
+
+      if (rank === 'HANG_NHAT') {
+        // Hạng nhất: cần >= yêu cầu từ nhóm 0.9-1.0
+        return months0_9_1_0 >= requiredMonths;
+      } else if (rank === 'HANG_NHI') {
+        // Hạng nhì: cần >= yêu cầu từ nhóm 0.8 + 0.9-1.0 (hạng cao cộng vào)
+        return months0_8 + months0_9_1_0 >= requiredMonths;
+      } else if (rank === 'HANG_BA') {
+        // Hạng ba: cần >= yêu cầu từ nhóm 0.7 + 0.8 + 0.9-1.0 (tất cả hạng cao cộng vào)
+        return months0_7 + months0_8 + months0_9_1_0 >= requiredMonths;
+      }
+
+      return false;
+    };
+    const getTotalMonthsByGroup = async (personnelId, group) => {
+      const histories = await positionHistoryService.getPositionHistory(personnelId);
+
+      let totalMonths = 0;
+
+      histories.forEach(history => {
+        const heSo = Number(history.he_so_chuc_vu) || 0;
+        let belongsToGroup = false;
+
+        if (group === '0.7') {
+          belongsToGroup = heSo >= 0.7 && heSo < 0.8;
+        } else if (group === '0.8') {
+          belongsToGroup = heSo >= 0.8 && heSo < 0.9;
+        } else if (group === '0.9-1.0') {
+          belongsToGroup = heSo >= 0.9 && heSo <= 1.0;
+        }
+
+        if (belongsToGroup && history.so_thang !== null && history.so_thang !== undefined) {
+          totalMonths += history.so_thang;
+        }
+      });
+
+      return totalMonths;
+    };
     try {
       // Load thông tin quân nhân và lịch sử chức vụ
       const personnel = await prisma.quanNhan.findUnique({
@@ -1257,99 +1310,67 @@ class ProfileService {
         where: { quan_nhan_id: personnelId },
       });
 
-      // Tính toán tổng số tháng công tác
-      let totalMonths = 0;
-      if (personnel.ngay_nhap_ngu) {
-        const ngayNhapNgu = new Date(personnel.ngay_nhap_ngu);
-        const ngayKetThuc = personnel.ngay_xuat_ngu
-          ? new Date(personnel.ngay_xuat_ngu)
-          : new Date();
-
-        totalMonths = (ngayKetThuc.getFullYear() - ngayNhapNgu.getFullYear()) * 12;
-        totalMonths += ngayKetThuc.getMonth() - ngayNhapNgu.getMonth();
-        if (ngayKetThuc.getDate() < ngayNhapNgu.getDate()) {
-          totalMonths--;
-        }
-        totalMonths = Math.max(0, totalMonths);
-      }
+      const personnelHCBVTQ = await prisma.khenThuongCongHien.findMany({
+        where: { quan_nhan_id: personnelId },
+      });
 
       // Tính HCBVTQ dựa trên tổng số tháng công tác
       // Logic thứ bậc: Phải NHẬN hạng thấp trước mới được đề xuất hạng cao
-      const hcbvtqBa = this.calculateHCBVTQ(
-        totalMonths,
-        120, // 10 năm
-        existingProfile?.hcbvtq_hang_ba_status || 'CHUA_DU',
-        'Ba'
+      const hcbvtqBa = personnelHCBVTQ.find(kt => kt.danh_hieu === 'HCBVTQ_HANG_BA')
+        ? {
+            status: 'DA_NHAN',
+          }
+        : (await checkEligibleForRank(personnelId, 'HANG_BA'))
+        ? { status: 'DU_DIEU_KIEN' }
+        : { status: 'CHUA_DU' };
+
+      const hcbvtqNhi = personnelHCBVTQ.find(kt => kt.danh_hieu === 'HCBVTQ_HANG_NHI')
+        ? {
+            status: 'DA_NHAN',
+          }
+        : (await checkEligibleForRank(personnelId, 'HANG_NHI'))
+        ? { status: 'DU_DIEU_KIEN' }
+        : { status: 'CHUA_DU' };
+
+      const hcbvtqNhat = personnelHCBVTQ.find(kt => kt.danh_hieu === 'HCBVTQ_HANG_NHAT')
+        ? {
+            status: 'DA_NHAN',
+          }
+        : (await checkEligibleForRank(personnelId, 'HANG_NHAT'))
+        ? { status: 'DU_DIEU_KIEN' }
+        : { status: 'CHUA_DU' };
+
+      console.log(
+        `[recalculateContributionProfile] Kết quả tính HCBVTQ - Ba: ${hcbvtqBa.status}, Nhì: ${hcbvtqNhi.status}, Nhất: ${hcbvtqNhat.status}`
       );
 
-      // Chỉ xét Hạng Nhì nếu ĐÃ NHẬN Hạng Ba
-      let hcbvtqNhi;
-      if (existingProfile?.hcbvtq_hang_ba_status === 'DA_NHAN') {
-        hcbvtqNhi = this.calculateHCBVTQ(
-          totalMonths,
-          180, // 15 năm
-          existingProfile?.hcbvtq_hang_nhi_status || 'CHUA_DU',
-          'Nhì'
-        );
-      } else {
-        hcbvtqNhi = {
-          status: 'CHUA_DU',
-          ngay: null,
-          goiY: '',
-        };
-      }
-
-      // Chỉ xét Hạng Nhất nếu ĐÃ NHẬN Hạng Nhì
-      let hcbvtqNhat;
-      if (existingProfile?.hcbvtq_hang_nhi_status === 'DA_NHAN') {
-        hcbvtqNhat = this.calculateHCBVTQ(
-          totalMonths,
-          240, // 20 năm
-          existingProfile?.hcbvtq_hang_nhat_status || 'CHUA_DU',
-          'Nhất'
-        );
-      } else {
-        hcbvtqNhat = {
-          status: 'CHUA_DU',
-          ngay: null,
-          goiY: '',
-        };
-      }
-
-      // Tổng hợp gợi ý cống hiến
-      const goiYList = [];
-      if (hcbvtqBa.goiY) goiYList.push(hcbvtqBa.goiY);
-      if (hcbvtqNhi.goiY) goiYList.push(hcbvtqNhi.goiY);
-      if (hcbvtqNhat.goiY) goiYList.push(hcbvtqNhat.goiY);
-
-      const finalGoiY =
-        goiYList.length > 0
-          ? goiYList.join('\n')
-          : 'Chưa đủ điều kiện xét huân chương Bảo vệ Tổ quốc.';
+      const months0_7 = await getTotalMonthsByGroup(personnelId, '0.7');
+      const months0_8 = await getTotalMonthsByGroup(personnelId, '0.8');
+      const months0_9_1_0 = await getTotalMonthsByGroup(personnelId, '0.9-1.0');
 
       // Cập nhật hoặc tạo mới hồ sơ cống hiến
       await prisma.hoSoCongHien.upsert({
         where: { quan_nhan_id: personnelId },
         update: {
-          hcbvtq_total_months: totalMonths,
+          hcbvtq_total_months: months0_7 + months0_8 + months0_9_1_0,
           hcbvtq_hang_ba_status: hcbvtqBa.status,
-          hcbvtq_hang_ba_ngay: hcbvtqBa.ngay,
+          hcbvtq_hang_ba_ngay: null,
           hcbvtq_hang_nhi_status: hcbvtqNhi.status,
-          hcbvtq_hang_nhi_ngay: hcbvtqNhi.ngay,
+          hcbvtq_hang_nhi_ngay: null,
           hcbvtq_hang_nhat_status: hcbvtqNhat.status,
-          hcbvtq_hang_nhat_ngay: hcbvtqNhat.ngay,
-          goi_y: finalGoiY,
+          hcbvtq_hang_nhat_ngay: null,
+          goi_y: null,
         },
         create: {
           quan_nhan_id: personnelId,
-          hcbvtq_total_months: totalMonths,
+          hcbvtq_total_months: months0_7 + months0_8 + months0_9_1_0,
           hcbvtq_hang_ba_status: hcbvtqBa.status,
-          hcbvtq_hang_ba_ngay: hcbvtqBa.ngay,
+          hcbvtq_hang_ba_ngay: null,
           hcbvtq_hang_nhi_status: hcbvtqNhi.status,
-          hcbvtq_hang_nhi_ngay: hcbvtqNhi.ngay,
+          hcbvtq_hang_nhi_ngay: null,
           hcbvtq_hang_nhat_status: hcbvtqNhat.status,
-          hcbvtq_hang_nhat_ngay: hcbvtqNhat.ngay,
-          goi_y: finalGoiY,
+          hcbvtq_hang_nhat_ngay: null,
+          goi_y: null,
         },
       });
 
