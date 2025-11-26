@@ -135,6 +135,16 @@ export default function UnitAnnualAwardHistoryModal({
                   {annualAwards?.dvqt_lien_tuc || 0} năm
                 </Tag>
               </Descriptions.Item>
+              <Descriptions.Item label="Đủ điều kiện BKBQP">
+                <Tag color="blue" style={{ fontSize: '14px', padding: '4px 12px' }}>
+                  {(annualAwards?.du_dieu_kien_bk_tong_cuc) ? 'Có' : 'Không'}
+                </Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Đủ điều kiện BKTTCP">
+                <Tag color="blue" style={{ fontSize: '14px', padding: '4px 12px' }}>
+                  {(annualAwards?.du_dieu_kien_bk_thu_tuong) ? 'Có' : 'Không'}
+                </Tag>
+              </Descriptions.Item>
             </Descriptions>
             <Table
               columns={columns}
