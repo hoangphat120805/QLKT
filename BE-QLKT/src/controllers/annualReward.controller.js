@@ -311,7 +311,7 @@ class AnnualRewardController {
       const { personnelId } = req.params;
 
       // Kiểm tra đang trong đề xuất PENDING hoặc APPROVED
-      const pendingOrApprovedProposal = await prisma.huanChuongQuanKyQuyetThang.findFirst({
+      const pendingOrApprovedProposal = await prisma.bangDeXuat.findFirst({
         where: {
           loai_de_xuat: 'HC_QKQT',
           status: {
