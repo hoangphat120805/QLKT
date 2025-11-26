@@ -107,7 +107,7 @@ class UnitAnnualAwardService {
     });
 
     let continuous = 0;
-    let current = year;
+    let current = year - 1;
     for (const r of records) {
       if (r.nam !== current) continue; // chỉ xét chuỗi liên tiếp từ năm hiện tại trở lùi
       // Có danh hiệu nếu có danh_hieu không null và không rỗng
@@ -365,8 +365,8 @@ class UnitAnnualAwardService {
   async updateHoSoDonVi(donViId, year, isCoQuanDonVi) {
     const dvqtResult = await this.calculateTotalDVQT(donViId, year);
     const dvqtLienTuc = await this.calculateContinuousYears(donViId, year);
-    const du3 = dvqtLienTuc >= 3;
-    const du5 = dvqtLienTuc >= 5;
+    const du3 = dvqtLienTuc >= 2;
+    const du5 = dvqtLienTuc >= 4;
 
     // Kiểm tra xem có bằng khen chưa (dựa vào DanhHieuDonViHangNam năm hiện tại)
     const currentYearAward = await prisma.danhHieuDonViHangNam.findFirst({
@@ -636,7 +636,7 @@ class UnitAnnualAwardService {
   /**
    * Lấy hồ sơ gợi ý hằng năm của đơn vị (tương tự getAnnualProfile)
    */
-  async getAnnualUnit(donViId) {
+  async getAnnualUnit(donViId, year) {
     try {
       // Kiểm tra đơn vị tồn tại
       const donVi =
@@ -653,6 +653,7 @@ class UnitAnnualAwardService {
       let profile = await prisma.hoSoDonViHangNam.findFirst({
         where: {
           OR: [{ co_quan_don_vi_id: donViId }, { don_vi_truc_thuoc_id: donViId }],
+          nam: year,
         },
         orderBy: { nam: 'desc' },
         include: {
@@ -729,8 +730,8 @@ class UnitAnnualAwardService {
       const dvqtResult = await this.calculateTotalDVQT(donViId, targetYear);
       const dvqtLienTuc = await this.calculateContinuousYears(donViId, targetYear);
 
-      const du_dieu_kien_bk_tong_cuc = dvqtLienTuc >= 3;
-      const du_dieu_kien_bk_thu_tuong = dvqtLienTuc >= 5;
+      const du_dieu_kien_bk_tong_cuc = dvqtLienTuc >= 2;
+      const du_dieu_kien_bk_thu_tuong = dvqtLienTuc >= 4;
 
       // Kiểm tra xem có bằng khen chưa
       const currentYearAward = danhHieuList.find(dh => dh.nam === targetYear);

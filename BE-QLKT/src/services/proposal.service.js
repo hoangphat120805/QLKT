@@ -2975,7 +2975,7 @@ class ProposalService {
 
             // Tính số năm liên tục
             let dvqtLienTuc = 0;
-            let currentYear = namValue;
+            let currentYear = namValue - 1;
             const recordsByYear = {};
             for (const r of allAwardRecords) {
               if (!recordsByYear[r.nam]) recordsByYear[r.nam] = [];
@@ -2998,8 +2998,8 @@ class ProposalService {
             const tongDVQT = validRecords.length;
             const tongDVQTJson = validRecords.map(r => ({ nam: r.nam, danh_hieu: r.danh_hieu }));
 
-            const du3 = dvqtLienTuc >= 3;
-            const du5 = dvqtLienTuc >= 5;
+            const du3 = dvqtLienTuc >= 2;
+            const du5 = dvqtLienTuc >= 4;
             let goi_y = null;
             if (!soQuyetDinh) {
               if (du5)
