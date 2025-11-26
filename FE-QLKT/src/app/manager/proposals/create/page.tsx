@@ -1031,7 +1031,8 @@ export default function CreateProposalPage() {
               const titleInfo = titleData.find(
                 t =>
                   String(t.personnelId) === String(record.id) ||
-                  String(t.don_vi_id) === String(record.id)
+                  String(t.don_vi_id) === String(record.id) ||
+                  String(t.personnel_id) === String(record.id)
               );
               const danh_hieu = titleInfo?.danh_hieu;
               console.log('Rendering danh_hieu for record:', titleData);

@@ -221,6 +221,8 @@ export default function ManagerProposalsPage() {
             tooltip = 'Số đề tài/sáng kiến khoa học';
             break;
           case 'NIEN_HAN':
+          case 'HC_QKQT':
+          case 'KNC_VSNXD_QDNDVN':
             count = record.so_nien_han ?? 0;
             tooltip = 'Số quân nhân đề xuất niên hạn';
             break;
