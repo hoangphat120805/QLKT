@@ -60,7 +60,7 @@ class PositionHistoryController {
 
       // Tự động cập nhật lại hồ sơ sau khi thêm lịch sử chức vụ
       try {
-        await profileService.recalculateProfile(personnel_id);
+        await profileService.recalculateAnnualProfile(personnel_id);
       } catch (recalcError) {
         // Silent fail - không ảnh hưởng đến response
       }
@@ -92,7 +92,7 @@ class PositionHistoryController {
       // Tự động cập nhật lại hồ sơ sau khi cập nhật lịch sử chức vụ
       try {
         const personnelId = result.data?.quan_nhan_id || result.quan_nhan_id;
-        await profileService.recalculateProfile(personnelId);
+        await profileService.recalculateAnnualProfile(personnelId);
       } catch (recalcError) {
         // Silent fail - không ảnh hưởng đến response
       }
@@ -126,7 +126,7 @@ class PositionHistoryController {
       // Tự động cập nhật lại hồ sơ sau khi xóa lịch sử chức vụ
       if (result.personnelId) {
         try {
-          await profileService.recalculateProfile(result.personnelId);
+          await profileService.recalculateAnnualProfile(result.personnelId);
         } catch (recalcError) {
           // Silent fail - không ảnh hưởng đến response
         }

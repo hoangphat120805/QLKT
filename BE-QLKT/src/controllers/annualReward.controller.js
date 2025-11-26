@@ -103,7 +103,7 @@ class AnnualRewardController {
 
       // Tự động cập nhật lại hồ sơ sau khi thêm danh hiệu
       try {
-        await profileService.recalculateProfile(personnel_id);
+        await profileService.recalculateAnnualProfile(personnel_id);
         console.log(`✅ Auto-recalculated profile for personnel ${personnel_id}`);
       } catch (recalcError) {
         console.error(`⚠️ Failed to auto-recalculate profile:`, recalcError.message);
@@ -152,7 +152,7 @@ class AnnualRewardController {
 
       // Tự động cập nhật lại hồ sơ sau khi cập nhật danh hiệu
       try {
-        await profileService.recalculateProfile(result.quan_nhan_id);
+        await profileService.recalculateAnnualProfile(result.quan_nhan_id);
         console.log(`✅ Auto-recalculated profile for personnel ${result.quan_nhan_id}`);
       } catch (recalcError) {
         console.error(`⚠️ Failed to auto-recalculate profile:`, recalcError.message);
@@ -181,7 +181,7 @@ class AnnualRewardController {
       // Tự động cập nhật lại hồ sơ sau khi xóa danh hiệu
       if (result.personnelId) {
         try {
-          await profileService.recalculateProfile(result.personnelId);
+          await profileService.recalculateAnnualProfile(result.personnelId);
           console.log(`✅ Auto-recalculated profile for personnel ${result.personnelId}`);
         } catch (recalcError) {
           console.error(`⚠️ Failed to auto-recalculate profile:`, recalcError.message);

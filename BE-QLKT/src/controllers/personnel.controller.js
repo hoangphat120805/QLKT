@@ -172,7 +172,7 @@ class PersonnelController {
 
       // Tự động cập nhật lại hồ sơ sau khi update
       try {
-        await profileService.recalculateProfile(id);
+        await profileService.recalculateAnnualProfile(id);
         console.log(`✅ Auto-recalculated profile for personnel ${id}`);
       } catch (recalcError) {
         console.error(

@@ -200,23 +200,43 @@ class ProfileService {
    * @param {Array} danhHieuList - Danh sách danh hiệu đã sắp xếp theo năm giảm dần
    * @returns {number} Số năm liên tục
    */
-  calculateContinuousCSTDCS(danhHieuList) {
+  calculateContinuousCSTDCS(danhHieuList, thanhTichList, year) {
     let count = 0;
     const sortedRewards = [...danhHieuList].sort((a, b) => b.nam - a.nam);
-
+    const sortedThanhTich = [...thanhTichList].sort((a, b) => b.nam - a.nam);
+    let currentYear = year; // Bắt đầu từ năm gần nhất
     for (const reward of sortedRewards) {
-      // Kiểm tra đã nhận CSTDTQ → reset chuỗi
-      if (reward.nhan_cstdtq === true) {
-        // Nếu gặp năm đã nhận CSTDTQ, reset về 0 (bắt đầu chuỗi mới)
-        count = 0;
-        continue;
-      }
-
-      // Đếm CSTDCS
+      if (reward.nam !== currentYear) continue; // Chỉ xét chuỗi liên tiếp từ năm hiện tại trở lùi
+      // check NCKH trong năm hiện tại
+      const nckhInYear = sortedThanhTich.find(t => t.nam === currentYear);
+      if (!nckhInYear) break; // Nếu năm hiện tại không có NCKH thì dừng chuỗi
       if (reward.danh_hieu === 'CSTDCS') {
         count++;
+        currentYear--;
       } else {
-        // Gặp năm không phải CSTDCS (CSTT, KHONG_DAT, null) → dừng đếm
+        break;
+      }
+    }
+
+    return count;
+  }
+
+  /**
+   * Tính số năm liên tục nhận BKBQP (mỗi 2 năm)
+   * @param {Array} danhHieuList - Danh sách danh hiệu đã sắp xếp theo năm giảm dần
+   * @returns {number} Số năm liên tục
+   */
+  calculateContinuousBKBQP(danhHieuList, year) {
+    let count = 0;
+    const sortedRewards = [...danhHieuList].sort((a, b) => b.nam - a.nam);
+    let currentYear = year - 1; // Bắt đầu từ năm trước năm gần nhất
+
+    for (const reward of sortedRewards) {
+      if (reward.nam !== currentYear) continue; // Chỉ xét chuỗi liên tiếp từ năm hiện tại trở lùi
+      if (reward.nhan_bkbqp === true) {
+        count++;
+        currentYear -= 2; // Bước nhảy 2 năm cho BKBQP
+      } else {
         break;
       }
     }
@@ -575,11 +595,14 @@ class ProfileService {
         where: { id: personnelId },
         include: {
           DanhHieuHangNam: {
-            orderBy: { nam: 'asc' }, // Sắp xếp theo năm tăng dần
+            where: {
+              nam: { lte: year },
+            },
+            orderBy: { nam: 'asc' },
           },
           ThanhTichKhoaHoc: {
-            where: { status: 'APPROVED' }, // Chỉ lấy ĐTKH/SKKH đã duyệt
-            orderBy: { nam: 'asc' }, // Sắp xếp theo năm tăng dần
+            where: { status: 'APPROVED', nam: { lte: year } },
+            orderBy: { nam: 'asc' },
           },
         },
       });
@@ -639,198 +662,22 @@ class ProfileService {
         `📋 [recalculateAnnualProfile] Số NCKH: ${tong_nckh}, JSON:`,
         JSON.stringify(tong_nckh_json, null, 2)
       );
-      let cstdcs_lien_tuc = 0;
-      let nam_cstdcs_lien_tuc = []; // Mảng lưu các năm CSTĐCS liên tục
 
       // ==============================================
       // BƯỚC 3: Logic "Bộ não" (Lặp và Kiểm tra)
       // ==============================================
 
-      // Tìm các chuỗi CSTĐCS liên tục và kiểm tra điều kiện
-      // Logic mới: Tìm từng chuỗi liên tục, kiểm tra điều kiện, nếu không đủ thì reset và bắt đầu chuỗi mới
-
-      let currentSequence = []; // Chuỗi CSTDCS hiện tại đang xét
-      let lastCheckedYear = null; // Năm cuối cùng đã kiểm tra
-
-      for (const danhHieu of danhHieuList) {
-        if (danhHieu.danh_hieu === 'CSTDCS') {
-          // tong_cstdcs đã được tính từ tong_cstdcs_json.length ở trên
-
-          // Kiểm tra xem năm này có liên tiếp với chuỗi hiện tại không
-          if (currentSequence.length === 0 || danhHieu.nam === lastCheckedYear + 1) {
-            // Thêm vào chuỗi hiện tại
-            currentSequence.push(danhHieu.nam);
-            lastCheckedYear = danhHieu.nam;
-            cstdcs_lien_tuc = currentSequence.length;
-            nam_cstdcs_lien_tuc = [...currentSequence];
-          } else {
-            // Không liên tiếp, reset và bắt đầu chuỗi mới
-            currentSequence = [danhHieu.nam];
-            lastCheckedYear = danhHieu.nam;
-            cstdcs_lien_tuc = 1;
-            nam_cstdcs_lien_tuc = [danhHieu.nam];
-          }
-
-          // B. Logic kiểm tra điều kiện BKBQP (2 năm) - KIỂM TRA TRƯỚC
-          // Điều kiện: ĐÚNG 2 năm CSTDCS liên tục + MỖI năm đều có NCKH (ĐTKH/SKKH) đã duyệt
-          // Mỗi cụm 2 năm là độc lập, không liên quan đến nhau (ví dụ: 1-2, 3-4, 5-6 là các cụm độc lập)
-          // NCKH chỉ được kiểm tra trong phạm vi của từng cụm 2 năm riêng biệt
-          // Tính cụm 2 năm từ đầu đến cuối, không lấy 2 năm cuối
-          let hasBKBQPInSequence = false; // Biến để lưu trạng thái BKBQP trong cụm hiện tại
-
-          if (currentSequence.length >= 2) {
-            // Luôn kiểm tra cụm 2 năm đầu tiên (từ đầu chuỗi)
-            const nam_1 = currentSequence[0];
-            const nam_2 = currentSequence[1];
-
-            // Kiểm tra mỗi năm đều có NCKH (chỉ trong phạm vi cụm 2 năm này)
-            const hasNCKH_Nam1 = thanhTichList.some(tt => tt.nam === nam_1);
-            const hasNCKH_Nam2 = thanhTichList.some(tt => tt.nam === nam_2);
-
-            // Kiểm tra đã có BKBQP chưa (trong cụm 2 năm này: năm 1 hoặc năm 2)
-            const hasBKBQP = danhHieuList.some(
-              dh => dh.nhan_bkbqp === true && (dh.nam === nam_1 || dh.nam === nam_2)
-            );
-
-            if (hasNCKH_Nam1 && hasNCKH_Nam2) {
-              // Cụm 2 năm đầu đủ điều kiện BKBQP
-              du_dieu_kien_bkbqp = true;
-              hasBKBQPInSequence = hasBKBQP;
-              // Lưu lại 2 năm đã đủ điều kiện BKBQP để tạo gợi ý
-              nam_bkbqp_sequence = [nam_1, nam_2];
-
-              if (hasBKBQP) {
-                // Đã có BKBQP rồi, có thể kiểm tra CSTDTQ nếu có đủ 3 năm
-                // Không reset, để kiểm tra CSTDTQ
-              } else {
-                // Chưa có BKBQP, reset và bắt đầu cụm mới từ năm tiếp theo
-                if (currentSequence.length > 2) {
-                  // Có hơn 2 năm, reset và bắt đầu cụm mới từ năm thứ 3
-                  // Bỏ qua 2 năm đầu (đã xử lý xong), bắt đầu từ năm thứ 3
-                  const remainingYears = currentSequence.slice(2);
-                  if (remainingYears.length > 0) {
-                    currentSequence = remainingYears;
-                    lastCheckedYear = remainingYears[remainingYears.length - 1];
-                    cstdcs_lien_tuc = remainingYears.length;
-                    nam_cstdcs_lien_tuc = [...remainingYears];
-                  } else {
-                    currentSequence = [];
-                    lastCheckedYear = null;
-                    cstdcs_lien_tuc = 0;
-                    nam_cstdcs_lien_tuc = [];
-                  }
-                }
-              }
-            } else if (currentSequence.length === 2) {
-              // Có đúng 2 năm nhưng không đủ điều kiện BKBQP, giữ lại để hiển thị gợi ý
-              du_dieu_kien_bkbqp = false;
-              // Không reset, giữ lại để logic tạo gợi ý có thể xử lý
-            } else if (currentSequence.length > 2) {
-              // Có hơn 2 năm, cụm 2 năm đầu không đủ điều kiện
-              // Bắt đầu cụm mới từ năm thứ 3 (bỏ qua 2 năm đầu)
-              const remainingYears = currentSequence.slice(2);
-              if (remainingYears.length > 0) {
-                currentSequence = remainingYears;
-                lastCheckedYear = remainingYears[remainingYears.length - 1];
-                cstdcs_lien_tuc = remainingYears.length;
-                nam_cstdcs_lien_tuc = [...remainingYears];
-              } else {
-                currentSequence = [];
-                lastCheckedYear = null;
-                cstdcs_lien_tuc = 0;
-                nam_cstdcs_lien_tuc = [];
-              }
-              du_dieu_kien_bkbqp = false;
-            }
-          }
-
-          // C. Logic kiểm tra điều kiện CSTDTQ (3 năm) - CHỈ KIỂM TRA SAU KHI ĐÃ CÓ BKBQP
-          // Điều kiện: ĐÚNG 3 năm CSTDCS liên tục + MỖI năm đều có NCKH (ĐTKH/SKKH) đã duyệt + Có BKBQP
-          // Mỗi cụm 3 năm là độc lập, không liên quan đến nhau (ví dụ: 1-2-3, 4-5-6 là các cụm độc lập)
-          // NCKH chỉ được kiểm tra trong phạm vi của từng cụm 3 năm riêng biệt
-          // CHỈ KIỂM TRA NẾU ĐÃ CÓ BKBQP (vì BKBQP là điều kiện của CSTDTQ)
-          // Tính cụm 3 năm từ đầu đến cuối, không lấy 3 năm cuối
-          if (currentSequence.length >= 3 && hasBKBQPInSequence) {
-            // Kiểm tra cụm 3 năm đầu tiên (từ đầu chuỗi)
-            const nam_1 = currentSequence[0];
-            const nam_2 = currentSequence[1];
-            const nam_3 = currentSequence[2];
-
-            // Kiểm tra mỗi năm đều có NCKH (chỉ trong phạm vi cụm 3 năm này)
-            const hasNCKH_Nam1 = thanhTichList.some(tt => tt.nam === nam_1);
-            const hasNCKH_Nam2 = thanhTichList.some(tt => tt.nam === nam_2);
-            const hasNCKH_Nam3 = thanhTichList.some(tt => tt.nam === nam_3);
-
-            // Kiểm tra có BKBQP không (chỉ trong phạm vi cụm 3 năm này: năm 1 hoặc năm 2)
-            const hasBKBQP = danhHieuList.some(
-              dh => dh.nhan_bkbqp === true && (dh.nam === nam_1 || dh.nam === nam_2)
-            );
-
-            if (hasNCKH_Nam1 && hasNCKH_Nam2 && hasNCKH_Nam3 && hasBKBQP) {
-              // Cụm 3 năm đầu đủ điều kiện CSTDTQ, reset và bắt đầu cụm mới từ năm thứ 4
-              du_dieu_kien_cstdtq = true;
-              const remainingYears = currentSequence.slice(3);
-              if (remainingYears.length > 0) {
-                currentSequence = remainingYears;
-                lastCheckedYear = remainingYears[remainingYears.length - 1];
-                cstdcs_lien_tuc = remainingYears.length;
-                nam_cstdcs_lien_tuc = [...remainingYears];
-              } else {
-                currentSequence = [];
-                lastCheckedYear = null;
-                cstdcs_lien_tuc = 0;
-                nam_cstdcs_lien_tuc = [];
-              }
-            } else if (currentSequence.length === 3) {
-              // Có đúng 3 năm nhưng không đủ điều kiện CSTDTQ, reset và bắt đầu cụm mới
-              currentSequence = [];
-              lastCheckedYear = null;
-              cstdcs_lien_tuc = 0;
-              nam_cstdcs_lien_tuc = [];
-              du_dieu_kien_cstdtq = false;
-            } else if (currentSequence.length > 3) {
-              // Có hơn 3 năm, cụm 3 năm đầu không đủ điều kiện
-              // Bắt đầu cụm mới từ năm thứ 4 (bỏ qua 3 năm đầu)
-              const remainingYears = currentSequence.slice(3);
-              if (remainingYears.length > 0) {
-                currentSequence = remainingYears;
-                lastCheckedYear = remainingYears[remainingYears.length - 1];
-                cstdcs_lien_tuc = remainingYears.length;
-                nam_cstdcs_lien_tuc = [...remainingYears];
-              } else {
-                currentSequence = [];
-                lastCheckedYear = null;
-                cstdcs_lien_tuc = 0;
-                nam_cstdcs_lien_tuc = [];
-              }
-              du_dieu_kien_cstdtq = false;
-            }
-          }
-        } else {
-          // Reset chuỗi nếu không phải CSTDCS
-          currentSequence = [];
-          lastCheckedYear = null;
-          cstdcs_lien_tuc = 0;
-          nam_cstdcs_lien_tuc = [];
-        }
-      }
-
-      // Kiểm tra xem chuỗi CSTDCS liên tục có còn hiệu lực không
-      // Chỉ tính chuỗi nếu kết thúc ở năm hiện tại hoặc năm trước (cách không quá 1 năm)
-      // Nếu chuỗi kết thúc quá xa, coi như đã quá hạn và không còn hợp lệ
-      // Sử dụng năm được truyền lên (nếu có) thay vì năm hiện tại
-      const currentYear = year || new Date().getFullYear();
-      if (nam_cstdcs_lien_tuc.length > 0) {
-        const namCuoiCung = nam_cstdcs_lien_tuc[nam_cstdcs_lien_tuc.length - 1];
-        // Nếu chuỗi kết thúc cách năm hiện tại hơn 1 năm (ví dụ: kết thúc 2023, năm hiện tại 2025), coi như đã quá hạn
-        if (currentYear - namCuoiCung > 1) {
-          // Chuỗi đã quá hạn, reset về 0
-          cstdcs_lien_tuc = 0;
-          nam_cstdcs_lien_tuc = [];
-          du_dieu_kien_bkbqp = false;
-          du_dieu_kien_cstdtq = false;
-        }
-      }
+      const cstdcs_lien_tuc = this.calculateContinuousCSTDCS(
+        danhHieuList.filter(dh => dh.danh_hieu === 'CSTDCS'),
+        thanhTichList,
+        year
+      );
+      const bkbqp_lien_tuc = this.calculateContinuousBKBQP(
+        danhHieuList.filter(dh => dh.danh_hieu === 'BKBQP'),
+        year
+      );
+      du_dieu_kien_bkbqp = cstdcs_lien_tuc % 2 === 0 && cstdcs_lien_tuc >= 1;
+      du_dieu_kien_cstdtq = cstdcs_lien_tuc === 7 && tong_nckh >= 1;
 
       // ==============================================
       // BƯỚC 4: Logic Tạo Gợi ý (Suggestion) - CHỈ GỢI Ý BKBQP VÀ CSTDTQ
@@ -916,173 +763,6 @@ class ProfileService {
       };
     } catch (error) {
       console.error('Lỗi khi tính toán hồ sơ hằng năm:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Tính toán lại hồ sơ cho 1 quân nhân (CẢ NIÊN HẠN VÀ HẰNG NĂM)
-   * @param {string} personnelId - ID quân nhân
-   * @param {number} [year] - Năm để tính toán gợi ý (mặc định là null, sẽ dùng năm hiện tại)
-   */
-  async recalculateProfile(personnelId, year = null) {
-    console.log(
-      `[recalculateProfile] Bắt đầu tính toán toàn bộ profile cho quân nhân ID: ${personnelId}, năm: ${
-        year || 'all'
-      }`
-    );
-    try {
-      // Load tất cả dữ liệu cần thiết
-      const personnel = await prisma.quanNhan.findUnique({
-        where: { id: personnelId },
-        include: {
-          DanhHieuHangNam: {
-            orderBy: { nam: 'desc' },
-          },
-          ThanhTichKhoaHoc: {
-            where: { status: 'APPROVED' },
-          },
-          LichSuChucVu: {
-            include: {
-              ChucVu: true,
-            },
-          },
-        },
-      });
-
-      if (!personnel) {
-        throw new Error('Quân nhân không tồn tại');
-      }
-
-      // Lấy hồ sơ hiện tại (nếu có) để giữ status đã được Admin cập nhật
-      const existingAnnualProfile = await prisma.hoSoHangNam.findUnique({
-        where: { quan_nhan_id: personnelId },
-      });
-
-      const existingServiceProfile = await prisma.hoSoNienHan.findUnique({
-        where: { quan_nhan_id: personnelId },
-      });
-
-      // ==============================================
-      // TÍNH TOÁN HỒ SƠ HẰNG NĂM
-      // ==============================================
-      const annualProfileResult = await this.recalculateAnnualProfile(personnelId, year);
-
-      // Lưu TẤT CẢ danh hiệu cá nhân hằng năm dạng JSON (CSTT, CSTDCS, BKBQP, CSTDTQ)
-      // Lưu ý: recalculateAnnualProfile đã tính toán và lưu đúng, nên không cần tính lại ở đây
-      // Chỉ cần lấy từ kết quả đã tính
-      const tong_cstdcs_json = personnel.DanhHieuHangNam.filter(
-        dh => dh.danh_hieu === 'CSTDCS' || dh.danh_hieu === 'CSTT'
-      )
-        .map(dh => ({
-          nam: dh.nam,
-          danh_hieu: dh.danh_hieu,
-          so_quyet_dinh: dh.so_quyet_dinh || null,
-          file_quyet_dinh: dh.file_quyet_dinh || null,
-          nhan_bkbqp: dh.nhan_bkbqp || false,
-          nhan_cstdtq: dh.nhan_cstdtq || false,
-          so_quyet_dinh_bkbqp: dh.so_quyet_dinh_bkbqp || null,
-          file_quyet_dinh_bkbqp: dh.file_quyet_dinh_bkbqp || null,
-          so_quyet_dinh_cstdtq: dh.so_quyet_dinh_cstdtq || null,
-          file_quyet_dinh_cstdtq: dh.file_quyet_dinh_cstdtq || null,
-        }))
-        .sort((a, b) => a.nam - b.nam);
-      const CSTDCSCount = tong_cstdcs_json.length;
-
-      // Lưu danh sách NCKH dạng JSON
-      const tong_nckh_json = personnel.ThanhTichKhoaHoc.filter(tt =>
-        ['NCKH', 'SKKH'].includes(tt.loai)
-      )
-        .map(tt => ({
-          nam: tt.nam,
-          loai: tt.loai,
-          mo_ta: tt.mo_ta,
-          status: tt.status,
-          so_quyet_dinh: tt.so_quyet_dinh || null,
-          file_quyet_dinh: tt.file_quyet_dinh || null,
-        }))
-        .sort((a, b) => a.nam - b.nam);
-      const nckhCount = tong_nckh_json.length;
-
-      // Xử lý trường hợp đặc biệt (Reset, đã nhận)
-      const specialCase = this.handleSpecialCases(personnel.DanhHieuHangNam);
-
-      // Tính số năm CSTDCS liên tục
-      const CSTDCSLienTuc = this.calculateContinuousCSTDCS(personnel.DanhHieuHangNam);
-
-      // Tính toán BKBQP
-      const bkbqpResult = this.calculateBKBQP(
-        CSTDCSLienTuc,
-        personnel.DanhHieuHangNam,
-        personnel.ThanhTichKhoaHoc
-      );
-
-      // Tính toán CSTDTQ
-      const cstdtqResult = this.calculateCSTDTQ(
-        CSTDCSLienTuc,
-        bkbqpResult,
-        personnel.DanhHieuHangNam,
-        personnel.ThanhTichKhoaHoc
-      );
-
-      // Tổng hợp gợi ý
-      let finalGoiYHangNam = '';
-      if (specialCase.isSpecialCase) {
-        finalGoiYHangNam = specialCase.goiY;
-      } else if (cstdtqResult.duDieuKien) {
-        finalGoiYHangNam = cstdtqResult.goiY;
-      } else if (bkbqpResult.duDieuKien) {
-        finalGoiYHangNam = bkbqpResult.goiY + ' ' + cstdtqResult.goiY;
-      } else {
-        finalGoiYHangNam = bkbqpResult.goiY;
-      }
-
-      // Cập nhật hoặc tạo mới hồ sơ hằng năm
-      // Lưu ý: recalculateAnnualProfile đã lưu đúng dữ liệu với logic mới (2 năm BKBQP, 3 năm CSTDTQ)
-      // Hàm này chỉ cập nhật các trường bổ sung nếu cần, nhưng tốt nhất là không ghi đè
-      // Vì recalculateAnnualProfile đã tính toán chính xác hơn
-      // Chỉ cập nhật nếu cần thiết (ví dụ: goi_y từ logic cũ)
-      // Nhưng để tránh xung đột, chúng ta sẽ bỏ qua phần lưu này vì recalculateAnnualProfile đã lưu rồi
-      // Nếu cần cập nhật goi_y từ logic cũ, có thể uncomment phần dưới:
-      /*
-      await prisma.hoSoHangNam.upsert({
-        where: { quan_nhan_id: personnelId },
-        update: {
-          tong_cstdcs: CSTDCSCount, // Số lượng (Int)
-          tong_nckh: nckhCount, // Số lượng (Int)
-          tong_cstdcs_json: tong_cstdcs_json, // Chi tiết dạng JSON
-          tong_nckh_json: tong_nckh_json, // Chi tiết dạng JSON
-          cstdcs_lien_tuc: CSTDCSLienTuc,
-          du_dieu_kien_bkbqp: bkbqpResult.duDieuKien,
-          du_dieu_kien_cstdtq: cstdtqResult.duDieuKien,
-          goi_y: finalGoiYHangNam,
-        },
-        create: {
-          quan_nhan_id: personnelId,
-          tong_cstdcs: CSTDCSCount, // Số lượng (Int)
-          tong_nckh: nckhCount, // Số lượng (Int)
-          tong_cstdcs_json: tong_cstdcs_json, // Chi tiết dạng JSON
-          tong_nckh_json: tong_nckh_json, // Chi tiết dạng JSON
-          cstdcs_lien_tuc: CSTDCSLienTuc,
-          du_dieu_kien_bkbqp: bkbqpResult.duDieuKien,
-          du_dieu_kien_cstdtq: cstdtqResult.duDieuKien,
-          goi_y: finalGoiYHangNam,
-        },
-      });
-      */
-
-      // ==============================================
-      // TÍNH TOÁN HỒ SƠ NIÊN HẠN
-      // ==============================================
-      await this.recalculateTenureProfile(personnelId);
-
-      // ==============================================
-      // TÍNH TOÁN HỒ SƠ CỐNG HIẾN
-      // ==============================================
-      await this.recalculateContributionProfile(personnelId);
-
-      return { message: 'Tính toán lại hồ sơ thành công' };
-    } catch (error) {
       throw error;
     }
   }
@@ -1466,7 +1146,7 @@ class ProfileService {
 
       for (const personnel of allPersonnel) {
         try {
-          await this.recalculateProfile(personnel.id);
+          await this.recalculateAnnualProfile(personnel.id);
           successCount++;
           if (successCount % 10 === 0) {
             console.log(`[recalculateAll] Tiến độ: ${successCount}/${allPersonnel.length}`);

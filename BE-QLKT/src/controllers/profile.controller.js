@@ -98,7 +98,7 @@ class ProfileController {
       const { year } = req.query; // Lấy năm từ query params
       const yearNumber = year ? parseInt(year, 10) : null;
 
-      const result = await profileService.recalculateProfile(personnel_id, yearNumber);
+      const result = await profileService.recalculateAnnualProfile(personnel_id, yearNumber);
 
       return res.status(200).json({
         success: true,

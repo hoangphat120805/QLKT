@@ -123,7 +123,7 @@ class UnitAnnualAwardService {
 
   async calculateBKBQPContinuous(donViId, year) {
     // Check awarded records (nhan_bkbqp) in DanhHieuDonViHangNam table
-        const records = await prisma.danhHieuDonViHangNam.findMany({
+    const records = await prisma.danhHieuDonViHangNam.findMany({
       where: {
         OR: [{ co_quan_don_vi_id: donViId }, { don_vi_truc_thuoc_id: donViId }],
         nam: { lte: year },
@@ -392,7 +392,7 @@ class UnitAnnualAwardService {
     const dvqtResult = await this.calculateTotalDVQT(donViId, year);
     const dvqtLienTuc = await this.calculateContinuousYears(donViId, year);
     const bkbqpLienTuc = await this.calculateBKBQPContinuous(donViId, year);
-    const du3 = dvqtLienTuc % 2 === 0;
+    const du3 = dvqtLienTuc % 2 === 0 && dvqtLienTuc >= 1;
     const du5 = dvqtLienTuc == 7 && bkbqpLienTuc == 3;
 
     // Kiểm tra xem có bằng khen chưa (dựa vào DanhHieuDonViHangNam năm hiện tại)
@@ -758,7 +758,7 @@ class UnitAnnualAwardService {
       const dvqtLienTuc = await this.calculateContinuousYears(donViId, targetYear);
       const bkbqpLienTuc = await this.calculateBKBQPContinuous(donViId, targetYear);
 
-      const du_dieu_kien_bk_tong_cuc = dvqtLienTuc % 2 === 0;
+      const du_dieu_kien_bk_tong_cuc = dvqtLienTuc % 2 === 0 && dvqtLienTuc >= 1;
       const du_dieu_kien_bk_thu_tuong = dvqtLienTuc >= 7 && bkbqpLienTuc >= 3;
 
       // Kiểm tra xem có bằng khen chưa
