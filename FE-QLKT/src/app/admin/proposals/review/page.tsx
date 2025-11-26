@@ -10,6 +10,7 @@ import {
   CheckCircleOutlined,
   WarningOutlined,
   LoadingOutlined,
+  UnorderedListOutlined,
 } from '@ant-design/icons';
 import { format } from 'date-fns';
 import { apiClient } from '@/lib/api-client';
@@ -123,6 +124,11 @@ export default function ProposalReviewPage() {
       render: (date: string) => format(new Date(date), 'dd/MM/yyyy HH:mm'),
     },
     {
+      title: 'Năm',
+      dataIndex: 'nam',
+      key: 'nam',
+    },
+    {
       title: 'Số lượng',
       key: 'so_luong',
       align: 'center' as const,
@@ -171,6 +177,15 @@ export default function ProposalReviewPage() {
   ];
 
   const tabItems = [
+    {
+      key: 'all',
+      label: (
+        <span>
+          <UnorderedListOutlined style={{ marginRight: 8 }} />
+          Tất cả ({proposals.length})
+        </span>
+      ),
+    },
     {
       key: 'pending',
       label: (
@@ -223,7 +238,9 @@ export default function ProposalReviewPage() {
           children: (
             <Card
               title={
-                activeTab === 'pending'
+                activeTab === 'all'
+                  ? 'Tất cả đề xuất'
+                  : activeTab === 'pending'
                   ? 'Đề xuất đang chờ phê duyệt'
                   : activeTab === 'approved'
                   ? 'Đề xuất đã được phê duyệt'
@@ -231,7 +248,9 @@ export default function ProposalReviewPage() {
               }
               extra={
                 <Paragraph style={{ margin: 0, color: '#666' }}>
-                  {activeTab === 'pending'
+                  {activeTab === 'all'
+                    ? 'Danh sách tất cả các đề xuất'
+                    : activeTab === 'pending'
                     ? "Nhấn 'Xem và Duyệt' để kiểm tra và phê duyệt đề xuất"
                     : activeTab === 'approved'
                     ? 'Danh sách các đề xuất đã được phê duyệt và import vào hệ thống'
@@ -251,7 +270,9 @@ export default function ProposalReviewPage() {
                     <div>
                       <div style={{ fontWeight: 500 }}>Không có đề xuất nào</div>
                       <div style={{ fontSize: '14px', marginTop: '4px' }}>
-                        {activeTab === 'pending'
+                        {activeTab === 'all'
+                          ? 'Chưa có đề xuất nào'
+                          : activeTab === 'pending'
                           ? 'Chưa có đề xuất chờ phê duyệt'
                           : activeTab === 'approved'
                           ? 'Chưa có đề xuất nào được phê duyệt'
