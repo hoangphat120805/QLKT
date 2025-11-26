@@ -42,6 +42,7 @@ import Step2SelectPersonnelCongHien from './components/Step2SelectPersonnelCongH
 import Step2SelectPersonnelNCKH from './components/Step2SelectPersonnelNCKH';
 import Step2SelectUnits from './components/Step2SelectUnits';
 import Step3SetTitles from './components/Step3SetTitles';
+import { record } from 'zod';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -1016,7 +1017,14 @@ export default function CreateProposalPage() {
               dataIndex: 'mo_ta',
               key: 'mo_ta',
               align: 'center',
-              ellipsis: true,
+              render: (_, record) => {
+                const moTa = titleData.find(
+                  t =>
+                    String(t.personnelId) === String(record.id) ||
+                    String(t.personnel_id) === String(record.id)
+                )?.mo_ta;
+                return <Text>{moTa}</Text>;
+              },
             }
           );
         } else {
@@ -1035,7 +1043,6 @@ export default function CreateProposalPage() {
                   String(t.personnel_id) === String(record.id)
               );
               const danh_hieu = titleInfo?.danh_hieu;
-              console.log('Rendering danh_hieu for record:', titleData);
 
               // Map mã danh hiệu sang tên đầy đủ
               const danhHieuMap: Record<string, string> = {
