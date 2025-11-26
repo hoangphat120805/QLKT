@@ -29,6 +29,8 @@ export default function ExcelImportSection({
 }: ExcelImportSectionProps) {
   const [uploading, setUploading] = useState(false);
   const [fileList, setFileList] = useState<UploadFile[]>([]);
+  const [importSuccess, setImportSuccess] = useState(false);
+  const [importedCount, setImportedCount] = useState(0);
   const { token } = theme.useToken();
 
   const handleDownloadTemplate = async () => {
@@ -63,6 +65,10 @@ export default function ExcelImportSection({
   };
 
   const handleUploadExcel = async (file: File) => {
+    // Reset success state for new upload
+    setImportSuccess(false);
+    setImportedCount(0);
+
     if (localProcessing && onLocalProcess) {
       // Xử lý local
       try {
@@ -82,6 +88,10 @@ export default function ExcelImportSection({
             message.info(`Còn ${result.errors.length - 5} lỗi khác...`, 3);
           }
         }
+
+        // Set success state
+        setImportSuccess(true);
+        setImportedCount(result.imported);
 
         // Callback với result
         if (onImportSuccess) {
@@ -126,6 +136,10 @@ export default function ExcelImportSection({
               message.info(`Còn ${result.errors.length - 5} lỗi khác...`, 3);
             }
           }
+
+          // Set success state
+          setImportSuccess(true);
+          setImportedCount(result.imported);
 
           // Callback với result
           if (onImportSuccess) {
@@ -200,9 +214,9 @@ export default function ExcelImportSection({
           </Upload>
         </Space>
 
-        {selectedCount > 0 && (
+        {importSuccess && importedCount > 0 && (
           <Alert
-            message={`Đã import thành công ${selectedCount} ${entityLabel} từ file Excel`}
+            message={`Đã import thành công ${importedCount} ${entityLabel} từ file Excel`}
             type="success"
             showIcon
           />
