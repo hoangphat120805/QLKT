@@ -121,6 +121,32 @@ class UnitAnnualAwardService {
     return continuous;
   }
 
+  async calculateBKBQPContinuous(donViId, year) {
+    // Check awarded records (nhan_bkbqp) in DanhHieuDonViHangNam table
+        const records = await prisma.danhHieuDonViHangNam.findMany({
+      where: {
+        OR: [{ co_quan_don_vi_id: donViId }, { don_vi_truc_thuoc_id: donViId }],
+        nam: { lte: year },
+        danh_hieu: 'BKBQP',
+      },
+      orderBy: { nam: 'desc' },
+      select: { nam: true, danh_hieu: true },
+    });
+    let continuous = 0;
+    let current = year - 1;
+    for (const r of records) {
+      if (r.nam !== current) continue; // chỉ xét chuỗi liên tiếp từ năm hiện tại trở lùi
+      // Có danh hiệu nếu có danh_hieu không null và không rỗng
+      if (r.danh_hieu && r.danh_hieu.trim() !== '') {
+        continuous += 1;
+        current -= 2;
+      } else {
+        break;
+      }
+    }
+    return continuous;
+  }
+
   /**
    * Tính tổng số lần đơn vị đạt danh hiệu DVQT
    */
@@ -365,8 +391,9 @@ class UnitAnnualAwardService {
   async updateHoSoDonVi(donViId, year, isCoQuanDonVi) {
     const dvqtResult = await this.calculateTotalDVQT(donViId, year);
     const dvqtLienTuc = await this.calculateContinuousYears(donViId, year);
-    const du3 = dvqtLienTuc >= 2;
-    const du5 = dvqtLienTuc >= 4;
+    const bkbqpLienTuc = await this.calculateBKBQPContinuous(donViId, year);
+    const du3 = dvqtLienTuc % 2 === 0;
+    const du5 = dvqtLienTuc == 7 && bkbqpLienTuc == 3;
 
     // Kiểm tra xem có bằng khen chưa (dựa vào DanhHieuDonViHangNam năm hiện tại)
     const currentYearAward = await prisma.danhHieuDonViHangNam.findFirst({
@@ -729,9 +756,10 @@ class UnitAnnualAwardService {
       // Tính toán các chỉ số
       const dvqtResult = await this.calculateTotalDVQT(donViId, targetYear);
       const dvqtLienTuc = await this.calculateContinuousYears(donViId, targetYear);
+      const bkbqpLienTuc = await this.calculateBKBQPContinuous(donViId, targetYear);
 
-      const du_dieu_kien_bk_tong_cuc = dvqtLienTuc >= 2;
-      const du_dieu_kien_bk_thu_tuong = dvqtLienTuc >= 7;
+      const du_dieu_kien_bk_tong_cuc = dvqtLienTuc % 2 === 0;
+      const du_dieu_kien_bk_thu_tuong = dvqtLienTuc >= 7 && bkbqpLienTuc >= 3;
 
       // Kiểm tra xem có bằng khen chưa
       const currentYearAward = danhHieuList.find(dh => dh.nam === targetYear);
