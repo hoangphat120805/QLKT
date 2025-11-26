@@ -38,7 +38,7 @@ export default function ProposalReviewPage() {
   const router = useRouter();
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('pending');
+  const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
     fetchProposals();
