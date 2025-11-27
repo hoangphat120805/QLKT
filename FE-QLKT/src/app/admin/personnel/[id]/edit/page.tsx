@@ -13,8 +13,8 @@ import {
   Breadcrumb,
   ConfigProvider,
   theme as antdTheme,
+  Spin,
 } from 'antd';
-import { Loading } from '@/components/ui/loading';
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
@@ -262,7 +262,9 @@ export default function PersonnelEditPage() {
         />
 
         {loadingData ? (
-          <Loading message="Đang tải thông tin quân nhân..." size="large" />
+          <div className="flex justify-center items-center min-h-[400px]">
+            <Spin size="large" />
+          </div>
         ) : (
           <>
             {/* Header */}

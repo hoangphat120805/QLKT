@@ -10,12 +10,12 @@ import {
   ConfigProvider,
   theme as antdTheme,
   Pagination,
+  Spin,
 } from 'antd';
 import { FileTextOutlined, DashboardOutlined, FundOutlined, HomeOutlined } from '@ant-design/icons';
 import { LogsFilter } from '@/components/system-logs/logs-filter';
 import { LogsTable } from '@/components/system-logs/logs-table';
 import { apiClient } from '@/lib/api-client';
-import { Loading } from '@/components/ui/loading';
 import { useTheme } from '@/components/theme-provider';
 import Link from 'next/link';
 
@@ -100,13 +100,9 @@ export default function AdminSystemLogsPage() {
 
   if (loading && logs.length === 0) {
     return (
-      <ConfigProvider
-        theme={{
-          algorithm: theme === 'dark' ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
-        }}
-      >
-        <Loading fullScreen message="Đang tải nhật ký hệ thống..." size="large" />
-      </ConfigProvider>
+      <div className="flex items-center justify-center min-h-screen">
+        <Spin size="large" />
+      </div>
     );
   }
 

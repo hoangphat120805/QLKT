@@ -13,8 +13,8 @@ import {
   message,
   ConfigProvider,
   theme as antdTheme,
+  Spin,
 } from 'antd';
-import { Loading } from '@/components/ui/loading';
 import { useTheme } from '@/components/theme-provider';
 import {
   SyncOutlined,
@@ -67,13 +67,16 @@ export default function ManagerPersonnelPage() {
             setManagerUnitId(res.data.don_vi_id);
           } else {
             message.error('Không thể xác định đơn vị quản lý.');
+            setLoading(false); // Đảm bảo không bị loading mãi
           }
         })
         .catch(() => {
           message.error('Không thể tải thông tin đơn vị.');
+          setLoading(false); // Đảm bảo không bị loading mãi
         });
     } else {
       message.error('Không tìm thấy thông tin quản lý. Vui lòng đăng nhập lại.');
+      setLoading(false); // Đảm bảo không bị loading mãi
     }
   }, []);
 
@@ -206,13 +209,9 @@ export default function ManagerPersonnelPage() {
 
   if (loading && personnel.length === 0 && managerUnitId !== null) {
     return (
-      <ConfigProvider
-        theme={{
-          algorithm: theme === 'dark' ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
-        }}
-      >
-        <Loading fullScreen message="Đang tải danh sách quân nhân đơn vị..." size="large" />
-      </ConfigProvider>
+      <div className="flex items-center justify-center min-h-screen">
+        <Spin size="large" />
+      </div>
     );
   }
 

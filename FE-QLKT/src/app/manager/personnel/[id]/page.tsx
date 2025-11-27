@@ -16,8 +16,8 @@ import {
   Col,
   Statistic,
   Divider,
+  Spin,
 } from 'antd';
-import { Loading } from '@/components/ui/loading';
 import {
   ArrowLeftOutlined,
   EditOutlined,
@@ -147,13 +147,9 @@ export default function ManagerPersonnelDetailPage() {
 
   if (loading) {
     return (
-      <ConfigProvider
-        theme={{
-          algorithm: currentTheme === 'dark' ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
-        }}
-      >
-        <Loading fullScreen message="Đang tải thông tin quân nhân..." size="large" />
-      </ConfigProvider>
+      <div className="flex items-center justify-center min-h-screen">
+        <Spin size="large" />
+      </div>
     );
   }
 

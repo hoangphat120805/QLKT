@@ -13,6 +13,7 @@ import {
   ConfigProvider,
   theme as antdTheme,
   Space,
+  Spin,
 } from 'antd';
 import { PlusOutlined, HomeOutlined } from '@ant-design/icons';
 import { UnitForm } from '@/components/categories/unit-form';
@@ -21,7 +22,6 @@ import { PositionForm } from '@/components/categories/position-form';
 import { PositionsTable } from '@/components/categories/positions-table';
 import { apiClient } from '@/lib/api-client';
 import { useTheme } from '@/components/theme-provider';
-import { Loading } from '@/components/ui/loading';
 import Link from 'next/link';
 
 const { Title, Text } = Typography;
@@ -97,7 +97,9 @@ export default function CategoriesPage() {
           algorithm: theme === 'dark' ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
         }}
       >
-        <Loading message="Đang tải dữ liệu danh mục..." size="large" />
+        <div className="flex justify-center items-center min-h-screen">
+          <Spin size="large" />
+        </div>
       </ConfigProvider>
     );
   }

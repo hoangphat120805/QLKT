@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, Breadcrumb, Typography, ConfigProvider, theme as antdTheme, Row, Col } from 'antd';
+import { Card, Breadcrumb, Typography, ConfigProvider, theme as antdTheme, Row, Col, Spin } from 'antd';
 import {
   DashboardOutlined,
   UserOutlined,
@@ -15,7 +15,6 @@ import {
 } from '@ant-design/icons';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
-import { Loading } from '@/components/ui/loading';
 import { useTheme } from '@/components/theme-provider';
 import {
   Chart as ChartJS,
@@ -477,13 +476,9 @@ export default function SuperAdminDashboard() {
 
   if (loading) {
     return (
-      <ConfigProvider
-        theme={{
-          algorithm: theme === 'dark' ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
-        }}
-      >
-        <Loading fullScreen message="Đang tải thống kê hệ thống..." size="large" />
-      </ConfigProvider>
+      <div className="flex items-center justify-center min-h-screen">
+        <Spin size="large" />
+      </div>
     );
   }
 

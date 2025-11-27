@@ -14,7 +14,6 @@ import {
   Space,
   Tag,
 } from 'antd';
-import { Loading } from '@/components/ui/loading';
 import { useTheme } from '@/components/theme-provider';
 import { HomeOutlined, EyeOutlined, TrophyOutlined } from '@ant-design/icons';
 import type { TableColumnsType } from 'antd';
@@ -129,7 +128,17 @@ export default function ManagerUnitsPage() {
   ];
 
   if (loading) {
-    return <Loading />;
+    return (
+      <ConfigProvider
+        theme={{
+          algorithm: theme === 'dark' ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+        }}
+      >
+        <div className="flex justify-center items-center min-h-screen">
+          <Spin size="large" />
+        </div>
+      </ConfigProvider>
+    );
   }
 
   return (

@@ -17,8 +17,8 @@ import {
   ConfigProvider,
   theme as antdTheme,
   Popover,
+  Spin,
 } from 'antd';
-import { Loading } from '@/components/ui/loading';
 import { useTheme } from '@/components/theme-provider';
 import {
   PlusOutlined,
@@ -318,13 +318,9 @@ export default function PersonnelPage() {
 
   if (loading && personnel.length === 0) {
     return (
-      <ConfigProvider
-        theme={{
-          algorithm: theme === 'dark' ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
-        }}
-      >
-        <Loading fullScreen message="Đang tải danh sách quân nhân..." size="large" />
-      </ConfigProvider>
+      <div className="flex items-center justify-center min-h-screen">
+        <Spin size="large" />
+      </div>
     );
   }
 

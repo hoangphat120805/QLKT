@@ -16,7 +16,6 @@ import {
   Spin,
   Popover,
 } from 'antd';
-import { Loading } from '@/components/ui/loading';
 import { useTheme } from '@/components/theme-provider';
 import {
   DownloadOutlined,
@@ -299,13 +298,9 @@ export default function ManagerAwardsPage() {
 
   if (loading && awards.length === 0) {
     return (
-      <ConfigProvider
-        theme={{
-          algorithm: theme === 'dark' ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
-        }}
-      >
-        <Loading fullScreen message="Đang tải danh sách khen thưởng..." size="large" />
-      </ConfigProvider>
+      <div className="flex items-center justify-center min-h-screen">
+        <Spin size="large" />
+      </div>
     );
   }
 

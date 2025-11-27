@@ -11,8 +11,8 @@ import {
   theme as antdTheme,
   Row,
   Col,
+  Spin,
 } from 'antd';
-import { Loading } from '@/components/ui/loading';
 import {
   TeamOutlined,
   FileTextOutlined,
@@ -153,7 +153,9 @@ export default function AdminDashboard() {
 
         {/* Statistics Cards */}
         {loading ? (
-          <Loading message="Đang tải thống kê hệ thống..." size="large" />
+          <div className="flex justify-center items-center min-h-screen">
+            <Spin size="large" />
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {statCards.map((stat, index) => {

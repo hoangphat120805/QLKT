@@ -14,7 +14,6 @@ import {
   theme as antdTheme,
   Spin,
 } from 'antd';
-import { Loading } from '@/components/ui/loading';
 import { useTheme } from '@/components/theme-provider';
 import { PositionForm } from '@/components/categories/position-form';
 import { PositionsTable } from '@/components/categories/positions-table';
@@ -81,13 +80,9 @@ export default function PositionsPage() {
 
   if (loading && positions.length === 0) {
     return (
-      <ConfigProvider
-        theme={{
-          algorithm: theme === 'dark' ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
-        }}
-      >
-        <Loading fullScreen message="Đang tải danh sách chức vụ..." size="large" />
-      </ConfigProvider>
+      <div className="flex items-center justify-center min-h-screen">
+        <Spin size="large" />
+      </div>
     );
   }
 

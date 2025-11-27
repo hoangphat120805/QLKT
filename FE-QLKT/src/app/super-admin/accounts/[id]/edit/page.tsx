@@ -13,8 +13,8 @@ import {
   ConfigProvider,
   theme as antdTheme,
   Breadcrumb,
+  Spin,
 } from 'antd';
-import { Loading } from '@/components/ui/loading';
 import { SaveOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
@@ -88,13 +88,9 @@ export default function AccountEditPage() {
 
   if (fetchLoading) {
     return (
-      <ConfigProvider
-        theme={{
-          algorithm: theme === 'dark' ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
-        }}
-      >
-        <Loading fullScreen message="Đang tải thông tin tài khoản..." size="large" />
-      </ConfigProvider>
+      <div className="flex items-center justify-center min-h-screen">
+        <Spin size="large" />
+      </div>
     );
   }
 

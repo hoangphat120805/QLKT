@@ -15,6 +15,7 @@ import {
   theme as antdTheme,
   Modal,
   Alert,
+  Spin,
 } from 'antd';
 import { ArrowLeftOutlined, EditOutlined, ReloadOutlined } from '@ant-design/icons';
 import Link from 'next/link';
@@ -22,7 +23,6 @@ import { useParams } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
 import { formatDate, formatDateTime } from '@/lib/utils';
 import { useTheme } from '@/components/theme-provider';
-import { Loading } from '@/components/ui/loading';
 
 const { Title } = Typography;
 
@@ -110,13 +110,9 @@ export default function AccountDetailPage() {
 
   if (loading) {
     return (
-      <ConfigProvider
-        theme={{
-          algorithm: theme === 'dark' ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
-        }}
-      >
-        <Loading fullScreen message="Đang tải thông tin tài khoản..." size="large" />
-      </ConfigProvider>
+      <div className="flex items-center justify-center min-h-screen">
+        <Spin size="large" />
+      </div>
     );
   }
 
