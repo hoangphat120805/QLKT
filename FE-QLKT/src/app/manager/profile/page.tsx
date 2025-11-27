@@ -58,7 +58,7 @@ export default function UserProfilePage() {
         const [personnelRes, annualRes, scientificRes, positionRes, serviceRes, annualProfileRes] =
           await Promise.all([
             apiClient.getPersonnelById(user.quan_nhan_id),
-            apiClient.getAnnualRewards(user.quan_nhan_id),
+            apiClient.getAnnualRewardsByPersonnel(user.quan_nhan_id),
             apiClient.getPersonnelScientificAchievements(user.quan_nhan_id),
             apiClient.getPositionHistory(user.quan_nhan_id),
             apiClient.getServiceProfile(user.quan_nhan_id),
@@ -320,42 +320,6 @@ export default function UserProfilePage() {
       {/* Tabs */}
       <Card className="shadow-sm" bodyStyle={{ padding: '24px', overflow: 'visible' }}>
         <Tabs defaultActiveKey="1" size="large">
-          {/* Tab 1: Danh hiệu hằng năm */}
-          <TabPane
-            tab={
-              <Space>
-                <TrophyOutlined />
-                Danh hiệu hằng năm
-              </Space>
-            }
-            key="1"
-          >
-            <div className="mb-4">
-              <Text strong>Tổng số: {annualRewards.length}</Text>
-            </div>
-            <Table
-              dataSource={annualRewards}
-              columns={annualRewardsColumns}
-              rowKey="id"
-              pagination={{
-                pageSize: 10,
-                showTotal: total => `Tổng ${total} bản ghi`,
-              }}
-              scroll={{ x: 1000 }}
-              bordered
-              locale={{
-                emptyText: (
-                  <Alert
-                    message="Chưa có dữ liệu"
-                    description="Bạn chưa có danh hiệu hằng năm nào"
-                    type="info"
-                    showIcon
-                  />
-                ),
-              }}
-            />
-          </TabPane>
-
           {/* Tab 2: Thành tích khoa học */}
           <TabPane
             tab={
@@ -865,7 +829,6 @@ export default function UserProfilePage() {
                     </div>
                   </div>
                 </div>
-
                 {/* Điều kiện khen thưởng */}
                 <div className="w-full">
                   <h3
@@ -924,7 +887,6 @@ export default function UserProfilePage() {
                     </div>
                   </div>
                 </div>
-
                 {/* Gợi ý */}
                 {annualProfile.goi_y && (
                   <div
@@ -953,6 +915,28 @@ export default function UserProfilePage() {
                     </div>
                   </div>
                 )}
+
+                <Table
+                  dataSource={annualRewards}
+                  columns={annualRewardsColumns}
+                  rowKey="id"
+                  pagination={{
+                    pageSize: 10,
+                    showTotal: total => `Tổng ${total} bản ghi`,
+                  }}
+                  scroll={{ x: 1000 }}
+                  bordered
+                  locale={{
+                    emptyText: (
+                      <Alert
+                        message="Chưa có dữ liệu"
+                        description="Bạn chưa có danh hiệu hằng năm nào"
+                        type="info"
+                        showIcon
+                      />
+                    ),
+                  }}
+                />
               </div>
             ) : (
               <Alert
