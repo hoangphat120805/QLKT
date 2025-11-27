@@ -2,7 +2,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, Breadcrumb, Typography, message, ConfigProvider, theme as antdTheme, Pagination, Spin } from 'antd';
+import {
+  Card,
+  Breadcrumb,
+  Typography,
+  message,
+  ConfigProvider,
+  theme as antdTheme,
+  Pagination,
+  Spin,
+} from 'antd';
 import { FileTextOutlined, DashboardOutlined, FundOutlined, HomeOutlined } from '@ant-design/icons';
 import { LogsFilter } from '@/components/system-logs/logs-filter';
 import { LogsTable } from '@/components/system-logs/logs-table';
@@ -61,7 +70,12 @@ export default function ManagerSystemLogsPage() {
         const normalized = list.map((l: any) => {
           const actionCombined = [l?.action, l?.resource].filter(Boolean).join('_').toUpperCase();
           const actorName =
-            l?.NguoiThucHien?.QuanNhan?.ho_ten || l?.NguoiThucHien?.username || l?.Actor?.QuanNhan?.ho_ten || l?.Actor?.username || l?.actor_name || l?.actor_id;
+            l?.NguoiThucHien?.QuanNhan?.ho_ten ||
+            l?.NguoiThucHien?.username ||
+            l?.Actor?.QuanNhan?.ho_ten ||
+            l?.Actor?.username ||
+            l?.actor_name ||
+            l?.actor_id;
           return {
             ...l,
             action: actionCombined,
@@ -196,7 +210,14 @@ export default function ManagerSystemLogsPage() {
           <div style={{ padding: 0 }}>
             <LogsTable logs={logs} loading={loading} />
             {pagination.total > 0 && (
-              <div style={{ padding: '16px', display: 'flex', justifyContent: 'center', borderTop: '1px solid #f0f0f0' }}>
+              <div
+                style={{
+                  padding: '16px',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  borderTop: '1px solid #f0f0f0',
+                }}
+              >
                 <Pagination
                   current={pagination.current}
                   pageSize={pagination.pageSize}

@@ -1,7 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, Breadcrumb, Typography, ConfigProvider, theme as antdTheme, Row, Col, Spin } from 'antd';
+import {
+  Card,
+  Breadcrumb,
+  Typography,
+  ConfigProvider,
+  theme as antdTheme,
+  Row,
+  Col,
+  Spin,
+} from 'antd';
 import {
   DashboardOutlined,
   UserOutlined,

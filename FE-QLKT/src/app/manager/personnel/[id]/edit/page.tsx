@@ -271,7 +271,7 @@ export default function ManagerPersonnelEditPage() {
                 form={form}
                 layout="vertical"
                 onFinish={onFinish}
-                onFinishFailed={(errorInfo) => {
+                onFinishFailed={errorInfo => {
                   console.log('Form validation failed:', errorInfo);
                   message.error('Vui lòng kiểm tra lại các trường bắt buộc');
                 }}
@@ -322,7 +322,12 @@ export default function ManagerPersonnelEditPage() {
                       },
                     ]}
                   >
-                    <Select placeholder="Chọn giới tính" disabled={loading} size="large" allowClear={false}>
+                    <Select
+                      placeholder="Chọn giới tính"
+                      disabled={loading}
+                      size="large"
+                      allowClear={false}
+                    >
                       <Select.Option value="NAM">Nam</Select.Option>
                       <Select.Option value="NU">Nữ</Select.Option>
                     </Select>
@@ -349,7 +354,12 @@ export default function ManagerPersonnelEditPage() {
                   </Form.Item>
 
                   <Form.Item name="so_dien_thoai" label="Số điện thoại">
-                    <Input size="large" placeholder="Nhập số điện thoại" disabled={loading} maxLength={15} />
+                    <Input
+                      size="large"
+                      placeholder="Nhập số điện thoại"
+                      disabled={loading}
+                      maxLength={15}
+                    />
                   </Form.Item>
                 </div>
 
@@ -359,7 +369,11 @@ export default function ManagerPersonnelEditPage() {
                 </Title>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                   <Form.Item name="que_quan_2_cap" label="Quê quán (2 cấp)">
-                    <Input size="large" placeholder="VD: Xã Hoà An, tỉnh Ninh Bình" disabled={loading} />
+                    <Input
+                      size="large"
+                      placeholder="VD: Xã Hoà An, tỉnh Ninh Bình"
+                      disabled={loading}
+                    />
                   </Form.Item>
 
                   <Form.Item name="que_quan_3_cap" label="Quê quán (3 cấp)">
@@ -371,11 +385,19 @@ export default function ManagerPersonnelEditPage() {
                   </Form.Item>
 
                   <Form.Item name="tru_quan" label="Trú quán">
-                    <Input size="large" placeholder="VD: Xã Hoà An, tỉnh Ninh Bình" disabled={loading} />
+                    <Input
+                      size="large"
+                      placeholder="VD: Xã Hoà An, tỉnh Ninh Bình"
+                      disabled={loading}
+                    />
                   </Form.Item>
 
                   <Form.Item name="cho_o_hien_nay" label="Chỗ ở hiện nay">
-                    <Input size="large" placeholder="VD: Xã Hoà An, tỉnh Ninh Bình" disabled={loading} />
+                    <Input
+                      size="large"
+                      placeholder="VD: Xã Hoà An, tỉnh Ninh Bình"
+                      disabled={loading}
+                    />
                   </Form.Item>
                 </div>
 
@@ -436,7 +458,12 @@ export default function ManagerPersonnelEditPage() {
                   </Form.Item>
 
                   <Form.Item name="so_the_dang_vien" label="Số thẻ Đảng viên">
-                    <Input size="large" placeholder="Nhập số thẻ Đảng viên" disabled={loading} maxLength={50} />
+                    <Input
+                      size="large"
+                      placeholder="Nhập số thẻ Đảng viên"
+                      disabled={loading}
+                      maxLength={50}
+                    />
                   </Form.Item>
                 </div>
 
@@ -514,4 +541,3 @@ export default function ManagerPersonnelEditPage() {
     </ConfigProvider>
   );
 }
-
