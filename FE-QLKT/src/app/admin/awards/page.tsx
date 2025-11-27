@@ -302,10 +302,10 @@ export default function AdminAwardsPage() {
         const { imported, total, errors } = result.data;
         setImportResult({
           type: 'success',
-          message: `Import thành công ${imported}/${total} bản ghi khen thưởng`,
+          message: `Đã thêm thành công ${imported}/${total} bản ghi khen thưởng`,
           details: { imported, total, errors },
         });
-        message.success(`Import thành công ${imported}/${total} bản ghi`);
+        message.success(`Đã thêm thành công ${imported}/${total} bản ghi`);
         // Refresh awards list
         await fetchAwards();
       } else {
@@ -907,6 +907,10 @@ export default function AdminAwardsPage() {
                     activeTab === 'unit' &&
                     (col.key === 'ngay_sinh' || col.key === 'cap_bac_chuc_vu')
                   ) {
+                    return false;
+                  }
+                  // Keep 'loai_khen_thuong' only for scientific tab
+                  if (col.key === 'loai_khen_thuong' && activeTab !== 'scientific') {
                     return false;
                   }
                   return true;

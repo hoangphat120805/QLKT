@@ -290,8 +290,8 @@ class ScientificAchievementService {
 
     // Chỉ ADMIN mới có cột số quyết định
     if (userRole === 'ADMIN') {
-      columns.splice(7, 0, { header: 'Ghi chú', key: 'ghi_chu', width: 30 });
-      columns.splice(8, 0, { header: 'Số quyết định', key: 'so_quyet_dinh', width: 20 });
+      columns.splice(8, 0, { header: 'Ghi chú', key: 'ghi_chu', width: 30 });
+      columns.splice(9, 0, { header: 'Số quyết định', key: 'so_quyet_dinh', width: 20 });
     }
 
     worksheet.columns = columns;
@@ -362,8 +362,8 @@ class ScientificAchievementService {
       const mo_ta = row.getCell(6).value?.toString().trim();
       const cap_bac = row.getCell(7).value?.toString().trim();
       const chuc_vu = row.getCell(8).value?.toString().trim();
-      const so_quyet_dinh = row.getCell(9).value?.toString().trim();
-      const ghi_chu = row.getCell(10).value?.toString().trim();
+      const ghi_chu = row.getCell(9).value?.toString().trim();
+      const so_quyet_dinh = row.getCell(10).value?.toString().trim();
 
       try {
         if (!ho_ten || !nam || !loai || !mo_ta) {

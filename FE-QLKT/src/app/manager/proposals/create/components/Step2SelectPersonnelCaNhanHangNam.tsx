@@ -257,7 +257,7 @@ export default function Step2SelectPersonnelCaNhanHangNam({
       }
     }
 
-    // Tự động chuyển sang bước 4 (Upload file) sau khi import thành công
+    // Tự động chuyển sang bước 4 (Upload file) sau khi Đã thêm thành công
     // Bỏ qua bước 3 vì đã import dữ liệu từ Excel
     if (onNextStep) {
       setTimeout(() => {

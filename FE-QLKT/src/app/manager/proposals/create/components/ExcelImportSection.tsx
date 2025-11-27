@@ -75,7 +75,7 @@ export default function ExcelImportSection({
         setUploading(true);
         const result = await onLocalProcess(file);
 
-        message.success(`Import thành công ${result.imported}/${result.total} ${entityLabel}`);
+        message.success(`Đã thêm thành công ${result.imported}/${result.total} ${entityLabel}`);
 
         // Hiển thị lỗi nếu có (tối đa 5 lỗi đầu tiên)
         if (result.errors && result.errors.length > 0) {
@@ -123,7 +123,7 @@ export default function ExcelImportSection({
 
         if (response.data.success) {
           const result = response.data.data;
-          message.success(`Import thành công ${result.imported}/${result.total} ${entityLabel}`);
+          message.success(`Đã thêm thành công ${result.imported}/${result.total} ${entityLabel}`);
 
           // Hiển thị lỗi nếu có (tối đa 5 lỗi đầu tiên)
           if (result.errors && result.errors.length > 0) {
@@ -216,7 +216,7 @@ export default function ExcelImportSection({
 
         {importSuccess && importedCount > 0 && (
           <Alert
-            message={`Đã import thành công ${importedCount} ${entityLabel} từ file Excel`}
+            message={`Đã Đã thêm thành công ${importedCount} ${entityLabel} từ file Excel`}
             type="success"
             showIcon
           />

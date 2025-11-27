@@ -249,7 +249,7 @@ class ScientificAchievementController {
 
       return res.status(200).json({
         success: true,
-        message: `Import thành công ${result.imported}/${result.total} bản ghi`,
+        message: `Đã thêm thành công ${result.imported}/${result.total} bản ghi`,
         data: result,
       });
     } catch (error) {

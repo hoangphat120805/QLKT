@@ -702,7 +702,7 @@ export default function Step2SelectPersonnelNienHan({
       }
     }
 
-    // Tự động chuyển sang bước 4 (Upload file) sau khi import thành công
+    // Tự động chuyển sang bước 4 (Upload file) sau khi Đã thêm thành công
     // Bỏ qua bước 3 vì dữ liệu đã được import từ Excel
     if (onNextStep) {
       setTimeout(() => {

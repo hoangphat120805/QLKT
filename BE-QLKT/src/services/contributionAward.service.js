@@ -78,6 +78,8 @@ class ContributionAwardService {
 
     const results = {
       success: 0,
+      total: 0,
+      imported: 0,
       failed: 0,
       errors: [],
       selectedPersonnelIds: [],
@@ -96,7 +98,11 @@ class ContributionAwardService {
         const ho_ten = row.getCell(1).value?.toString().trim();
         const ngay_sinh_raw = row.getCell(2).value;
         const nam = parseInt(row.getCell(3).value);
-        const danh_hieu = row.getCell(4).value?.toString().trim();
+        const cap_bac = row.getCell(4).value?.toString().trim();
+        const chuc_vu = row.getCell(5).value?.toString().trim();
+        const danh_hieu = row.getCell(6).value?.toString().trim();
+        const ghi_chu = row.getCell(7).value?.toString().trim();
+        const so_quyet_dinh = row.getCell(8).value?.toString().trim();
 
         if (!ho_ten || !nam || !danh_hieu) {
           results.errors.push(`Dòng ${rowNumber}: Thiếu thông tin bắt buộc`);
@@ -175,22 +181,24 @@ class ContributionAwardService {
             quan_nhan_id: personnel.id,
             danh_hieu,
             nam,
-            cap_bac: row.getCell(5).value?.toString() || null,
-            chuc_vu: row.getCell(6).value?.toString() || null,
-            ghi_chu: row.getCell(7).value?.toString() || null,
-            so_quyet_dinh: row.getCell(8).value?.toString() || null,
+            cap_bac: cap_bac || null,
+            chuc_vu: chuc_vu || null,
+            ghi_chu: ghi_chu || null,
+            so_quyet_dinh: so_quyet_dinh || null,
           },
           update: {
             danh_hieu,
             nam,
-            cap_bac: row.getCell(5).value?.toString() || null,
-            chuc_vu: row.getCell(6).value?.toString() || null,
-            ghi_chu: row.getCell(7).value?.toString() || null,
-            so_quyet_dinh: row.getCell(8).value?.toString() || null,
+            cap_bac: cap_bac || null,
+            chuc_vu: chuc_vu || null,
+            ghi_chu: ghi_chu || null,
+            so_quyet_dinh: so_quyet_dinh || null,
           },
         });
 
         results.success++;
+        results.imported++;
+        results.total++;
         results.selectedPersonnelIds.push(personnel.id);
         results.titleData.push({
           personnelId: personnel.id,
@@ -205,6 +213,7 @@ class ContributionAwardService {
       } catch (error) {
         results.errors.push(`Dòng ${rowNumber}: ${error.message}`);
         results.failed++;
+        results.total++;
       }
     }
 
@@ -242,6 +251,7 @@ class ContributionAwardService {
               cccd: true,
               ho_ten: true,
               cap_bac: true,
+              ngay_sinh: true,
               CoQuanDonVi: { select: { ten_don_vi: true } },
               DonViTrucThuoc: { select: { ten_don_vi: true } },
             },

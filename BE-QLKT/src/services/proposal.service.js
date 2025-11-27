@@ -2532,7 +2532,8 @@ class ProposalService {
               item.personnel_id,
               proposalYear,
               item.danh_hieu,
-              proposalType
+              proposalType,
+              'APPROVED'
             );
             if (checkResult.exists) {
               const quanNhan = await prisma.quanNhan.findUnique({
@@ -2551,7 +2552,8 @@ class ProposalService {
       if (
         (proposalType === 'NIEN_HAN' ||
           proposalType === 'HC_QKQT' ||
-          proposalType === 'KNC_VSNXD_QDNDVN') &&
+          proposalType === 'KNC_VSNXD_QDNDVN' ||
+          proposalType === 'HCCSVV') &&
         nienHanData &&
         nienHanData.length > 0
       ) {
@@ -2561,7 +2563,8 @@ class ProposalService {
               item.personnel_id,
               proposalYear,
               item.danh_hieu,
-              proposalType
+              proposalType,
+              'APPROVED'
             );
             if (checkResult.exists) {
               const quanNhan = await prisma.quanNhan.findUnique({
@@ -3085,6 +3088,9 @@ class ProposalService {
               },
               update: {
                 danh_hieu: item.danh_hieu,
+                cap_bac: item.cap_bac || null,
+                chuc_vu: item.chuc_vu || null,
+                ghi_chu: item.ghi_chu || null,
                 so_quyet_dinh: soQuyetDinhDanhHieu,
                 file_quyet_dinh: filePdfDanhHieu,
                 nhan_bkbqp: nhanBKBQP,
@@ -3097,6 +3103,9 @@ class ProposalService {
               create: {
                 quan_nhan_id: quanNhan.id,
                 nam: namLuu,
+                cap_bac: item.cap_bac || null,
+                chuc_vu: item.chuc_vu || null,
+                ghi_chu: item.ghi_chu || null,
                 danh_hieu: item.danh_hieu,
                 so_quyet_dinh: soQuyetDinhDanhHieu,
                 file_quyet_dinh: filePdfDanhHieu,
@@ -4523,8 +4532,8 @@ class ProposalService {
       return {
         message:
           importWarnings.length > 0
-            ? `Import thành công ${imported} bản ghi nhưng có ${importWarnings.length} cảnh báo về điều kiện khen thưởng.`
-            : 'Import khen thưởng thành công',
+            ? `Đã thêm thành công thành công ${imported} bản ghi nhưng có ${importWarnings.length} cảnh báo về điều kiện khen thưởng.`
+            : 'Đã thêm khen thưởng thành công',
         importedUnits: Array.from(importedUnitsMap.values()), // Danh sách đơn vị để gửi thông báo
         result: {
           total: awards.length,
@@ -4742,7 +4751,7 @@ class ProposalService {
    * @param {string} proposalType - Loại đề xuất
    * @returns {Promise<Object>} - { exists: boolean, message?: string }
    */
-  async checkDuplicateAward(personnelId, nam, danhHieu, proposalType) {
+  async checkDuplicateAward(personnelId, nam, danhHieu, proposalType, status = null) {
     try {
       const { prisma } = require('../models');
 
@@ -4752,7 +4761,7 @@ class ProposalService {
           where: {
             loai_de_xuat: 'CA_NHAN_HANG_NAM',
             nam: parseInt(nam),
-            status: { not: 'REJECTED' },
+            status: status ? status : { not: 'REJECTED' },
           },
         });
 
