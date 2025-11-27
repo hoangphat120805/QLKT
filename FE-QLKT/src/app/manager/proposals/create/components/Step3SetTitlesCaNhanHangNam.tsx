@@ -377,6 +377,7 @@ export default function Step3SetTitlesCaNhanHangNam({
         return (
           <Select
             value={data.danh_hieu}
+            disabled={availableOptions.length === 0}
             onChange={value => updateTitle(record.id, 'danh_hieu', value)}
             placeholder="Chọn danh hiệu"
             style={{ width: '100%' }}
