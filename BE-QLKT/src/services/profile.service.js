@@ -204,7 +204,7 @@ class ProfileService {
     let count = 0;
     const sortedRewards = [...danhHieuList].sort((a, b) => b.nam - a.nam);
     const sortedThanhTich = [...thanhTichList].sort((a, b) => b.nam - a.nam);
-    let currentYear = year; // Bắt đầu từ năm gần nhất
+    let currentYear = year - 1; // Bắt đầu từ năm gần nhất
     for (const reward of sortedRewards) {
       if (reward.nam !== currentYear) continue; // Chỉ xét chuỗi liên tiếp từ năm hiện tại trở lùi
       // check NCKH trong năm hiện tại
@@ -677,7 +677,7 @@ class ProfileService {
         year
       );
       du_dieu_kien_bkbqp = cstdcs_lien_tuc % 2 === 0 && cstdcs_lien_tuc >= 1;
-      du_dieu_kien_cstdtq = cstdcs_lien_tuc === 7 && tong_nckh >= 1;
+      du_dieu_kien_cstdtq = cstdcs_lien_tuc === 7 && bkbqp_lien_tuc >= 1;
 
       // ==============================================
       // BƯỚC 4: Logic Tạo Gợi ý (Suggestion) - CHỈ GỢI Ý BKBQP VÀ CSTDTQ

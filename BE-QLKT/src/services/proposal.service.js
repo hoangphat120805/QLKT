@@ -4746,20 +4746,29 @@ class ProposalService {
     try {
       const { prisma } = require('../models');
 
-      // CA_NHAN_HANG_NAM: Kiểm tra trong DanhHieuHangNam
+      // CA_NHAN_HANG_NAM: Kiểm tra trong BangDeXuat
       if (proposalType === 'CA_NHAN_HANG_NAM') {
-        const existing = await prisma.danhHieuHangNam.findFirst({
+        const proposals = await prisma.bangDeXuat.findMany({
           where: {
-            quan_nhan_id: personnelId,
+            loai_de_xuat: 'CA_NHAN_HANG_NAM',
             nam: parseInt(nam),
-            danh_hieu: danhHieu,
+            status: { not: 'REJECTED' },
           },
+        });
+
+        // tìm trong data_danh_hieu của từng proposal
+        const existing = proposals.find(p => {
+          const dataDanhHieu = p.data_danh_hieu || [];
+          return dataDanhHieu.some(
+            item => item.personnel_id === personnelId && item.danh_hieu === danhHieu
+          );
         });
 
         if (existing) {
           return {
             exists: true,
-            message: `Quân nhân đã có danh hiệu ${danhHieu} cho năm ${nam}`,
+            message: `Quân nhân đã có đề xuất danh hiệu ${danhHieu} cho năm ${nam} `,
+            status: existing.status,
           };
         }
       }

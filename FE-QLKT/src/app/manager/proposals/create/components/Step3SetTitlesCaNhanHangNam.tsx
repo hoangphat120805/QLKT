@@ -246,10 +246,10 @@ export default function Step3SetTitlesCaNhanHangNam({
           });
 
           if (response.data.success && response.data.data.exists) {
-            message.warning(
-              `${personnelDetail.ho_ten}: ${response.data.data.message}. Vui lòng kiểm tra lại.`
+            message.error(
+              `${personnelDetail.ho_ten}: ${response.data.data.message}. Không thể đề xuất danh hiệu này.`
             );
-            // Vẫn cho phép chọn nhưng cảnh báo
+            return; // Không cho phép chọn
           }
         } catch (error: any) {
           console.error('Error checking duplicate award:', error);
