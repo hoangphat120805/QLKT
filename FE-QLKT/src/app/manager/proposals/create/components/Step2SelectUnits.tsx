@@ -18,6 +18,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { apiClient } from '@/lib/api-client';
 import ExcelImportSection from './ExcelImportSection';
 import * as XLSX from 'xlsx';
+import axiosInstance from '@/utils/axiosInstance';
 
 const { Text } = Typography;
 
