@@ -1049,64 +1049,82 @@ export default function ManagerProposalDetailPage() {
                   render: (_, __, index) => index + 1,
                 },
                 {
-                  title: 'Họ và tên',
-                  dataIndex: 'ho_ten',
-                  key: 'ho_ten',
+                  title: proposal.loai_de_xuat === 'DON_VI_HANG_NAM' ? 'Tên đơn vị' : 'Họ và tên',
+                  dataIndex: proposal.loai_de_xuat === 'DON_VI_HANG_NAM' ? 'ten_don_vi' : 'ho_ten',
+                  key: proposal.loai_de_xuat === 'DON_VI_HANG_NAM' ? 'ten_don_vi' : 'ho_ten',
                   width: 250,
                   align: 'center',
                   render: (text: string, record: any) => {
-                    const coQuanDonVi = record.co_quan_don_vi?.ten_co_quan_don_vi;
-                    const donViTrucThuoc = record.don_vi_truc_thuoc?.ten_don_vi;
-                    const parts = [];
-                    if (donViTrucThuoc) parts.push(donViTrucThuoc);
-                    if (coQuanDonVi) parts.push(coQuanDonVi);
-                    const unitInfo = parts.length > 0 ? parts.join(', ') : null;
+                    if (proposal.loai_de_xuat === 'DON_VI_HANG_NAM') {
+                      // For units, show unit name
+                      return (
+                        <div
+                          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+                        >
+                          <Text strong>{text || '-'}</Text>
+                        </div>
+                      );
+                    } else {
+                      // For personnel, show name and unit info
+                      const coQuanDonVi = record.co_quan_don_vi?.ten_co_quan_don_vi;
+                      const donViTrucThuoc = record.don_vi_truc_thuoc?.ten_don_vi;
+                      const parts = [];
+                      if (donViTrucThuoc) parts.push(donViTrucThuoc);
+                      if (coQuanDonVi) parts.push(coQuanDonVi);
+                      const unitInfo = parts.length > 0 ? parts.join(', ') : null;
 
-                    return (
-                      <div
-                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
-                      >
-                        <Text strong>{text || '-'}</Text>
-                        {unitInfo && (
-                          <Text type="secondary" style={{ fontSize: '12px', marginTop: '4px' }}>
-                            {unitInfo}
-                          </Text>
-                        )}
-                      </div>
-                    );
+                      return (
+                        <div
+                          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+                        >
+                          <Text strong>{text || '-'}</Text>
+                          {unitInfo && (
+                            <Text type="secondary" style={{ fontSize: '12px', marginTop: '4px' }}>
+                              {unitInfo}
+                            </Text>
+                          )}
+                        </div>
+                      );
+                    }
                   },
                 },
                 {
-                  title: 'Cấp bậc / Chức vụ',
-                  key: 'cap_bac_chuc_vu',
+                  title:
+                    proposal.loai_de_xuat === 'DON_VI_HANG_NAM' ? 'Mã đơn vị' : 'Cấp bậc / Chức vụ',
+                  key:
+                    proposal.loai_de_xuat === 'DON_VI_HANG_NAM' ? 'ma_don_vi' : 'cap_bac_chuc_vu',
                   width: 180,
                   align: 'center',
                   render: (_: any, record: any) => {
-                    // Chỉ lấy từ dataJSON, không lấy từ personnelDetails
-                    const capBac = record.cap_bac;
-                    const chucVu = record.chuc_vu;
+                    if (proposal.loai_de_xuat === 'DON_VI_HANG_NAM') {
+                      // For units, show unit code
+                      return <Text strong>{record.ma_don_vi || '-'}</Text>;
+                    } else {
+                      // For personnel, show rank and position
+                      const capBac = record.cap_bac;
+                      const chucVu = record.chuc_vu;
 
-                    // Nếu không có cả cấp bậc và chức vụ, để trống
-                    if (!capBac && !chucVu) {
-                      return <span>-</span>;
+                      if (!capBac && !chucVu) {
+                        return <span>-</span>;
+                      }
+
+                      return (
+                        <div
+                          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+                        >
+                          {capBac && (
+                            <Text strong style={{ marginBottom: chucVu ? '4px' : '0' }}>
+                              {capBac}
+                            </Text>
+                          )}
+                          {chucVu && (
+                            <Text type="secondary" style={{ fontSize: '12px' }}>
+                              {chucVu}
+                            </Text>
+                          )}
+                        </div>
+                      );
                     }
-
-                    return (
-                      <div
-                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
-                      >
-                        {capBac && (
-                          <Text strong style={{ marginBottom: chucVu ? '4px' : '0' }}>
-                            {capBac}
-                          </Text>
-                        )}
-                        {chucVu && (
-                          <Text type="secondary" style={{ fontSize: '12px' }}>
-                            {chucVu}
-                          </Text>
-                        )}
-                      </div>
-                    );
                   },
                 },
                 {

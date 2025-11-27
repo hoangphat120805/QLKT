@@ -14,13 +14,13 @@ class CommemorativeMedalService {
       { header: 'Họ tên', key: 'ho_ten', width: 25 },
       { header: 'Ngày sinh', key: 'ngay_sinh', width: 15 },
       { header: 'Năm', key: 'nam', width: 10 },
+      { header: 'Cấp bậc', key: 'cap_bac', width: 15 },
+      { header: 'Chức vụ', key: 'chuc_vu', width: 30 },
     ];
 
     // ADMIN có thêm các cột chi tiết
     if (userRole === 'ADMIN') {
       columns.push(
-        { header: 'Cấp bậc', key: 'cap_bac', width: 15 },
-        { header: 'Chức vụ', key: 'chuc_vu', width: 30 },
         { header: 'Ghi chú', key: 'ghi_chu', width: 30 },
         { header: 'Số quyết định', key: 'so_quyet_dinh', width: 20 }
       );

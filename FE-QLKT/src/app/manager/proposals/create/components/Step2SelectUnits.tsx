@@ -260,6 +260,7 @@ export default function Step2SelectUnits({
               don_vi_id: matchingUnit.id,
               danh_hieu: danhHieu,
               nam: namInt,
+              don_vi_type: matchingUnit.type,
             });
           });
 
@@ -292,59 +293,22 @@ export default function Step2SelectUnits({
       onUnitChange(result.selectedUnitIds);
     }
 
-    // Fetch the imported award data to populate titleData
-    if (result.selectedUnitIds && result.selectedUnitIds.length > 0) {
-      try {
-        // Fetch award data for the imported units for the current year
-        const awardPromises = result.selectedUnitIds.map(async (unitId: string) => {
-          try {
-            const response = await apiClient.getUnitAnnualAwardsByUnit(unitId);
-            if (response.success && response.data && response.data.length > 0) {
-              // The API returns an array of awards, find the one for the current year
-              const currentYearAward = response.data.find((award: any) => award.nam === nam);
-              if (currentYearAward && currentYearAward.danh_hieu) {
-                return {
-                  don_vi_id: unitId,
-                  danh_hieu: currentYearAward.danh_hieu,
-                  nam: currentYearAward.nam,
-                };
-              }
-            }
-          } catch (error) {
-            console.error(`Error fetching award data for unit ${unitId}:`, error);
-          }
-          return null;
-        });
-
-        const awardResults = await Promise.all(awardPromises);
-        const validAwards = awardResults.filter(award => award !== null);
-
-        // Update titleData through parent callback if available
-        if (validAwards.length > 0 && onTitleDataChange) {
-          onTitleDataChange(validAwards);
-        }
-        if (result.titleData[0].nam) {
-          onNamChange(result.titleData[0].nam);
-        }
-
-        if (onNextStep) {
-          setTimeout(() => {
-            onNextStep(); // Chuyển sang bước 3
-            setTimeout(() => {
-              onNextStep(); // Chuyển sang bước 4
-            }, 100);
-          }, 500);
-        }
-      } catch (error) {
-        console.error('Error fetching imported award data:', error);
-      }
+    // Update titleData through parent callback if available
+    if (result.titleData.length > 0 && onTitleDataChange) {
+      onTitleDataChange(result.titleData);
+    }
+    if (result.titleData[0].nam) {
+      onNamChange(result.titleData[0].nam);
     }
 
     // Tự động chuyển sang bước 4 (Upload file) sau khi import thành công
     // Bỏ qua bước 3 vì dữ liệu đã được import từ Excel
     if (onNextStep) {
       setTimeout(() => {
-        onNextStep(); // Chuyển sang bước 4
+        onNextStep(); // Chuyển sang bước 3
+        setTimeout(() => {
+          onNextStep(); // Chuyển sang bước 4
+        }, 100);
       }, 500);
     }
   };

@@ -217,10 +217,13 @@ export default function Step2SelectPersonnelNCKH({
             const rowNumber = index + 2; // +2 vì bỏ header và index từ 0
 
             // Validate required fields
-            const hoTen = row[0]?.toString().trim();
-            const ngaySinh = row[1]?.toString().trim();
-            const nam = row[2]?.toString().trim();
-            const danhHieu = row[3]?.toString().trim();
+            const hoTen = row[1]?.toString().trim();
+            const ngaySinh = row[2]?.toString().trim();
+            const nam = row[3]?.toString().trim();
+            const loai = row[4]?.toString().trim();
+            const mota = row[5]?.toString().trim();
+            const capBac = row[6]?.toString().trim();
+            const chucVu = row[7]?.toString().trim();
 
             if (!hoTen) {
               errors.push(`Dòng ${rowNumber}: Thiếu họ tên`);
@@ -232,8 +235,8 @@ export default function Step2SelectPersonnelNCKH({
               return;
             }
 
-            if (!danhHieu) {
-              errors.push(`Dòng ${rowNumber}: Thiếu danh hiệu`);
+            if (!loai) {
+              errors.push(`Dòng ${rowNumber}: Thiếu loại`);
               return;
             }
 
@@ -282,10 +285,12 @@ export default function Step2SelectPersonnelNCKH({
             processedPersonnelIds.push(matchingPersonnel.id);
 
             titleData.push({
-              personnelId: matchingPersonnel.id,
-              loai: danhHieu, // Sử dụng danh hiệu từ Excel làm loại
-              mo_ta: '', // Không có mô tả trong Excel
+              personnel_id: matchingPersonnel.id,
+              loai: loai, // Sử dụng danh hiệu từ Excel làm loại
+              mo_ta: mota, // Không có mô tả trong Excel
               nam: namInt,
+              cap_bac: capBac,
+              chuc_vu: chucVu,
               ghi_chu: '', // Không có ghi chú trong Excel
             });
           });
@@ -322,9 +327,9 @@ export default function Step2SelectPersonnelNCKH({
       if (result.titleData && result.titleData.length > 0) {
         // Transform to titleData format
         const titleData = result.titleData.map((achievement: any) => ({
-          personnelId: String(
+          personnel_id: String(
             achievement.quan_nhan_id ??
-              achievement.personnelId ??
+              achievement.personnel_id ??
               achievement.co_quan_don_vi_id ??
               achievement.don_vi_truc_thuoc_id ??
               '' // fallback nếu tất cả đều null/undefined
@@ -332,6 +337,8 @@ export default function Step2SelectPersonnelNCKH({
           loai: achievement.loai,
           mo_ta: achievement.mo_ta,
           nam: achievement.nam,
+          cap_bac: achievement.cap_bac,
+          chuc_vu: achievement.chuc_vu,
           ghi_chu: achievement.ghi_chu,
         }));
 

@@ -547,6 +547,7 @@ export default function CreateProposalPage() {
       }
 
       formData.append('title_data', JSON.stringify(titleData));
+      console.log('Submitting proposal with title_data:', titleData);
 
       // Upload các file đính kèm (optional, multiple)
       if (attachedFiles.length > 0) {
@@ -786,7 +787,7 @@ export default function CreateProposalPage() {
           });
         } else {
           reviewTableData = personnelDetails.map(p => {
-            const titleInfo = titleData.find(t => String(t.personnelId) === String(p.id));
+            const titleInfo = titleData.find(t => String(t.personnel_id) === String(p.id));
             return {
               ...p,
               ...titleInfo,
@@ -889,10 +890,10 @@ export default function CreateProposalPage() {
               render: (_, record: any) => {
                 // Lấy thông tin từ personnel details nếu có
                 const personnelDetail = personnelDetails.find(
-                  (p: any) => p.id === record.personnelId || p.id === record.id
+                  (p: any) => p.id === record.personnel_id || p.id === record.id
                 );
-                const capBac = personnelDetail?.cap_bac || record.cap_bac;
-                const chucVu = personnelDetail?.ChucVu?.ten_chuc_vu || record.ChucVu?.ten_chuc_vu;
+                const capBac = record.cap_bac || personnelDetail?.cap_bac;
+                const chucVu = record.chuc_vu || personnelDetail?.ChucVu?.ten_chuc_vu;
                 return (
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                     <Text strong style={{ marginBottom: '4px' }}>
@@ -1036,9 +1037,10 @@ export default function CreateProposalPage() {
             align: 'center',
             render: (_, record) => {
               // Lấy danh_hieu trực tiếp từ titleData để đảm bảo chính xác
+              console.log('Record in review table:', titleData);
               const titleInfo = titleData.find(
                 t =>
-                  String(t.personnelId) === String(record.id) ||
+                  String(t.personnel_id) === String(record.id) ||
                   String(t.don_vi_id) === String(record.id) ||
                   String(t.personnel_id) === String(record.id)
               );

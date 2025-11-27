@@ -286,11 +286,11 @@ class ScientificAchievementService {
       { header: 'Mô tả (*)', key: 'mo_ta', width: 40 },
       { header: 'Cấp bậc', key: 'cap_bac', width: 15 },
       { header: 'Chức vụ', key: 'chuc_vu', width: 20 },
-      { header: 'Ghi chú', key: 'ghi_chu', width: 30 },
     ];
 
     // Chỉ ADMIN mới có cột số quyết định
     if (userRole === 'ADMIN') {
+      columns.splice(7, 0, { header: 'Ghi chú', key: 'ghi_chu', width: 30 });
       columns.splice(8, 0, { header: 'Số quyết định', key: 'so_quyet_dinh', width: 20 });
     }
 

@@ -929,8 +929,8 @@ class ProposalService {
             status: item.status || 'PENDING',
             so_quyet_dinh: item.so_quyet_dinh || null,
             file_quyet_dinh: item.file_quyet_dinh || null,
-            cap_bac: personnel?.cap_bac || null,
-            chuc_vu: personnel?.ChucVu?.ten_chuc_vu || null,
+            cap_bac: item.cap_bac || personnel?.cap_bac || null,
+            chuc_vu: item.chuc_vu || personnel?.ChucVu?.ten_chuc_vu || null,
             co_quan_don_vi: personnel?.CoQuanDonVi
               ? {
                   id: personnel.CoQuanDonVi.id,
@@ -1053,8 +1053,8 @@ class ProposalService {
             ho_ten: personnel?.ho_ten || '',
             nam: nam,
             danh_hieu: item.danh_hieu,
-            cap_bac: personnel?.cap_bac || null,
-            chuc_vu: personnel?.ChucVu?.ten_chuc_vu || null,
+            cap_bac: item.cap_bac || personnel?.cap_bac || null,
+            chuc_vu: item.chuc_vu || personnel?.ChucVu?.ten_chuc_vu || null,
             co_quan_don_vi: coQuanDonVi,
             don_vi_truc_thuoc: donViTrucThuoc,
           };
@@ -1105,8 +1105,8 @@ class ProposalService {
             so_quyet_dinh: item.so_quyet_dinh || null,
             file_quyet_dinh: item.file_quyet_dinh || null,
             thoi_gian: thoiGian, // Lưu mốc thời gian vào JSON
-            cap_bac: personnel?.cap_bac || null,
-            chuc_vu: personnel?.ChucVu?.ten_chuc_vu || null,
+            cap_bac: item.cap_bac || personnel?.cap_bac || null,
+            chuc_vu: item.chuc_vu || personnel?.ChucVu?.ten_chuc_vu || null,
             co_quan_don_vi: personnel?.CoQuanDonVi
               ? {
                   id: personnel.CoQuanDonVi.id,
@@ -1141,8 +1141,8 @@ class ProposalService {
               ho_ten: personnel?.ho_ten || '',
               nam: nam,
               danh_hieu: item.danh_hieu,
-              cap_bac: personnel?.cap_bac || null,
-              chuc_vu: personnel?.ChucVu?.ten_chuc_vu || null,
+              cap_bac: item.cap_bac || personnel?.cap_bac || null,
+              chuc_vu: item.chuc_vu || personnel?.ChucVu?.ten_chuc_vu || null,
               co_quan_don_vi: personnel?.CoQuanDonVi
                 ? {
                     id: personnel.CoQuanDonVi.id,
@@ -2084,8 +2084,8 @@ class ProposalService {
               ho_ten: item.ho_ten || personnel?.ho_ten || '',
               nam: item.nam || proposal.createdAt?.getFullYear() || new Date().getFullYear(),
               // Chỉ lấy từ dataJSON, không lấy từ personnel hiện tại (đề xuất có thể từ quá khứ)
-              cap_bac: item.cap_bac !== undefined && item.cap_bac !== null ? item.cap_bac : null,
-              chuc_vu: item.chuc_vu !== undefined && item.chuc_vu !== null ? item.chuc_vu : null,
+              cap_bac: item.cap_bac || null,
+              chuc_vu: item.chuc_vu || null,
             };
 
             // Thêm thông tin đơn vị nếu chưa có (theo cấu trúc mới)

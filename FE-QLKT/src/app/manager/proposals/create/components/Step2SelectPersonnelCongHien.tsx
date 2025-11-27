@@ -396,7 +396,9 @@ export default function Step2SelectPersonnelCongHien({
             const hoTen = row[0]?.toString().trim();
             const ngaySinh = row[1]?.toString().trim();
             const nam = row[2]?.toString().trim();
-            const danhHieu = row[3]?.toString().trim();
+            const capBac = row[3]?.toString().trim();
+            const chucVu = row[4]?.toString().trim();
+            const danhHieu = row[5]?.toString().trim();
 
             if (!hoTen) {
               errors.push(`Dòng ${rowNumber}: Thiếu họ tên`);
@@ -458,9 +460,11 @@ export default function Step2SelectPersonnelCongHien({
             processedPersonnelIds.push(matchingPersonnel.id);
 
             titleData.push({
-              personnelId: matchingPersonnel.id,
+              personnel_id: matchingPersonnel.id,
               danh_hieu: danhHieu,
               nam: namInt,
+              cap_bac: capBac,
+              chuc_vu: chucVu,
               ghi_chu: '', // Không có ghi chú trong Excel
             });
           });
@@ -497,15 +501,17 @@ export default function Step2SelectPersonnelCongHien({
       if (result.titleData && result.titleData.length > 0) {
         // Transform to titleData format
         const titleData = result.titleData.map((award: any) => ({
-          personnelId: String(
+          personnel_id: String(
             award.quan_nhan_id ??
-              award.personnelId ??
+              award.personnel_id ??
               award.co_quan_don_vi_id ??
               award.don_vi_truc_thuoc_id ??
               '' // fallback nếu tất cả đều null/undefined
           ),
           danh_hieu: award.danh_hieu,
           nam: award.nam,
+          cap_bac: award.cap_bac,
+          chuc_vu: award.chuc_vu,
           ghi_chu: award.ghi_chu,
         }));
 
