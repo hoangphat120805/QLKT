@@ -138,6 +138,7 @@ interface ProposalDetail {
   nguoi_duyet: any;
   ngay_duyet: string | null;
   ghi_chu: string | null;
+  rejection_reason: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -1382,6 +1383,17 @@ export default function ManagerProposalDetailPage() {
             />
           </Card>
         ) : null}
+
+        {proposal.status === 'REJECTED' && (
+          <Card className="shadow-sm bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200">
+            <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+              <Title level={4} className="!mb-0">
+                Lý do từ chối đề xuất
+              </Title>
+              <Text>{proposal.rejection_reason || '-'}</Text>
+            </Space>
+          </Card>
+        )}
 
         {/* Action Buttons */}
         {proposal.status === 'REJECTED' && (

@@ -2443,6 +2443,7 @@ class ProposalService {
         data_cong_hien: dataCongHien,
         files_attached: proposal.files_attached || [],
         ghi_chu: proposal.ghi_chu,
+        rejection_reason: proposal.rejection_reason || null,
         nguoi_duyet: proposal.NguoiDuyet
           ? {
               id: proposal.NguoiDuyet.id,
