@@ -1,5 +1,6 @@
 const { prisma } = require('../models');
 const ExcelJS = require('exceljs');
+const proposalService = require('./proposal.service');
 
 class HCCSVVService {
   /**
@@ -81,6 +82,8 @@ class HCCSVVService {
     const results = {
       success: 0,
       failed: 0,
+      total: 0,
+      imported: 0,
       errors: [],
       selectedPersonnelIds: [],
       titleData: [],
@@ -174,6 +177,27 @@ class HCCSVVService {
           }
         }
 
+        // Check for duplicate awards in proposals
+        try {
+          const duplicateCheck = await proposalService.checkDuplicateAward(
+            personnel.id,
+            nam,
+            danh_hieu,
+            'NIEN_HAN',
+            'APPROVED'
+          );
+          if (duplicateCheck.isDuplicate) {
+            results.errors.push(
+              `Dòng ${rowNumber}: ${duplicateCheck.message} (Quân nhân: ${ho_ten}, Năm: ${nam}, Danh hiệu: ${danh_hieu})`
+            );
+            results.failed++;
+            continue;
+          }
+        } catch (checkError) {
+          console.error('Error checking duplicates:', checkError);
+          // Continue processing but log the error
+        }
+
         // Check if already exists
         const existing = await prisma.khenThuongHCCSVV.findUnique({
           where: {
@@ -205,6 +229,8 @@ class HCCSVVService {
         });
 
         results.success++;
+        results.imported++;
+        results.total++;
         results.selectedPersonnelIds.push(personnel.id);
         results.titleData.push({
           personnelId: personnel.id,
@@ -219,6 +245,7 @@ class HCCSVVService {
       } catch (error) {
         results.errors.push(`Dòng ${rowNumber}: ${error.message}`);
         results.failed++;
+        results.total++;
       }
     }
 

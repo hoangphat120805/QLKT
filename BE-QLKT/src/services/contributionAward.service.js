@@ -1,5 +1,6 @@
 const { prisma } = require('../models');
 const ExcelJS = require('exceljs');
+const proposalService = require('./proposal.service');
 
 class ContributionAwardService {
   /**
@@ -172,6 +173,27 @@ class ContributionAwardService {
             results.failed++;
             continue;
           }
+        }
+
+        // Check for duplicate awards in proposals
+        try {
+          const duplicateCheck = await proposalService.checkDuplicateAward(
+            personnel.id,
+            nam,
+            danh_hieu,
+            'CONG_HIEN',
+            'APPROVED'
+          );
+          if (duplicateCheck.isDuplicate) {
+            results.errors.push(
+              `Dòng ${rowNumber}: ${duplicateCheck.message} (Quân nhân: ${ho_ten}, Năm: ${nam}, Danh hiệu: ${danh_hieu})`
+            );
+            results.failed++;
+            continue;
+          }
+        } catch (checkError) {
+          console.error('Error checking duplicates:', checkError);
+          // Continue processing but log the error
         }
 
         // Upsert (mỗi quân nhân chỉ có 1 bản ghi)

@@ -4782,13 +4782,21 @@ class ProposalService {
         }
       }
 
-      // NIEN_HAN với HCCSVV: Kiểm tra trong KhenThuongHCCSVV
+      // NIEN_HAN với HCCSVV: Kiểm tra trong BangDeXuat
       if (proposalType === 'NIEN_HAN' && danhHieu?.startsWith('HCCSVV_')) {
-        const existing = await prisma.khenThuongHCCSVV.findFirst({
+        const proposals = await prisma.bangDeXuat.findMany({
           where: {
-            quan_nhan_id: personnelId,
-            danh_hieu: danhHieu,
+            loai_de_xuat: 'NIEN_HAN',
+            nam: parseInt(nam),
+            status: status ? status : { not: 'REJECTED' },
           },
+        });
+
+        const  existing = proposals.find(p => {
+          const dataNienHan = p.data_nien_han || [];
+          return dataNienHan.some(
+            item => item.personnel_id === personnelId && item.danh_hieu === danhHieu
+          );
         });
 
         if (existing) {
@@ -4801,10 +4809,19 @@ class ProposalService {
 
       // HC_QKQT: Kiểm tra xem đã có chưa (unique quan_nhan_id)
       if (proposalType === 'HC_QKQT') {
-        const existing = await prisma.huanChuongQuanKyQuyetThang.findUnique({
+        const proposals = await prisma.bangDeXuat.findMany({
           where: {
-            quan_nhan_id: personnelId,
+            loai_de_xuat: 'HC_QKQT',
+            nam: parseInt(nam),
+            status: status ? status : { not: 'REJECTED' },
           },
+        });
+
+        const existing = proposals.find(p => {
+          const dataNienHan = p.data_nien_han || [];
+          return dataNienHan.some(
+            item => item.personnel_id === personnelId
+          );
         });
 
         if (existing) {
@@ -4817,10 +4834,19 @@ class ProposalService {
 
       // KNC_VSNXD_QDNDVN: Kiểm tra xem đã có chưa (unique quan_nhan_id)
       if (proposalType === 'KNC_VSNXD_QDNDVN') {
-        const existing = await prisma.kyNiemChuongVSNXDQDNDVN.findUnique({
+        const proposals = await prisma.bangDeXuat.findMany({
           where: {
-            quan_nhan_id: personnelId,
+            loai_de_xuat: 'KNC_VSNXD_QDNDVN',
+            status: status ? status : { not: 'REJECTED' },
+            nam: parseInt(nam),
           },
+        });
+
+        const existing = proposals.find(p => {
+          const dataNienHan = p.data_nien_han || [];
+          return dataNienHan.some(
+            item => item.personnel_id === personnelId
+          );
         });
 
         if (existing) {
@@ -4833,10 +4859,19 @@ class ProposalService {
 
       // CONG_HIEN: Kiểm tra xem đã có chưa (unique quan_nhan_id)
       if (proposalType === 'CONG_HIEN') {
-        const existing = await prisma.khenThuongCongHien.findUnique({
+        const proposals = await prisma.bangDeXuat.findMany({
           where: {
-            quan_nhan_id: personnelId,
+            loai_de_xuat: 'CONG_HIEN',
+            status: status ? status : { not: 'REJECTED' },
+            nam: parseInt(nam),
           },
+        });
+
+        const existing = proposals.find(p => {
+          const dataCongHien = p.data_cong_hien || [];
+          return dataCongHien.some(
+            item => item.personnel_id === personnelId
+          );
         });
 
         if (existing) {

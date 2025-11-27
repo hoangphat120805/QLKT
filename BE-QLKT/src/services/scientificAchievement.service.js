@@ -1,4 +1,5 @@
 const { prisma } = require('../models');
+const proposalService = require('./proposal.service');
 
 class ScientificAchievementService {
   async getAchievements(personnelId) {
@@ -430,6 +431,25 @@ class ScientificAchievementService {
           if (!personnel) {
             throw new Error(`Không tìm thấy quân nhân tên "${ho_ten}" với ngày sinh ${dateStr}`);
           }
+        }
+
+        // Check for duplicate awards in proposals
+        try {
+          const duplicateCheck = await proposalService.checkDuplicateAward(
+            personnel.id,
+            nam,
+            loai,
+            'NCKH'
+          );
+          if (duplicateCheck.isDuplicate) {
+            throw new Error(duplicateCheck.message);
+          }
+        } catch (checkError) {
+          if (checkError.message.includes('duplicate')) {
+            throw checkError;
+          }
+          console.error('Error checking duplicates:', checkError);
+          // Continue processing but log the error
         }
 
         const achievement = await prisma.thanhTichKhoaHoc.create({

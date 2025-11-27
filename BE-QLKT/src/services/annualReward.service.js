@@ -1,5 +1,6 @@
 const { prisma } = require('../models');
 const ExcelJS = require('exceljs');
+const proposalService = require('./proposal.service');
 
 class AnnualRewardService {
   /**
@@ -403,6 +404,28 @@ class AnnualRewardService {
               `Dòng ${rowNumber}: Không tìm thấy quân nhân tên "${ho_ten}" với ngày sinh đã cung cấp`
             );
             continue;
+          }
+        }
+
+        // Check for duplicate awards in proposals
+        if (danh_hieu) {
+          try {
+            const duplicateCheck = await proposalService.checkDuplicateAward(
+              personnel.id,
+              nam,
+              danh_hieu,
+              'CA_NHAN_HANG_NAM',
+              'APPROVED'
+            );
+            if (duplicateCheck.isDuplicate) {
+              errors.push(
+                `Dòng ${rowNumber}: ${duplicateCheck.message} (Quân nhân: ${ho_ten}, Năm: ${nam}, Danh hiệu: ${danh_hieu})`
+              );
+              continue;
+            }
+          } catch (checkError) {
+            console.error('Error checking duplicates:', checkError);
+            // Continue processing but log the error
           }
         }
 

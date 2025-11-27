@@ -544,7 +544,7 @@ export default function Step2SelectPersonnelNienHan({
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
 
-      reader.onload = e => {
+      reader.onload = async e => {
         try {
           const data = new Uint8Array(e.target?.result as ArrayBuffer);
           const workbook = XLSX.read(data, { type: 'array' });
@@ -649,6 +649,33 @@ export default function Step2SelectPersonnelNienHan({
 
           // Remove duplicates from personnel IDs
           const uniquePersonnelIds = Array.from(new Set(processedPersonnelIds));
+
+          // Kiểm tra trùng lặp trước khi resolve
+          try {
+            for (const item of titleData) {
+              const checkResponse = await axiosInstance.get('/api/proposals/check-duplicate', {
+                params: {
+                  personnel_id: item.personnel_id,
+                  nam: item.nam,
+                  danh_hieu: item.danh_hieu,
+                  proposal_type: 'NIEN_HAN',
+                },
+              });
+
+              if (checkResponse.data.data.success === false) {
+                throw new Error(checkResponse.data.data.message || 'Có lỗi khi kiểm tra trùng lặp');
+              }
+
+              if (checkResponse.data.data.exists === true) {
+                throw new Error(
+                  'Dữ liệu import có trùng lặp với đề xuất đã tồn tại. Vui lòng kiểm tra lại.'
+                );
+              }
+            }
+          } catch (error: any) {
+            reject(new Error(`Lỗi kiểm tra trùng lặp: ${error.message}`));
+            return;
+          }
 
           resolve({
             imported: titleData.length,

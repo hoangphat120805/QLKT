@@ -1,4 +1,5 @@
 const { prisma } = require('../models');
+const proposalService = require('./proposal.service');
 
 class UnitAnnualAwardService {
   /**
@@ -1091,6 +1092,26 @@ class UnitAnnualAwardService {
           }
 
           console.log(`=== DEBUG: Processing DonViTrucThuoc ID: ${donViTrucThuoc.id} ===`);
+
+          // Check for duplicate unit awards in proposals
+          try {
+            const duplicateCheck = await proposalService.checkDuplicateUnitAward(
+              donViTrucThuoc.id,
+              nam,
+              danhHieu,
+              'DON_VI_HANG_NAM'
+            );
+            if (duplicateCheck.isDuplicate) {
+              throw new Error(duplicateCheck.message);
+            }
+          } catch (checkError) {
+            if (checkError.message.includes('duplicate')) {
+              throw checkError;
+            }
+            console.error('Error checking unit duplicates:', checkError);
+            // Continue processing but log the error
+          }
+
           const award = await prisma.danhHieuDonViHangNam.upsert({
             where: {
               unique_don_vi_truc_thuoc_nam_dh: {
@@ -1122,6 +1143,26 @@ class UnitAnnualAwardService {
           }
         } else {
           console.log(`=== DEBUG: Processing CoQuanDonVi ID: ${donVi.id} ===`);
+
+          // Check for duplicate unit awards in proposals
+          try {
+            const duplicateCheck = await proposalService.checkDuplicateUnitAward(
+              donVi.id,
+              nam,
+              danhHieu,
+              'DON_VI_HANG_NAM'
+            );
+            if (duplicateCheck.isDuplicate) {
+              throw new Error(duplicateCheck.message);
+            }
+          } catch (checkError) {
+            if (checkError.message.includes('duplicate')) {
+              throw checkError;
+            }
+            console.error('Error checking unit duplicates:', checkError);
+            // Continue processing but log the error
+          }
+
           const award = await prisma.danhHieuDonViHangNam.upsert({
             where: {
               unique_co_quan_don_vi_nam_dh: {

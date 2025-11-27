@@ -411,6 +411,7 @@ export default function CreateProposalPage() {
   const handleSubmit = async () => {
     try {
       setLoading(true);
+      
 
       // Validation cho KNC_VSNXD_QDNDVN: Kiểm tra giới tính và ngày nhập ngũ
       if (proposalType === 'KNC_VSNXD_QDNDVN' && selectedPersonnelIds.length > 0) {
