@@ -283,7 +283,7 @@ export default function AnnualRewardsPage() {
             <Link href="/manager/personnel">Quân nhân</Link>
           </Breadcrumb.Item>
           <Breadcrumb.Item>
-            <Link href={`/manager/personnel/${personnelId}`}>#{personnelId}</Link>
+            <Link href={`/manager/personnel/${personnelId}`}>{personnel?.ho_ten}</Link>
           </Breadcrumb.Item>
           <Breadcrumb.Item>Khen thưởng hàng năm</Breadcrumb.Item>
         </Breadcrumb>
