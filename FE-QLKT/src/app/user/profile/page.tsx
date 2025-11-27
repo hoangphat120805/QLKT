@@ -52,16 +52,17 @@ export default function UserProfilePage() {
         }
 
         setPersonnelId(user.quan_nhan_id);
+        const currentYear = new Date().getFullYear();
 
         // Lấy dữ liệu song song
         const [personnelRes, annualRes, scientificRes, positionRes, serviceRes, annualProfileRes] =
           await Promise.all([
             apiClient.getPersonnelById(user.quan_nhan_id),
-            apiClient.getAnnualRewards(user.quan_nhan_id),
+            apiClient.getAnnualRewardsByPersonnel(user.quan_nhan_id),
             apiClient.getPersonnelScientificAchievements(user.quan_nhan_id),
             apiClient.getPositionHistory(user.quan_nhan_id),
             apiClient.getServiceProfile(user.quan_nhan_id),
-            apiClient.getAnnualProfile(user.quan_nhan_id),
+            apiClient.getAnnualProfile(user.quan_nhan_id, currentYear),
           ]);
 
         if (personnelRes.success) {
@@ -261,7 +262,7 @@ export default function UserProfilePage() {
       {/* Breadcrumb */}
       <Breadcrumb>
         <Breadcrumb.Item>
-          <Link href="/user/dashboard">
+          <Link href="/manager/dashboard">
             <HomeOutlined />
           </Link>
         </Breadcrumb.Item>
@@ -319,42 +320,6 @@ export default function UserProfilePage() {
       {/* Tabs */}
       <Card className="shadow-sm" bodyStyle={{ padding: '24px', overflow: 'visible' }}>
         <Tabs defaultActiveKey="1" size="large">
-          {/* Tab 1: Danh hiệu hằng năm */}
-          <TabPane
-            tab={
-              <Space>
-                <TrophyOutlined />
-                Danh hiệu hằng năm
-              </Space>
-            }
-            key="1"
-          >
-            <div className="mb-4">
-              <Text strong>Tổng số: {annualRewards.length}</Text>
-            </div>
-            <Table
-              dataSource={annualRewards}
-              columns={annualRewardsColumns}
-              rowKey="id"
-              pagination={{
-                pageSize: 10,
-                showTotal: total => `Tổng ${total} bản ghi`,
-              }}
-              scroll={{ x: 1000 }}
-              bordered
-              locale={{
-                emptyText: (
-                  <Alert
-                    message="Chưa có dữ liệu"
-                    description="Bạn chưa có danh hiệu hằng năm nào"
-                    type="info"
-                    showIcon
-                  />
-                ),
-              }}
-            />
-          </TabPane>
-
           {/* Tab 2: Thành tích khoa học */}
           <TabPane
             tab={
@@ -433,13 +398,29 @@ export default function UserProfilePage() {
               <div className="space-y-6 w-full">
                 {/* Huân chương Chiến sỹ Vẻ vang */}
                 <div className="w-full">
-                  <h3 className="text-base font-semibold text-gray-700 dark:text-gray-300 mb-4">
+                  <h3
+                    style={{
+                      fontSize: '16px',
+                      fontWeight: 600,
+                      color: 'var(--ant-color-text)',
+                      marginBottom: '16px',
+                    }}
+                  >
                     Huân chương Chiến sỹ Vẻ vang
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 w-full">
                     {/* HC Chiến sỹ VV - Hạng Ba */}
-                    <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-sm dark:shadow-none">
-                      <div className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                    <div
+                      className="p-4 border rounded-lg"
+                      style={{
+                        borderColor: 'var(--ant-color-border)',
+                        backgroundColor: 'var(--ant-color-bg-container)',
+                      }}
+                    >
+                      <div
+                        className="text-sm font-semibold mb-2"
+                        style={{ color: 'var(--ant-color-text-secondary)' }}
+                      >
                         HC Chiến sỹ VV - Hạng Ba
                       </div>
                       <div className="space-y-2">
@@ -465,12 +446,10 @@ export default function UserProfilePage() {
                             ? 'Đã nhận'
                             : serviceProfile.hccsvv_hang_ba_status === 'DU_DIEU_KIEN'
                             ? 'Đủ điều kiện'
-                            : serviceProfile.hccsvv_hang_ba_status === 'QUA_HAN'
-                            ? serviceProfile.hccsvv_hang_ba_goi_y || 'Chưa đủ điều kiện'
                             : 'Chưa đủ điều kiện'}
                         </Tag>
                         {serviceProfile.hccsvv_hang_ba_ngay && (
-                          <div className="text-xs text-gray-600 dark:text-gray-300">
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
                             Ngày: {formatDate(serviceProfile.hccsvv_hang_ba_ngay)}
                           </div>
                         )}
@@ -478,8 +457,17 @@ export default function UserProfilePage() {
                     </div>
 
                     {/* HC Chiến sỹ VV - Hạng Nhì */}
-                    <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-sm dark:shadow-none">
-                      <div className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                    <div
+                      className="p-4 border rounded-lg"
+                      style={{
+                        borderColor: 'var(--ant-color-border)',
+                        backgroundColor: 'var(--ant-color-bg-container)',
+                      }}
+                    >
+                      <div
+                        className="text-sm font-semibold mb-2"
+                        style={{ color: 'var(--ant-color-text-secondary)' }}
+                      >
                         HC Chiến sỹ VV - Hạng Nhì
                       </div>
                       <div className="space-y-2">
@@ -505,12 +493,10 @@ export default function UserProfilePage() {
                             ? 'Đã nhận'
                             : serviceProfile.hccsvv_hang_nhi_status === 'DU_DIEU_KIEN'
                             ? 'Đủ điều kiện'
-                            : serviceProfile.hccsvv_hang_nhi_status === 'QUA_HAN'
-                            ? serviceProfile.hccsvv_hang_nhi_goi_y || 'Chưa đủ điều kiện'
                             : 'Chưa đủ điều kiện'}
                         </Tag>
                         {serviceProfile.hccsvv_hang_nhi_ngay && (
-                          <div className="text-xs text-gray-600 dark:text-gray-300">
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
                             Ngày: {formatDate(serviceProfile.hccsvv_hang_nhi_ngay)}
                           </div>
                         )}
@@ -518,8 +504,17 @@ export default function UserProfilePage() {
                     </div>
 
                     {/* HC Chiến sỹ VV - Hạng Nhất */}
-                    <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-sm dark:shadow-none">
-                      <div className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                    <div
+                      className="p-4 border rounded-lg"
+                      style={{
+                        borderColor: 'var(--ant-color-border)',
+                        backgroundColor: 'var(--ant-color-bg-container)',
+                      }}
+                    >
+                      <div
+                        className="text-sm font-semibold mb-2"
+                        style={{ color: 'var(--ant-color-text-secondary)' }}
+                      >
                         HC Chiến sỹ VV - Hạng Nhất
                       </div>
                       <div className="space-y-2">
@@ -545,12 +540,10 @@ export default function UserProfilePage() {
                             ? 'Đã nhận'
                             : serviceProfile.hccsvv_hang_nhat_status === 'DU_DIEU_KIEN'
                             ? 'Đủ điều kiện'
-                            : serviceProfile.hccsvv_hang_nhat_status === 'QUA_HAN'
-                            ? serviceProfile.hccsvv_hang_nhat_goi_y || 'Chưa đủ điều kiện'
                             : 'Chưa đủ điều kiện'}
                         </Tag>
                         {serviceProfile.hccsvv_hang_nhat_ngay && (
-                          <div className="text-xs text-gray-600 dark:text-gray-300">
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
                             Ngày: {formatDate(serviceProfile.hccsvv_hang_nhat_ngay)}
                           </div>
                         )}
@@ -561,23 +554,54 @@ export default function UserProfilePage() {
 
                 {/* Huân chương Bảo vệ Tổ quốc */}
                 <div className="w-full">
-                  <h3 className="text-base font-semibold text-gray-700 dark:text-gray-300 mb-4">
+                  <h3
+                    style={{
+                      fontSize: '16px',
+                      fontWeight: 600,
+                      color: 'var(--ant-color-text)',
+                      marginBottom: '16px',
+                    }}
+                  >
                     Huân chương Bảo vệ Tổ quốc
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 w-full">
                     {/* Tháng cống hiến tích lũy */}
-                    <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-sm dark:shadow-none">
-                      <div className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                    <div
+                      className="p-4 border rounded-lg"
+                      style={{
+                        borderColor: 'var(--ant-color-border)',
+                        backgroundColor: 'var(--ant-color-bg-container)',
+                      }}
+                    >
+                      <div
+                        className="text-sm font-semibold mb-2"
+                        style={{ color: 'var(--ant-color-text-secondary)' }}
+                      >
                         Tháng cống hiến tích lũy
                       </div>
-                      <div className="text-base font-medium text-gray-900 dark:text-gray-100">
+                      <div
+                        style={{
+                          fontSize: '16px',
+                          fontWeight: 500,
+                          color: 'var(--ant-color-text)',
+                        }}
+                      >
                         {serviceProfile.hcbvtq_total_months || 0} tháng
                       </div>
                     </div>
 
                     {/* HC Bảo vệ TQ - Hạng Ba */}
-                    <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-sm dark:shadow-none">
-                      <div className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                    <div
+                      className="p-4 border rounded-lg"
+                      style={{
+                        borderColor: 'var(--ant-color-border)',
+                        backgroundColor: 'var(--ant-color-bg-container)',
+                      }}
+                    >
+                      <div
+                        className="text-sm font-semibold mb-2"
+                        style={{ color: 'var(--ant-color-text-secondary)' }}
+                      >
                         HC Bảo vệ TQ - Hạng Ba
                       </div>
                       <Tag
@@ -607,8 +631,17 @@ export default function UserProfilePage() {
                     </div>
 
                     {/* HC Bảo vệ TQ - Hạng Nhì */}
-                    <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-sm dark:shadow-none">
-                      <div className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                    <div
+                      className="p-4 border rounded-lg"
+                      style={{
+                        borderColor: 'var(--ant-color-border)',
+                        backgroundColor: 'var(--ant-color-bg-container)',
+                      }}
+                    >
+                      <div
+                        className="text-sm font-semibold mb-2"
+                        style={{ color: 'var(--ant-color-text-secondary)' }}
+                      >
                         HC Bảo vệ TQ - Hạng Nhì
                       </div>
                       <Tag
@@ -638,8 +671,17 @@ export default function UserProfilePage() {
                     </div>
 
                     {/* HC Bảo vệ TQ - Hạng Nhất */}
-                    <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-sm dark:shadow-none">
-                      <div className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                    <div
+                      className="p-4 border rounded-lg"
+                      style={{
+                        borderColor: 'var(--ant-color-border)',
+                        backgroundColor: 'var(--ant-color-bg-container)',
+                      }}
+                    >
+                      <div
+                        className="text-sm font-semibold mb-2"
+                        style={{ color: 'var(--ant-color-text-secondary)' }}
+                      >
                         HC Bảo vệ TQ - Hạng Nhất
                       </div>
                       <Tag
@@ -672,11 +714,28 @@ export default function UserProfilePage() {
 
                 {/* Gợi ý */}
                 {serviceProfile.goi_y && (
-                  <div className="w-full p-4 border border-blue-200 dark:border-blue-700 rounded-lg bg-blue-50 dark:bg-blue-900/20 shadow-sm dark:shadow-none">
-                    <div className="text-sm font-semibold text-blue-700 dark:text-blue-300 mb-2">
+                  <div
+                    className="w-full p-4 border rounded-lg"
+                    style={{
+                      borderColor: 'var(--ant-color-border)',
+                      backgroundColor: 'var(--ant-color-info-bg)',
+                    }}
+                  >
+                    <div
+                      className="text-sm font-semibold mb-2"
+                      style={{ color: 'var(--ant-color-text-secondary)' }}
+                    >
                       💡 Gợi ý
                     </div>
-                    <div className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed whitespace-pre-wrap break-words">
+                    <div
+                      style={{
+                        fontSize: '14px',
+                        color: 'var(--ant-color-text)',
+                        lineHeight: '1.6',
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word',
+                      }}
+                    >
                       {serviceProfile.goi_y}
                     </div>
                   </div>
@@ -698,13 +757,29 @@ export default function UserProfilePage() {
               <div className="space-y-6 w-full">
                 {/* Thống kê */}
                 <div className="w-full">
-                  <h3 className="text-base font-semibold text-gray-700 dark:text-gray-300 mb-4">
+                  <h3
+                    style={{
+                      fontSize: '16px',
+                      fontWeight: 600,
+                      color: 'var(--ant-color-text)',
+                      marginBottom: '16px',
+                    }}
+                  >
                     Thống kê
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 w-full">
                     {/* Tổng CSTDCS */}
-                    <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-sm dark:shadow-none">
-                      <div className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                    <div
+                      className="p-4 border rounded-lg"
+                      style={{
+                        borderColor: 'var(--ant-color-border)',
+                        backgroundColor: 'var(--ant-color-bg-container)',
+                      }}
+                    >
+                      <div
+                        className="text-sm font-semibold mb-2"
+                        style={{ color: 'var(--ant-color-text-secondary)' }}
+                      >
                         Tổng CSTDCS
                       </div>
                       <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
@@ -714,8 +789,17 @@ export default function UserProfilePage() {
                     </div>
 
                     {/* CSTDCS liên tục */}
-                    <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-sm dark:shadow-none">
-                      <div className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                    <div
+                      className="p-4 border rounded-lg"
+                      style={{
+                        borderColor: 'var(--ant-color-border)',
+                        backgroundColor: 'var(--ant-color-bg-container)',
+                      }}
+                    >
+                      <div
+                        className="text-sm font-semibold mb-2"
+                        style={{ color: 'var(--ant-color-text-secondary)' }}
+                      >
                         CSTDCS liên tục
                       </div>
                       <div className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">
@@ -725,8 +809,17 @@ export default function UserProfilePage() {
                     </div>
 
                     {/* Tổng ĐTKH/SKKH */}
-                    <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-sm dark:shadow-none">
-                      <div className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                    <div
+                      className="p-4 border rounded-lg"
+                      style={{
+                        borderColor: 'var(--ant-color-border)',
+                        backgroundColor: 'var(--ant-color-bg-container)',
+                      }}
+                    >
+                      <div
+                        className="text-sm font-semibold mb-2"
+                        style={{ color: 'var(--ant-color-text-secondary)' }}
+                      >
                         Tổng ĐTKH/SKKH
                       </div>
                       <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
@@ -736,16 +829,31 @@ export default function UserProfilePage() {
                     </div>
                   </div>
                 </div>
-
                 {/* Điều kiện khen thưởng */}
                 <div className="w-full">
-                  <h3 className="text-base font-semibold text-gray-700 dark:text-gray-300 mb-4">
+                  <h3
+                    style={{
+                      fontSize: '16px',
+                      fontWeight: 600,
+                      color: 'var(--ant-color-text)',
+                      marginBottom: '16px',
+                    }}
+                  >
                     Điều kiện khen thưởng
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                     {/* Điều kiện BKBQP */}
-                    <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-sm dark:shadow-none">
-                      <div className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                    <div
+                      className="p-4 border rounded-lg"
+                      style={{
+                        borderColor: 'var(--ant-color-border)',
+                        backgroundColor: 'var(--ant-color-bg-container)',
+                      }}
+                    >
+                      <div
+                        className="text-sm font-semibold mb-2"
+                        style={{ color: 'var(--ant-color-text-secondary)' }}
+                      >
                         Bằng khen BQP
                       </div>
                       <Tag
@@ -757,8 +865,17 @@ export default function UserProfilePage() {
                     </div>
 
                     {/* Điều kiện CSTDTQ */}
-                    <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-sm dark:shadow-none">
-                      <div className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                    <div
+                      className="p-4 border rounded-lg"
+                      style={{
+                        borderColor: 'var(--ant-color-border)',
+                        backgroundColor: 'var(--ant-color-bg-container)',
+                      }}
+                    >
+                      <div
+                        className="text-sm font-semibold mb-2"
+                        style={{ color: 'var(--ant-color-text-secondary)' }}
+                      >
                         Chiến sỹ thi đua Toàn quân
                       </div>
                       <Tag
@@ -770,18 +887,56 @@ export default function UserProfilePage() {
                     </div>
                   </div>
                 </div>
-
                 {/* Gợi ý */}
                 {annualProfile.goi_y && (
-                  <div className="w-full p-4 border border-blue-200 dark:border-blue-700 rounded-lg bg-blue-50 dark:bg-blue-900/20 shadow-sm dark:shadow-none">
-                    <div className="text-sm font-semibold text-blue-700 dark:text-blue-300 mb-2">
+                  <div
+                    className="w-full p-4 border rounded-lg"
+                    style={{
+                      borderColor: 'var(--ant-color-border)',
+                      backgroundColor: 'var(--ant-color-info-bg)',
+                    }}
+                  >
+                    <div
+                      className="text-sm font-semibold mb-2"
+                      style={{ color: 'var(--ant-color-text-secondary)' }}
+                    >
                       💡 Gợi ý
                     </div>
-                    <div className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed whitespace-pre-wrap break-words">
+                    <div
+                      style={{
+                        fontSize: '14px',
+                        color: 'var(--ant-color-text)',
+                        lineHeight: '1.6',
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word',
+                      }}
+                    >
                       {annualProfile.goi_y}
                     </div>
                   </div>
                 )}
+
+                <Table
+                  dataSource={annualRewards}
+                  columns={annualRewardsColumns}
+                  rowKey="id"
+                  pagination={{
+                    pageSize: 10,
+                    showTotal: total => `Tổng ${total} bản ghi`,
+                  }}
+                  scroll={{ x: 1000 }}
+                  bordered
+                  locale={{
+                    emptyText: (
+                      <Alert
+                        message="Chưa có dữ liệu"
+                        description="Bạn chưa có danh hiệu hằng năm nào"
+                        type="info"
+                        showIcon
+                      />
+                    ),
+                  }}
+                />
               </div>
             ) : (
               <Alert
