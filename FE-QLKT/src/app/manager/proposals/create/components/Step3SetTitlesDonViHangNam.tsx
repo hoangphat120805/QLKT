@@ -212,7 +212,8 @@ export default function Step3SetTitlesDonViHangNam({
             message.warning(
               `${unitDetail.ten_don_vi}: ${response.data.data.message}. Vui lòng kiểm tra lại.`
             );
-            // Vẫn cho phép chọn nhưng cảnh báo
+            // Không cho phép chọn
+            return;
           }
         } catch (error: any) {
           console.error('Error checking duplicate unit award:', error);
