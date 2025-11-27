@@ -34,18 +34,17 @@ import { useTheme } from '@/components/theme-provider';
 
 const { Title, Paragraph } = Typography;
 
-interface RewardRecord {
+interface ScientificAchievement {
   id: string;
   nam: number;
-  danh_hieu: string;
-  cap_bac?: string;
-  chuc_vu?: string;
-  ghi_chu?: string;
+  loai: string;
+  mo_ta: string;
+  status?: string;
   so_quyet_dinh?: string;
   file_quyet_dinh?: string;
 }
 
-export default function AnnualRewardsPage() {
+export default function ScientificAchievementsPage() {
   const params = useParams();
   const personnelId = params?.id as string;
   const { theme } = useTheme();
@@ -53,9 +52,9 @@ export default function AnnualRewardsPage() {
 
   const [loading, setLoading] = useState(true);
   const [personnel, setPersonnel] = useState<any>(null);
-  const [rewards, setRewards] = useState<RewardRecord[]>([]);
+  const [achievements, setAchievements] = useState<ScientificAchievement[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingReward, setEditingReward] = useState<any>(null);
+  const [editingAchievement, setEditingAchievement] = useState<any>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -67,16 +66,16 @@ export default function AnnualRewardsPage() {
   async function loadData() {
     try {
       setLoading(true);
-      const [personnelRes, rewardsRes] = await Promise.all([
+      const [personnelRes, achievementsRes] = await Promise.all([
         apiClient.getPersonnelById(personnelId),
-        apiClient.getAnnualRewardsByPersonnel(personnelId),
+        apiClient.getPersonnelScientificAchievements(personnelId),
       ]);
 
       if (personnelRes.success) {
         setPersonnel(personnelRes.data);
       }
-      if (rewardsRes.success) {
-        setRewards(rewardsRes.data || []);
+      if (achievementsRes.success) {
+        setAchievements(achievementsRes.data || []);
       }
     } catch (error) {
       message.error('Không thể tải dữ liệu');
@@ -85,18 +84,22 @@ export default function AnnualRewardsPage() {
     }
   }
 
-  const handleOpenDialog = (reward?: any) => {
-    if (reward) {
-      setEditingReward(reward);
+  const handleOpenDialog = (achievement?: any) => {
+    if (achievement) {
+      setEditingAchievement(achievement);
       form.setFieldsValue({
-        nam: reward.nam?.toString() || new Date().getFullYear().toString(),
-        danh_hieu: reward.danh_hieu || '',
+        nam: achievement.nam?.toString() || new Date().getFullYear().toString(),
+        loai: achievement.loai || '',
+        mo_ta: achievement.mo_ta || '',
+        status: achievement.status || '',
       });
     } else {
-      setEditingReward(null);
+      setEditingAchievement(null);
       form.setFieldsValue({
         nam: new Date().getFullYear().toString(),
-        danh_hieu: '',
+        loai: '',
+        mo_ta: '',
+        status: '',
       });
     }
     setDialogOpen(true);
@@ -104,7 +107,7 @@ export default function AnnualRewardsPage() {
 
   const handleCloseDialog = () => {
     setDialogOpen(false);
-    setEditingReward(null);
+    setEditingAchievement(null);
     form.resetFields();
   };
 
@@ -114,19 +117,18 @@ export default function AnnualRewardsPage() {
 
       const payload = {
         nam: parseInt(values.nam),
-        danh_hieu: values.danh_hieu,
-        cap_bac: values.cap_bac || null,
-        chuc_vu: values.chuc_vu || null,
-        ghi_chu: values.ghi_chu || null,
+        loai: values.loai,
+        mo_ta: values.mo_ta,
+        status: values.status || null,
       };
 
-      const res = editingReward
-        ? await apiClient.updateAnnualReward(editingReward.id, payload)
-        : await apiClient.createAnnualReward(personnelId, payload);
+      const res = editingAchievement
+        ? await apiClient.updateScientificAchievement(editingAchievement.id, payload)
+        : await apiClient.createScientificAchievement(personnelId, payload);
 
       if (res.success) {
         message.success(
-          editingReward ? 'Cập nhật khen thưởng thành công' : 'Thêm khen thưởng thành công'
+          editingAchievement ? 'Cập nhật thành tích thành công' : 'Thêm thành tích thành công'
         );
         handleCloseDialog();
         loadData();
@@ -143,10 +145,10 @@ export default function AnnualRewardsPage() {
   const handleDelete = async () => {
     if (!deleteId) return;
     try {
-      const res = await apiClient.deleteAnnualReward(deleteId);
+      const res = await apiClient.deleteScientificAchievement(deleteId);
 
       if (res.success) {
-        message.success('Xóa khen thưởng thành công');
+        message.success('Xóa thành tích thành công');
         setDeleteModalOpen(false);
         setDeleteId(null);
         loadData();
@@ -158,7 +160,7 @@ export default function AnnualRewardsPage() {
     }
   };
 
-  const columns: ColumnsType<RewardRecord> = [
+  const columns: ColumnsType<ScientificAchievement> = [
     {
       title: 'Năm',
       dataIndex: 'nam',
@@ -167,35 +169,38 @@ export default function AnnualRewardsPage() {
       align: 'center',
     },
     {
-      title: 'Danh hiệu',
-      dataIndex: 'danh_hieu',
-      key: 'danh_hieu',
-      width: 200,
+      title: 'Loại',
+      dataIndex: 'loai',
+      key: 'loai',
+      width: 150,
       align: 'center',
-      render: (text: string) => text || '-',
+      render: (text: string) => {
+        const map: Record<string, string> = {
+          NCKH: 'Đề tài khoa học',
+          SKKH: 'Sáng kiến khoa học',
+        };
+        return map[text] || text || '-';
+      },
     },
     {
-      title: 'Cấp bậc',
-      dataIndex: 'cap_bac',
-      key: 'cap_bac',
-      width: 120,
-      align: 'center',
-      render: (text: string) => text || '-',
-    },
-    {
-      title: 'Chức vụ',
-      dataIndex: 'chuc_vu',
-      key: 'chuc_vu',
-      width: 180,
-      render: (text: string) => text || '-',
-    },
-    {
-      title: 'Ghi chú',
-      dataIndex: 'ghi_chu',
-      key: 'ghi_chu',
-      width: 200,
+      title: 'Mô tả',
+      dataIndex: 'mo_ta',
+      key: 'mo_ta',
       ellipsis: true,
       render: (text: string) => text || '-',
+    },
+    {
+      title: 'Trạng thái',
+      dataIndex: 'status',
+      key: 'status',
+      width: 120,
+      align: 'center',
+      render: (status: string) => {
+        if (!status) return '-';
+        const color = status === 'APPROVED' ? 'green' : 'orange';
+        const text = status === 'APPROVED' ? 'Đã duyệt' : 'Chờ duyệt';
+        return <span style={{ color }}>{text}</span>;
+      },
     },
     {
       title: 'Số quyết định',
@@ -203,14 +208,14 @@ export default function AnnualRewardsPage() {
       key: 'so_quyet_dinh',
       width: 200,
       align: 'center',
-      render: (text: string, record: RewardRecord) => {
+      render: (text: string, record: ScientificAchievement) => {
         if (!text) return '-';
 
         // Nếu có file PDF, hiển thị link để xem
         if (record.file_quyet_dinh) {
           const pdfUrl = `${
             process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000'
-          }/api/annual-rewards/decision-files/${record.file_quyet_dinh}`;
+          }/api/scientific-achievements/decision-files/${record.file_quyet_dinh}`;
           return (
             <a
               href={pdfUrl}
@@ -243,7 +248,7 @@ export default function AnnualRewardsPage() {
           />
           <Popconfirm
             title="Xác nhận xóa"
-            description="Bạn có chắc chắn muốn xóa danh hiệu này?"
+            description="Bạn có chắc chắn muốn xóa thành tích này?"
             onConfirm={() => {
               setDeleteId(record.id);
               setDeleteModalOpen(true);
@@ -285,7 +290,7 @@ export default function AnnualRewardsPage() {
           <Breadcrumb.Item>
             <Link href={`/manager/personnel/${personnelId}`}>#{personnelId}</Link>
           </Breadcrumb.Item>
-          <Breadcrumb.Item>Khen thưởng hàng năm</Breadcrumb.Item>
+          <Breadcrumb.Item>Thành tích khoa học</Breadcrumb.Item>
         </Breadcrumb>
 
         {/* Header */}
@@ -306,7 +311,7 @@ export default function AnnualRewardsPage() {
               </Link>
             </Space>
             <Title level={2} style={{ marginTop: 8, marginBottom: 8 }}>
-              Khen thưởng hàng năm
+              Thành tích khoa học
             </Title>
             {personnel && (
               <Paragraph style={{ fontSize: 14, color: '#666', marginBottom: 0 }}>
@@ -316,7 +321,7 @@ export default function AnnualRewardsPage() {
           </div>
           <Link href={`/manager/proposals/create`}>
             <Button type="primary" icon={<PlusOutlined />}>
-              Thêm khen thưởng
+              Thêm thành tích
             </Button>
           </Link>
         </div>
@@ -333,11 +338,11 @@ export default function AnnualRewardsPage() {
           <Card>
             <Table
               columns={columns}
-              dataSource={rewards}
+              dataSource={achievements}
               rowKey="id"
               pagination={false}
               locale={{
-                emptyText: 'Chưa có dữ liệu khen thưởng',
+                emptyText: 'Chưa có dữ liệu thành tích khoa học',
               }}
             />
           </Card>
@@ -345,7 +350,7 @@ export default function AnnualRewardsPage() {
 
         {/* Form Modal */}
         <Modal
-          title={editingReward ? 'Sửa khen thưởng' : 'Thêm khen thưởng mới'}
+          title={editingAchievement ? 'Sửa thành tích' : 'Thêm thành tích mới'}
           open={dialogOpen}
           onCancel={handleCloseDialog}
           footer={null}
@@ -361,68 +366,29 @@ export default function AnnualRewardsPage() {
             </Form.Item>
 
             <Form.Item
-              name="danh_hieu"
-              label="Danh hiệu"
-              rules={[{ required: true, message: 'Vui lòng chọn danh hiệu' }]}
+              name="loai"
+              label="Loại"
+              rules={[{ required: true, message: 'Vui lòng chọn loại' }]}
             >
-              <Select placeholder="Chọn danh hiệu" size="large">
-                <Select.Option value="CSTDCS">Chiến sĩ thi đua cơ sở (CSTDCS)</Select.Option>
-                <Select.Option value="CSTT">Chiến sĩ tốt (CSTT)</Select.Option>
+              <Select placeholder="Chọn loại" size="large">
+                <Select.Option value="NCKH">Đề tài khoa học (NCKH)</Select.Option>
+                <Select.Option value="SKKH">Sáng kiến khoa học (SKKH)</Select.Option>
               </Select>
             </Form.Item>
 
-            <Form.Item name="cap_bac" label="Cấp bậc (tại thời điểm đề nghị)">
-              <Select placeholder="Chọn cấp bậc" size="large" allowClear>
-                <Select.Option value="Thượng tá">Thượng tá</Select.Option>
-                <Select.Option value="Trung tá">Trung tá</Select.Option>
-                <Select.Option value="Thiếu tá">Thiếu tá</Select.Option>
-                <Select.Option value="Đại úy">Đại úy</Select.Option>
-                <Select.Option value="Thượng úy">Thượng úy</Select.Option>
-                <Select.Option value="Trung úy">Trung úy</Select.Option>
-                <Select.Option value="Thiếu úy">Thiếu úy</Select.Option>
-                <Select.Option value="Thượng sĩ">Thượng sĩ</Select.Option>
-                <Select.Option value="Trung sĩ">Trung sĩ</Select.Option>
-                <Select.Option value="Hạ sĩ">Hạ sĩ</Select.Option>
+            <Form.Item
+              name="mo_ta"
+              label="Mô tả"
+              rules={[{ required: true, message: 'Vui lòng nhập mô tả' }]}
+            >
+              <Input.TextArea placeholder="Mô tả chi tiết về thành tích" rows={4} size="large" />
+            </Form.Item>
+
+            <Form.Item name="status" label="Trạng thái">
+              <Select placeholder="Chọn trạng thái" size="large" allowClear>
+                <Select.Option value="PENDING">Chờ duyệt</Select.Option>
+                <Select.Option value="APPROVED">Đã duyệt</Select.Option>
               </Select>
-            </Form.Item>
-
-            <Form.Item name="chuc_vu" label="Chức vụ (tại thời điểm đề nghị)">
-              <Input placeholder="Nhập chức vụ" size="large" />
-            </Form.Item>
-
-            <Form.Item name="ghi_chu" label="Ghi chú">
-              <Input.TextArea
-                placeholder="Ghi chú (ví dụ: chuyển từ đơn vị khác)"
-                rows={3}
-                size="large"
-              />
-            </Form.Item>
-
-            <Form.Item name="cap_bac" label="Cấp bậc (tại thời điểm đề nghị)">
-              <Select placeholder="Chọn cấp bậc" size="large" allowClear>
-                <Select.Option value="Thượng tá">Thượng tá</Select.Option>
-                <Select.Option value="Trung tá">Trung tá</Select.Option>
-                <Select.Option value="Thiếu tá">Thiếu tá</Select.Option>
-                <Select.Option value="Đại úy">Đại úy</Select.Option>
-                <Select.Option value="Thượng úy">Thượng úy</Select.Option>
-                <Select.Option value="Trung úy">Trung úy</Select.Option>
-                <Select.Option value="Thiếu úy">Thiếu úy</Select.Option>
-                <Select.Option value="Thượng sĩ">Thượng sĩ</Select.Option>
-                <Select.Option value="Trung sĩ">Trung sĩ</Select.Option>
-                <Select.Option value="Hạ sĩ">Hạ sĩ</Select.Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item name="chuc_vu" label="Chức vụ (tại thời điểm đề nghị)">
-              <Input placeholder="Nhập chức vụ" size="large" />
-            </Form.Item>
-
-            <Form.Item name="ghi_chu" label="Ghi chú">
-              <Input.TextArea
-                placeholder="Ghi chú (vd: chuyển từ đơn vị khác)"
-                rows={3}
-                size="large"
-              />
             </Form.Item>
 
             <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
@@ -431,7 +397,7 @@ export default function AnnualRewardsPage() {
                   Hủy
                 </Button>
                 <Button type="primary" htmlType="submit" loading={submitting}>
-                  {editingReward ? 'Cập nhật' : 'Tạo mới'}
+                  {editingAchievement ? 'Cập nhật' : 'Tạo mới'}
                 </Button>
               </Space>
             </Form.Item>
@@ -452,7 +418,7 @@ export default function AnnualRewardsPage() {
           okButtonProps={{ danger: true }}
         >
           <Paragraph>
-            Bạn có chắc chắn muốn xóa khen thưởng này? Hành động này không thể hoàn tác.
+            Bạn có chắc chắn muốn xóa thành tích này? Hành động này không thể hoàn tác.
           </Paragraph>
         </Modal>
       </div>

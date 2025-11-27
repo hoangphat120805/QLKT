@@ -221,12 +221,6 @@ export default function UserProfilePage() {
       render: (chucVu: any) => chucVu?.ten_chuc_vu || 'N/A',
     },
     {
-      title: 'Nhóm cống hiến',
-      dataIndex: 'ChucVu',
-      key: 'nhom_cong_hien',
-      render: (chucVu: any) => chucVu?.NhomCongHien?.ten_nhom || 'N/A',
-    },
-    {
       title: 'Ngày bắt đầu',
       dataIndex: 'ngay_bat_dau',
       key: 'ngay_bat_dau',
