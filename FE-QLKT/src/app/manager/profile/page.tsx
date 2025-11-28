@@ -788,7 +788,10 @@ export default function UserProfilePage() {
                         backgroundColor: 'var(--ant-color-bg-container)',
                       }}
                     >
-                      <div className="text-sm font-semibold mb-2" style={{ color: 'var(--ant-color-text-secondary)' }}>
+                      <div
+                        className="text-sm font-semibold mb-2"
+                        style={{ color: 'var(--ant-color-text-secondary)' }}
+                      >
                         Huân chương Quân kỳ Quyết thắng
                       </div>
                       <div className="space-y-2">
@@ -825,10 +828,14 @@ export default function UserProfilePage() {
                             </Tag>
                             {(() => {
                               const yearsRequired = 25;
-                              const yearsOfService = calculateYearsOfService(personnelInfo?.ngay_nhap_ngu);
+                              const yearsOfService = calculateYearsOfService(
+                                personnelInfo?.ngay_nhap_ngu
+                              );
                               const eligible = yearsOfService >= yearsRequired;
                               return eligible ? (
-                                <Tag color="orange" style={{ marginLeft: 8 }}>Đủ điều kiện</Tag>
+                                <Tag color="orange" style={{ marginLeft: 8 }}>
+                                  Đủ điều kiện
+                                </Tag>
                               ) : (
                                 <Tag color="default" style={{ marginLeft: 8 }}>
                                   Chưa đủ ({yearsOfService}/{yearsRequired} năm)
@@ -871,7 +878,10 @@ export default function UserProfilePage() {
                         backgroundColor: 'var(--ant-color-bg-container)',
                       }}
                     >
-                      <div className="text-sm font-semibold mb-2" style={{ color: 'var(--ant-color-text-secondary)' }}>
+                      <div
+                        className="text-sm font-semibold mb-2"
+                        style={{ color: 'var(--ant-color-text-secondary)' }}
+                      >
                         Kỷ niệm chương Vì sự nghiệp xây dựng QĐNDVN
                       </div>
                       <div className="space-y-2">
@@ -908,10 +918,14 @@ export default function UserProfilePage() {
                             </Tag>
                             {(() => {
                               const yearsRequired = personnelInfo?.gioi_tinh === 'NAM' ? 25 : 20;
-                              const yearsOfService = calculateYearsOfService(personnelInfo?.ngay_nhap_ngu);
+                              const yearsOfService = calculateYearsOfService(
+                                personnelInfo?.ngay_nhap_ngu
+                              );
                               const eligible = yearsOfService >= yearsRequired;
                               return eligible ? (
-                                <Tag color="orange" style={{ marginLeft: 8 }}>Đủ điều kiện</Tag>
+                                <Tag color="orange" style={{ marginLeft: 8 }}>
+                                  Đủ điều kiện
+                                </Tag>
                               ) : (
                                 <Tag color="default" style={{ marginLeft: 8 }}>
                                   Chưa đủ ({yearsOfService}/{yearsRequired} năm)

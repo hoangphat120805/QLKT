@@ -447,8 +447,7 @@ export default function ManagerPersonnelDetailPage() {
                         value={0}
                         valueStyle={{ fontSize: '14px' }}
                         valueRender={() => {
-                          const hasReceived =
-                            militaryFlag && militaryFlag.hasReceived;
+                          const hasReceived = militaryFlag && militaryFlag.hasReceived;
                           if (hasReceived) {
                             return getStatusTag('DA_NHAN');
                           } else {

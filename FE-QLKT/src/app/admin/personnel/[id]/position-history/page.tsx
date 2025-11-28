@@ -439,8 +439,8 @@ export default function PositionHistoryPage() {
                 style={{
                   marginBottom: 16,
                   padding: 12,
-                  backgroundColor: '#fff7e6',
-                  border: '1px solid #ffd591',
+                  backgroundColor: theme === 'dark' ? '#4a3c28' : '#fff7e6',
+                  border: `1px solid ${theme === 'dark' ? '#d4a574' : '#ffd591'}`,
                   borderRadius: 4,
                 }}
               >

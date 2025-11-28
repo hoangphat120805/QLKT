@@ -369,7 +369,7 @@ export default function PersonnelDetailPage() {
               </div>
 
               {/* HC Bảo vệ Tổ quốc */}
-              <div>
+              <div className="mb-6">
                 <Text strong className="text-base">
                   Huân chương Bảo vệ Tổ quốc
                 </Text>
@@ -419,7 +419,7 @@ export default function PersonnelDetailPage() {
               </div>
 
               {/* HC Quân kỳ Quyết thắng */}
-              <div>
+              <div className="mb-6">
                 <Text strong className="text-base">
                   Huân chương Quân kỳ Quyết thắng
                 </Text>
@@ -443,9 +443,13 @@ export default function PersonnelDetailPage() {
                               <div>
                                 <Text>HC QKQT {yearsRequired} năm</Text>
                                 {eligible ? (
-                                  <Tag color="orange" style={{ marginLeft: 8 }}>Đủ điều kiện</Tag>
+                                  <Tag color="orange" style={{ marginLeft: 8 }}>
+                                    Đủ điều kiện
+                                  </Tag>
                                 ) : (
-                                  <Tag color="default" style={{ marginLeft: 8 }}>Chưa đủ ({yearsOfService}/{yearsRequired} năm)</Tag>
+                                  <Tag color="default" style={{ marginLeft: 8 }}>
+                                    Chưa đủ ({yearsOfService}/{yearsRequired} năm)
+                                  </Tag>
                                 )}
                               </div>
                             );
@@ -480,7 +484,8 @@ export default function PersonnelDetailPage() {
                         value={0}
                         valueStyle={{ fontSize: '14px' }}
                         valueRender={() => {
-                          const hasReceived = commemorationMedals && commemorationMedals.hasReceived;
+                          const hasReceived =
+                            commemorationMedals && commemorationMedals.hasReceived;
                           if (hasReceived) {
                             return getStatusTag('DA_NHAN');
                           } else {
@@ -491,9 +496,13 @@ export default function PersonnelDetailPage() {
                               <div>
                                 <Text>KNC VSNXD QDNDVN {yearsRequired} năm</Text>
                                 {eligible ? (
-                                  <Tag color="orange" style={{ marginLeft: 8 }}>Đủ điều kiện</Tag>
+                                  <Tag color="orange" style={{ marginLeft: 8 }}>
+                                    Đủ điều kiện
+                                  </Tag>
                                 ) : (
-                                  <Tag color="default" style={{ marginLeft: 8 }}>Chưa đủ ({yearsOfService}/{yearsRequired} năm)</Tag>
+                                  <Tag color="default" style={{ marginLeft: 8 }}>
+                                    Chưa đủ ({yearsOfService}/{yearsRequired} năm)
+                                  </Tag>
                                 )}
                               </div>
                             );
