@@ -2,7 +2,23 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, Form, Input, DatePicker, Button, Spin, Alert, message, Divider, Select } from 'antd';
+import {
+  Card,
+  Form,
+  Input,
+  DatePicker,
+  Button,
+  Spin,
+  Alert,
+  message,
+  Divider,
+  Select,
+  Descriptions,
+  Tag,
+  Space,
+  ConfigProvider,
+  theme as antdTheme,
+} from 'antd';
 import {
   UserOutlined,
   IdcardOutlined,
@@ -13,11 +29,14 @@ import {
   PhoneOutlined,
   TeamOutlined,
   BankOutlined,
+  EditOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { apiClient } from '@/lib/api-client';
 import VietnamAddressCascader from './VietnamAddressCascader';
 import { MILITARY_RANKS } from '@/lib/constants/military-ranks';
+import { useTheme } from '@/components/theme-provider';
+import { formatDate } from '@/lib/utils';
 
 // Helper function để hiển thị tên quyền
 const getRoleName = (role: string) => {
@@ -177,10 +196,12 @@ export default function ProfileEditForm({
 }: ProfileEditFormProps = {}) {
   const [form] = Form.useForm();
   const router = useRouter();
+  const { theme: currentTheme } = useTheme();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [personnelData, setPersonnelData] = useState<any>(null);
   const [showTempCCCDWarning, setShowTempCCCDWarning] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   // Handler để format địa chỉ khi người dùng rời khỏi input
   const handleAddressBlur = (fieldName: string) => {
@@ -356,6 +377,260 @@ export default function ProfileEditForm({
     );
   }
 
+  if (!isEditing) {
+    return (
+      <ConfigProvider
+        theme={{
+          algorithm: currentTheme === 'dark' ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+        }}
+      >
+        <div className="p-6 max-w-7xl mx-auto">
+          <Card
+            title={
+              <div className="flex items-center gap-2">
+                <UserOutlined className="text-2xl" />
+                <span className="text-2xl font-bold">Thông tin cá nhân</span>
+              </div>
+            }
+            className="shadow-lg"
+            extra={
+              <Button type="primary" icon={<EditOutlined />} onClick={() => setIsEditing(true)}>
+                Chỉnh sửa
+              </Button>
+            }
+          >
+            <div className="space-y-4">
+              {/* Personnel Information Card */}
+              <Card title="Thông tin cá nhân" className="shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table
+                    className={`min-w-full rounded-lg border ${
+                      currentTheme === 'dark'
+                        ? 'border-gray-700 bg-gray-900/60'
+                        : 'border-gray-200 bg-white'
+                    }`}
+                  >
+                    <tbody>
+                      {[
+                        { label: 'ID', value: personnelData.id },
+                        { label: 'Họ và tên', value: personnelData.ho_ten || '-' },
+                        {
+                          label: 'Giới tính',
+                          value:
+                            personnelData.gioi_tinh === 'NAM'
+                              ? 'Nam'
+                              : personnelData.gioi_tinh === 'NU'
+                              ? 'Nữ'
+                              : '-',
+                        },
+                        { label: 'CCCD', value: personnelData.cccd || '-' },
+                        { label: 'Số điện thoại', value: personnelData.so_dien_thoai || '-' },
+                        { label: 'Ngày sinh', value: formatDate(personnelData.ngay_sinh) },
+                        { label: 'Ngày nhập ngũ', value: formatDate(personnelData.ngay_nhap_ngu) },
+                        { label: 'Ngày xuất ngũ', value: formatDate(personnelData.ngay_xuat_ngu) },
+                      ].map(item => (
+                        <tr
+                          key={item.label}
+                          className={`border-b last:border-b-0 ${
+                            currentTheme === 'dark' ? 'border-gray-800' : 'border-gray-100'
+                          }`}
+                        >
+                          <td
+                            className={`px-4 py-3 text-sm font-semibold w-48 ${
+                              currentTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                            }`}
+                          >
+                            {item.label}
+                          </td>
+                          <td
+                            className={`px-4 py-3 text-base break-words ${
+                              currentTheme === 'dark' ? 'text-gray-200' : 'text-gray-800'
+                            }`}
+                          >
+                            {item.value ?? '-'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+
+              <Card title="Địa chỉ & Thông tin Đảng" className="shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table
+                    className={`min-w-full rounded-lg border ${
+                      currentTheme === 'dark'
+                        ? 'border-gray-700 bg-gray-900/60'
+                        : 'border-gray-200 bg-white'
+                    }`}
+                  >
+                    <tbody>
+                      {[
+                        { label: 'Quê quán 2 cấp', value: personnelData.que_quan_2_cap || '-' },
+                        { label: 'Quê quán 3 cấp', value: personnelData.que_quan_3_cap || '-' },
+                        { label: 'Trú quán hiện nay', value: personnelData.tru_quan || '-' },
+                        { label: 'Chỗ ở hiện nay', value: personnelData.cho_o_hien_nay || '-' },
+                        { label: 'Ngày vào Đảng', value: formatDate(personnelData.ngay_vao_dang) },
+                        {
+                          label: 'Ngày vào Đảng chính thức',
+                          value: formatDate(personnelData.ngay_vao_dang_chinh_thuc),
+                        },
+                        { label: 'Số thẻ Đảng viên', value: personnelData.so_the_dang_vien || '-' },
+                      ].map(item => (
+                        <tr
+                          key={item.label}
+                          className={`border-b last:border-b-0 ${
+                            currentTheme === 'dark' ? 'border-gray-800' : 'border-gray-100'
+                          }`}
+                        >
+                          <td
+                            className={`px-4 py-3 text-sm font-semibold w-48 ${
+                              currentTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                            }`}
+                          >
+                            {item.label}
+                          </td>
+                          <td
+                            className={`px-4 py-3 text-base break-words ${
+                              currentTheme === 'dark' ? 'text-gray-200' : 'text-gray-800'
+                            }`}
+                          >
+                            {item.value ?? '-'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+
+              <Card title="Đơn vị & Chức vụ" className="shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table
+                    className={`min-w-full rounded-lg border ${
+                      currentTheme === 'dark'
+                        ? 'border-gray-700 bg-gray-900/60'
+                        : 'border-gray-200 bg-white'
+                    }`}
+                  >
+                    <tbody>
+                      {[
+                        {
+                          label: 'Cơ quan đơn vị',
+                          value:
+                            personnelData.DonViTrucThuoc?.CoQuanDonVi?.ten_don_vi ||
+                            personnelData.CoQuanDonVi?.ten_don_vi ||
+                            '-',
+                        },
+                        {
+                          label: 'Đơn vị trực thuộc',
+                          value: personnelData.DonViTrucThuoc?.ten_don_vi || '-',
+                        },
+                        { label: 'Cấp bậc', value: personnelData.cap_bac || '-' },
+                        { label: 'Chức vụ', value: personnelData.ChucVu?.ten_chuc_vu || '-' },
+                        {
+                          label: 'Hệ số chức vụ',
+                          value: personnelData.ChucVu?.he_so_chuc_vu
+                            ? Number(personnelData.ChucVu.he_so_chuc_vu).toFixed(2)
+                            : '-',
+                        },
+                      ].map(item => (
+                        <tr
+                          key={item.label}
+                          className={`border-b last:border-b-0 ${
+                            currentTheme === 'dark' ? 'border-gray-800' : 'border-gray-100'
+                          }`}
+                        >
+                          <td
+                            className={`px-4 py-3 text-sm font-semibold w-48 ${
+                              currentTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                            }`}
+                          >
+                            {item.label}
+                          </td>
+                          <td
+                            className={`px-4 py-3 text-base break-words ${
+                              currentTheme === 'dark' ? 'text-gray-200' : 'text-gray-800'
+                            }`}
+                          >
+                            {item.value ?? '-'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+
+              {personnelData.TaiKhoan && (
+                <Card title="Tài khoản liên kết" className="shadow-sm overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table
+                      className={`min-w-full rounded-lg border ${
+                        currentTheme === 'dark'
+                          ? 'border-gray-700 bg-gray-900/60'
+                          : 'border-gray-200 bg-white'
+                      }`}
+                    >
+                      <tbody>
+                        {[
+                          { label: 'Username', value: personnelData.TaiKhoan.username },
+                          {
+                            label: 'Vai trò',
+                            value: (
+                              <Tag
+                                color={
+                                  personnelData.TaiKhoan.role === 'SUPER_ADMIN'
+                                    ? 'purple'
+                                    : personnelData.TaiKhoan.role === 'ADMIN'
+                                    ? 'red'
+                                    : personnelData.TaiKhoan.role === 'MANAGER'
+                                    ? 'blue'
+                                    : personnelData.TaiKhoan.role === 'USER'
+                                    ? 'green'
+                                    : 'default'
+                                }
+                              >
+                                {getRoleName(personnelData.TaiKhoan.role)}
+                              </Tag>
+                            ),
+                          },
+                        ].map(item => (
+                          <tr
+                            key={item.label}
+                            className={`border-b last:border-b-0 ${
+                              currentTheme === 'dark' ? 'border-gray-800' : 'border-gray-100'
+                            }`}
+                          >
+                            <td
+                              className={`px-4 py-3 text-sm font-semibold w-48 ${
+                                currentTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                              }`}
+                            >
+                              {item.label}
+                            </td>
+                            <td
+                              className={`px-4 py-3 text-base break-words ${
+                                currentTheme === 'dark' ? 'text-gray-200' : 'text-gray-800'
+                              }`}
+                            >
+                              {item.value ?? '-'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </Card>
+              )}
+            </div>
+          </Card>
+        </div>
+      </ConfigProvider>
+    );
+  }
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <Card
@@ -366,6 +641,7 @@ export default function ProfileEditForm({
           </div>
         }
         className="shadow-lg"
+        extra={<Button onClick={() => setIsEditing(false)}>Hủy chỉnh sửa</Button>}
       >
         <p className="text-gray-600 mb-6">
           Vui lòng cập nhật đầy đủ thông tin cá nhân, đặc biệt là <strong>CCCD</strong>,{' '}
@@ -595,12 +871,7 @@ export default function ProfileEditForm({
             </Form.Item>
 
             <Form.Item label="Cấp bậc" name="cap_bac" required={false}>
-              <Select
-                placeholder="Chọn cấp bậc"
-                size="large"
-                className="rounded-lg"
-                allowClear
-              >
+              <Select placeholder="Chọn cấp bậc" size="large" className="rounded-lg" allowClear>
                 {MILITARY_RANKS.map(rank => (
                   <Select.Option key={rank} value={rank}>
                     {rank}
