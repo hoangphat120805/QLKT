@@ -1000,6 +1000,24 @@ export const apiClient = {
     }
   },
 
+  async getMilitaryFlagByPersonnel(personnelId: string): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.get(`/api/military-flag/personnel/${personnelId}`);
+      return { success: true, data: res.data?.data || res.data };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async getCommemorationMedalsByPersonnel(personnelId: string): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.get(`/api/commemorative-medals/personnel/${personnelId}`);
+      return { success: true, data: res.data?.data || res.data };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
   // Notifications
   async getNotifications(params?: {
     page?: number;

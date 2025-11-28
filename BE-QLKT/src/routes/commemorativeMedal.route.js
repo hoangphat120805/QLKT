@@ -80,4 +80,16 @@ router.get(
   commemorativeMedalController.getStatistics
 );
 
+/**
+ * @route   GET /api/commemorative-medals/personnel/:personnel_id
+ * @desc    Lấy Kỷ niệm chương theo personnel_id
+ * @access  ADMIN, MANAGER, USER
+ */
+router.get(
+  '/personnel/:personnel_id',
+  verifyToken,
+  checkRole(['ADMIN', 'MANAGER', 'USER']),
+  commemorativeMedalController.getByPersonnelId
+);
+
 module.exports = router;

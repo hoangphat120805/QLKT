@@ -162,6 +162,73 @@ class MilitaryFlagController {
       });
     }
   }
+
+  /**
+   * GET /api/military-flag/personnel/:personnel_id
+   * Lấy Huân chương Quân kỳ Quyết thắng theo personnel_id
+   */
+  async getByPersonnelId(req, res) {
+    try {
+      const { personnel_id } = req.params;
+      const userId = req.user.id;
+      const userRole = req.user.role;
+      const userPersonnelId = req.user.personnel_id;
+
+      // Nếu là USER, chỉ cho phép xem của chính mình
+      if (userRole === 'USER' && userPersonnelId !== personnel_id) {
+        return res.status(403).json({
+          success: false,
+          message: 'Bạn chỉ có thể xem thông tin của mình',
+        });
+      }
+
+      // Nếu là MANAGER, kiểm tra personnel có thuộc đơn vị của mình không
+      if (userRole === 'MANAGER') {
+        const user = await militaryFlagService.getUserWithUnit(userId);
+        if (!user || !user.QuanNhan) {
+          return res.status(403).json({
+            success: false,
+            message: 'Không tìm thấy thông tin đơn vị',
+          });
+        }
+        const managerUnitId = user.QuanNhan.co_quan_don_vi_id || user.QuanNhan.don_vi_truc_thuoc_id;
+
+        // Lấy thông tin personnel để kiểm tra đơn vị
+        const personnel = await militaryFlagService.getPersonnelById(personnel_id);
+        if (!personnel) {
+          return res.status(404).json({
+            success: false,
+            message: 'Không tìm thấy thông tin quân nhân',
+          });
+        }
+
+        const personnelUnitId = personnel.co_quan_don_vi_id || personnel.don_vi_truc_thuoc_id;
+        if (personnelUnitId !== managerUnitId) {
+          return res.status(403).json({
+            success: false,
+            message: 'Bạn chỉ có thể xem thông tin của đơn vị mình',
+          });
+        }
+      }
+
+      const result = await militaryFlagService.getByPersonnelId(personnel_id);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Lấy HCQKQT theo personnel_id thành công',
+        data: {
+          hasReceived: result.length > 0,
+          data: result,
+        },
+      });
+    } catch (error) {
+      console.error('Get military flag by personnel id error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Lấy dữ liệu thất bại',
+      });
+    }
+  }
 }
 
 module.exports = new MilitaryFlagController();

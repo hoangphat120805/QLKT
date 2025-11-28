@@ -98,7 +98,7 @@ export default function ManagerPersonnelPage() {
           unit_id: managerUnitId,
         }),
         apiClient.getPositions(),
-        apiClient.getUnits(),
+        apiClient.getMyUnits(),
       ]);
 
       if (personnelRes.success) {

@@ -75,4 +75,16 @@ router.get(
   militaryFlagController.getStatistics
 );
 
+/**
+ * @route   GET /api/military-flag/personnel/:personnel_id
+ * @desc    Lấy Huân chương Quân kỳ Quyết thắng theo personnel_id
+ * @access  ADMIN, MANAGER, USER
+ */
+router.get(
+  '/personnel/:personnel_id',
+  verifyToken,
+  checkRole(['ADMIN', 'MANAGER', 'USER']),
+  militaryFlagController.getByPersonnelId
+);
+
 module.exports = router;

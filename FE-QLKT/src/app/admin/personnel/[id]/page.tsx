@@ -47,15 +47,19 @@ export default function PersonnelDetailPage() {
   const [personnel, setPersonnel] = useState<any>(null);
   const [serviceProfile, setServiceProfile] = useState<any>(null);
   const [annualProfile, setAnnualProfile] = useState<any>(null);
+  const [militaryFlag, setMilitaryFlag] = useState<any>(null);
+  const [commemorationMedals, setCommemorationMedals] = useState<any>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [personnelRes, serviceRes, annualRes] = await Promise.all([
+        const [personnelRes, serviceRes, annualRes, militaryRes, commRes] = await Promise.all([
           apiClient.getPersonnelById(personnelId),
           apiClient.getServiceProfile(personnelId),
           apiClient.getAnnualProfile(personnelId),
+          apiClient.getMilitaryFlagByPersonnel(personnelId),
+          apiClient.getCommemorationMedalsByPersonnel(personnelId),
         ]);
 
         if (personnelRes.success) {
@@ -70,6 +74,14 @@ export default function PersonnelDetailPage() {
 
         if (annualRes.success) {
           setAnnualProfile(annualRes.data);
+        }
+
+        if (militaryRes.success) {
+          setMilitaryFlag(militaryRes.data);
+        }
+
+        if (commRes.success) {
+          setCommemorationMedals(commRes.data);
         }
       } catch (error: any) {
         message.error(error.message || 'Lỗi khi lấy thông tin');
@@ -108,6 +120,13 @@ export default function PersonnelDetailPage() {
       default:
         return { label: role || '-', color: 'default' };
     }
+  };
+
+  const calculateYearsOfService = (ngayNhapNgu: string) => {
+    if (!ngayNhapNgu) return 0;
+    const now = new Date();
+    const nhapNgu = new Date(ngayNhapNgu);
+    return Math.floor((now.getTime() - nhapNgu.getTime()) / (1000 * 60 * 60 * 24 * 365));
   };
 
   const InfoGrid = ({ items }: { items: Array<{ label: string; value?: ReactNode }> }) => (
@@ -399,15 +418,101 @@ export default function PersonnelDetailPage() {
                 </Row>
               </div>
 
-              {serviceProfile.goi_y && (
-                <>
-                  <Divider className="my-4" />
-                  <Card size="small" className="bg-blue-50 dark:bg-gray-800">
-                    <Text strong>💡 Gợi ý: </Text>
-                    <Text>{serviceProfile.goi_y}</Text>
-                  </Card>
-                </>
-              )}
+              {/* HC Quân kỳ Quyết thắng */}
+              <div>
+                <Text strong className="text-base">
+                  Huân chương Quân kỳ Quyết thắng
+                </Text>
+                <Divider className="my-3" />
+                <Row gutter={[16, 16]}>
+                  <Col xs={24} md={24}>
+                    <Card size="small" className="h-full">
+                      <Statistic
+                        title="Huân chương Quân kỳ Quyết thắng"
+                        value={0}
+                        valueStyle={{ fontSize: '14px' }}
+                        valueRender={() => {
+                          const hasReceived = militaryFlag && militaryFlag.hasReceived;
+                          if (hasReceived) {
+                            return getStatusTag('DA_NHAN');
+                          } else {
+                            const yearsRequired = 25;
+                            const yearsOfService = calculateYearsOfService(personnel.ngay_nhap_ngu);
+                            const eligible = yearsOfService >= yearsRequired;
+                            return (
+                              <div>
+                                <Text>HC QKQT {yearsRequired} năm</Text>
+                                {eligible ? (
+                                  <Tag color="orange" style={{ marginLeft: 8 }}>Đủ điều kiện</Tag>
+                                ) : (
+                                  <Tag color="default" style={{ marginLeft: 8 }}>Chưa đủ ({yearsOfService}/{yearsRequired} năm)</Tag>
+                                )}
+                              </div>
+                            );
+                          }
+                        }}
+                      />
+                      {militaryFlag &&
+                        militaryFlag.hasReceived &&
+                        militaryFlag.data &&
+                        militaryFlag.data.length > 0 &&
+                        militaryFlag.data[0].ngay_cap && (
+                          <Text type="secondary" className="text-xs">
+                            {formatDate(militaryFlag.data[0].ngay_cap)}
+                          </Text>
+                        )}
+                    </Card>
+                  </Col>
+                </Row>
+              </div>
+
+              {/* Kỷ niệm chương Vì sự nghiệp xây dựng QĐNDVN */}
+              <div>
+                <Text strong className="text-base">
+                  Kỷ niệm chương Vì sự nghiệp xây dựng Quân đội Nhân dân Việt Nam
+                </Text>
+                <Divider className="my-3" />
+                <Row gutter={[16, 16]}>
+                  <Col xs={24} md={24}>
+                    <Card size="small" className="h-full">
+                      <Statistic
+                        title="Kỷ niệm chương Vì sự nghiệp xây dựng QĐNDVN"
+                        value={0}
+                        valueStyle={{ fontSize: '14px' }}
+                        valueRender={() => {
+                          const hasReceived = commemorationMedals && commemorationMedals.hasReceived;
+                          if (hasReceived) {
+                            return getStatusTag('DA_NHAN');
+                          } else {
+                            const yearsRequired = personnel.gioi_tinh === 'NAM' ? 25 : 20;
+                            const yearsOfService = calculateYearsOfService(personnel.ngay_nhap_ngu);
+                            const eligible = yearsOfService >= yearsRequired;
+                            return (
+                              <div>
+                                <Text>KNC VSNXD QDNDVN {yearsRequired} năm</Text>
+                                {eligible ? (
+                                  <Tag color="orange" style={{ marginLeft: 8 }}>Đủ điều kiện</Tag>
+                                ) : (
+                                  <Tag color="default" style={{ marginLeft: 8 }}>Chưa đủ ({yearsOfService}/{yearsRequired} năm)</Tag>
+                                )}
+                              </div>
+                            );
+                          }
+                        }}
+                      />
+                      {commemorationMedals &&
+                        commemorationMedals.hasReceived &&
+                        commemorationMedals.data &&
+                        commemorationMedals.data.length > 0 &&
+                        commemorationMedals.data[0].ngay_cap && (
+                          <Text type="secondary" className="text-xs">
+                            {formatDate(commemorationMedals.data[0].ngay_cap)}
+                          </Text>
+                        )}
+                    </Card>
+                  </Col>
+                </Row>
+              </div>
             </Card>
           )}
 

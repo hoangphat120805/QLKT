@@ -276,12 +276,12 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
         {
           key: 'awards',
           icon: <FileTextOutlined />,
-          label: <Link href="/manager/awards">Khen Thưởng Đơn vị</Link>,
+          label: <Link href="/manager/awards">Khen thưởng quân nhân</Link>,
         },
         {
           key: 'units',
           icon: <ApartmentOutlined />,
-          label: <Link href="/manager/units">Quản lý Đơn vị</Link>,
+          label: <Link href="/manager/units">Khen thưởng đơn vị</Link>,
         },
         {
           key: 'system-logs',

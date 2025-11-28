@@ -351,6 +351,41 @@ class MilitaryFlagService {
       },
     });
   }
+
+  /**
+   * Get Military Flag by personnel ID
+   */
+  async getByPersonnelId(personnelId) {
+    const result = await prisma.huanChuongQuanKyQuyetThang.findUnique({
+      where: { quan_nhan_id: personnelId },
+      include: {
+        QuanNhan: {
+          select: {
+            cccd: true,
+            ho_ten: true,
+            cap_bac: true,
+            ngay_sinh: true,
+            CoQuanDonVi: { select: { ten_don_vi: true } },
+            DonViTrucThuoc: { select: { ten_don_vi: true } },
+          },
+        },
+      },
+    });
+    return result ? [result] : [];
+  }
+
+  /**
+   * Get personnel by ID (helper method)
+   */
+  async getPersonnelById(personnelId) {
+    return await prisma.quanNhan.findUnique({
+      where: { id: personnelId },
+      select: {
+        co_quan_don_vi_id: true,
+        don_vi_truc_thuoc_id: true,
+      },
+    });
+  }
 }
 
 module.exports = new MilitaryFlagService();

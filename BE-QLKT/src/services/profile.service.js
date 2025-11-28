@@ -799,20 +799,21 @@ class ProfileService {
       });
 
       //reset status huân chương nếu chưa có khen thưởng hccsvv
-      existingProfile.hccsvv_hang_ba_status = 'CHUA_DU';
-      existingProfile.hccsvv_hang_nhi_status = 'CHUA_DU';
-      existingProfile.hccsvv_hang_nhat_status = 'CHUA_DU';
+      let newProfile = existingProfile ?? {};
+      newProfile.hccsvv_hang_ba_status = 'CHUA_DU';
+      newProfile.hccsvv_hang_nhi_status = 'CHUA_DU';
+      newProfile.hccsvv_hang_nhat_status = 'CHUA_DU';
 
       // update status huân chương từ khen thưởng hccsvv
       for (const kt of khenthuonghccsvv) {
         if (kt.danh_hieu === 'HCCSVV_HANG_BA') {
-          existingProfile.hccsvv_hang_ba_status = 'DA_NHAN';
+          newProfile.hccsvv_hang_ba_status = 'DA_NHAN';
         }
         if (kt.danh_hieu === 'HCCSVV_HANG_NHI') {
-          existingProfile.hccsvv_hang_nhi_status = 'DA_NHAN';
+          newProfile.hccsvv_hang_nhi_status = 'DA_NHAN';
         }
         if (kt.danh_hieu === 'HCCSVV_HANG_NHAT') {
-          existingProfile.hccsvv_hang_nhat_status = 'DA_NHAN';
+          newProfile.hccsvv_hang_nhat_status = 'DA_NHAN';
         }
       }
 
@@ -821,17 +822,17 @@ class ProfileService {
       const hccsvvBa = this.calculateHCCSVV(
         personnel.ngay_nhap_ngu,
         10,
-        existingProfile.hccsvv_hang_ba_status || 'CHUA_DU',
+        newProfile.hccsvv_hang_ba_status || 'CHUA_DU',
         'Ba'
       );
 
       // Chỉ xét Hạng Nhì nếu ĐÃ NHẬN Hạng Ba (DA_NHAN)
       let hccsvvNhi;
-      if (existingProfile.hccsvv_hang_ba_status === 'DA_NHAN') {
+      if (newProfile.hccsvv_hang_ba_status === 'DA_NHAN') {
         hccsvvNhi = this.calculateHCCSVV(
           personnel.ngay_nhap_ngu,
           15,
-          existingProfile.hccsvv_hang_nhi_status || 'CHUA_DU',
+          newProfile.hccsvv_hang_nhi_status || 'CHUA_DU',
           'Nhì'
         );
       } else {
@@ -844,11 +845,11 @@ class ProfileService {
 
       // Chỉ xét Hạng Nhất nếu ĐÃ NHẬN Hạng Nhì (DA_NHAN)
       let hccsvvNhat;
-      if (existingProfile.hccsvv_hang_nhi_status === 'DA_NHAN') {
+      if (newProfile.hccsvv_hang_nhi_status === 'DA_NHAN') {
         hccsvvNhat = this.calculateHCCSVV(
           personnel.ngay_nhap_ngu,
           20,
-          existingProfile.hccsvv_hang_nhat_status || 'CHUA_DU',
+          newProfile.hccsvv_hang_nhat_status || 'CHUA_DU',
           'Nhất'
         );
       } else {
