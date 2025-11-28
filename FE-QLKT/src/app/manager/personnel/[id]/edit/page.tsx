@@ -333,16 +333,6 @@ export default function ManagerPersonnelEditPage() {
                     </Select>
                   </Form.Item>
 
-                  <Form.Item name="cap_bac" label="Cấp bậc" required={false}>
-                    <Select placeholder="Chọn cấp bậc" disabled={loading} size="large" allowClear>
-                      {MILITARY_RANKS.map(rank => (
-                        <Select.Option key={rank} value={rank}>
-                          {rank}
-                        </Select.Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-
                   <Form.Item name="ngay_sinh" label="Ngày sinh">
                     <DatePicker
                       size="large"
