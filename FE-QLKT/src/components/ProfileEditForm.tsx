@@ -23,7 +23,6 @@ import {
   UserOutlined,
   IdcardOutlined,
   CalendarOutlined,
-  SaveOutlined,
   InfoCircleOutlined,
   EnvironmentOutlined,
   PhoneOutlined,
@@ -349,6 +348,9 @@ export default function ProfileEditForm({
         // Reload data
         await loadPersonnelData();
 
+        // Chuyển về chế độ xem thông tin sau khi cập nhật
+        setIsEditing(false);
+
         // Gọi callback nếu có
         if (onSuccess) {
           onSuccess();
@@ -641,7 +643,6 @@ export default function ProfileEditForm({
           </div>
         }
         className="shadow-lg"
-        extra={<Button onClick={() => setIsEditing(false)}>Hủy chỉnh sửa</Button>}
       >
         <p className="text-gray-600 mb-6">
           Vui lòng cập nhật đầy đủ thông tin cá nhân, đặc biệt là <strong>CCCD</strong>,{' '}
@@ -934,17 +935,26 @@ export default function ProfileEditForm({
 
           {/* Submit Button */}
           <Form.Item className="mb-0 mt-6">
-            <div className="flex justify-end">
+            <div className="flex justify-end items-center">
               <Button
-                type="primary"
-                htmlType="submit"
+                onClick={() => setIsEditing(false)}
                 size="large"
-                icon={<SaveOutlined />}
-                loading={saving}
-                className="w-full md:w-auto min-w-[200px] rounded-lg h-12 text-lg font-semibold"
+                className="min-w-[200px] rounded-lg h-12"
               >
-                Cập nhật thông tin
+                Hủy chỉnh sửa
               </Button>
+
+              <div className="ml-4">
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  size="large"
+                  loading={saving}
+                  className="min-w-[200px] rounded-lg h-12 text-lg font-semibold"
+                >
+                  Cập nhật thông tin
+                </Button>
+              </div>
             </div>
           </Form.Item>
         </Form>
