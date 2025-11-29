@@ -20,6 +20,9 @@ import {
   ConfigProvider,
   theme as antdTheme,
   DatePicker,
+  Row,
+  Col,
+  Statistic,
 } from 'antd';
 import type { TableColumnsType } from 'antd';
 import {
@@ -154,10 +157,17 @@ export default function PositionHistoryPage() {
       setSubmitting(true);
 
       const payload: any = {
-        ngay_bat_dau: values.ngay_bat_dau ? dayjs(values.ngay_bat_dau).format('YYYY-MM-DD') : undefined,
+        ngay_bat_dau: values.ngay_bat_dau
+          ? dayjs(values.ngay_bat_dau).format('YYYY-MM-DD')
+          : undefined,
         // Nếu ngày kết thúc bị xóa (null), gửi null để backend biết là đang xóa
         // Nếu không có (undefined), không gửi field này (giữ nguyên giá trị cũ)
-        ngay_ket_thuc: values.ngay_ket_thuc === null ? null : values.ngay_ket_thuc ? dayjs(values.ngay_ket_thuc).format('YYYY-MM-DD') : undefined,
+        ngay_ket_thuc:
+          values.ngay_ket_thuc === null
+            ? null
+            : values.ngay_ket_thuc
+            ? dayjs(values.ngay_ket_thuc).format('YYYY-MM-DD')
+            : undefined,
         he_so_chuc_vu: values.he_so_chuc_vu || undefined, // Gửi hệ số chức vụ nếu có
       };
 
@@ -173,10 +183,10 @@ export default function PositionHistoryPage() {
 
       if (res.success) {
         // Xử lý warning nếu có
-        if (res.warning) {
+        if ((res as any).warning) {
           Modal.confirm({
             title: 'Cảnh báo',
-            content: res.warning.message,
+            content: (res as any).warning.message,
             okText: 'Đồng ý',
             cancelText: 'Không',
             onOk: async () => {
@@ -184,9 +194,12 @@ export default function PositionHistoryPage() {
                 setSubmitting(true);
                 const newPayload = {
                   ...payload,
-                  ngay_ket_thuc: res.warning.suggestedEndDate,
+                  ngay_ket_thuc: (res as any).warning.suggestedEndDate,
                 };
-                const updateRes = await apiClient.updatePositionHistory(editingHistory.id, newPayload);
+                const updateRes = await apiClient.updatePositionHistory(
+                  editingHistory.id,
+                  newPayload
+                );
                 if (updateRes.success) {
                   message.success('Cập nhật lịch sử thành công');
                   handleCloseDialog();
@@ -204,13 +217,17 @@ export default function PositionHistoryPage() {
             },
             onCancel: () => {
               // Người dùng không đồng ý, giữ nguyên (đã cập nhật thành chưa kết thúc)
-              message.success(editingHistory ? 'Cập nhật lịch sử thành công' : 'Thêm lịch sử thành công');
+              message.success(
+                editingHistory ? 'Cập nhật lịch sử thành công' : 'Thêm lịch sử thành công'
+              );
               handleCloseDialog();
               loadData();
             },
           });
         } else {
-          message.success(editingHistory ? 'Cập nhật lịch sử thành công' : 'Thêm lịch sử thành công');
+          message.success(
+            editingHistory ? 'Cập nhật lịch sử thành công' : 'Thêm lịch sử thành công'
+          );
           handleCloseDialog();
           loadData();
         }
@@ -321,7 +338,8 @@ export default function PositionHistoryPage() {
       key: 'he_so_chuc_vu',
       width: 120,
       align: 'center',
-      render: (value: number) => (value !== null && value !== undefined ? Number(value).toFixed(2) : '-'),
+      render: (value: number) =>
+        value !== null && value !== undefined ? Number(value).toFixed(2) : '-',
     },
     {
       title: 'Thời gian',
@@ -329,27 +347,6 @@ export default function PositionHistoryPage() {
       width: 200,
       align: 'center',
       render: (_, record) => calculateDuration(record.ngay_bat_dau, record.ngay_ket_thuc),
-    },
-    {
-      title: 'Tổng thời gian (0.7)',
-      key: 'total_time_0_7',
-      width: 150,
-      align: 'center',
-      render: () => calculateTotalTimeByGroup('0.7'),
-    },
-    {
-      title: 'Tổng thời gian (0.8)',
-      key: 'total_time_0_8',
-      width: 150,
-      align: 'center',
-      render: () => calculateTotalTimeByGroup('0.8'),
-    },
-    {
-      title: 'Tổng thời gian (0.9-1.0)',
-      key: 'total_time_0_9_1_0',
-      width: 150,
-      align: 'center',
-      render: () => calculateTotalTimeByGroup('0.9-1.0'),
     },
     {
       title: 'Hành động',
@@ -443,6 +440,39 @@ export default function PositionHistoryPage() {
           </Button>
         </div>
 
+        {/* Statistics */}
+        <div style={{ marginBottom: 24 }}>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} md={8}>
+              <Card size="small">
+                <Statistic
+                  title="Tổng thời gian (0.7)"
+                  value={0}
+                  valueRender={() => calculateTotalTimeByGroup('0.7')}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} md={8}>
+              <Card size="small">
+                <Statistic
+                  title="Tổng thời gian (0.8)"
+                  value={0}
+                  valueRender={() => calculateTotalTimeByGroup('0.8')}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} md={8}>
+              <Card size="small">
+                <Statistic
+                  title="Tổng thời gian (0.9-1.0)"
+                  value={0}
+                  valueRender={() => calculateTotalTimeByGroup('0.9-1.0')}
+                />
+              </Card>
+            </Col>
+          </Row>
+        </div>
+
         {/* Table */}
         {loading ? (
           <Card>
@@ -476,10 +506,20 @@ export default function PositionHistoryPage() {
         >
           <Form form={form} onFinish={onSubmit} layout="vertical" style={{ marginTop: 24 }}>
             {isCurrentPosition && (
-              <div style={{ marginBottom: 16, padding: 12, backgroundColor: '#fff7e6', border: '1px solid #ffd591', borderRadius: 4 }}>
+              <div
+                style={{
+                  marginBottom: 16,
+                  padding: 12,
+                  backgroundColor: '#fff7e6',
+                  border: '1px solid #ffd591',
+                  borderRadius: 4,
+                }}
+              >
                 <Text type="warning">
                   <InfoCircleOutlined style={{ marginRight: 8 }} />
-                  Đây là chức vụ hiện tại. Bạn chỉ có thể sửa thời gian (ngày bắt đầu, ngày kết thúc). Để thay đổi chức vụ đảm nhận, vui lòng sử dụng mục "Cập nhật thông tin cá nhân".
+                  Đây là chức vụ hiện tại. Bạn chỉ có thể sửa thời gian (ngày bắt đầu, ngày kết
+                  thúc). Để thay đổi chức vụ đảm nhận, vui lòng sử dụng mục "Cập nhật thông tin cá
+                  nhân".
                 </Text>
               </div>
             )}
@@ -637,4 +677,3 @@ export default function PositionHistoryPage() {
     </ConfigProvider>
   );
 }
-

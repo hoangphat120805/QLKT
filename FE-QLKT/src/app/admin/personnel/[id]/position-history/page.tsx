@@ -20,6 +20,9 @@ import {
   ConfigProvider,
   theme as antdTheme,
   DatePicker,
+  Row,
+  Col,
+  Statistic,
 } from 'antd';
 import type { TableColumnsType } from 'antd';
 import {
@@ -261,6 +264,40 @@ export default function PositionHistoryPage() {
     }
   };
 
+  // Tính tổng thời gian đảm nhiệm chức vụ theo nhóm hệ số
+  const calculateTotalTimeByGroup = (group: '0.7' | '0.8' | '0.9-1.0') => {
+    let totalMonths = 0;
+
+    histories.forEach((history: any) => {
+      const heSo = Number(history.he_so_chuc_vu) || 0;
+      let belongsToGroup = false;
+
+      if (group === '0.7') {
+        belongsToGroup = heSo >= 0.7 && heSo < 0.8;
+      } else if (group === '0.8') {
+        belongsToGroup = heSo >= 0.8 && heSo < 0.9;
+      } else if (group === '0.9-1.0') {
+        belongsToGroup = heSo >= 0.9 && heSo <= 1.0;
+      }
+
+      if (belongsToGroup && history.so_thang !== null && history.so_thang !== undefined) {
+        totalMonths += history.so_thang;
+      }
+    });
+
+    const years = Math.floor(totalMonths / 12);
+    const remainingMonths = totalMonths % 12;
+
+    if (totalMonths === 0) return '-';
+    if (years > 0 && remainingMonths > 0) {
+      return `${years} năm ${remainingMonths} tháng`;
+    } else if (years > 0) {
+      return `${years} năm`;
+    } else {
+      return `${remainingMonths} tháng`;
+    }
+  };
+
   const columns: TableColumnsType<HistoryRecord> = [
     {
       title: 'Chức vụ',
@@ -400,6 +437,39 @@ export default function PositionHistoryPage() {
           <Button type="primary" icon={<PlusOutlined />} onClick={() => handleOpenDialog()}>
             Thêm lịch sử
           </Button>
+        </div>
+
+        {/* Statistics */}
+        <div style={{ marginBottom: 24 }}>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} md={8}>
+              <Card size="small">
+                <Statistic
+                  title="Tổng thời gian (0.7)"
+                  value={0}
+                  valueRender={() => calculateTotalTimeByGroup('0.7')}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} md={8}>
+              <Card size="small">
+                <Statistic
+                  title="Tổng thời gian (0.8)"
+                  value={0}
+                  valueRender={() => calculateTotalTimeByGroup('0.8')}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} md={8}>
+              <Card size="small">
+                <Statistic
+                  title="Tổng thời gian (0.9-1.0)"
+                  value={0}
+                  valueRender={() => calculateTotalTimeByGroup('0.9-1.0')}
+                />
+              </Card>
+            </Col>
+          </Row>
         </div>
 
         {/* Table */}
