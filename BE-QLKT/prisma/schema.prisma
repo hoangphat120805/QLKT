@@ -381,6 +381,7 @@ model HoSoHangNam {
   tong_cstdcs_json    Json?    // Lưu chi tiết danh hiệu dạng JSON
   tong_nckh_json      Json?    // Lưu chi tiết NCKH dạng JSON
   cstdcs_lien_tuc     Int      @default(0)
+  nckh_lien_tuc       Int      @default(0)
   du_dieu_kien_bkbqp  Boolean  @default(false)
   du_dieu_kien_cstdtq Boolean  @default(false)
   goi_y               String?  @db.Text

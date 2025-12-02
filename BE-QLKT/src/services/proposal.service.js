@@ -4439,12 +4439,12 @@ class ProposalService {
           const nckhCount = quanNhan.ThanhTichKhoaHoc.length;
 
           // Kiểm tra BKBQP
-          if (award.nhan_bkbqp && cstdcsLienTuc < 5) {
+          if (award.nhan_bkbqp && cstdcsLienTuc < 2) {
             importWarnings.push(
               `CCCD ${
                 award.cccd
-              }: Đề xuất BKBQP nhưng chỉ có ${cstdcsLienTuc}/5 năm CSTDCS liên tục. Thiếu ${
-                5 - cstdcsLienTuc
+              }: Đề xuất BKBQP nhưng chỉ có ${cstdcsLienTuc}/2 năm CSTDCS liên tục. Thiếu ${
+                2 - cstdcsLienTuc
               } năm.`
             );
           }
@@ -4455,8 +4455,8 @@ class ProposalService {
               importWarnings.push(
                 `CCCD ${
                   award.cccd
-                }: Đề xuất CSTDTQ nhưng chỉ có ${cstdcsLienTuc}/10 năm CSTDCS liên tục. Thiếu ${
-                  10 - cstdcsLienTuc
+                }: Đề xuất CSTDTQ nhưng chỉ có ${cstdcsLienTuc}/7 năm CSTDCS liên tục. Thiếu ${
+                  7 - cstdcsLienTuc
                 } năm.`
               );
             } else if (nckhCount === 0) {

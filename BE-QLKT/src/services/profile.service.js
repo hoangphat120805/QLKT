@@ -200,17 +200,36 @@ class ProfileService {
    * @param {Array} danhHieuList - Danh sách danh hiệu đã sắp xếp theo năm giảm dần
    * @returns {number} Số năm liên tục
    */
-  calculateContinuousCSTDCS(danhHieuList, thanhTichList, year) {
+  calculateContinuousCSTDCS(danhHieuList, year) {
     let count = 0;
     const sortedRewards = [...danhHieuList].sort((a, b) => b.nam - a.nam);
-    const sortedThanhTich = [...thanhTichList].sort((a, b) => b.nam - a.nam);
     let currentYear = year - 1; // Bắt đầu từ năm gần nhất
     for (const reward of sortedRewards) {
       if (reward.nam !== currentYear) continue; // Chỉ xét chuỗi liên tiếp từ năm hiện tại trở lùi
       // check NCKH trong năm hiện tại
-      const nckhInYear = sortedThanhTich.find(t => t.nam === currentYear);
-      if (!nckhInYear) break; // Nếu năm hiện tại không có NCKH thì dừng chuỗi
       if (reward.danh_hieu === 'CSTDCS') {
+        count++;
+        currentYear--;
+      } else {
+        break;
+      }
+    }
+
+    return count;
+  }
+
+  /**
+   * Tính số năm NCKH liên tục từ năm gần nhất
+   * @param {Array} thanhTichList - Danh sách danh hiệu đã sắp xếp theo năm giảm dần
+   * @returns {number} Số năm liên tục
+   */
+  calculateContinuousNCKH(thanhTichList, year) {
+    let count = 0;
+    const sortedRewards = [...thanhTichList].sort((a, b) => b.nam - a.nam);
+    let currentYear = year - 1; // Bắt đầu từ năm gần nhất
+    for (const reward of sortedRewards) {
+      if (reward.nam !== currentYear) continue; // Chỉ xét chuỗi liên tiếp từ năm hiện tại trở lùi
+      if ((reward.loai === 'NCKH' || reward.loai === 'SKKH') && reward.status === 'APPROVED') {
         count++;
         currentYear--;
       } else {
@@ -669,15 +688,19 @@ class ProfileService {
 
       const cstdcs_lien_tuc = this.calculateContinuousCSTDCS(
         danhHieuList.filter(dh => dh.danh_hieu === 'CSTDCS'),
-        thanhTichList,
         year
       );
+
+      const nckh_lien_tuc = this.calculateContinuousNCKH(thanhTichList, year);
+
       const bkbqp_lien_tuc = this.calculateContinuousBKBQP(
         danhHieuList.filter(dh => dh.danh_hieu === 'BKBQP'),
         year
       );
-      du_dieu_kien_bkbqp = cstdcs_lien_tuc % 2 === 0 && cstdcs_lien_tuc >= 1;
-      du_dieu_kien_cstdtq = cstdcs_lien_tuc === 7 && bkbqp_lien_tuc >= 1;
+      du_dieu_kien_bkbqp =
+        cstdcs_lien_tuc % 2 === 0 && cstdcs_lien_tuc >= 1 && nckh_lien_tuc === cstdcs_lien_tuc;
+      du_dieu_kien_cstdtq =
+        cstdcs_lien_tuc === 7 && bkbqp_lien_tuc >= 1 && nckh_lien_tuc === cstdcs_lien_tuc;
 
       // ==============================================
       // BƯỚC 4: Logic Tạo Gợi ý (Suggestion) - CHỈ GỢI Ý BKBQP VÀ CSTDTQ
@@ -723,6 +746,7 @@ class ProfileService {
           tong_cstdcs_json: tong_cstdcs_json, // Chi tiết dạng JSON
           tong_nckh_json: tong_nckh_json, // Chi tiết dạng JSON
           cstdcs_lien_tuc: cstdcs_lien_tuc,
+          nckh_lien_tuc: nckh_lien_tuc,
           du_dieu_kien_bkbqp: du_dieu_kien_bkbqp,
           du_dieu_kien_cstdtq: du_dieu_kien_cstdtq,
           goi_y: goi_y,
@@ -734,6 +758,7 @@ class ProfileService {
           tong_cstdcs_json: tong_cstdcs_json, // Chi tiết dạng JSON
           tong_nckh_json: tong_nckh_json, // Chi tiết dạng JSON
           cstdcs_lien_tuc: cstdcs_lien_tuc,
+          nckh_lien_tuc: nckh_lien_tuc,
           du_dieu_kien_bkbqp: du_dieu_kien_bkbqp,
           du_dieu_kien_cstdtq: du_dieu_kien_cstdtq,
           goi_y: goi_y,
@@ -750,6 +775,7 @@ class ProfileService {
             tong_cstdcs: hoSoHangNam.tong_cstdcs,
             tong_nckh: hoSoHangNam.tong_nckh,
             cstdcs_lien_tuc: hoSoHangNam.cstdcs_lien_tuc,
+            nckh_lien_tuc: hoSoHangNam.nckh_lien_tuc,
           },
           null,
           2

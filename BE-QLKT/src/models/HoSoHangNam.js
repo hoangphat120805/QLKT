@@ -31,6 +31,10 @@ const HoSoHangNam = sequelize.define(
       type: DataTypes.INTEGER,
       defaultValue: 0,
     },
+    nckh_lien_tuc: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
     du_dieu_kien_bkbqp: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
