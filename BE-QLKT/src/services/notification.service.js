@@ -113,7 +113,7 @@ class NotificationService {
     try {
       const count = await prisma.thongBao.count({
         where: {
-          recipient_id: userId,
+          nguoi_nhan_id: userId,
           is_read: false,
         },
       });
@@ -133,7 +133,7 @@ class NotificationService {
       const notification = await prisma.thongBao.findFirst({
         where: {
           id: notificationId,
-          recipient_id: userId,
+          nguoi_nhan_id: userId,
         },
       });
 
@@ -162,7 +162,7 @@ class NotificationService {
     try {
       const result = await prisma.thongBao.updateMany({
         where: {
-          recipient_id: userId,
+          nguoi_nhan_id: userId,
           is_read: false,
         },
         data: {
@@ -186,7 +186,7 @@ class NotificationService {
       const notification = await prisma.thongBao.findFirst({
         where: {
           id: notificationId,
-          recipient_id: userId,
+          nguoi_nhan_id: userId,
         },
       });
 

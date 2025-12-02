@@ -2,7 +2,7 @@ const { prisma } = require('../models');
 const { NOTIFICATION_TYPES, RESOURCE_TYPES } = require('../constants/notificationTypes');
 
 // Helper function to format proposal type to Vietnamese
-const formatProposalType = (loaiDeXuat) => {
+const formatProposalType = loaiDeXuat => {
   const proposalTypeMap = {
     CA_NHAN_HANG_NAM: 'Đề xuất cá nhân hằng năm',
     DON_VI_HANG_NAM: 'Đề xuất đơn vị hằng năm',
@@ -42,7 +42,7 @@ class NotificationHelper {
         message: `${submitter.username} đã gửi ${proposalTypeName.toLowerCase()}`,
         resource: RESOURCE_TYPES.PROPOSALS,
         tai_nguyen_id: proposal.id,
-        link: `/admin/proposals/${proposal.id}`,
+        link: `/admin/proposals/review/${proposal.id}`,
       }));
 
       if (notifications.length > 0) {
@@ -236,7 +236,7 @@ class NotificationHelper {
           message: `Thành tích khoa học ${achievement.loai} năm ${achievement.nam} của bạn đã được ${approverUsername} phê duyệt`,
           resource: RESOURCE_TYPES.ACHIEVEMENTS,
           tai_nguyen_id: achievement.id,
-          link: `/user/achievements`,
+          link: `/user/profile`,
         },
       });
 

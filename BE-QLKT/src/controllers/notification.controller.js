@@ -107,11 +107,19 @@ class NotificationController {
     try {
       const { id } = req.params;
       const currentUser = req.user;
+      const notificationId = parseInt(id, 10);
+
+      if (isNaN(notificationId)) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID thông báo không hợp lệ',
+        });
+      }
 
       // Kiểm tra thông báo có tồn tại và thuộc về user hiện tại
       const notification = await prisma.thongBao.findFirst({
         where: {
-          id: id,
+          id: notificationId,
           nguoi_nhan_id: currentUser.id,
         },
       });
@@ -124,7 +132,7 @@ class NotificationController {
       }
 
       const updatedNotification = await prisma.thongBao.update({
-        where: { id: id },
+        where: { id: notificationId },
         data: {
           is_read: true,
           read_at: new Date(),
@@ -186,11 +194,19 @@ class NotificationController {
     try {
       const { id } = req.params;
       const currentUser = req.user;
+      const notificationId = parseInt(id, 10);
+
+      if (isNaN(notificationId)) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID thông báo không hợp lệ',
+        });
+      }
 
       // Kiểm tra thông báo có tồn tại và thuộc về user hiện tại
       const notification = await prisma.thongBao.findFirst({
         where: {
-          id: id,
+          id: notificationId,
           nguoi_nhan_id: currentUser.id,
         },
       });
@@ -203,7 +219,7 @@ class NotificationController {
       }
 
       await prisma.thongBao.delete({
-        where: { id: id },
+        where: { id: notificationId },
       });
 
       return res.status(200).json({
