@@ -696,9 +696,9 @@ class ProfileService {
         year
       );
       du_dieu_kien_bkbqp =
-        cstdcs_lien_tuc % 2 === 0 && cstdcs_lien_tuc >= 1 && nckh_lien_tuc === cstdcs_lien_tuc;
+        cstdcs_lien_tuc % 2 === 0 && cstdcs_lien_tuc >= 1 && nckh_lien_tuc >=  cstdcs_lien_tuc;
       du_dieu_kien_cstdtq =
-        cstdcs_lien_tuc === 3 && bkbqp_lien_tuc >= 1 && nckh_lien_tuc === cstdcs_lien_tuc;
+        cstdcs_lien_tuc === 3 && bkbqp_lien_tuc >= 1 && nckh_lien_tuc >= cstdcs_lien_tuc;
 
       // ==============================================
       // BƯỚC 4: Logic Tạo Gợi ý (Suggestion) - CHỈ GỢI Ý BKBQP VÀ CSTDTQ
