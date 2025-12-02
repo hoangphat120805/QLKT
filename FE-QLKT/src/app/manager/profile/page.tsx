@@ -620,8 +620,8 @@ export default function UserProfilePage() {
                   >
                     Huân chương Bảo vệ Tổ quốc
                   </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 w-full">
-                    {/* Tháng cống hiến tích lũy */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 w-full">
+                    {/* Tháng cống hiến tích lũy - 0.7 */}
                     <div
                       className="p-4 border rounded-lg"
                       style={{
@@ -633,7 +633,7 @@ export default function UserProfilePage() {
                         className="text-sm font-semibold mb-2"
                         style={{ color: 'var(--ant-color-text-secondary)' }}
                       >
-                        Tháng cống hiến tích lũy
+                        Tháng cống hiến tích lũy 0.7
                       </div>
                       <div
                         style={{
@@ -642,7 +642,57 @@ export default function UserProfilePage() {
                           color: 'var(--ant-color-text)',
                         }}
                       >
-                        {contributionProfile?.hcbvtq_total_months || 0} tháng
+                        {contributionProfile?.months_07 || 0} tháng
+                      </div>
+                    </div>
+
+                    {/* Tháng cống hiến tích lũy - 0.8 */}
+                    <div
+                      className="p-4 border rounded-lg"
+                      style={{
+                        borderColor: 'var(--ant-color-border)',
+                        backgroundColor: 'var(--ant-color-bg-container)',
+                      }}
+                    >
+                      <div
+                        className="text-sm font-semibold mb-2"
+                        style={{ color: 'var(--ant-color-text-secondary)' }}
+                      >
+                        Tháng cống hiến tích lũy 0.8
+                      </div>
+                      <div
+                        style={{
+                          fontSize: '16px',
+                          fontWeight: 500,
+                          color: 'var(--ant-color-text)',
+                        }}
+                      >
+                        {contributionProfile?.months_08 || 0} tháng
+                      </div>
+                    </div>
+
+                    {/* Tháng cống hiến tích lũy - 0.9-1.0 */}
+                    <div
+                      className="p-4 border rounded-lg"
+                      style={{
+                        borderColor: 'var(--ant-color-border)',
+                        backgroundColor: 'var(--ant-color-bg-container)',
+                      }}
+                    >
+                      <div
+                        className="text-sm font-semibold mb-2"
+                        style={{ color: 'var(--ant-color-text-secondary)' }}
+                      >
+                        Tháng cống hiến tích lũy 0.9-1.0
+                      </div>
+                      <div
+                        style={{
+                          fontSize: '16px',
+                          fontWeight: 500,
+                          color: 'var(--ant-color-text)',
+                        }}
+                      >
+                        {contributionProfile?.months_0910 || 0} tháng
                       </div>
                     </div>
 

@@ -47,6 +47,7 @@ export default function PersonnelDetailPage() {
   const [personnel, setPersonnel] = useState<any>(null);
   const [serviceProfile, setServiceProfile] = useState<any>(null);
   const [annualProfile, setAnnualProfile] = useState<any>(null);
+  const [contributionProfile, setContributionProfile] = useState<any>(null);
   const [militaryFlag, setMilitaryFlag] = useState<any>(null);
   const [commemorationMedals, setCommemorationMedals] = useState<any>(null);
 
@@ -54,13 +55,15 @@ export default function PersonnelDetailPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [personnelRes, serviceRes, annualRes, militaryRes, commRes] = await Promise.all([
-          apiClient.getPersonnelById(personnelId),
-          apiClient.getServiceProfile(personnelId),
-          apiClient.getAnnualProfile(personnelId),
-          apiClient.getMilitaryFlagByPersonnel(personnelId),
-          apiClient.getCommemorationMedalsByPersonnel(personnelId),
-        ]);
+        const [personnelRes, serviceRes, annualRes, contributionRes, militaryRes, commRes] =
+          await Promise.all([
+            apiClient.getPersonnelById(personnelId),
+            apiClient.getServiceProfile(personnelId),
+            apiClient.getAnnualProfile(personnelId),
+            apiClient.getContributionProfile(personnelId),
+            apiClient.getMilitaryFlagByPersonnel(personnelId),
+            apiClient.getCommemorationMedalsByPersonnel(personnelId),
+          ]);
 
         if (personnelRes.success) {
           setPersonnel(personnelRes.data);
@@ -74,6 +77,11 @@ export default function PersonnelDetailPage() {
 
         if (annualRes.success) {
           setAnnualProfile(annualRes.data);
+        }
+
+        if (contributionRes.success) {
+          console.log(contributionRes);
+          setContributionProfile(contributionRes.data);
         }
 
         if (militaryRes.success) {
@@ -103,6 +111,7 @@ export default function PersonnelDetailPage() {
       DU_DIEU_KIEN: { label: 'Đủ điều kiện', color: 'orange' },
       CHUA_DU: { label: 'Chưa đủ', color: 'default' },
     };
+    console.log(serviceProfile);
     const s = statusMap[status] || statusMap.CHUA_DU;
     return <Tag color={s.color}>{s.label}</Tag>;
   };
@@ -375,43 +384,65 @@ export default function PersonnelDetailPage() {
                 </Text>
                 <Divider className="my-3" />
                 <Row gutter={[16, 16]}>
-                  <Col xs={24} md={6}>
+                  <Col xs={24} md={8}>
                     <Card size="small" className="h-full">
                       <Statistic
-                        title="Tháng tích lũy"
-                        value={serviceProfile.hcbvtq_total_months || 0}
+                        title="Tháng tích lũy 0.7"
+                        value={contributionProfile.months_07 || 0}
                         suffix="tháng"
                         valueStyle={{ color: '#3f8600' }}
                       />
                     </Card>
                   </Col>
-                  <Col xs={24} md={6}>
+                  <Col xs={24} md={8}>
+                    <Card size="small" className="h-full">
+                      <Statistic
+                        title="Tháng tích lũy 0.8"
+                        value={contributionProfile.months_08 || 0}
+                        suffix="tháng"
+                        valueStyle={{ color: '#3f8600' }}
+                      />
+                    </Card>
+                  </Col>
+                  <Col xs={24} md={8}>
+                    <Card size="small" className="h-full">
+                      <Statistic
+                        title="Tháng tích lũy 0.9-1.0"
+                        value={contributionProfile.months_0910 || 0}
+                        suffix="tháng"
+                        valueStyle={{ color: '#3f8600' }}
+                      />
+                    </Card>
+                  </Col>
+                  <Col xs={24} md={8}>
                     <Card size="small" className="h-full">
                       <Statistic
                         title="Hạng Ba"
                         value={0}
                         valueStyle={{ fontSize: '14px' }}
-                        valueRender={() => getStatusTag(serviceProfile.hcbvtq_hang_ba_status)}
+                        valueRender={() => getStatusTag(contributionProfile.hcbvtq_hang_ba_status)}
                       />
                     </Card>
                   </Col>
-                  <Col xs={24} md={6}>
+                  <Col xs={24} md={8}>
                     <Card size="small" className="h-full">
                       <Statistic
                         title="Hạng Nhì"
                         value={0}
                         valueStyle={{ fontSize: '14px' }}
-                        valueRender={() => getStatusTag(serviceProfile.hcbvtq_hang_nhi_status)}
+                        valueRender={() => getStatusTag(contributionProfile.hcbvtq_hang_nhi_status)}
                       />
                     </Card>
                   </Col>
-                  <Col xs={24} md={6}>
+                  <Col xs={24} md={8}>
                     <Card size="small" className="h-full">
                       <Statistic
                         title="Hạng Nhất"
                         value={0}
                         valueStyle={{ fontSize: '14px' }}
-                        valueRender={() => getStatusTag(serviceProfile.hcbvtq_hang_nhat_status)}
+                        valueRender={() =>
+                          getStatusTag(contributionProfile.hcbvtq_hang_nhat_status)
+                        }
                       />
                     </Card>
                   </Col>

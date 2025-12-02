@@ -386,17 +386,37 @@ export default function ManagerPersonnelDetailPage() {
                 </Text>
                 <Divider className="my-3" />
                 <Row gutter={[16, 16]}>
-                  <Col xs={24} md={6}>
+                  <Col xs={24} md={8}>
                     <Card size="small" className="h-full">
                       <Statistic
-                        title="Tháng tích lũy"
-                        value={contributionProfile?.hcbvtq_total_months || 0}
+                        title="Tháng tích lũy 0.7"
+                        value={contributionProfile?.months_07 || 0}
                         suffix="tháng"
                         valueStyle={{ color: '#3f8600' }}
                       />
                     </Card>
                   </Col>
-                  <Col xs={24} md={6}>
+                  <Col xs={24} md={8}>
+                    <Card size="small" className="h-full">
+                      <Statistic
+                        title="Tháng tích lũy 0.8"
+                        value={contributionProfile?.months_08 || 0}
+                        suffix="tháng"
+                        valueStyle={{ color: '#3f8600' }}
+                      />
+                    </Card>
+                  </Col>
+                  <Col xs={24} md={8}>
+                    <Card size="small" className="h-full">
+                      <Statistic
+                        title="Tháng tích lũy 0.9-1.0"
+                        value={contributionProfile?.months_0910 || 0}
+                        suffix="tháng"
+                        valueStyle={{ color: '#3f8600' }}
+                      />
+                    </Card>
+                  </Col>
+                  <Col xs={24} md={8}>
                     <Card size="small" className="h-full">
                       <Statistic
                         title="Hạng Ba"
@@ -406,7 +426,7 @@ export default function ManagerPersonnelDetailPage() {
                       />
                     </Card>
                   </Col>
-                  <Col xs={24} md={6}>
+                  <Col xs={24} md={8}>
                     <Card size="small" className="h-full">
                       <Statistic
                         title="Hạng Nhì"
@@ -418,7 +438,7 @@ export default function ManagerPersonnelDetailPage() {
                       />
                     </Card>
                   </Col>
-                  <Col xs={24} md={6}>
+                  <Col xs={24} md={8}>
                     <Card size="small" className="h-full">
                       <Statistic
                         title="Hạng Nhất"
@@ -432,7 +452,6 @@ export default function ManagerPersonnelDetailPage() {
                   </Col>
                 </Row>
               </div>
-
               {/* HC Quân kỳ Quyết thắng */}
               <div className="mb-6">
                 <Text strong className="text-base">

@@ -288,7 +288,7 @@ export default function PositionHistoryPage() {
     const years = Math.floor(totalMonths / 12);
     const remainingMonths = totalMonths % 12;
 
-    if (totalMonths === 0) return '-';
+    if (totalMonths === 0) return '0 năm 0 tháng';
     if (years > 0 && remainingMonths > 0) {
       return `${years} năm ${remainingMonths} tháng`;
     } else if (years > 0) {
