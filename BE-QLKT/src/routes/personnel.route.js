@@ -61,7 +61,7 @@ router.post(
 router.put(
   '/:id',
   verifyToken,
-  requireAuth, // Thay đổi từ requireManager sang requireAuth để cho phép USER
+  requireManager, // Thay đổi từ requireManager sang requireAuth để cho phép USER
   auditLog({
     action: 'UPDATE',
     resource: 'personnel',
