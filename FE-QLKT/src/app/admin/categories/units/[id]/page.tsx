@@ -33,6 +33,7 @@ export default function UnitDetailPage() {
   const unitId = params.id as string;
 
   const [unit, setUnit] = useState<any>(null);
+  const [units, setUnits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogType, setDialogType] = useState<'unit' | 'position'>('unit');
@@ -46,11 +47,16 @@ export default function UnitDetailPage() {
   async function loadUnitDetail() {
     try {
       setLoading(true);
-      const res = await apiClient.getUnitById(unitId);
-      if (res.success) {
-        setUnit(res.data);
+      const [unitRes, unitsRes] = await Promise.all([
+        apiClient.getUnitById(unitId),
+        apiClient.getUnits({ hierarchy: true }),
+      ]);
+
+      if (unitRes.success) {
+        setUnit(unitRes.data);
+        setUnits(unitsRes.data || []);
       } else {
-        message.error(res.message || 'Không thể tải thông tin đơn vị');
+        message.error(unitRes.message || 'Không thể tải thông tin đơn vị');
         router.push('/admin/categories');
       }
     } catch (error) {
@@ -202,7 +208,7 @@ export default function UnitDetailPage() {
           </div>
           <Button
             icon={<EditOutlined />}
-            onClick={() => router.push(`/admin/categories/units/${unitId}/edit`)}
+            onClick={() => handleOpenDialog('unit', unit)}
             type="primary"
             size="large"
           >
@@ -373,9 +379,15 @@ export default function UnitDetailPage() {
                 }}
               >
                 {dialogType === 'unit' ? (
-                  <PlusOutlined style={{ fontSize: '18px', color: '#fff' }} />
-                ) : (
+                  editingItem?.id ? (
+                    <EditOutlined style={{ fontSize: '18px', color: '#fff' }} />
+                  ) : (
+                    <PlusOutlined style={{ fontSize: '18px', color: '#fff' }} />
+                  )
+                ) : editingItem?.id ? (
                   <EditOutlined style={{ fontSize: '18px', color: '#fff' }} />
+                ) : (
+                  <PlusOutlined style={{ fontSize: '18px', color: '#fff' }} />
                 )}
               </div>
               <span style={{ fontSize: '18px', fontWeight: 600 }}>
@@ -405,7 +417,7 @@ export default function UnitDetailPage() {
           {dialogType === 'unit' && (
             <UnitForm
               unit={editingItem}
-              units={[unit]} // Truyền đơn vị hiện tại (là cơ quan đơn vị) để hiển thị tên trong form
+              units={units} // Truyền danh sách tất cả đơn vị để chọn parent
               onSuccess={handleSuccess}
               onClose={handleCloseDialog}
             />

@@ -110,8 +110,7 @@ class UnitAnnualAwardService {
     let continuous = 0;
     let current = year - 1;
     for (const r of records) {
-      if (r.nam !== current) continue; // chỉ xét chuỗi liên tiếp từ năm hiện tại trở lùi
-      // Có danh hiệu nếu có danh_hieu không null và không rỗng
+      if (r.nam !== current) continue;
       if (r.danh_hieu && r.danh_hieu.trim() !== '') {
         continuous += 1;
         current -= 1;
