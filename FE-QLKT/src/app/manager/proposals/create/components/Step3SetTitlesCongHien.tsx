@@ -8,6 +8,7 @@ import axiosInstance from '@/utils/axiosInstance';
 import { formatDate } from '@/lib/utils';
 import { apiClient } from '@/lib/api-client';
 import PositionHistoryModal from './PositionHistoryModal';
+import { get } from 'http';
 
 const { Text } = Typography;
 
@@ -60,6 +61,7 @@ export default function Step3SetTitlesCongHien({
   const [selectedPersonnel, setSelectedPersonnel] = useState<Personnel | null>(null);
   const [positionHistory, setPositionHistory] = useState<any[]>([]);
   const [loadingModal, setLoadingModal] = useState(false);
+  const [contributionProfiles, setContributionProfiles] = useState<Record<string, any>>({});
 
   useEffect(() => {
     if (selectedPersonnelIds.length > 0) {
@@ -79,8 +81,24 @@ export default function Step3SetTitlesCongHien({
       setPersonnel(personnelData);
 
       // Trigger recalculate cho contribution profiles
-      await fetchContributionProfiles(personnelData);
+      const profilesMap: Record<string, any> = {};
 
+      // Gọi getContributionProfile để lấy dữ liệu
+      await Promise.all(
+        personnelData.map(async p => {
+          if (p.id) {
+            try {
+              const response = await apiClient.getContributionProfile(p.id);
+              if (response.success && response.data) {
+                profilesMap[p.id] = response.data;
+              }
+            } catch (error) {
+              console.error(`Error fetching contribution profile for ${p.id}:`, error);
+            }
+          }
+        })
+      );
+      setContributionProfiles(profilesMap);
       // Fetch position histories for display
       await fetchPositionHistories(personnelData);
 
@@ -88,6 +106,7 @@ export default function Step3SetTitlesCongHien({
       if (titleData.length === 0) {
         const initialData = personnelData.map((p: Personnel) => ({
           personnel_id: p.id,
+          danh_hieu: getHighestEligibleAward(profilesMap[p.id]),
         }));
         onTitleDataChange(initialData);
       }
@@ -95,30 +114,6 @@ export default function Step3SetTitlesCongHien({
       console.error('Error fetching personnel details:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchContributionProfiles = async (personnelList: Personnel[]) => {
-    const hideMessage = message.loading('Đang tính toán lại hồ sơ cống hiến...', 0);
-    try {
-      // Gọi getContributionProfile để trigger auto-recalculate
-      await Promise.all(
-        personnelList.map(async p => {
-          if (p.id) {
-            try {
-              await apiClient.getContributionProfile(p.id);
-            } catch (error) {
-              console.error(`Error fetching contribution profile for ${p.id}:`, error);
-            }
-          }
-        })
-      );
-      hideMessage();
-      message.success('Tính toán hồ sơ hoàn tất!');
-    } catch (error) {
-      console.error('Error fetching contribution profiles:', error);
-      hideMessage();
-      message.error('Có lỗi khi tính toán hồ sơ');
     }
   };
 
@@ -147,27 +142,13 @@ export default function Step3SetTitlesCongHien({
     }
   };
 
-  // Tính tổng thời gian đảm nhiệm chức vụ theo nhóm hệ số cho một quân nhân
+  // Tính tổng thời gian (theo tháng) cho một nhóm hệ số từ API data
   const calculateTotalTimeByGroup = (personnelId: string, group: '0.7' | '0.8' | '0.9-1.0') => {
-    const histories = positionHistoriesMap[personnelId] || [];
     let totalMonths = 0;
-
-    histories.forEach((history: any) => {
-      const heSo = Number(history.he_so_chuc_vu) || 0;
-      let belongsToGroup = false;
-
-      if (group === '0.7') {
-        belongsToGroup = heSo >= 0.7 && heSo < 0.8;
-      } else if (group === '0.8') {
-        belongsToGroup = heSo >= 0.8 && heSo < 0.9;
-      } else if (group === '0.9-1.0') {
-        belongsToGroup = heSo >= 0.9 && heSo <= 1.0;
-      }
-
-      if (belongsToGroup && history.so_thang !== null && history.so_thang !== undefined) {
-        totalMonths += history.so_thang;
-      }
-    });
+    console.log('Contribution Profiles:', contributionProfiles);
+    if (group === '0.7') totalMonths = contributionProfiles[personnelId]?.months_07 || 0;
+    else if (group === '0.8') totalMonths = contributionProfiles[personnelId]?.months_08 || 0;
+    else if (group === '0.9-1.0') totalMonths = contributionProfiles[personnelId]?.months_0910 || 0;
 
     const years = Math.floor(totalMonths / 12);
     const remainingMonths = totalMonths % 12;
@@ -182,63 +163,33 @@ export default function Step3SetTitlesCongHien({
     }
   };
 
-  // Tính tổng thời gian (theo tháng) cho một nhóm hệ số
-  const getTotalMonthsByGroup = (personnelId: string, group: '0.7' | '0.8' | '0.9-1.0'): number => {
-    const histories = positionHistoriesMap[personnelId] || [];
-    let totalMonths = 0;
-
-    histories.forEach((history: any) => {
-      const heSo = Number(history.he_so_chuc_vu) || 0;
-      let belongsToGroup = false;
-
-      if (group === '0.7') {
-        belongsToGroup = heSo >= 0.7 && heSo < 0.8;
-      } else if (group === '0.8') {
-        belongsToGroup = heSo >= 0.8 && heSo < 0.9;
-      } else if (group === '0.9-1.0') {
-        belongsToGroup = heSo >= 0.9 && heSo <= 1.0;
-      }
-
-      if (belongsToGroup && history.so_thang !== null && history.so_thang !== undefined) {
-        totalMonths += history.so_thang;
-      }
-    });
-
-    return totalMonths;
-  };
-
-  // Kiểm tra quân nhân có đủ điều kiện cho hạng cống hiến không
-  // Hạng cao có thể cộng thêm vào hạng thấp hơn
-  // Lưu ý: Nữ giảm 1/3 thời gian (chỉ cần 2/3), làm tròn tới tháng
+  // Kiểm tra quân nhân có đủ điều kiện cho hạng cống hiến không từ API data
   const checkEligibleForRank = (
-    personnelId: string,
+    profile: any,
     rank: 'HANG_NHAT' | 'HANG_NHI' | 'HANG_BA'
   ): boolean => {
-    const months0_9_1_0 = getTotalMonthsByGroup(personnelId, '0.9-1.0');
-    const months0_8 = getTotalMonthsByGroup(personnelId, '0.8');
-    const months0_7 = getTotalMonthsByGroup(personnelId, '0.7');
-
-    // Tính số tháng yêu cầu dựa trên giới tính
-    const baseRequiredMonths = 10 * 12; // 10 năm = 120 tháng (cho nam)
-    const femaleRequiredMonths = Math.round(baseRequiredMonths * (2 / 3)); // Nữ: 80 tháng (làm tròn)
-
-    // Lấy thông tin quân nhân để biết giới tính
-    const personnelDetail = personnel.find(p => p.id === personnelId);
-    const requiredMonths =
-      personnelDetail?.gioi_tinh === 'NU' ? femaleRequiredMonths : baseRequiredMonths;
-
+    if (!profile) return false;
     if (rank === 'HANG_NHAT') {
-      // Hạng nhất: cần >= yêu cầu từ nhóm 0.9-1.0
-      return months0_9_1_0 >= requiredMonths;
+      return profile.hcbvtq_hang_nhat_status === 'DU_DIEU_KIEN';
     } else if (rank === 'HANG_NHI') {
-      // Hạng nhì: cần >= yêu cầu từ nhóm 0.8 + 0.9-1.0 (hạng cao cộng vào)
-      return months0_8 + months0_9_1_0 >= requiredMonths;
+      return profile.hcbvtq_hang_nhi_status === 'DU_DIEU_KIEN';
     } else if (rank === 'HANG_BA') {
-      // Hạng ba: cần >= yêu cầu từ nhóm 0.7 + 0.8 + 0.9-1.0 (tất cả hạng cao cộng vào)
-      return months0_7 + months0_8 + months0_9_1_0 >= requiredMonths;
+      return profile.hcbvtq_hang_ba_status === 'DU_DIEU_KIEN';
     }
 
     return false;
+  };
+
+  // Lấy huân chương cao nhất mà quân nhân đủ điều kiện từ API data
+  const getHighestEligibleAward = (profile: any): string | null => {
+    if (checkEligibleForRank(profile, 'HANG_NHAT')) {
+      return 'HCBVTQ_HANG_NHAT';
+    } else if (checkEligibleForRank(profile, 'HANG_NHI')) {
+      return 'HCBVTQ_HANG_NHI';
+    } else if (checkEligibleForRank(profile, 'HANG_BA')) {
+      return 'HCBVTQ_HANG_BA';
+    }
+    return null;
   };
 
   const getDanhHieuOptions = () => {
@@ -250,56 +201,7 @@ export default function Step3SetTitlesCongHien({
   };
 
   const updateTitle = async (id: string, field: string, value: any) => {
-    // Validation cho CONG_HIEN: Kiểm tra điều kiện thời gian khi chọn danh hiệu
-    if (field === 'danh_hieu' && value) {
-      const personnelRecord = personnel.find(p => p.id === id);
-      if (personnelRecord) {
-        let rankName = '';
-        let eligible = false;
-
-        if (value === 'HCBVTQ_HANG_NHAT') {
-          eligible = checkEligibleForRank(id, 'HANG_NHAT');
-          rankName = 'Hạng Nhất';
-        } else if (value === 'HCBVTQ_HANG_NHI') {
-          eligible = checkEligibleForRank(id, 'HANG_NHI');
-          rankName = 'Hạng Nhì';
-        } else if (value === 'HCBVTQ_HANG_BA') {
-          eligible = checkEligibleForRank(id, 'HANG_BA');
-          rankName = 'Hạng Ba';
-        }
-
-        if (!eligible && rankName) {
-          const months0_9_1_0 = getTotalMonthsByGroup(id, '0.9-1.0');
-          const months0_8 = getTotalMonthsByGroup(id, '0.8');
-          const months0_7 = getTotalMonthsByGroup(id, '0.7');
-
-          let totalMonths = 0;
-          if (value === 'HCBVTQ_HANG_NHAT') {
-            totalMonths = months0_9_1_0;
-          } else if (value === 'HCBVTQ_HANG_NHI') {
-            totalMonths = months0_8 + months0_9_1_0;
-          } else if (value === 'HCBVTQ_HANG_BA') {
-            totalMonths = months0_7 + months0_8 + months0_9_1_0;
-          }
-
-          const totalYears = Math.floor(totalMonths / 12);
-          const remainingMonths = totalMonths % 12;
-          const totalYearsText =
-            totalYears > 0 && remainingMonths > 0
-              ? `${totalYears} năm ${remainingMonths} tháng`
-              : totalYears > 0
-              ? `${totalYears} năm`
-              : `${remainingMonths} tháng`;
-
-          message.error(
-            `Quân nhân "${personnelRecord.ho_ten}" không đủ điều kiện đề xuất Huân chương Bảo vệ Tổ quốc ${rankName}. ` +
-              `Yêu cầu: ít nhất 10 năm. Hiện tại: ${totalYearsText}. ` +
-              `Vui lòng kiểm tra lại lịch sử chức vụ của quân nhân này.`
-          );
-          return; // Không cập nhật nếu không đủ điều kiện
-        }
-      }
-    }
+    // Không cần validation nữa vì đã tự động set danh_hieu cao nhất
 
     const newData = [...titleData];
     const index = newData.findIndex(d => d.personnel_id === id);
@@ -419,51 +321,18 @@ export default function Step3SetTitlesCongHien({
       align: 'center',
       render: (_, record) => {
         const data = getTitleData(record.id);
-
-        // Lọc danh hiệu dựa trên điều kiện thời gian
-        let availableOptions = getDanhHieuOptions();
-        availableOptions = availableOptions.filter(option => {
-          if (option.value === 'HCBVTQ_HANG_NHAT') {
-            return checkEligibleForRank(record.id, 'HANG_NHAT');
-          } else if (option.value === 'HCBVTQ_HANG_NHI') {
-            return checkEligibleForRank(record.id, 'HANG_NHI');
-          } else if (option.value === 'HCBVTQ_HANG_BA') {
-            return checkEligibleForRank(record.id, 'HANG_BA');
-          }
-          return true;
-        });
+        const awardLabels: Record<string, string> = {
+          HCBVTQ_HANG_NHAT: 'Huân chương Bảo vệ Tổ quốc Hạng Nhất',
+          HCBVTQ_HANG_NHI: 'Huân chương Bảo vệ Tổ quốc Hạng Nhì',
+          HCBVTQ_HANG_BA: 'Huân chương Bảo vệ Tổ quốc Hạng Ba',
+        };
 
         return (
-          <Select
-            value={data.danh_hieu}
-            onChange={value => updateTitle(record.id, 'danh_hieu', value)}
-            placeholder="Chọn danh hiệu"
-            style={{ width: '100%' }}
-            size="middle"
-            allowClear
-            popupMatchSelectWidth={false}
-            styles={{ popup: { root: { minWidth: 'max-content' } } }}
-            options={availableOptions}
-            disabled={availableOptions.length === 0}
-          />
+          <Text strong style={{ color: !data.danh_hieu ? '#ff4d4f' : undefined }}>
+            {data.danh_hieu ? awardLabels[data.danh_hieu] || data.danh_hieu : 'Chưa xác định'}
+          </Text>
         );
       },
-    },
-    {
-      title: 'Xem lịch sử khen thưởng',
-      key: 'history',
-      width: 180,
-      align: 'center',
-      render: (_, record) => (
-        <Button
-          type="link"
-          icon={<HistoryOutlined />}
-          onClick={() => handleViewHistory(record)}
-          size="small"
-        >
-          Xem lịch sử
-        </Button>
-      ),
     },
     {
       title: 'Tổng thời gian (0.7)',
@@ -485,6 +354,22 @@ export default function Step3SetTitlesCongHien({
       width: 150,
       align: 'center',
       render: (_: any, record: Personnel) => calculateTotalTimeByGroup(record.id, '0.9-1.0'),
+    },
+    {
+      title: 'Xem lịch sử chức vụ',
+      key: 'history',
+      width: 180,
+      align: 'center',
+      render: (_, record) => (
+        <Button
+          type="link"
+          icon={<HistoryOutlined />}
+          onClick={() => handleViewHistory(record)}
+          size="small"
+        >
+          Xem lịch sử
+        </Button>
+      ),
     },
   ];
 

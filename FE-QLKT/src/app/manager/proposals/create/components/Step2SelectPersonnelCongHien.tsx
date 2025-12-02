@@ -88,6 +88,7 @@ export default function Step2SelectPersonnelCongHien({
   const [positionHistoriesMap, setPositionHistoriesMap] = useState<Record<string, any[]>>({});
   const [localNam, setLocalNam] = useState<number | null>(nam);
   const [ineligiblePersonnel, setIneligiblePersonnel] = useState<IneligiblePersonnel[]>([]);
+  const [contributionProfiles, setContributionProfiles] = useState<Record<string, any>>({});
 
   useEffect(() => {
     fetchPersonnel();
@@ -97,6 +98,7 @@ export default function Step2SelectPersonnelCongHien({
     // Fetch lịch sử chức vụ cho tất cả quân nhân khi personnel thay đổi
     if (personnel.length > 0) {
       fetchPositionHistories(personnel);
+      fetchContributionProfiles(personnel.map(p => p.id));
       checkContributionEligibility(personnel.map(p => p.id));
     }
   }, [personnel.length]);
@@ -154,6 +156,29 @@ export default function Step2SelectPersonnelCongHien({
     }
   };
 
+  const fetchContributionProfiles = async (personnelIds: string[]) => {
+    try {
+      const profilesMap: Record<string, any> = {};
+
+      await Promise.all(
+        personnelIds.map(async id => {
+          try {
+            const response = await apiClient.getContributionProfile(id);
+            if (response.success && response.data) {
+              profilesMap[id] = response.data;
+            }
+          } catch (error) {
+            console.error(`Error fetching contribution profile for ${id}:`, error);
+          }
+        })
+      );
+
+      setContributionProfiles(profilesMap);
+    } catch (error) {
+      console.error('Error fetching contribution profiles:', error);
+    }
+  };
+
   const checkContributionEligibility = async (personnelIds: string[]) => {
     try {
       setCheckingEligibility(true);
@@ -172,27 +197,24 @@ export default function Step2SelectPersonnelCongHien({
     }
   };
 
-  // Tính tổng thời gian đảm nhiệm chức vụ theo nhóm hệ số cho một quân nhân
+  // Tính tổng thời gian (theo tháng) cho một nhóm hệ số từ API data
+  const getTotalMonthsByGroup = (personnelId: string, group: '0.7' | '0.8' | '0.9-1.0'): number => {
+    const profile = contributionProfiles[personnelId];
+    if (!profile) return 0;
+
+    if (group === '0.7') {
+      return profile.months_07 || 0;
+    } else if (group === '0.8') {
+      return profile.months_08 || 0;
+    } else if (group === '0.9-1.0') {
+      return profile.months_0910 || 0;
+    }
+
+    return 0;
+  };
+
   const calculateTotalTimeByGroup = (personnelId: string, group: '0.7' | '0.8' | '0.9-1.0') => {
-    const histories = positionHistoriesMap[personnelId] || [];
-    let totalMonths = 0;
-
-    histories.forEach((history: any) => {
-      const heSo = Number(history.he_so_chuc_vu) || 0;
-      let belongsToGroup = false;
-
-      if (group === '0.7') {
-        belongsToGroup = heSo >= 0.7 && heSo < 0.8;
-      } else if (group === '0.8') {
-        belongsToGroup = heSo >= 0.8 && heSo < 0.9;
-      } else if (group === '0.9-1.0') {
-        belongsToGroup = heSo >= 0.9 && heSo <= 1.0;
-      }
-
-      if (belongsToGroup && history.so_thang !== null && history.so_thang !== undefined) {
-        totalMonths += history.so_thang;
-      }
-    });
+    const totalMonths = getTotalMonthsByGroup(personnelId, group);
 
     const years = Math.floor(totalMonths / 12);
     const remainingMonths = totalMonths % 12;
@@ -205,6 +227,37 @@ export default function Step2SelectPersonnelCongHien({
     } else {
       return `${remainingMonths} tháng`;
     }
+  };
+
+  // Kiểm tra quân nhân có đủ điều kiện cho hạng cống hiến không từ API data
+  const checkEligibleForRank = (
+    personnelId: string,
+    rank: 'HANG_NHAT' | 'HANG_NHI' | 'HANG_BA'
+  ): boolean => {
+    const profile = contributionProfiles[personnelId];
+    if (!profile) return false;
+
+    if (rank === 'HANG_NHAT') {
+      return profile.hcbvtq_hang_nhat_status === 'DU_DIEU_KIEN';
+    } else if (rank === 'HANG_NHI') {
+      return profile.hcbvtq_hang_nhi_status === 'DU_DIEU_KIEN';
+    } else if (rank === 'HANG_BA') {
+      return profile.hcbvtq_hang_ba_status === 'DU_DIEU_KIEN';
+    }
+
+    return false;
+  };
+
+  // Lấy huân chương cao nhất mà quân nhân đủ điều kiện từ API data
+  const getHighestEligibleAward = (personnelId: string): string | null => {
+    if (checkEligibleForRank(personnelId, 'HANG_NHAT')) {
+      return 'HCBVTQ_HANG_NHAT';
+    } else if (checkEligibleForRank(personnelId, 'HANG_NHI')) {
+      return 'HCBVTQ_HANG_NHI';
+    } else if (checkEligibleForRank(personnelId, 'HANG_BA')) {
+      return 'HCBVTQ_HANG_BA';
+    }
+    return null;
   };
 
   const units = Array.from(
@@ -308,27 +361,27 @@ export default function Step2SelectPersonnelCongHien({
         return <Text>{record.gioi_tinh === 'NAM' ? 'Nam' : 'Nữ'}</Text>;
       },
     },
-    // {
-    //   title: 'Tổng thời gian (0.7)',
-    //   key: 'total_time_0_7',
-    //   width: 150,
-    //   align: 'center',
-    //   render: (_, record) => calculateTotalTimeByGroup(record.id, '0.7'),
-    // },
-    // {
-    //   title: 'Tổng thời gian (0.8)',
-    //   key: 'total_time_0_8',
-    //   width: 150,
-    //   align: 'center',
-    //   render: (_, record) => calculateTotalTimeByGroup(record.id, '0.8'),
-    // },
-    // {
-    //   title: 'Tổng thời gian (0.9-1.0)',
-    //   key: 'total_time_0_9_1_0',
-    //   width: 150,
-    //   align: 'center',
-    //   render: (_, record) => calculateTotalTimeByGroup(record.id, '0.9-1.0'),
-    // },
+    {
+      title: 'Tổng thời gian (0.7)',
+      key: 'total_time_0_7',
+      width: 150,
+      align: 'center',
+      render: (_, record) => calculateTotalTimeByGroup(record.id, '0.7'),
+    },
+    {
+      title: 'Tổng thời gian (0.8)',
+      key: 'total_time_0_8',
+      width: 150,
+      align: 'center',
+      render: (_, record) => calculateTotalTimeByGroup(record.id, '0.8'),
+    },
+    {
+      title: 'Tổng thời gian (0.9-1.0)',
+      key: 'total_time_0_9_1_0',
+      width: 150,
+      align: 'center',
+      render: (_, record) => calculateTotalTimeByGroup(record.id, '0.9-1.0'),
+    },
     {
       title: 'Trạng thái',
       key: 'eligibility_status',
@@ -353,11 +406,34 @@ export default function Step2SelectPersonnelCongHien({
             );
           }
         }
-        return (
-          <Text type="success" strong>
-            Đủ điều kiện
-          </Text>
-        );
+
+        // Kiểm tra giới tính
+        const missingGender =
+          !record.gioi_tinh || (record.gioi_tinh !== 'NAM' && record.gioi_tinh !== 'NU');
+        if (missingGender) {
+          return (
+            <Text type="danger" strong>
+              Chưa cập nhật giới tính
+            </Text>
+          );
+        }
+
+        // Lấy huân chương cao nhất đủ điều kiện
+        const highestAward = getHighestEligibleAward(record.id);
+        if (highestAward) {
+          const awardLabels: Record<string, string> = {
+            HCBVTQ_HANG_NHAT: 'HCBVTQ Hạng Nhất',
+            HCBVTQ_HANG_NHI: 'HCBVTQ Hạng Nhì',
+            HCBVTQ_HANG_BA: 'HCBVTQ Hạng Ba',
+          };
+          return (
+            <Text type="success" strong>
+              {awardLabels[highestAward]}
+            </Text>
+          );
+        } else {
+          return <Text type="secondary">Không đủ điều kiện</Text>;
+        }
       },
     },
   ];
@@ -582,6 +658,9 @@ export default function Step2SelectPersonnelCongHien({
 
       const ineligible = ineligiblePersonnel.find(i => i.personnelId === record.id);
 
+      const highestAward = getHighestEligibleAward(record.id);
+      const notEligible = !highestAward;
+
       let disabled = false;
       let title = '';
 
@@ -595,6 +674,9 @@ export default function Step2SelectPersonnelCongHien({
         } else if (ineligible.status === 'PENDING') {
           title = 'Quân nhân đang có đề xuất cống hiến chờ duyệt';
         }
+      } else if (notEligible) {
+        disabled = true;
+        title = 'Quân nhân không đủ điều kiện nhận huân chương bảo vệ tổ quốc';
       }
 
       return {
@@ -622,6 +704,14 @@ export default function Step2SelectPersonnelCongHien({
           } else if (ineligible.status === 'PENDING') {
             message.warning(`Quân nhân ${record.ho_ten} đang có đề xuất cống hiến chờ duyệt`);
           }
+          return false;
+        }
+
+        const highestAward = getHighestEligibleAward(record.id);
+        if (!highestAward) {
+          message.warning(
+            `Quân nhân ${record.ho_ten} không đủ điều kiện nhận huân chương bảo vệ tổ quốc`
+          );
           return false;
         }
       }
@@ -755,6 +845,13 @@ export default function Step2SelectPersonnelCongHien({
           ineligiblePersonnel.some(i => i.personnelId === p.id)
         ).length;
 
+        const notEligibleCount = filteredPersonnel.filter(p => {
+          const missingGender = !p.gioi_tinh || (p.gioi_tinh !== 'NAM' && p.gioi_tinh !== 'NU');
+          const ineligible = ineligiblePersonnel.some(i => i.personnelId === p.id);
+          if (missingGender || ineligible) return false;
+          return !getHighestEligibleAward(p.id);
+        }).length;
+
         const warnings = [];
 
         if (missingGenderCount > 0) {
@@ -783,6 +880,19 @@ export default function Step2SelectPersonnelCongHien({
           );
         }
 
+        if (notEligibleCount > 0) {
+          warnings.push(
+            <Alert
+              key="not-eligible-warning"
+              message="Thông báo"
+              description={`Có ${notEligibleCount} quân nhân không đủ điều kiện nhận huân chương bảo vệ tổ quốc.`}
+              type="info"
+              showIcon
+              style={{ marginBottom: 16 }}
+            />
+          );
+        }
+
         return warnings.length > 0 ? <>{warnings}</> : null;
       })()}
 
@@ -797,12 +907,16 @@ export default function Step2SelectPersonnelCongHien({
           const missingGender =
             !record.gioi_tinh || (record.gioi_tinh !== 'NAM' && record.gioi_tinh !== 'NU');
           const ineligible = ineligiblePersonnel.some(i => i.personnelId === record.id);
+          const notEligible = !getHighestEligibleAward(record.id);
 
           if (missingGender) {
             return 'row-missing-gender';
           }
           if (ineligible) {
             return 'row-ineligible';
+          }
+          if (notEligible) {
+            return 'row-not-eligible';
           }
           return '';
         }}

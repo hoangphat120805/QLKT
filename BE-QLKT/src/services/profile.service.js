@@ -933,38 +933,31 @@ class ProfileService {
     console.log(
       `[recalculateContributionProfile] Bắt đầu tính toán hồ sơ cống hiến cho quân nhân ID: ${personnelId}`
     );
-    const checkEligibleForRank = async (personnelId, rank) => {
-      const months0_9_1_0 = getTotalMonthsByGroup(personnelId, '0.9-1.0');
-      const months0_8 = getTotalMonthsByGroup(personnelId, '0.8');
-      const months0_7 = getTotalMonthsByGroup(personnelId, '0.7');
+    const checkEligibleForRank = (personnel, rank) => {
+      const months0_9_1_0 = getTotalMonthsByGroup(personnel.LichSuChucVu, '0.9-1.0');
+      const months0_8 = getTotalMonthsByGroup(personnel.LichSuChucVu, '0.8');
+      const months0_7 = getTotalMonthsByGroup(personnel.LichSuChucVu, '0.7');
+      console.log(
+        `[checkEligibleForRank] Kiểm tra điều kiện hạng ${rank} cho quân nhân ID: ${personnelId} - Tháng 0.9-1.0: ${months0_9_1_0}, Tháng 0.8: ${months0_8}, Tháng 0.7: ${months0_7}`
+      );
 
-      // Tính số tháng yêu cầu dựa trên giới tính
-      const baseRequiredMonths = 10 * 12; // 10 năm = 120 tháng (cho nam)
-      const femaleRequiredMonths = Math.round(baseRequiredMonths * (2 / 3)); // Nữ: 80 tháng (làm tròn)
+      const baseRequiredMonths = 10 * 12;
+      const femaleRequiredMonths = Math.round(baseRequiredMonths * (2 / 3));
 
-      // Lấy thông tin quân nhân để biết giới tính
-      const personnelDetail = await prisma.quanNhan.findUnique({
-        where: { id: personnelId },
-      });
       const requiredMonths =
-        personnelDetail?.gioi_tinh === 'NU' ? femaleRequiredMonths : baseRequiredMonths;
+        personnel?.gioi_tinh === 'NU' ? femaleRequiredMonths : baseRequiredMonths;
 
       if (rank === 'HANG_NHAT') {
-        // Hạng nhất: cần >= yêu cầu từ nhóm 0.9-1.0
         return months0_9_1_0 >= requiredMonths;
       } else if (rank === 'HANG_NHI') {
-        // Hạng nhì: cần >= yêu cầu từ nhóm 0.8 + 0.9-1.0 (hạng cao cộng vào)
         return months0_8 + months0_9_1_0 >= requiredMonths;
       } else if (rank === 'HANG_BA') {
-        // Hạng ba: cần >= yêu cầu từ nhóm 0.7 + 0.8 + 0.9-1.0 (tất cả hạng cao cộng vào)
         return months0_7 + months0_8 + months0_9_1_0 >= requiredMonths;
       }
 
       return false;
     };
-    const getTotalMonthsByGroup = async (personnelId, group) => {
-      const histories = await positionHistoryService.getPositionHistory(personnelId);
-
+    const getTotalMonthsByGroup = (histories, group) => {
       let totalMonths = 0;
 
       histories.forEach(history => {
@@ -978,11 +971,22 @@ class ProfileService {
         } else if (group === '0.9-1.0') {
           belongsToGroup = heSo >= 0.9 && heSo <= 1.0;
         }
+        const monthDiff = (start, end) => {
+          const s = new Date(start);
+          const e = new Date(end);
 
-        if (belongsToGroup && history.so_thang !== null && history.so_thang !== undefined) {
-          totalMonths += history.so_thang;
+          return (e.getFullYear() - s.getFullYear()) * 12 + (e.getMonth() - s.getMonth());
+        };
+
+        if (belongsToGroup) {
+          // Nếu số tháng null thì lấy hôm này trừ ngày bắt đầu để tính số tháng
+          totalMonths += history.so_thang || monthDiff(history.ngay_bat_dau, new Date());
         }
       });
+
+      console.log(
+        `[getTotalMonthsByGroup] Tổng số tháng cho nhóm ${group} của quân nhân ID: ${personnelId} là ${totalMonths}`
+      );
 
       return totalMonths;
     };
@@ -1009,7 +1013,6 @@ class ProfileService {
       console.log(
         `[recalculateContributionProfile] Quân nhân: ${personnel.ho_ten}, Giới tính: ${personnel.gioi_tinh}, Số lịch sử chức vụ: ${personnel.LichSuChucVu.length}`
       );
-
       // Lấy hồ sơ cống hiến hiện tại
       const existingProfile = await prisma.hoSoCongHien.findUnique({
         where: { quan_nhan_id: personnelId },
@@ -1025,7 +1028,7 @@ class ProfileService {
         ? {
             status: 'DA_NHAN',
           }
-        : (await checkEligibleForRank(personnelId, 'HANG_BA'))
+        : (await checkEligibleForRank(personnel, 'HANG_BA'))
         ? { status: 'DU_DIEU_KIEN' }
         : { status: 'CHUA_DU' };
 
@@ -1033,7 +1036,7 @@ class ProfileService {
         ? {
             status: 'DA_NHAN',
           }
-        : (await checkEligibleForRank(personnelId, 'HANG_NHI'))
+        : (await checkEligibleForRank(personnel, 'HANG_NHI'))
         ? { status: 'DU_DIEU_KIEN' }
         : { status: 'CHUA_DU' };
 
@@ -1041,7 +1044,7 @@ class ProfileService {
         ? {
             status: 'DA_NHAN',
           }
-        : (await checkEligibleForRank(personnelId, 'HANG_NHAT'))
+        : (await checkEligibleForRank(personnel, 'HANG_NHAT'))
         ? { status: 'DU_DIEU_KIEN' }
         : { status: 'CHUA_DU' };
 
@@ -1049,15 +1052,18 @@ class ProfileService {
         `[recalculateContributionProfile] Kết quả tính HCBVTQ - Ba: ${hcbvtqBa.status}, Nhì: ${hcbvtqNhi.status}, Nhất: ${hcbvtqNhat.status}`
       );
 
-      const months0_7 = await getTotalMonthsByGroup(personnelId, '0.7');
-      const months0_8 = await getTotalMonthsByGroup(personnelId, '0.8');
-      const months0_9_1_0 = await getTotalMonthsByGroup(personnelId, '0.9-1.0');
+      const months0_7 = getTotalMonthsByGroup(personnel.LichSuChucVu, '0.7');
+      const months0_8 = getTotalMonthsByGroup(personnel.LichSuChucVu, '0.8');
+      const months0_9_1_0 = getTotalMonthsByGroup(personnel.LichSuChucVu, '0.9-1.0');
 
       // Cập nhật hoặc tạo mới hồ sơ cống hiến
       await prisma.hoSoCongHien.upsert({
         where: { quan_nhan_id: personnelId },
         update: {
           hcbvtq_total_months: months0_7 + months0_8 + months0_9_1_0,
+          months_07: months0_7,
+          months_08: months0_8,
+          months_0910: months0_9_1_0,
           hcbvtq_hang_ba_status: hcbvtqBa.status,
           hcbvtq_hang_ba_ngay: null,
           hcbvtq_hang_nhi_status: hcbvtqNhi.status,
@@ -1069,6 +1075,9 @@ class ProfileService {
         create: {
           quan_nhan_id: personnelId,
           hcbvtq_total_months: months0_7 + months0_8 + months0_9_1_0,
+          months_07: months0_7,
+          months_08: months0_8,
+          months_0910: months0_9_1_0,
           hcbvtq_hang_ba_status: hcbvtqBa.status,
           hcbvtq_hang_ba_ngay: null,
           hcbvtq_hang_nhi_status: hcbvtqNhi.status,

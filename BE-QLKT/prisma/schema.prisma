@@ -355,6 +355,9 @@ model HoSoCongHien {
 
   // Huân chương Bảo vệ Tổ quốc (HCBVTQ - Cống hiến)
   hcbvtq_total_months     Int    @default(0)
+  months_07               Int    @default(0)
+  months_08               Int    @default(0)
+  months_0910             Int    @default(0)
   hcbvtq_hang_ba_status   String @default("CHUA_DU") @db.VarChar(20) // CHUA_DU, DU_DIEU_KIEN, DA_NHAN
   hcbvtq_hang_ba_ngay     DateTime? @db.Date
   hcbvtq_hang_nhi_status  String @default("CHUA_DU") @db.VarChar(20)
