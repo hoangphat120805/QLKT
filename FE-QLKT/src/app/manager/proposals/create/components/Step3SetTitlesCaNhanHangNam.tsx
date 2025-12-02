@@ -180,11 +180,9 @@ export default function Step3SetTitlesCaNhanHangNam({
     ];
     if (annualProfiles[id]) {
       if (annualProfiles[id].du_dieu_kien_bkbqp === false) {
-        // Loại bỏ BKBQP nếu không đủ điều kiện
         allOptions = allOptions.filter(opt => opt.value !== 'BKBQP');
       }
       if (annualProfiles[id].du_dieu_kien_cstdtq === false) {
-        // Loại bỏ CSTDTQ nếu không đủ điều kiện
         allOptions = allOptions.filter(opt => opt.value !== 'CSTDTQ');
       }
     }
@@ -244,6 +242,24 @@ export default function Step3SetTitlesCaNhanHangNam({
               proposal_type: 'CA_NHAN_HANG_NAM',
             },
           });
+
+          if (value === 'CSTDCS' || value === 'CSTT') {
+            // Kiểm tra thêm cho CSTDCS/CSTT
+            const response = await axiosInstance.get('/api/proposals/check-duplicate', {
+              params: {
+                personnel_id: id,
+                nam: nam,
+                danh_hieu: value === 'CSTDCS' ? 'CSTT' : 'CSTDCS',
+                proposal_type: 'CA_NHAN_HANG_NAM',
+              },
+            });
+            if (response.data.success && response.data.data.exists) {
+              message.error(
+                `${personnelDetail.ho_ten}: ${response.data.data.message}. Không thể đề xuất danh hiệu này.`
+              );
+              return; // Không cho phép chọn
+            }
+          }
 
           if (response.data.success && response.data.data.exists) {
             message.error(
