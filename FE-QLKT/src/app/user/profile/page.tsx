@@ -37,6 +37,16 @@ export default function UserProfilePage() {
   const [positionHistory, setPositionHistory] = useState<any[]>([]);
   const [serviceProfile, setServiceProfile] = useState<any>(null);
   const [annualProfile, setAnnualProfile] = useState<any>(null);
+  const [contributionProfile, setContributionProfile] = useState<any>(null);
+  const [militaryFlag, setMilitaryFlag] = useState<any>(null);
+  const [commemorationMedals, setCommemorationMedals] = useState<any>(null);
+
+  const calculateYearsOfService = (ngayNhapNgu: string) => {
+    if (!ngayNhapNgu) return 0;
+    const now = new Date();
+    const nhapNgu = new Date(ngayNhapNgu);
+    return Math.floor((now.getTime() - nhapNgu.getTime()) / (1000 * 60 * 60 * 24 * 365));
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -55,15 +65,27 @@ export default function UserProfilePage() {
         const currentYear = new Date().getFullYear();
 
         // Lấy dữ liệu song song
-        const [personnelRes, annualRes, scientificRes, positionRes, serviceRes, annualProfileRes] =
-          await Promise.all([
-            apiClient.getPersonnelById(user.quan_nhan_id),
-            apiClient.getAnnualRewardsByPersonnel(user.quan_nhan_id),
-            apiClient.getPersonnelScientificAchievements(user.quan_nhan_id),
-            apiClient.getPositionHistory(user.quan_nhan_id),
-            apiClient.getServiceProfile(user.quan_nhan_id),
-            apiClient.getAnnualProfile(user.quan_nhan_id, currentYear),
-          ]);
+        const [
+          personnelRes,
+          annualRes,
+          scientificRes,
+          positionRes,
+          serviceRes,
+          annualProfileRes,
+          contributionRes,
+          militaryRes,
+          commRes,
+        ] = await Promise.all([
+          apiClient.getPersonnelById(user.quan_nhan_id),
+          apiClient.getAnnualRewardsByPersonnel(user.quan_nhan_id),
+          apiClient.getPersonnelScientificAchievements(user.quan_nhan_id),
+          apiClient.getPositionHistory(user.quan_nhan_id),
+          apiClient.getServiceProfile(user.quan_nhan_id),
+          apiClient.getAnnualProfile(user.quan_nhan_id, currentYear),
+          apiClient.getContributionProfile(user.quan_nhan_id),
+          apiClient.getMilitaryFlagByPersonnel(user.quan_nhan_id),
+          apiClient.getCommemorationMedalsByPersonnel(user.quan_nhan_id),
+        ]);
 
         if (personnelRes.success) {
           setPersonnelInfo(personnelRes.data);
@@ -87,6 +109,18 @@ export default function UserProfilePage() {
 
         if (annualProfileRes.success) {
           setAnnualProfile(annualProfileRes.data);
+        }
+
+        if (contributionRes.success) {
+          setContributionProfile(contributionRes.data);
+        }
+
+        if (militaryRes.success) {
+          setMilitaryFlag(militaryRes.data);
+        }
+
+        if (commRes.success) {
+          setCommemorationMedals(commRes.data);
         }
       } catch (error: any) {
         console.error('Error fetching profile data:', error);
@@ -586,7 +620,7 @@ export default function UserProfilePage() {
                           color: 'var(--ant-color-text)',
                         }}
                       >
-                        {serviceProfile.hcbvtq_total_months || 0} tháng
+                        {contributionProfile?.hcbvtq_total_months || 0} tháng
                       </div>
                     </div>
 
@@ -606,9 +640,9 @@ export default function UserProfilePage() {
                       </div>
                       <Tag
                         color={
-                          serviceProfile.hcbvtq_hang_ba_status === 'DA_NHAN'
+                          contributionProfile?.hcbvtq_hang_ba_status === 'DA_NHAN'
                             ? 'green'
-                            : serviceProfile.hcbvtq_hang_ba_status === 'DU_DIEU_KIEN'
+                            : contributionProfile?.hcbvtq_hang_ba_status === 'DU_DIEU_KIEN'
                             ? 'orange'
                             : 'default'
                         }
@@ -622,9 +656,9 @@ export default function UserProfilePage() {
                           maxWidth: '100%',
                         }}
                       >
-                        {serviceProfile.hcbvtq_hang_ba_status === 'DA_NHAN'
+                        {contributionProfile?.hcbvtq_hang_ba_status === 'DA_NHAN'
                           ? 'Đã nhận'
-                          : serviceProfile.hcbvtq_hang_ba_status === 'DU_DIEU_KIEN'
+                          : contributionProfile?.hcbvtq_hang_ba_status === 'DU_DIEU_KIEN'
                           ? 'Đủ điều kiện'
                           : 'Chưa đủ điều kiện'}
                       </Tag>
@@ -646,9 +680,9 @@ export default function UserProfilePage() {
                       </div>
                       <Tag
                         color={
-                          serviceProfile.hcbvtq_hang_nhi_status === 'DA_NHAN'
+                          contributionProfile?.hcbvtq_hang_nhi_status === 'DA_NHAN'
                             ? 'green'
-                            : serviceProfile.hcbvtq_hang_nhi_status === 'DU_DIEU_KIEN'
+                            : contributionProfile?.hcbvtq_hang_nhi_status === 'DU_DIEU_KIEN'
                             ? 'orange'
                             : 'default'
                         }
@@ -662,9 +696,9 @@ export default function UserProfilePage() {
                           maxWidth: '100%',
                         }}
                       >
-                        {serviceProfile.hcbvtq_hang_nhi_status === 'DA_NHAN'
+                        {contributionProfile?.hcbvtq_hang_nhi_status === 'DA_NHAN'
                           ? 'Đã nhận'
-                          : serviceProfile.hcbvtq_hang_nhi_status === 'DU_DIEU_KIEN'
+                          : contributionProfile?.hcbvtq_hang_nhi_status === 'DU_DIEU_KIEN'
                           ? 'Đủ điều kiện'
                           : 'Chưa đủ điều kiện'}
                       </Tag>
@@ -686,9 +720,9 @@ export default function UserProfilePage() {
                       </div>
                       <Tag
                         color={
-                          serviceProfile.hcbvtq_hang_nhat_status === 'DA_NHAN'
+                          contributionProfile?.hcbvtq_hang_nhat_status === 'DA_NHAN'
                             ? 'green'
-                            : serviceProfile.hcbvtq_hang_nhat_status === 'DU_DIEU_KIEN'
+                            : contributionProfile?.hcbvtq_hang_nhat_status === 'DU_DIEU_KIEN'
                             ? 'orange'
                             : 'default'
                         }
@@ -702,12 +736,192 @@ export default function UserProfilePage() {
                           maxWidth: '100%',
                         }}
                       >
-                        {serviceProfile.hcbvtq_hang_nhat_status === 'DA_NHAN'
+                        {contributionProfile?.hcbvtq_hang_nhat_status === 'DA_NHAN'
                           ? 'Đã nhận'
-                          : serviceProfile.hcbvtq_hang_nhat_status === 'DU_DIEU_KIEN'
+                          : contributionProfile?.hcbvtq_hang_nhat_status === 'DU_DIEU_KIEN'
                           ? 'Đủ điều kiện'
                           : 'Chưa đủ điều kiện'}
                       </Tag>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Huân chương Quân kỳ Quyết thắng */}
+                <div className="w-full">
+                  <h3
+                    style={{
+                      fontSize: '16px',
+                      fontWeight: 600,
+                      color: 'var(--ant-color-text)',
+                      marginBottom: '16px',
+                    }}
+                  >
+                    Huân chương Quân kỳ Quyết thắng
+                  </h3>
+                  <div className="grid grid-cols-1 gap-4 w-full">
+                    <div
+                      className="p-4 border rounded-lg"
+                      style={{
+                        borderColor: 'var(--ant-color-border)',
+                        backgroundColor: 'var(--ant-color-bg-container)',
+                      }}
+                    >
+                      <div
+                        className="text-sm font-semibold mb-2"
+                        style={{ color: 'var(--ant-color-text-secondary)' }}
+                      >
+                        Huân chương Quân kỳ Quyết thắng
+                      </div>
+                      <div className="space-y-2">
+                        {militaryFlag && militaryFlag.hasReceived ? (
+                          <Tag
+                            color="green"
+                            style={{
+                              margin: 0,
+                              fontSize: '14px',
+                              padding: '4px 12px',
+                              whiteSpace: 'normal',
+                              wordBreak: 'break-word',
+                              display: 'inline-block',
+                              maxWidth: '100%',
+                            }}
+                          >
+                            Đã nhận
+                          </Tag>
+                        ) : (
+                          <div>
+                            <Tag
+                              color="default"
+                              style={{
+                                margin: 0,
+                                fontSize: '14px',
+                                padding: '4px 12px',
+                                whiteSpace: 'normal',
+                                wordBreak: 'break-word',
+                                display: 'inline-block',
+                                maxWidth: '100%',
+                              }}
+                            >
+                              HC QKQT 25 năm
+                            </Tag>
+                            {(() => {
+                              const yearsRequired = 25;
+                              const yearsOfService = calculateYearsOfService(
+                                personnelInfo?.ngay_nhap_ngu
+                              );
+                              const eligible = yearsOfService >= yearsRequired;
+                              return eligible ? (
+                                <Tag color="orange" style={{ marginLeft: 8 }}>
+                                  Đủ điều kiện
+                                </Tag>
+                              ) : (
+                                <Tag color="default" style={{ marginLeft: 8 }}>
+                                  Chưa đủ ({yearsOfService}/{yearsRequired} năm)
+                                </Tag>
+                              );
+                            })()}
+                          </div>
+                        )}
+                        {militaryFlag &&
+                          militaryFlag.hasReceived &&
+                          militaryFlag.data &&
+                          militaryFlag.data.length > 0 &&
+                          militaryFlag.data[0].ngay_cap && (
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              Ngày: {formatDate(militaryFlag.data[0].ngay_cap)}
+                            </div>
+                          )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Kỷ niệm chương Vì sự nghiệp xây dựng QĐNDVN */}
+                <div className="w-full">
+                  <h3
+                    style={{
+                      fontSize: '16px',
+                      fontWeight: 600,
+                      color: 'var(--ant-color-text)',
+                      marginBottom: '16px',
+                    }}
+                  >
+                    Kỷ niệm chương Vì sự nghiệp xây dựng Quân đội Nhân dân Việt Nam
+                  </h3>
+                  <div className="grid grid-cols-1 gap-4 w-full">
+                    <div
+                      className="p-4 border rounded-lg"
+                      style={{
+                        borderColor: 'var(--ant-color-border)',
+                        backgroundColor: 'var(--ant-color-bg-container)',
+                      }}
+                    >
+                      <div
+                        className="text-sm font-semibold mb-2"
+                        style={{ color: 'var(--ant-color-text-secondary)' }}
+                      >
+                        Kỷ niệm chương Vì sự nghiệp xây dựng QĐNDVN
+                      </div>
+                      <div className="space-y-2">
+                        {commemorationMedals && commemorationMedals.hasReceived ? (
+                          <Tag
+                            color="green"
+                            style={{
+                              margin: 0,
+                              fontSize: '14px',
+                              padding: '4px 12px',
+                              whiteSpace: 'normal',
+                              wordBreak: 'break-word',
+                              display: 'inline-block',
+                              maxWidth: '100%',
+                            }}
+                          >
+                            Đã nhận
+                          </Tag>
+                        ) : (
+                          <div>
+                            <Tag
+                              color="default"
+                              style={{
+                                margin: 0,
+                                fontSize: '14px',
+                                padding: '4px 12px',
+                                whiteSpace: 'normal',
+                                wordBreak: 'break-word',
+                                display: 'inline-block',
+                                maxWidth: '100%',
+                              }}
+                            >
+                              KNC VSNXD QDNDVN {personnelInfo?.gioi_tinh === 'NAM' ? 25 : 20} năm
+                            </Tag>
+                            {(() => {
+                              const yearsRequired = personnelInfo?.gioi_tinh === 'NAM' ? 25 : 20;
+                              const yearsOfService = calculateYearsOfService(
+                                personnelInfo?.ngay_nhap_ngu
+                              );
+                              const eligible = yearsOfService >= yearsRequired;
+                              return eligible ? (
+                                <Tag color="orange" style={{ marginLeft: 8 }}>
+                                  Đủ điều kiện
+                                </Tag>
+                              ) : (
+                                <Tag color="default" style={{ marginLeft: 8 }}>
+                                  Chưa đủ ({yearsOfService}/{yearsRequired} năm)
+                                </Tag>
+                              );
+                            })()}
+                          </div>
+                        )}
+                        {commemorationMedals &&
+                          commemorationMedals.hasReceived &&
+                          commemorationMedals.data &&
+                          commemorationMedals.data.length > 0 &&
+                          commemorationMedals.data[0].ngay_cap && (
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              Ngày: {formatDate(commemorationMedals.data[0].ngay_cap)}
+                            </div>
+                          )}
+                      </div>
                     </div>
                   </div>
                 </div>

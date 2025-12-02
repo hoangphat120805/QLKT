@@ -1,5 +1,5 @@
-import ProfileEditForm from '@/components/ProfileEditForm';
+import ProfileViewForm from '@/components/ProfileViewForm';
 
 export default function UserProfileEditPage() {
-  return <ProfileEditForm />;
+  return <ProfileViewForm />;
 }
