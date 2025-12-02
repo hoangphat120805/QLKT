@@ -1,6 +1,7 @@
 const scientificAchievementService = require('../services/scientificAchievement.service');
 const profileService = require('../services/profile.service');
 const { prisma } = require('../models');
+const { DATE } = require('sequelize');
 
 class ScientificAchievementController {
   async getAchievements(req, res) {
@@ -127,7 +128,7 @@ class ScientificAchievementController {
 
       // Tự động cập nhật lại hồ sơ sau khi cập nhật thành tích
       try {
-        await profileService.recalculateAnnualProfile(result.quan_nhan_id);
+        await profileService.recalculateAnnualProfile(result.quan_nhan_id, year(DATE.now()));
         console.log(`✅ Auto-recalculated profile for personnel ${result.quan_nhan_id}`);
       } catch (recalcError) {
         console.error(`⚠️ Failed to auto-recalculate profile:`, recalcError.message);

@@ -707,6 +707,96 @@ export default function PersonnelDetailPage() {
               </Link>
             </Col>
           </Row>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} md={6}>
+              <Link href={`/admin/personnel/${personnelId}/service-rewards`}>
+                <Card
+                  hoverable
+                  className="text-center h-full"
+                  bodyStyle={{
+                    padding: '24px',
+                    minHeight: '120px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <SafetyOutlined style={{ fontSize: '32px' }} />
+                    <Text strong style={{ fontSize: '16px' }}>
+                      Khen thưởng niên hạn
+                    </Text>
+                  </div>
+                </Card>
+              </Link>
+            </Col>
+            <Col xs={24} md={6}>
+              <Link href={`/admin/personnel/${personnelId}/military-flag`}>
+                <Card
+                  hoverable
+                  className="text-center h-full"
+                  bodyStyle={{
+                    padding: '24px',
+                    minHeight: '120px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <TrophyOutlined style={{ fontSize: '32px' }} />
+                    <Text strong style={{ fontSize: '16px' }}>
+                      Huân chương QKQT
+                    </Text>
+                  </div>
+                </Card>
+              </Link>
+            </Col>
+            <Col xs={24} md={6}>
+              <Link href={`/admin/personnel/${personnelId}/commemoration-medals`}>
+                <Card
+                  hoverable
+                  className="text-center h-full"
+                  bodyStyle={{
+                    padding: '24px',
+                    minHeight: '120px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <TrophyOutlined style={{ fontSize: '32px' }} />
+                    <Text strong style={{ fontSize: '16px' }}>
+                      Kỷ niệm chương VSNXD
+                    </Text>
+                  </div>
+                </Card>
+              </Link>
+            </Col>
+            <Col xs={24} md={6}>
+              <Link href={`/admin/personnel/${personnelId}/contribution-awards`}>
+                <Card
+                  hoverable
+                  className="text-center h-full"
+                  bodyStyle={{
+                    padding: '24px',
+                    minHeight: '120px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <TrophyOutlined style={{ fontSize: '32px' }} />
+                    <Text strong style={{ fontSize: '16px' }}>
+                      Khen thưởng cống hiến
+                    </Text>
+                  </div>
+                </Card>
+              </Link>
+            </Col>
+          </Row>
         </div>
       ),
     },

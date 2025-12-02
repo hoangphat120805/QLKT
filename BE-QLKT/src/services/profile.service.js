@@ -600,7 +600,7 @@ class ProfileService {
    * @param {number} [year] - Năm để tính toán gợi ý (mặc định là năm hiện tại)
    * @returns {Promise<Object>} Kết quả tính toán
    */
-  async recalculateAnnualProfile(personnelId, year = null) {
+  async recalculateAnnualProfile(personnelId, year = new Date().getFullYear()) {
     console.log(
       `[recalculateAnnualProfile] Bắt đầu tính toán cho quân nhân ID: ${personnelId}, năm: ${
         year || 'all'
@@ -646,8 +646,6 @@ class ProfileService {
       // ==============================================
       let du_dieu_kien_bkbqp = false;
       let du_dieu_kien_cstdtq = false;
-      // Lưu lại 2 năm đã đủ điều kiện BKBQP để tạo gợi ý (nếu có)
-      let nam_bkbqp_sequence = [];
       // Chỉ lưu CSTDCS và CSTT trong JSON, BKBQP và CSTDTQ là trường đánh dấu boolean
       const tong_cstdcs_json = danhHieuList
         .filter(dh => dh.danh_hieu === 'CSTDCS' || dh.danh_hieu === 'CSTT')
