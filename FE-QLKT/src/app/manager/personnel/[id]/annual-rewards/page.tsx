@@ -398,33 +398,6 @@ export default function AnnualRewardsPage() {
               />
             </Form.Item>
 
-            <Form.Item name="cap_bac" label="Cấp bậc (tại thời điểm đề nghị)">
-              <Select placeholder="Chọn cấp bậc" size="large" allowClear>
-                <Select.Option value="Thượng tá">Thượng tá</Select.Option>
-                <Select.Option value="Trung tá">Trung tá</Select.Option>
-                <Select.Option value="Thiếu tá">Thiếu tá</Select.Option>
-                <Select.Option value="Đại úy">Đại úy</Select.Option>
-                <Select.Option value="Thượng úy">Thượng úy</Select.Option>
-                <Select.Option value="Trung úy">Trung úy</Select.Option>
-                <Select.Option value="Thiếu úy">Thiếu úy</Select.Option>
-                <Select.Option value="Thượng sĩ">Thượng sĩ</Select.Option>
-                <Select.Option value="Trung sĩ">Trung sĩ</Select.Option>
-                <Select.Option value="Hạ sĩ">Hạ sĩ</Select.Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item name="chuc_vu" label="Chức vụ (tại thời điểm đề nghị)">
-              <Input placeholder="Nhập chức vụ" size="large" />
-            </Form.Item>
-
-            <Form.Item name="ghi_chu" label="Ghi chú">
-              <Input.TextArea
-                placeholder="Ghi chú (vd: chuyển từ đơn vị khác)"
-                rows={3}
-                size="large"
-              />
-            </Form.Item>
-
             <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
               <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
                 <Button onClick={handleCloseDialog} disabled={submitting}>
