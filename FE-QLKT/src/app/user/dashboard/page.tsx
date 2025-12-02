@@ -67,8 +67,10 @@ export default function UserDashboard() {
           setPersonnelInfo(personnelRes.data);
         }
 
+        const current_year = new Date().getFullYear();
+
         // Lấy hồ sơ hằng năm
-        const annualRes = await apiClient.getAnnualProfile(user.quan_nhan_id);
+        const annualRes = await apiClient.getAnnualProfile(user.quan_nhan_id, current_year);
         if (annualRes.success) {
           setAnnualProfile(annualRes.data);
         }

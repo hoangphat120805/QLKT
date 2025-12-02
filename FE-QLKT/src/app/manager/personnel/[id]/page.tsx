@@ -52,13 +52,14 @@ export default function ManagerPersonnelDetailPage() {
 
   useEffect(() => {
     const fetchData = async () => {
+      const current_year = new Date().getFullYear();
       try {
         setLoading(true);
         const [personnelRes, serviceRes, annualRes, contributionRes, militaryRes, commRes] =
           await Promise.all([
             apiClient.getPersonnelById(personnelId),
             apiClient.getServiceProfile(personnelId),
-            apiClient.getAnnualProfile(personnelId),
+            apiClient.getAnnualProfile(personnelId, current_year),
             apiClient.getContributionProfile(personnelId),
             apiClient.getMilitaryFlagByPersonnel(personnelId),
             apiClient.getCommemorationMedalsByPersonnel(personnelId),
