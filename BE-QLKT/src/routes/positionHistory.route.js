@@ -21,7 +21,7 @@ router.post(
 router.put(
   '/:id',
   verifyToken,
-  requireManager,
+  requireAuth,
   auditLog({
     action: 'UPDATE',
     resource: 'position-history',
@@ -33,7 +33,7 @@ router.put(
 router.delete(
   '/:id',
   verifyToken,
-  requireManager,
+  requireAuth,
   auditLog({
     action: 'DELETE',
     resource: 'position-history',

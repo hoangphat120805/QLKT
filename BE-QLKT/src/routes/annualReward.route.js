@@ -79,7 +79,7 @@ router.post(
 router.put(
   '/:id',
   verifyToken,
-  requireManager,
+  requireAdmin,
   auditLog({
     action: 'UPDATE',
     resource: 'annual-rewards',
@@ -91,7 +91,7 @@ router.put(
 router.delete(
   '/:id',
   verifyToken,
-  requireManager,
+  requireAdmin,
   auditLog({
     action: 'DELETE',
     resource: 'annual-rewards',

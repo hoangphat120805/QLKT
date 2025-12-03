@@ -227,42 +227,6 @@ export default function AnnualRewardsPage() {
         return text;
       },
     },
-    {
-      title: 'Hành động',
-      key: 'action',
-      width: 150,
-      align: 'center',
-      render: (_, record) => (
-        <Space size="small" className="action-buttons">
-          <Button
-            type="text"
-            icon={<EditOutlined />}
-            onClick={() => handleOpenDialog(record)}
-            className="action-btn"
-            title="Sửa"
-          />
-          <Popconfirm
-            title="Xác nhận xóa"
-            description="Bạn có chắc chắn muốn xóa danh hiệu này?"
-            onConfirm={() => {
-              setDeleteId(record.id);
-              setDeleteModalOpen(true);
-            }}
-            okText="Xóa"
-            cancelText="Hủy"
-            okButtonProps={{ danger: true }}
-          >
-            <Button
-              type="text"
-              danger
-              icon={<DeleteOutlined />}
-              className="action-btn"
-              title="Xóa"
-            />
-          </Popconfirm>
-        </Space>
-      ),
-    },
   ];
 
   return (
@@ -342,92 +306,6 @@ export default function AnnualRewardsPage() {
             />
           </Card>
         )}
-
-        {/* Form Modal */}
-        <Modal
-          title={editingReward ? 'Sửa khen thưởng' : 'Thêm khen thưởng mới'}
-          open={dialogOpen}
-          onCancel={handleCloseDialog}
-          footer={null}
-          width={600}
-        >
-          <Form form={form} onFinish={onSubmit} layout="vertical" style={{ marginTop: 24 }}>
-            <Form.Item
-              name="nam"
-              label="Năm"
-              rules={[{ required: true, message: 'Năm không hợp lệ' }]}
-            >
-              <Input placeholder="Nhập năm (YYYY)" maxLength={4} size="large" />
-            </Form.Item>
-
-            <Form.Item
-              name="danh_hieu"
-              label="Danh hiệu"
-              rules={[{ required: true, message: 'Vui lòng chọn danh hiệu' }]}
-            >
-              <Select placeholder="Chọn danh hiệu" size="large">
-                <Select.Option value="CSTDCS">Chiến sĩ thi đua cơ sở (CSTDCS)</Select.Option>
-                <Select.Option value="CSTT">Chiến sĩ tốt (CSTT)</Select.Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item name="cap_bac" label="Cấp bậc (tại thời điểm đề nghị)">
-              <Select placeholder="Chọn cấp bậc" size="large" allowClear>
-                <Select.Option value="Thượng tá">Thượng tá</Select.Option>
-                <Select.Option value="Trung tá">Trung tá</Select.Option>
-                <Select.Option value="Thiếu tá">Thiếu tá</Select.Option>
-                <Select.Option value="Đại úy">Đại úy</Select.Option>
-                <Select.Option value="Thượng úy">Thượng úy</Select.Option>
-                <Select.Option value="Trung úy">Trung úy</Select.Option>
-                <Select.Option value="Thiếu úy">Thiếu úy</Select.Option>
-                <Select.Option value="Thượng sĩ">Thượng sĩ</Select.Option>
-                <Select.Option value="Trung sĩ">Trung sĩ</Select.Option>
-                <Select.Option value="Hạ sĩ">Hạ sĩ</Select.Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item name="chuc_vu" label="Chức vụ (tại thời điểm đề nghị)">
-              <Input placeholder="Nhập chức vụ" size="large" />
-            </Form.Item>
-
-            <Form.Item name="ghi_chu" label="Ghi chú">
-              <Input.TextArea
-                placeholder="Ghi chú (ví dụ: chuyển từ đơn vị khác)"
-                rows={3}
-                size="large"
-              />
-            </Form.Item>
-
-            <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
-              <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-                <Button onClick={handleCloseDialog} disabled={submitting}>
-                  Hủy
-                </Button>
-                <Button type="primary" htmlType="submit" loading={submitting}>
-                  {editingReward ? 'Cập nhật' : 'Tạo mới'}
-                </Button>
-              </Space>
-            </Form.Item>
-          </Form>
-        </Modal>
-
-        {/* Delete Confirmation Modal */}
-        <Modal
-          title="Xác nhận xóa"
-          open={deleteModalOpen}
-          onOk={handleDelete}
-          onCancel={() => {
-            setDeleteModalOpen(false);
-            setDeleteId(null);
-          }}
-          okText="Xóa"
-          cancelText="Hủy"
-          okButtonProps={{ danger: true }}
-        >
-          <Paragraph>
-            Bạn có chắc chắn muốn xóa khen thưởng này? Hành động này không thể hoàn tác.
-          </Paragraph>
-        </Modal>
       </div>
     </ConfigProvider>
   );

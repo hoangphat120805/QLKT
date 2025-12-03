@@ -215,42 +215,6 @@ export default function ContributionAwardsPage() {
       align: 'center',
       render: (status: string) => getStatusTag(status),
     },
-    {
-      title: 'Hành động',
-      key: 'action',
-      width: 150,
-      align: 'center',
-      render: (_, record) => (
-        <Space size="small" className="action-buttons">
-          <Button
-            type="text"
-            icon={<EditOutlined />}
-            onClick={() => handleOpenDialog(record)}
-            className="action-btn"
-            title="Sửa"
-          />
-          <Popconfirm
-            title="Xác nhận xóa"
-            description="Bạn có chắc chắn muốn xóa khen thưởng này?"
-            onConfirm={() => {
-              setDeleteId(record.id);
-              setDeleteModalOpen(true);
-            }}
-            okText="Xóa"
-            cancelText="Hủy"
-            okButtonProps={{ danger: true }}
-          >
-            <Button
-              type="text"
-              danger
-              icon={<DeleteOutlined />}
-              className="action-btn"
-              title="Xóa"
-            />
-          </Popconfirm>
-        </Space>
-      ),
-    },
   ];
 
   return (
@@ -328,79 +292,6 @@ export default function ContributionAwardsPage() {
             />
           </Card>
         )}
-
-        {/* Form Modal */}
-        <Modal
-          title={editingAward ? 'Sửa khen thưởng cống hiến' : 'Thêm khen thưởng cống hiến mới'}
-          open={dialogOpen}
-          onCancel={handleCloseDialog}
-          footer={null}
-          width={600}
-          centered
-        >
-          <Form form={form} onFinish={onSubmit} layout="vertical" style={{ marginTop: 24 }}>
-            <Form.Item
-              name="name"
-              label="Tên khen thưởng"
-              rules={[{ required: true, message: 'Vui lòng nhập tên khen thưởng' }]}
-            >
-              <Input placeholder="Nhập tên khen thưởng" size="large" />
-            </Form.Item>
-
-            <Form.Item name="rank" label="Hạng (nếu có)">
-              <Select placeholder="Chọn hạng" size="large" allowClear>
-                <Select.Option value="Hạng Ba">Hạng Ba</Select.Option>
-                <Select.Option value="Hạng Nhì">Hạng Nhì</Select.Option>
-                <Select.Option value="Hạng Nhất">Hạng Nhất</Select.Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item name="ngay_cap" label="Ngày cấp">
-              <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} size="large" />
-            </Form.Item>
-
-            <Form.Item
-              name="status"
-              label="Trạng thái"
-              rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}
-            >
-              <Select placeholder="Chọn trạng thái" size="large">
-                <Select.Option value="DA_NHAN">Đã nhận</Select.Option>
-                <Select.Option value="DU_DIEU_KIEN">Đủ điều kiện</Select.Option>
-                <Select.Option value="CHUA_DU">Chưa đủ</Select.Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
-              <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-                <Button onClick={handleCloseDialog} disabled={submitting}>
-                  Hủy
-                </Button>
-                <Button type="primary" htmlType="submit" loading={submitting}>
-                  {editingAward ? 'Cập nhật' : 'Tạo mới'}
-                </Button>
-              </Space>
-            </Form.Item>
-          </Form>
-        </Modal>
-
-        {/* Delete Confirmation Modal */}
-        <Modal
-          title="Xác nhận xóa"
-          open={deleteModalOpen}
-          onOk={handleDelete}
-          onCancel={() => {
-            setDeleteModalOpen(false);
-            setDeleteId(null);
-          }}
-          okText="Xóa"
-          cancelText="Hủy"
-          okButtonProps={{ danger: true }}
-        >
-          <Paragraph>
-            Bạn có chắc chắn muốn xóa khen thưởng này? Hành động này không thể hoàn tác.
-          </Paragraph>
-        </Modal>
       </div>
     </ConfigProvider>
   );

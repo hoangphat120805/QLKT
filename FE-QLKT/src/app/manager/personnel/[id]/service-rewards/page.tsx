@@ -292,42 +292,6 @@ export default function ServiceRewardsPage() {
       align: 'center',
       render: (status: string) => getStatusTag(status),
     },
-    {
-      title: 'Hành động',
-      key: 'action',
-      width: 150,
-      align: 'center',
-      render: (_, record) => (
-        <Space size="small" className="action-buttons">
-          <Button
-            type="text"
-            icon={<EditOutlined />}
-            onClick={() => handleOpenDialog(record)}
-            className="action-btn"
-            title="Sửa"
-          />
-          <Popconfirm
-            title="Xác nhận xóa"
-            description="Bạn có chắc chắn muốn xóa khen thưởng này?"
-            onConfirm={() => {
-              setDeleteId(record.id);
-              setDeleteModalOpen(true);
-            }}
-            okText="Xóa"
-            cancelText="Hủy"
-            okButtonProps={{ danger: true }}
-          >
-            <Button
-              type="text"
-              danger
-              icon={<DeleteOutlined />}
-              className="action-btn"
-              title="Xóa"
-            />
-          </Popconfirm>
-        </Space>
-      ),
-    },
   ];
 
   return (
@@ -472,24 +436,6 @@ export default function ServiceRewardsPage() {
               </Space>
             </Form.Item>
           </Form>
-        </Modal>
-
-        {/* Delete Confirmation Modal */}
-        <Modal
-          title="Xác nhận xóa"
-          open={deleteModalOpen}
-          onOk={handleDelete}
-          onCancel={() => {
-            setDeleteModalOpen(false);
-            setDeleteId(null);
-          }}
-          okText="Xóa"
-          cancelText="Hủy"
-          okButtonProps={{ danger: true }}
-        >
-          <Paragraph>
-            Bạn có chắc chắn muốn xóa khen thưởng này? Hành động này không thể hoàn tác.
-          </Paragraph>
         </Modal>
       </div>
     </ConfigProvider>

@@ -17,11 +17,11 @@ router.post(
   scientificAchievementController.importFromExcel
 );
 router.post('/', verifyToken, requireManager, scientificAchievementController.createAchievement);
-router.put('/:id', verifyToken, requireManager, scientificAchievementController.updateAchievement);
+router.put('/:id', verifyToken, requireAuth, scientificAchievementController.updateAchievement);
 router.delete(
   '/:id',
   verifyToken,
-  requireManager,
+  requireAuth,
   scientificAchievementController.deleteAchievement
 );
 

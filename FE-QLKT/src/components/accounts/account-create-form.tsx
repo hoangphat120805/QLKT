@@ -25,8 +25,8 @@ import {
 } from '@/components/ui/select';
 import { accountCreateSchema } from '@/lib/schemas';
 import { apiClient } from '@/lib/api-client';
-import { useToast } from '@/hooks/use-toast';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
+import { message } from 'antd';
 
 type AccountCreateValues = z.infer<typeof accountCreateSchema>;
 
@@ -39,7 +39,6 @@ export function AccountCreateForm() {
   const [donViTrucThuocList, setDonViTrucThuocList] = useState<any[]>([]); // Danh sách Đơn vị trực thuộc (tất cả)
   const [positions, setPositions] = useState<any[]>([]);
   const router = useRouter();
-  const { toast } = useToast();
 
   useEffect(() => {
     // Lấy role của user hiện tại từ localStorage
@@ -232,10 +231,7 @@ export function AccountCreateForm() {
       const response = await apiClient.createAccount(submitData);
 
       if (response.success) {
-        toast({
-          title: 'Thành công',
-          description: 'Tạo tài khoản thành công',
-        });
+        message.success('Tạo tài khoản thành công');
         // Redirect về đúng trang dựa trên role hiện tại
         const currentRole = localStorage.getItem('role');
         if (currentRole === 'SUPER_ADMIN') {
@@ -248,11 +244,7 @@ export function AccountCreateForm() {
       } else {
         // Hiển thị lỗi từ backend
         console.error('Create account error:', response);
-        toast({
-          title: 'Lỗi',
-          description: response.message || 'Có lỗi xảy ra khi tạo tài khoản',
-          variant: 'destructive',
-        });
+        message.error(response.message || 'Có lỗi xảy ra khi tạo tài khoản');
       }
     } catch (error: any) {
       // Hiển thị lỗi nếu có exception
@@ -262,11 +254,7 @@ export function AccountCreateForm() {
         error?.message ||
         'Có lỗi xảy ra khi tạo tài khoản';
 
-      toast({
-        title: 'Lỗi',
-        description: errorMessage,
-        variant: 'destructive',
-      });
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }

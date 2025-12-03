@@ -581,7 +581,7 @@ export default function UserProfilePage() {
                   {/* Gợi ý */}
                   {serviceProfile.goi_y && (
                     <div
-                      className="w-full p-4 border rounded-lg"
+                      className="w-full p-4 border rounded-lg mt-4"
                       style={{
                         borderColor: 'var(--ant-color-border)',
                         backgroundColor: 'var(--ant-color-info-bg)',

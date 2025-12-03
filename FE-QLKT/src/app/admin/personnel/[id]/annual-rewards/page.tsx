@@ -65,7 +65,7 @@ export default function AnnualRewardsPage() {
       setLoading(true);
       const [personnelRes, rewardsRes] = await Promise.all([
         apiClient.getPersonnelById(personnelId),
-        apiClient.getAnnualRewards(personnelId),
+        apiClient.getAnnualRewardsByPersonnel(personnelId),
       ]);
 
       if (personnelRes.success) {
