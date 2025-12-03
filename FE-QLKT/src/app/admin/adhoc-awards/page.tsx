@@ -89,6 +89,14 @@ export default function Page() {
   const [decisionOptions, setDecisionOptions] = useState<any[]>([]);
   const [searchingDecision, setSearchingDecision] = useState(false);
   const [selectedDecision, setSelectedDecision] = useState<any>(null);
+  const [personnelFilters, setPersonnelFilters] = useState({
+    coQuanId: '',
+    donViId: '',
+    searchName: '',
+  });
+  const [unitFilters, setUnitFilters] = useState({
+    type: 'ALL',
+  });
 
   const handleSearchDecision = async (value: string) => {
     if (!value || value.trim().length === 0) {
@@ -227,6 +235,8 @@ export default function Page() {
       signDate: '',
       currentStep: 0,
     });
+    setPersonnelFilters({ coQuanId: '', donViId: '', searchName: '' });
+    setUnitFilters({ type: 'ALL' });
     setFileList([]);
     setDecisionFileList([]);
     setSelectedDecision(null);
@@ -493,6 +503,25 @@ export default function Page() {
     },
   ];
 
+  const filteredPersonnel = personnel.filter(p => {
+    if (personnelFilters.coQuanId && p.co_quan_don_vi_id !== personnelFilters.coQuanId)
+      return false;
+    if (personnelFilters.donViId && p.don_vi_truc_thuoc_id !== personnelFilters.donViId)
+      return false;
+    if (
+      personnelFilters.searchName &&
+      !p.ho_ten.toLowerCase().includes(personnelFilters.searchName.toLowerCase())
+    )
+      return false;
+    return true;
+  });
+
+  const filteredUnits = [...units, ...subUnits].filter(u => {
+    if (unitFilters.type === 'CO_QUAN' && subUnits.some(s => s.id === u.id)) return false;
+    if (unitFilters.type === 'DON_VI' && units.some(s => s.id === u.id)) return false;
+    return true;
+  });
+
   return (
     <div style={{ padding: '24px' }}>
       <Breadcrumb
@@ -533,7 +562,7 @@ export default function Page() {
           setModalVisible(false);
           setFormData({ ...formData, currentStep: 0 });
         }}
-        width={760}
+        width={1080}
         footer={null}
       >
         <Steps current={formData.currentStep || 0} size="small" style={{ marginBottom: 16 }}>
@@ -603,6 +632,63 @@ export default function Page() {
                       quân nhân
                     </Text>
                   </div>
+                  <Space direction="vertical" size="small" style={{ marginBottom: 16 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                      <div>
+                        <label>Cơ quan đơn vị</label>
+                        <Select
+                          style={{ width: '100%' }}
+                          value={personnelFilters.coQuanId}
+                          onChange={value => {
+                            setPersonnelFilters({
+                              ...personnelFilters,
+                              coQuanId: value,
+                              donViId: '',
+                            });
+                          }}
+                          allowClear
+                          placeholder="Chọn cơ quan đơn vị"
+                        >
+                          {units.map(unit => (
+                            <Select.Option key={unit.id} value={unit.id}>
+                              {unit.ten_don_vi}
+                            </Select.Option>
+                          ))}
+                        </Select>
+                      </div>
+                      <div>
+                        <label>Đơn vị trực thuộc</label>
+                        <Select
+                          style={{ width: '100%' }}
+                          value={personnelFilters.donViId}
+                          onChange={value =>
+                            setPersonnelFilters({ ...personnelFilters, donViId: value })
+                          }
+                          disabled={!personnelFilters.coQuanId}
+                          allowClear
+                          placeholder="Chọn đơn vị trực thuộc"
+                        >
+                          {subUnits
+                            .filter(s => s.co_quan_don_vi_id === personnelFilters.coQuanId)
+                            .map(sub => (
+                              <Select.Option key={sub.id} value={sub.id}>
+                                {sub.ten_don_vi}
+                              </Select.Option>
+                            ))}
+                        </Select>
+                      </div>
+                    </div>
+                    <div>
+                      <label>Tìm kiếm theo tên</label>
+                      <Input
+                        value={personnelFilters.searchName}
+                        onChange={e =>
+                          setPersonnelFilters({ ...personnelFilters, searchName: e.target.value })
+                        }
+                        placeholder="Nhập tên quân nhân"
+                      />
+                    </div>
+                  </Space>
                   <Table
                     rowSelection={{
                       selectedRowKeys: formData.personnelIds,
@@ -668,7 +754,7 @@ export default function Page() {
                         render: (_: any, record: any) => record.ChucVu?.ten_chuc_vu || '-',
                       },
                     ]}
-                    dataSource={personnel}
+                    dataSource={filteredPersonnel}
                     rowKey="id"
                     pagination={{ pageSize: 10, showSizeChanger: true }}
                     scroll={{ y: 300, x: 800 }}
@@ -683,7 +769,20 @@ export default function Page() {
                       <strong style={{ color: '#1890ff' }}>{formData.unitIds.length}</strong> đơn vị
                     </Text>
                   </div>
-
+                  <Space direction="vertical" size="small" style={{ marginBottom: 16 }}>
+                    <div>
+                      <label>Loại đơn vị</label>
+                      <Select
+                        style={{ width: '100%' }}
+                        value={unitFilters.type}
+                        onChange={value => setUnitFilters({ ...unitFilters, type: value })}
+                      >
+                        <Select.Option value="ALL">Tất cả</Select.Option>
+                        <Select.Option value="CO_QUAN">Cơ quan đơn vị</Select.Option>
+                        <Select.Option value="DON_VI">Đơn vị trực thuộc</Select.Option>
+                      </Select>
+                    </div>
+                  </Space>
                   <Table
                     rowSelection={{
                       selectedRowKeys: formData.unitIds,
@@ -712,7 +811,7 @@ export default function Page() {
                         },
                       },
                     ]}
-                    dataSource={[...units, ...subUnits]}
+                    dataSource={filteredUnits}
                     rowKey="id"
                     pagination={{ pageSize: 10, showSizeChanger: true }}
                     scroll={{ y: 300, x: 500 }}

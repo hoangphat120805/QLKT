@@ -78,27 +78,11 @@ export default function Step3SetTitlesNienHan({
       const personnelData = responses.filter(r => r.data.success).map(r => r.data.data);
       setPersonnel(personnelData);
 
-      // Initialize title data if empty
-      if (titleData.length === 0) {
-        const initialData = personnelData.map((p: Personnel) => ({
-          personnel_id: p.id,
-        }));
-        onTitleDataChange(initialData);
-      }
-    } catch (error) {
-      console.error('Error fetching personnel details:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchServiceProfiles = async (personnelList: Personnel[]) => {
-    const hideMessage = message.loading('Đang tính toán lại hồ sơ niên hạn...', 0);
-    try {
+      // Fetch service profiles
       const profilesMap: Record<string, any> = {};
 
       await Promise.all(
-        personnelList.map(async p => {
+        personnelData.map(async p => {
           if (p.id) {
             try {
               const res = await apiClient.getTenureProfile(p.id);
@@ -113,12 +97,19 @@ export default function Step3SetTitlesNienHan({
       );
 
       setServiceProfilesMap(profilesMap);
-      hideMessage();
-      message.success('Tính toán hồ sơ hoàn tất!');
+
+      // Initialize title data if empty
+      if (titleData.length === 0) {
+        const initialData = personnelData.map((p: Personnel) => ({
+          personnel_id: p.id,
+          danh_hieu: getHighestEligibleAwardNienHan(p, profilesMap[p.id]),
+        }));
+        onTitleDataChange(initialData);
+      }
     } catch (error) {
-      console.error('Error fetching service profiles:', error);
-      hideMessage();
-      message.error('Có lỗi khi tính toán hồ sơ');
+      console.error('Error fetching personnel details:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -204,123 +195,17 @@ export default function Step3SetTitlesNienHan({
     };
   };
 
-  const getDanhHieuOptions = () => {
-    return [
-      { label: 'Huân chương Chiến sỹ Vẻ vang Hạng Ba', value: 'HCCSVV_HANG_BA' },
-      { label: 'Huân chương Chiến sỹ Vẻ vang Hạng Nhì', value: 'HCCSVV_HANG_NHI' },
-      { label: 'Huân chương Chiến sỹ Vẻ vang Hạng Nhất', value: 'HCCSVV_HANG_NHAT' },
-    ];
-  };
-
-  const updateTitle = async (id: string, field: string, value: any) => {
-    // Validation cho NIEN_HAN: Kiểm tra điều kiện thời gian cho HCCSVV
-    if (field === 'danh_hieu' && value) {
-      const personnelRecord = personnel.find(p => p.id === id);
-      if (personnelRecord) {
-        const eligibility = checkHCCSVVEligibilityForPersonnel(personnelRecord);
-        if (eligibility) {
-          // Kiểm tra logic thứ bậc: Phải đủ Hạng Ba trước, sau đó mới có Hạng Nhì, rồi mới có Hạng Nhất
-          if (value === 'HCCSVV_HANG_NHI') {
-            if (!eligibility.hangBa) {
-              message.error(
-                `Quân nhân "${personnelRecord.ho_ten}" chưa đủ điều kiện Hạng Ba (10 năm). ` +
-                  `Không thể đề xuất Hạng Nhì (15 năm) khi chưa đủ Hạng Ba.`
-              );
-              return;
-            }
-            if (!eligibility.hangNhi) {
-              message.error(
-                `Quân nhân "${personnelRecord.ho_ten}" chưa đủ điều kiện Hạng Nhì (15 năm). ` +
-                  `Vui lòng kiểm tra lại thời gian phục vụ.`
-              );
-              return;
-            }
-          } else if (value === 'HCCSVV_HANG_NHAT') {
-            if (!eligibility.hangBa) {
-              message.error(
-                `Quân nhân "${personnelRecord.ho_ten}" chưa đủ điều kiện Hạng Ba (10 năm). ` +
-                  `Không thể đề xuất Hạng Nhất (20 năm) khi chưa đủ Hạng Ba.`
-              );
-              return;
-            }
-            if (!eligibility.hangNhi) {
-              message.error(
-                `Quân nhân "${personnelRecord.ho_ten}" chưa đủ điều kiện Hạng Nhì (15 năm). ` +
-                  `Không thể đề xuất Hạng Nhất (20 năm) khi chưa đủ Hạng Nhì.`
-              );
-              return;
-            }
-            if (!eligibility.hangNhat) {
-              message.error(
-                `Quân nhân "${personnelRecord.ho_ten}" chưa đủ điều kiện Hạng Nhất (20 năm). ` +
-                  `Vui lòng kiểm tra lại thời gian phục vụ.`
-              );
-              return;
-            }
-          } else if (value === 'HCCSVV_HANG_BA') {
-            if (!eligibility.hangBa) {
-              message.error(
-                `Quân nhân "${personnelRecord.ho_ten}" chưa đủ điều kiện Hạng Ba (10 năm). ` +
-                  `Vui lòng kiểm tra lại thời gian phục vụ.`
-              );
-              return;
-            }
-          }
-        } else {
-          message.error(
-            `Quân nhân "${personnelRecord.ho_ten}" chưa có thông tin ngày nhập ngũ. ` +
-              `Vui lòng cập nhật thông tin ngày nhập ngũ trước khi đề xuất.`
-          );
-          return;
-        }
-      }
-
-      // Kiểm tra thứ tự hạng (phải nhận từ thấp lên cao)
-      if (personnelRecord) {
-        const serviceProfile = serviceProfilesMap[id];
-        const hasHangBa = serviceProfile?.hccsvv_hang_ba_status === 'DA_NHAN';
-        const hasHangNhi = serviceProfile?.hccsvv_hang_nhi_status === 'DA_NHAN';
-        const hasHangNhat = serviceProfile?.hccsvv_hang_nhat_status === 'DA_NHAN';
-
-        if (value === 'HCCSVV_HANG_NHI' && !hasHangBa) {
-          message.error(`${personnelRecord.ho_ten}: Phải nhận Hạng Ba trước khi đề xuất Hạng Nhì.`);
-          return;
-        }
-
-        if (value === 'HCCSVV_HANG_NHAT' && !hasHangNhi) {
-          message.error(
-            `${personnelRecord.ho_ten}: Phải nhận Hạng Nhì trước khi đề xuất Hạng Nhất.`
-          );
-          return;
-        }
-
-        // Kiểm tra nếu đã nhận hạng rồi thì không cho đề xuất lại
-        if (value === 'HCCSVV_HANG_BA' && hasHangBa) {
-          message.warning(`${personnelRecord.ho_ten}: Đã nhận Hạng Ba rồi.`);
-          return;
-        }
-
-        if (value === 'HCCSVV_HANG_NHI' && hasHangNhi) {
-          message.warning(`${personnelRecord.ho_ten}: Đã nhận Hạng Nhì rồi.`);
-          return;
-        }
-
-        if (value === 'HCCSVV_HANG_NHAT' && hasHangNhat) {
-          message.warning(`${personnelRecord.ho_ten}: Đã nhận Hạng Nhất rồi.`);
-          return;
-        }
-      }
+  const getHighestEligibleAwardNienHan = (record: Personnel, serviceProfile: any) => {
+    if (serviceProfile?.hccsvv_hang_nhat_status === 'DU_DIEU_KIEN') {
+      return 'HCCSVV_HANG_NHAT';
     }
-
-    const newData = [...titleData];
-    const index = newData.findIndex(d => d.personnel_id === id);
-    if (index >= 0) {
-      newData[index] = { ...newData[index], [field]: value };
-    } else {
-      newData.push({ personnel_id: id, [field]: value });
+    if (serviceProfile?.hccsvv_hang_nhi_status === 'DU_DIEU_KIEN') {
+      return 'HCCSVV_HANG_NHI';
     }
-
-    onTitleDataChange(newData);
+    if (serviceProfile?.hccsvv_hang_ba_status === 'DU_DIEU_KIEN') {
+      return 'HCCSVV_HANG_BA';
+    }
+    return null;
   };
 
   const getTitleData = (id: string) => {
@@ -450,56 +335,16 @@ export default function Step3SetTitlesNienHan({
       align: 'center',
       render: (_, record) => {
         const data = getTitleData(record.id);
-
-        // Lọc danh hiệu dựa trên điều kiện thời gian và hạng đã nhận cho HCCSVV
-        // Logic: Phải nhận từ thấp lên cao: Hạng Ba → Hạng Nhì → Hạng Nhất
-        const eligibility = checkHCCSVVEligibilityForPersonnel(record);
-        const serviceProfile = serviceProfilesMap[record.id];
-
-        // Kiểm tra quân nhân đã nhận hạng nào
-        const hasHangBa = serviceProfile?.hccsvv_hang_ba_status === 'DA_NHAN';
-        const hasHangNhi = serviceProfile?.hccsvv_hang_nhi_status === 'DA_NHAN';
-        const hasHangNhat = serviceProfile?.hccsvv_hang_nhat_status === 'DA_NHAN';
-
-        let availableOptions = getDanhHieuOptions();
-        if (eligibility) {
-          availableOptions = availableOptions.filter(option => {
-            if (option.value === 'HCCSVV_HANG_BA') {
-              // Hạng Ba: cần đủ 10 năm VÀ chưa nhận Hạng Ba
-              return eligibility.hangBa && !hasHangBa;
-            } else if (option.value === 'HCCSVV_HANG_NHI') {
-              // Hạng Nhì: phải đã nhận Hạng Ba VÀ đủ 15 năm VÀ chưa nhận Hạng Nhì
-              return hasHangBa && eligibility.hangBa && eligibility.hangNhi && !hasHangNhi;
-            } else if (option.value === 'HCCSVV_HANG_NHAT') {
-              // Hạng Nhất: phải đã nhận Hạng Nhì VÀ đủ 20 năm VÀ chưa nhận Hạng Nhất
-              return (
-                hasHangNhi &&
-                eligibility.hangBa &&
-                eligibility.hangNhi &&
-                eligibility.hangNhat &&
-                !hasHangNhat
-              );
-            }
-            return true;
-          });
-        } else {
-          // Nếu không có ngày nhập ngũ, không cho chọn hạng nào
-          availableOptions = [];
-        }
+        const awardLabels: Record<string, string> = {
+          HCCSVV_HANG_BA: 'Huân chương Chiến sỹ Vẻ vang Hạng Ba',
+          HCCSVV_HANG_NHI: 'Huân chương Chiến sỹ Vẻ vang Hạng Nhì',
+          HCCSVV_HANG_NHAT: 'Huân chương Chiến sỹ Vẻ vang Hạng Nhất',
+        };
 
         return (
-          <Select
-            value={data.danh_hieu}
-            onChange={value => updateTitle(record.id, 'danh_hieu', value)}
-            placeholder="Chọn danh hiệu"
-            style={{ width: '100%' }}
-            size="middle"
-            allowClear
-            popupMatchSelectWidth={false}
-            styles={{ popup: { root: { minWidth: 'max-content' } } }}
-            options={availableOptions}
-            disabled={availableOptions.length === 0}
-          />
+          <Text strong style={{ color: !data.danh_hieu ? '#ff4d4f' : undefined }}>
+            {data.danh_hieu ? awardLabels[data.danh_hieu] || data.danh_hieu : 'Chưa xác định'}
+          </Text>
         );
       },
     },
@@ -533,8 +378,9 @@ export default function Step3SetTitlesNienHan({
         description={
           <div>
             <p>
-              1. Chọn danh hiệu khen thưởng cho từng quân nhân đã chọn (
-              <strong>{personnel.length}</strong> quân nhân)
+              1. Danh hiệu khen thưởng sẽ được tự động xác định dựa trên thời gian phục vụ và lịch
+              sử khen thưởng cho từng quân nhân đã chọn (<strong>{personnel.length}</strong> quân
+              nhân)
             </p>
             <p>
               2. <strong>Yêu cầu thời gian:</strong> Hạng Ba: 10 năm, Hạng Nhì: 15 năm, Hạng Nhất:
@@ -543,7 +389,7 @@ export default function Step3SetTitlesNienHan({
             <p>
               3. <strong>Lưu ý:</strong> Phải nhận từ thấp lên cao: Hạng Ba → Hạng Nhì → Hạng Nhất
             </p>
-            <p>4. Đảm bảo tất cả quân nhân đều đã được chọn danh hiệu</p>
+            <p>4. Đảm bảo tất cả quân nhân đều đã được xác định danh hiệu</p>
             <p>5. Sau khi hoàn tất, nhấn &quot;Tiếp tục&quot; để sang bước upload file</p>
           </div>
         }

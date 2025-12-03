@@ -4179,13 +4179,15 @@ class ProposalService {
               status: true,
             },
           });
+          console.log(a);
 
           return {
             id: a.id,
             cccd: a.QuanNhan.cccd,
             ho_ten: a.QuanNhan.ho_ten,
             don_vi: (a.QuanNhan.DonViTrucThuoc || a.QuanNhan.CoQuanDonVi)?.ten_don_vi || '-',
-            chuc_vu: a.QuanNhan.ChucVu.ten_chuc_vu,
+            chuc_vu: a.chuc_vu,
+            cap_bac: a.cap_bac,
             nam: a.nam,
             danh_hieu: a.danh_hieu,
             nhan_bkbqp: a.nhan_bkbqp,
@@ -4792,7 +4794,7 @@ class ProposalService {
           },
         });
 
-        const  existing = proposals.find(p => {
+        const existing = proposals.find(p => {
           const dataNienHan = p.data_nien_han || [];
           return dataNienHan.some(
             item => item.personnel_id === personnelId && item.danh_hieu === danhHieu
@@ -4819,9 +4821,7 @@ class ProposalService {
 
         const existing = proposals.find(p => {
           const dataNienHan = p.data_nien_han || [];
-          return dataNienHan.some(
-            item => item.personnel_id === personnelId
-          );
+          return dataNienHan.some(item => item.personnel_id === personnelId);
         });
 
         if (existing) {
@@ -4844,9 +4844,7 @@ class ProposalService {
 
         const existing = proposals.find(p => {
           const dataNienHan = p.data_nien_han || [];
-          return dataNienHan.some(
-            item => item.personnel_id === personnelId
-          );
+          return dataNienHan.some(item => item.personnel_id === personnelId);
         });
 
         if (existing) {
@@ -4869,9 +4867,7 @@ class ProposalService {
 
         const existing = proposals.find(p => {
           const dataCongHien = p.data_cong_hien || [];
-          return dataCongHien.some(
-            item => item.personnel_id === personnelId
-          );
+          return dataCongHien.some(item => item.personnel_id === personnelId);
         });
 
         if (existing) {

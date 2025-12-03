@@ -639,7 +639,6 @@ export default function AdminAwardsPage() {
         <Breadcrumb.Item href="/">
           <HomeOutlined />
         </Breadcrumb.Item>
-        <Breadcrumb.Item>Admin</Breadcrumb.Item>
         <Breadcrumb.Item>Quản Lý Khen Thưởng</Breadcrumb.Item>
       </Breadcrumb>
 

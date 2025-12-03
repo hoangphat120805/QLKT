@@ -81,6 +81,7 @@ export default function ManagerAwardsPage() {
       // Backend tự động filter theo đơn vị của Manager
       const result = await apiClient.getAwards(params);
       if (result.success) {
+        console.log('Fetched awards:', result.data);
         setAwards(result.data.awards || result.data || []);
       } else {
         message.error(result.message || 'Không thể tải danh sách khen thưởng');
@@ -315,7 +316,6 @@ export default function ManagerAwardsPage() {
           <Breadcrumb.Item href="/">
             <HomeOutlined />
           </Breadcrumb.Item>
-          <Breadcrumb.Item>Manager</Breadcrumb.Item>
           <Breadcrumb.Item>Khen Thưởng Đơn Vị</Breadcrumb.Item>
         </Breadcrumb>
 

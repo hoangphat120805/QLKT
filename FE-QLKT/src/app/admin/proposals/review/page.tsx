@@ -221,7 +221,6 @@ export default function ProposalReviewPage() {
         <Breadcrumb.Item href="/">
           <HomeOutlined />
         </Breadcrumb.Item>
-        <Breadcrumb.Item>Admin</Breadcrumb.Item>
         <Breadcrumb.Item>Duyệt Đề Xuất</Breadcrumb.Item>
       </Breadcrumb>
 
