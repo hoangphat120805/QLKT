@@ -205,7 +205,7 @@ export default function CommemorationMedalsPage() {
             <Link href="/manager/personnel">Quân nhân</Link>
           </Breadcrumb.Item>
           <Breadcrumb.Item>
-            <Link href={`/manager/personnel/${personnelId}`}>#{personnelId}</Link>
+            <Link href={`/manager/personnel/${personnelId}`}>{personnel?.ho_ten}</Link>
           </Breadcrumb.Item>
           <Breadcrumb.Item>Kỷ niệm chương VSNXD</Breadcrumb.Item>
         </Breadcrumb>

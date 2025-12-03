@@ -184,7 +184,7 @@ export default function MilitaryFlagPage() {
       width: 120,
       align: 'center',
       render: (status: string) => getStatusTag(status),
-    }
+    },
   ];
 
   return (
@@ -205,7 +205,7 @@ export default function MilitaryFlagPage() {
             <Link href="/manager/personnel">Quân nhân</Link>
           </Breadcrumb.Item>
           <Breadcrumb.Item>
-            <Link href={`/manager/personnel/${personnelId}`}>#{personnelId}</Link>
+            <Link href={`/manager/personnel/${personnelId}`}>{personnel?.ho_ten}</Link>
           </Breadcrumb.Item>
           <Breadcrumb.Item>Huân chương QKQT</Breadcrumb.Item>
         </Breadcrumb>

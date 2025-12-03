@@ -350,7 +350,7 @@ export default function AdminContributionAwardsPage() {
             <Link href="/admin/personnel">Quân nhân</Link>
           </Breadcrumb.Item>
           <Breadcrumb.Item>
-            <Link href={`/admin/personnel/${personnelId}`}>#{personnelId}</Link>
+            <Link href={`/admin/personnel/${personnelId}`}>{personnel?.ho_ten}</Link>
           </Breadcrumb.Item>
           <Breadcrumb.Item>Khen thưởng cống hiến</Breadcrumb.Item>
         </Breadcrumb>

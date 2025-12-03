@@ -256,7 +256,7 @@ export default function PersonnelEditPage() {
           items={[
             { title: <Link href="/admin/dashboard">Dashboard</Link> },
             { title: <Link href="/admin/personnel">Quân nhân</Link> },
-            { title: <Link href={`/admin/personnel/${personnelId}`}>#{personnelId}</Link> },
+            { title: <Link href={`/admin/personnel/${personnelId}`}>{personnel?.ho_ten}</Link> },
             { title: 'Chỉnh sửa' },
           ]}
         />

@@ -250,7 +250,7 @@ export default function AdminCommemorativeMedalsPage() {
             <Link href="/admin/personnel">Quân nhân</Link>
           </Breadcrumb.Item>
           <Breadcrumb.Item>
-            <Link href={`/admin/personnel/${personnelId}`}>#{personnelId}</Link>
+            <Link href={`/admin/personnel/${personnelId}`}>{personnel?.ho_ten}</Link>
           </Breadcrumb.Item>
           <Breadcrumb.Item>Kỷ niệm chương</Breadcrumb.Item>
         </Breadcrumb>

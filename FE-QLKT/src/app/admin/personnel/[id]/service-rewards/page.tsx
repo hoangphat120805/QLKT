@@ -348,7 +348,7 @@ export default function AdminServiceRewardsPage() {
             <Link href="/admin/personnel">Quân nhân</Link>
           </Breadcrumb.Item>
           <Breadcrumb.Item>
-            <Link href={`/admin/personnel/${personnelId}`}>#{personnelId}</Link>
+            <Link href={`/admin/personnel/${personnelId}`}>{personnel?.ho_ten}</Link>
           </Breadcrumb.Item>
           <Breadcrumb.Item>Khen thưởng niên hạn</Breadcrumb.Item>
         </Breadcrumb>

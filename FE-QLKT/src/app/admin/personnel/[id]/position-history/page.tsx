@@ -403,7 +403,7 @@ export default function PositionHistoryPage() {
             <Link href="/admin/personnel">Quân nhân</Link>
           </Breadcrumb.Item>
           <Breadcrumb.Item>
-            <Link href={`/admin/personnel/${personnelId}`}>#{personnelId}</Link>
+            <Link href={`/admin/personnel/${personnelId}`}>{personnel?.ho_ten}</Link>
           </Breadcrumb.Item>
           <Breadcrumb.Item>Lịch sử chức vụ</Breadcrumb.Item>
         </Breadcrumb>

@@ -235,7 +235,7 @@ export default function ContributionAwardsPage() {
             <Link href="/manager/personnel">Quân nhân</Link>
           </Breadcrumb.Item>
           <Breadcrumb.Item>
-            <Link href={`/manager/personnel/${personnelId}`}>#{personnelId}</Link>
+            <Link href={`/manager/personnel/${personnelId}`}>{personnel?.ho_ten}</Link>
           </Breadcrumb.Item>
           <Breadcrumb.Item>Khen thưởng cống hiến</Breadcrumb.Item>
         </Breadcrumb>

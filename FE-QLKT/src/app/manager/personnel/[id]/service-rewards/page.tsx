@@ -312,7 +312,7 @@ export default function ServiceRewardsPage() {
             <Link href="/manager/personnel">Quân nhân</Link>
           </Breadcrumb.Item>
           <Breadcrumb.Item>
-            <Link href={`/manager/personnel/${personnelId}`}>#{personnelId}</Link>
+            <Link href={`/manager/personnel/${personnelId}`}>{personnel?.ho_ten}</Link>
           </Breadcrumb.Item>
           <Breadcrumb.Item>Khen thưởng niên hạn</Breadcrumb.Item>
         </Breadcrumb>
