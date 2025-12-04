@@ -586,8 +586,8 @@ export default function ManagerProposalDetailPage() {
         </Card>
 
         {/* Attached Files */}
-        {proposal.files_attached && proposal.files_attached.length > 0 && (
-          <Card title="File đính kèm" className="shadow-sm">
+        <Card title="File đính kèm" className="shadow-sm">
+          {proposal.files_attached && proposal.files_attached.length > 0 ? (
             <Space direction="vertical" style={{ width: '100%' }} size="middle">
               {proposal.files_attached.map((file, index) => (
                 <div
@@ -675,8 +675,10 @@ export default function ManagerProposalDetailPage() {
                 </div>
               ))}
             </Space>
-          </Card>
-        )}
+          ) : (
+            <Text type="secondary">Không có file đính kèm</Text>
+          )}
+        </Card>
 
         {/* Data Tables - Hiển thị theo loại đề xuất */}
         {proposal.loai_de_xuat === 'NCKH' ? (

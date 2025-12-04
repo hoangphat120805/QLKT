@@ -194,11 +194,61 @@ export default function Step3SetTitlesDonViHangNam({
   };
 
   const updateTitle = async (id: string, field: string, value: any) => {
+    console.log('Updating title:', id, field, value);
+    // Validation: Kiểm tra nếu đang chọn danh hiệu và đã có danh hiệu khác loại
+    if (field === 'danh_hieu' && value) {
+      const selectedType = getSelectedDanhHieuType();
+      const isDonVi = value === 'ĐVQT' || value === 'ĐVTT';
+      const isBk = value === 'BKBQP' || value === 'BKTTCP';
+
+      // Kiểm tra xem có mix ĐVQT/ĐVTT với BKBQP/BKTTCP không
+      if (selectedType === 'donvi' && isBk) {
+        // Đã có ĐVQT/ĐVTT, không cho phép thêm BKBQP/BKTTCP
+        const currentData = titleData.find(d => d.don_vi_id === id);
+        if (!currentData || !currentData.danh_hieu) {
+          message.warning(
+            'Không thể đề xuất ĐVQT/ĐVTT cùng với BKBQP/BKTTCP trong một đề xuất. ' +
+              'Vui lòng tạo đề xuất riêng cho loại danh hiệu này.'
+          );
+          return;
+        }
+      } else if (selectedType === 'bkbqp_bkttcp' && isDonVi) {
+        // Đã có BKBQP/BKTTCP, không cho phép thêm ĐVQT/ĐVTT
+        const currentData = titleData.find(d => d.don_vi_id === id);
+        if (!currentData || !currentData.danh_hieu) {
+          message.warning(
+            'Không thể đề xuất ĐVQT/ĐVTT cùng với BKBQP/BKTTCP trong một đề xuất. ' +
+              'Vui lòng tạo đề xuất riêng cho loại danh hiệu này.'
+          );
+          return;
+        }
+      }
+    }
+
     // Kiểm tra đề xuất trùng: cùng năm và cùng danh hiệu
     if (field === 'danh_hieu' && value) {
       const unitDetail = units.find(u => u.id === id);
       if (unitDetail) {
         try {
+          if (value === 'ĐVQT' || value === 'ĐVTT') {
+            // Kiểm tra thêm cho ĐVQT/ĐVTT
+            const response = await axiosInstance.get('/api/proposals/check-duplicate-unit', {
+              params: {
+                don_vi_id: id,
+                nam: nam,
+                danh_hieu: value === 'ĐVQT' ? 'ĐVTT' : 'ĐVQT',
+                proposal_type: 'DON_VI_HANG_NAM',
+              },
+            });
+            if (response.data.success && response.data.data.exists) {
+              message.error(
+                `${unitDetail.ten_don_vi}: ${response.data.data.message}. Không thể đề xuất danh hiệu này.`
+              );
+              return; // Không cho phép chọn
+            }
+          }
+
+          // Kiểm tra cho danh hiệu chính
           const response = await axiosInstance.get('/api/proposals/check-duplicate-unit', {
             params: {
               don_vi_id: id,
@@ -209,11 +259,10 @@ export default function Step3SetTitlesDonViHangNam({
           });
 
           if (response.data.success && response.data.data.exists) {
-            message.warning(
-              `${unitDetail.ten_don_vi}: ${response.data.data.message}. Vui lòng kiểm tra lại.`
+            message.error(
+              `${unitDetail.ten_don_vi}: ${response.data.data.message}. Không thể đề xuất danh hiệu này.`
             );
-            // Không cho phép chọn
-            return;
+            return; // Không cho phép chọn
           }
         } catch (error: any) {
           console.error('Error checking duplicate unit award:', error);
@@ -317,6 +366,7 @@ export default function Step3SetTitlesDonViHangNam({
         return (
           <Select
             value={data.danh_hieu}
+            disabled={availableOptions.length === 0}
             onChange={value => updateTitle(record.id, 'danh_hieu', value)}
             placeholder="Chọn danh hiệu"
             style={{ width: '100%' }}
@@ -362,8 +412,12 @@ export default function Step3SetTitlesDonViHangNam({
               1. Chọn danh hiệu khen thưởng cho từng đơn vị đã chọn (<strong>{units.length}</strong>{' '}
               đơn vị)
             </p>
-            <p>2. Đảm bảo tất cả đơn vị đều đã được chọn danh hiệu</p>
-            <p>3. Sau khi hoàn tất, nhấn &quot;Tiếp tục&quot; để sang bước upload file</p>
+            <p>
+              2. <strong>Lưu ý:</strong> Không thể đề xuất ĐVQT/ĐVTT cùng với BKBQP/BKTTCP trong một
+              đề xuất. BKBQP và BKTTCP có thể đề xuất cùng nhau.
+            </p>
+            <p>3. Đảm bảo tất cả đơn vị đều đã được chọn danh hiệu</p>
+            <p>4. Sau khi hoàn tất, nhấn &quot;Tiếp tục&quot; để sang bước upload file</p>
           </div>
         }
         type="info"

@@ -20,6 +20,7 @@ import {
 } from 'antd';
 import {
   UploadOutlined,
+  DownloadOutlined,
   HomeOutlined,
   TrophyOutlined,
   TeamOutlined,
@@ -411,7 +412,6 @@ export default function CreateProposalPage() {
   const handleSubmit = async () => {
     try {
       setLoading(true);
-      
 
       // Validation cho KNC_VSNXD_QDNDVN: Kiểm tra giới tính và ngày nhập ngũ
       if (proposalType === 'KNC_VSNXD_QDNDVN' && selectedPersonnelIds.length > 0) {
@@ -1117,6 +1117,57 @@ export default function CreateProposalPage() {
                 </Descriptions.Item>
               </Descriptions>
             </Card>
+
+            {/* File đính kèm */}
+            {attachedFiles.length > 0 && (
+              <Card title="File đính kèm" style={{ marginTop: 16, marginBottom: 16 }}>
+                <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                  {attachedFiles.map((file, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '8px 12px',
+                        backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                        border: '1px solid rgba(0, 0, 0, 0.06)',
+                        borderRadius: '4px',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <UploadOutlined style={{ color: '#1890ff', fontSize: '16px' }} />
+                        <Text style={{ fontSize: '14px' }}>{file.name || 'Không có tên file'}</Text>
+                        {file.size && (
+                          <Text type="secondary" style={{ fontSize: '12px' }}>
+                            ({(file.size / 1024).toFixed(2)} KB)
+                          </Text>
+                        )}
+                      </div>
+                      <Button
+                        type="link"
+                        icon={<DownloadOutlined />}
+                        style={{ padding: '0 8px', borderRadius: '6px' }}
+                        onClick={() => {
+                          if (file.originFileObj) {
+                            const url = URL.createObjectURL(file.originFileObj);
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.download = file.name;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            URL.revokeObjectURL(url);
+                          }
+                        }}
+                      >
+                        Tải xuống
+                      </Button>
+                    </div>
+                  ))}
+                </Space>
+              </Card>
+            )}
 
             <Card
               title={

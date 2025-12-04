@@ -27,6 +27,7 @@ import {
   HomeOutlined,
 } from '@ant-design/icons';
 import { apiClient } from '@/lib/api-client';
+import axiosInstance from '@/utils/axiosInstance';
 
 const { Title, Paragraph } = Typography;
 
@@ -35,6 +36,8 @@ interface AchievementRecord {
   nam: number;
   loai: string;
   mo_ta: string;
+  so_quyet_dinh?: string;
+  file_quyet_dinh?: string;
 }
 
 export default function ScientificAchievementsPage() {
@@ -165,6 +168,24 @@ export default function ScientificAchievementsPage() {
     }
   };
 
+  const handleOpenDecisionFile = async (fileUrl: string) => {
+    try {
+      const response = await axiosInstance.get(fileUrl, {
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileUrl.split('/').pop() || 'decision_file');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      message.error('Không thể tải file quyết định');
+    }
+  };
+
   const columns: ColumnsType<AchievementRecord> = [
     {
       title: 'Năm',
@@ -177,6 +198,13 @@ export default function ScientificAchievementsPage() {
       dataIndex: 'loai',
       key: 'loai',
       width: 150,
+      render: (text: string) => {
+        const map: Record<string, string> = {
+          NCKH: 'Đề tài khoa học',
+          SKKH: 'Sáng kiến khoa học',
+        };
+        return map[text] || text || '-';
+      },
     },
     {
       title: 'Mô tả',
@@ -185,6 +213,26 @@ export default function ScientificAchievementsPage() {
       width: 400,
       render: (text: string) => text || '-',
       ellipsis: true,
+    },
+    {
+      title: 'Số quyết định',
+      dataIndex: 'so_quyet_dinh',
+      key: 'so_quyet_dinh',
+      width: 150,
+      align: 'center',
+      render: (so_quyet_dinh: string, record: AchievementRecord) => {
+        if (record.file_quyet_dinh) {
+          return (
+            <a
+              onClick={() => handleOpenDecisionFile(record.file_quyet_dinh!)}
+              style={{ color: '#52c41a', textDecoration: 'underline', cursor: 'pointer' }}
+            >
+              {so_quyet_dinh || 'N/A'}
+            </a>
+          );
+        }
+        return <span style={{ color: '#999' }}>{so_quyet_dinh || 'N/A'}</span>;
+      },
     },
   ];
 

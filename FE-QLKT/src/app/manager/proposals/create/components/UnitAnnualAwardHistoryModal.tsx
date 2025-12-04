@@ -4,6 +4,8 @@ import { Modal, Table, Tag, Typography, Spin, Descriptions } from 'antd';
 import { HistoryOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
+import axiosInstance from '@/utils/axiosInstance';
+import { message } from 'antd';
 
 const { Text } = Typography;
 
@@ -41,6 +43,48 @@ export default function UnitAnnualAwardHistoryModal({
   loading,
   onClose,
 }: UnitAnnualAwardHistoryModalProps) {
+  const handleOpenDecisionFile = async (soQuyetDinh: string, filePath?: string | null) => {
+    try {
+      let filename: string | null = null;
+
+      // Nếu đã có file_path trong record, dùng luôn
+      if (filePath) {
+        filename = filePath.split('/').pop() || null;
+      } else {
+        // Nếu chưa có file_path, tìm từ DB dựa trên số quyết định
+        const response = await axiosInstance.get(`/api/decisions?so_quyet_dinh=${soQuyetDinh}`);
+        if (response.data?.success && response.data?.data?.length > 0) {
+          const decision = response.data.data[0];
+          if (decision.file_path) {
+            filename = decision.file_path.split('/').pop() || null;
+          }
+        }
+      }
+
+      if (filename) {
+        // Tải file về bằng axios với responseType: 'blob'
+        const response = await axiosInstance.get(`/api/proposals/uploads/${filename}`, {
+          responseType: 'blob',
+        });
+        const blob = response.data;
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename || `${soQuyetDinh}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        message.success('Tải file thành công');
+      } else {
+        message.warning('Không tìm thấy file quyết định');
+      }
+    } catch (error: any) {
+      console.error('Error downloading decision file:', error);
+      message.error('Lỗi khi tải file quyết định');
+    }
+  };
+
   const columns: ColumnsType<UnitAnnualAward> = [
     {
       title: 'Năm',
@@ -87,17 +131,47 @@ export default function UnitAnnualAwardHistoryModal({
       width: 200,
       align: 'center',
       render: (_, record) => {
-        const decisions = [record.so_quyet_dinh];
+        const decisions = [];
+
+        if (record.so_quyet_dinh) {
+          decisions.push({
+            label: record.so_quyet_dinh,
+            soQuyetDinh: record.so_quyet_dinh,
+            filePath: record.file_quyet_dinh,
+          });
+        }
+
         if (record.so_quyet_dinh_bkbqp) {
-          decisions.push(`BKBQP: ${record.so_quyet_dinh_bkbqp}`);
+          decisions.push({
+            label: `BKBQP: ${record.so_quyet_dinh_bkbqp}`,
+            soQuyetDinh: record.so_quyet_dinh_bkbqp,
+            filePath: record.file_quyet_dinh_bkbqp,
+          });
         }
+
         if (record.so_quyet_dinh_bkttcp) {
-          decisions.push(`BKTTCP: ${record.so_quyet_dinh_bkttcp}`);
+          decisions.push({
+            label: `BKTTCP: ${record.so_quyet_dinh_bkttcp}`,
+            soQuyetDinh: record.so_quyet_dinh_bkttcp,
+            filePath: record.file_quyet_dinh_bkttcp,
+          });
         }
+
         return decisions.length > 0 ? (
           <div style={{ textAlign: 'left' }}>
             {decisions.map((d, i) => (
-              <div key={i}>{d}</div>
+              <div key={i}>
+                {d.filePath ? (
+                  <a
+                    onClick={() => handleOpenDecisionFile(d.soQuyetDinh, d.filePath)}
+                    style={{ color: '#52c41a', cursor: 'pointer', textDecoration: 'underline' }}
+                  >
+                    {d.label}
+                  </a>
+                ) : (
+                  <span style={{ color: '#999' }}>{d.label}</span>
+                )}
+              </div>
             ))}
           </div>
         ) : (

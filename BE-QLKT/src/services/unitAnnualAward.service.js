@@ -100,7 +100,7 @@ class UnitAnnualAwardService {
     const records = await prisma.danhHieuDonViHangNam.findMany({
       where: {
         OR: [{ co_quan_don_vi_id: donViId }, { don_vi_truc_thuoc_id: donViId }],
-        nam: { lte: year },
+        nam: { lte: year-1 },
         danh_hieu: 'ĐVQT',
       },
       orderBy: { nam: 'desc' },
@@ -110,13 +110,9 @@ class UnitAnnualAwardService {
     let continuous = 0;
     let current = year - 1;
     for (const r of records) {
-      if (r.nam !== current) continue;
-      if (r.danh_hieu && r.danh_hieu.trim() !== '') {
-        continuous += 1;
-        current -= 1;
-      } else {
-        break;
-      }
+      if (r.nam !== current) break;
+      continuous += 1;
+      current -= 1;
     }
     return continuous;
   }
@@ -126,8 +122,8 @@ class UnitAnnualAwardService {
     const records = await prisma.danhHieuDonViHangNam.findMany({
       where: {
         OR: [{ co_quan_don_vi_id: donViId }, { don_vi_truc_thuoc_id: donViId }],
-        nam: { lte: year },
-        danh_hieu: 'BKBQP',
+        nam: { lte: year-1 },
+        nhan_bkbqp: true,
       },
       orderBy: { nam: 'desc' },
       select: { nam: true, danh_hieu: true },
@@ -135,14 +131,9 @@ class UnitAnnualAwardService {
     let continuous = 0;
     let current = year - 1;
     for (const r of records) {
-      if (r.nam !== current) continue; // chỉ xét chuỗi liên tiếp từ năm hiện tại trở lùi
-      // Có danh hiệu nếu có danh_hieu không null và không rỗng
-      if (r.danh_hieu && r.danh_hieu.trim() !== '') {
-        continuous += 1;
-        current -= 2;
-      } else {
-        break;
-      }
+      if (r.nam !== current) break;
+      continuous += 1;
+      current -= 2;
     }
     return continuous;
   }
@@ -255,7 +246,7 @@ class UnitAnnualAwardService {
     });
 
     // Cập nhật hoặc tạo HoSoDonViHangNam
-    await this.updateHoSoDonVi(unitId, year, isCoQuanDonVi);
+    await this.recalculateAnnualUnit(unitId, year);
 
     return record;
   }
@@ -302,7 +293,7 @@ class UnitAnnualAwardService {
     });
 
     // Cập nhật hoặc tạo HoSoDonViHangNam để theo dõi thống kê
-    await this.updateHoSoDonVi(unitId, year, isCoQuanDonVi);
+    await this.recalculateAnnualUnit(unitId, year);
 
     return record;
   }
@@ -385,50 +376,6 @@ class UnitAnnualAwardService {
     await this.recalculateAnnualUnit(donViId, rejectedDanhHieu.nam);
 
     return rejectedDanhHieu;
-  }
-
-  /** Cập nhật hoặc tạo HoSoDonViHangNam để theo dõi thống kê */
-  async updateHoSoDonVi(donViId, year, isCoQuanDonVi) {
-    const dvqtResult = await this.calculateTotalDVQT(donViId, year);
-    const dvqtLienTuc = await this.calculateContinuousYears(donViId, year);
-    const bkbqpLienTuc = await this.calculateBKBQPContinuous(donViId, year);
-    const du3 = dvqtLienTuc % 2 === 0 && dvqtLienTuc >= 1;
-    const du5 = dvqtLienTuc == 7 && bkbqpLienTuc == 3;
-
-    // Kiểm tra xem có bằng khen chưa (dựa vào DanhHieuDonViHangNam năm hiện tại)
-    const currentYearAward = await prisma.danhHieuDonViHangNam.findFirst({
-      where: {
-        OR: [{ co_quan_don_vi_id: donViId }, { don_vi_truc_thuoc_id: donViId }],
-        nam: year,
-        status: 'APPROVED',
-      },
-    });
-
-    const goi_y = this.buildSuggestion(dvqtLienTuc, !!currentYearAward?.so_quyet_dinh);
-
-    const whereCondition = isCoQuanDonVi
-      ? { unique_co_quan_don_vi_nam: { co_quan_don_vi_id: donViId, nam: year } }
-      : { unique_don_vi_truc_thuoc_nam: { don_vi_truc_thuoc_id: donViId, nam: year } };
-
-    const data = {
-      tong_dvqt: dvqtResult.total,
-      tong_dvqt_json: dvqtResult.details,
-      dvqt_lien_tuc: dvqtLienTuc,
-      du_dieu_kien_bk_tong_cuc: du3,
-      du_dieu_kien_bk_thu_tuong: du5,
-      goi_y,
-    };
-
-    return prisma.hoSoDonViHangNam.upsert({
-      where: whereCondition,
-      update: data,
-      create: {
-        ...data,
-        co_quan_don_vi_id: isCoQuanDonVi ? donViId : null,
-        don_vi_truc_thuoc_id: isCoQuanDonVi ? null : donViId,
-        nam: year,
-      },
-    });
   }
 
   async list({ page = 1, limit = 10, year, donViId, status, userRole, userQuanNhanId }) {

@@ -1045,23 +1045,28 @@ export default function ProposalDetailPage() {
         if (!soQuyetDinh || (typeof soQuyetDinh === 'string' && soQuyetDinh.trim() === '')) {
           return <span style={{ color: '#999', fontWeight: 400 }}>Chưa có</span>;
         }
-        return (
-          <a
-            onClick={e => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleOpenDecisionFile(soQuyetDinh, fileQuyetDinh);
-            }}
-            style={{
-              color: '#52c41a',
-              fontWeight: 500,
-              textDecoration: 'underline',
-              cursor: 'pointer',
-            }}
-          >
-            {soQuyetDinh}
-          </a>
-        );
+
+        if (fileQuyetDinh) {
+          return (
+            <a
+              onClick={e => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleOpenDecisionFile(soQuyetDinh, fileQuyetDinh);
+              }}
+              style={{
+                color: '#52c41a',
+                fontWeight: 500,
+                textDecoration: 'underline',
+                cursor: 'pointer',
+              }}
+            >
+              {soQuyetDinh}
+            </a>
+          );
+        } else {
+          return <span style={{ color: '#999', fontWeight: 400 }}>{soQuyetDinh}</span>;
+        }
       },
     },
   ];
@@ -1182,23 +1187,28 @@ export default function ProposalDetailPage() {
         if (!soQuyetDinh || (typeof soQuyetDinh === 'string' && soQuyetDinh.trim() === '')) {
           return <span style={{ color: '#999', fontWeight: 400 }}>Chưa có</span>;
         }
-        return (
-          <a
-            onClick={e => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleOpenDecisionFile(soQuyetDinh, record.file_quyet_dinh);
-            }}
-            style={{
-              color: '#52c41a',
-              fontWeight: 500,
-              textDecoration: 'underline',
-              cursor: 'pointer',
-            }}
-          >
-            {soQuyetDinh}
-          </a>
-        );
+
+        if (record.file_quyet_dinh) {
+          return (
+            <a
+              onClick={e => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleOpenDecisionFile(soQuyetDinh, record.file_quyet_dinh);
+              }}
+              style={{
+                color: '#52c41a',
+                fontWeight: 500,
+                textDecoration: 'underline',
+                cursor: 'pointer',
+              }}
+            >
+              {soQuyetDinh}
+            </a>
+          );
+        } else {
+          return <span style={{ color: '#999', fontWeight: 400 }}>{soQuyetDinh}</span>;
+        }
       },
     },
   ];
@@ -1343,87 +1353,74 @@ export default function ProposalDetailPage() {
             </>
           )}
         </div>
+      </Card>
 
-        {/* File đính kèm */}
-        {proposal.files_attached && proposal.files_attached.length > 0 && (
-          <div
-            style={{
-              marginTop: '24px',
-              paddingTop: '24px',
-              borderTop: '1px solid rgba(0, 0, 0, 0.06)',
-            }}
-          >
-            <Text
-              type="secondary"
-              style={{ fontSize: '14px', display: 'block', marginBottom: '12px' }}
-            >
-              File đính kèm ({proposal.files_attached.length} file)
-            </Text>
-            <Space direction="vertical" style={{ width: '100%' }} size="small">
-              {proposal.files_attached.map((file: any, index: number) => (
-                <div
-                  key={index}
-                  className="file-attachment-item"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '8px 12px',
-                    backgroundColor: 'rgba(0, 0, 0, 0.02)',
-                    border: '1px solid rgba(0, 0, 0, 0.06)',
-                    borderRadius: '4px',
+      {/* File đính kèm */}
+      <Card title="File đính kèm" style={{ marginBottom: '24px' }}>
+        {proposal.files_attached && proposal.files_attached.length > 0 ? (
+          <Space direction="vertical" style={{ width: '100%' }} size="small">
+            {proposal.files_attached.map((file: any, index: number) => (
+              <div
+                key={index}
+                className="file-attachment-item"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '8px 12px',
+                  backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                  border: '1px solid rgba(0, 0, 0, 0.06)',
+                  borderRadius: '4px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <FileTextOutlined style={{ color: '#1890ff', fontSize: '16px' }} />
+                  <Text style={{ fontSize: '14px' }}>
+                    {file.originalName || file.originalname || file.filename || 'Không có tên file'}
+                  </Text>
+                  {file.size && (
+                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                      ({(file.size / 1024).toFixed(2)} KB)
+                    </Text>
+                  )}
+                </div>
+                <Button
+                  type="link"
+                  icon={<DownloadOutlined />}
+                  style={{ padding: '0 8px', borderRadius: '6px' }}
+                  onClick={async () => {
+                    try {
+                      const filename = file.filename;
+                      const response = await axiosInstance.get(
+                        `/api/proposals/uploads/${filename}`,
+                        {
+                          responseType: 'blob',
+                        }
+                      );
+                      const blob = response.data;
+                      const url = window.URL.createObjectURL(blob);
+                      const link = document.createElement('a');
+                      link.href = url;
+                      link.download =
+                        file.originalName || file.originalname || file.filename || 'download';
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                      window.URL.revokeObjectURL(url);
+                      message.success('Tải file thành công');
+                    } catch (error) {
+                      message.error('Lỗi khi tải file');
+                      console.error('Download error:', error);
+                    }
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <FileTextOutlined style={{ color: '#1890ff', fontSize: '16px' }} />
-                    <Text style={{ fontSize: '14px' }}>
-                      {file.originalName ||
-                        file.originalname ||
-                        file.filename ||
-                        'Không có tên file'}
-                    </Text>
-                    {file.size && (
-                      <Text type="secondary" style={{ fontSize: '12px' }}>
-                        ({(file.size / 1024).toFixed(2)} KB)
-                      </Text>
-                    )}
-                  </div>
-                  <Button
-                    type="link"
-                    icon={<DownloadOutlined />}
-                    style={{ padding: '0 8px', borderRadius: '6px' }}
-                    onClick={async () => {
-                      try {
-                        const filename = file.filename;
-                        const response = await axiosInstance.get(
-                          `/api/proposals/uploads/${filename}`,
-                          {
-                            responseType: 'blob',
-                          }
-                        );
-                        const blob = response.data;
-                        const url = window.URL.createObjectURL(blob);
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download =
-                          file.originalName || file.originalname || file.filename || 'download';
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        window.URL.revokeObjectURL(url);
-                        message.success('Tải file thành công');
-                      } catch (error) {
-                        message.error('Lỗi khi tải file');
-                        console.error('Download error:', error);
-                      }
-                    }}
-                  >
-                    Tải về
-                  </Button>
-                </div>
-              ))}
-            </Space>
-          </div>
+                  Tải về
+                </Button>
+              </div>
+            ))}
+          </Space>
+        ) : (
+          <Text type="secondary">Không có file đính kèm</Text>
         )}
       </Card>
 

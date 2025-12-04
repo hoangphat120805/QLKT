@@ -30,6 +30,7 @@ import {
   FilePdfOutlined,
 } from '@ant-design/icons';
 import { apiClient } from '@/lib/api-client';
+import axiosInstance from '@/utils/axiosInstance';
 import { useTheme } from '@/components/theme-provider';
 
 const { Title, Paragraph } = Typography;
@@ -160,6 +161,45 @@ export default function ScientificAchievementsPage() {
     }
   };
 
+  const handleOpenDecisionFile = async (soQuyetDinh: string, filePath?: string | null) => {
+    try {
+      let filename: string | null = null;
+
+      // Nếu đã có file_path trong record, dùng luôn
+      if (filePath) {
+        filename = filePath.split('/').pop() || null;
+      } else {
+        // Nếu chưa có file_path, tìm từ DB dựa trên số quyết định
+        const response = await apiClient.getDecisionBySoQuyetDinh(soQuyetDinh);
+        if (response.success && response.data?.file_path) {
+          filename = response.data.file_path.split('/').pop() || null;
+        }
+      }
+
+      if (filename) {
+        // Tải file về bằng axios với responseType: 'blob'
+        const response = await axiosInstance.get(`/api/proposals/uploads/${filename}`, {
+          responseType: 'blob',
+        });
+        const blob = response.data;
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename || `${soQuyetDinh}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        message.success('Tải file thành công');
+      } else {
+        message.warning('Không tìm thấy file quyết định');
+      }
+    } catch (error: any) {
+      console.error('Error downloading decision file:', error);
+      message.error('Lỗi khi tải file quyết định');
+    }
+  };
+
   const columns: ColumnsType<ScientificAchievement> = [
     {
       title: 'Năm',
@@ -211,25 +251,18 @@ export default function ScientificAchievementsPage() {
       render: (text: string, record: ScientificAchievement) => {
         if (!text) return '-';
 
-        // Nếu có file PDF, hiển thị link để xem
         if (record.file_quyet_dinh) {
-          const pdfUrl = `${
-            process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000'
-          }/api/scientific-achievements/decision-files/${record.file_quyet_dinh}`;
           return (
             <a
-              href={pdfUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:text-blue-800 hover:underline"
+              onClick={() => handleOpenDecisionFile(text, record.file_quyet_dinh)}
+              style={{ color: '#52c41a', cursor: 'pointer', textDecoration: 'underline' }}
             >
-              <FilePdfOutlined className="mr-1" />
               {text}
             </a>
           );
         }
 
-        return text;
+        return <span style={{ color: '#999' }}>{text}</span>;
       },
     },
   ];

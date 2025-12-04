@@ -19,6 +19,7 @@ import {
   Spin,
   ConfigProvider,
   theme as antdTheme,
+  Tag,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
@@ -30,6 +31,7 @@ import {
   FilePdfOutlined,
 } from '@ant-design/icons';
 import { apiClient } from '@/lib/api-client';
+import axiosInstance from '@/utils/axiosInstance';
 import { useTheme } from '@/components/theme-provider';
 
 const { Title, Paragraph } = Typography;
@@ -43,6 +45,12 @@ interface RewardRecord {
   ghi_chu?: string;
   so_quyet_dinh?: string;
   file_quyet_dinh?: string;
+  nhan_bkbqp: boolean;
+  so_quyet_dinh_bkbqp?: string;
+  file_quyet_dinh_bkbqp?: string;
+  nhan_cstdtq: boolean;
+  so_quyet_dinh_cstdtq?: string;
+  file_quyet_dinh_cstdtq?: string;
 }
 
 export default function AnnualRewardsPage() {
@@ -140,21 +148,42 @@ export default function AnnualRewardsPage() {
     }
   };
 
-  const handleDelete = async () => {
-    if (!deleteId) return;
+  const handleOpenDecisionFile = async (soQuyetDinh: string, filePath?: string | null) => {
     try {
-      const res = await apiClient.deleteAnnualReward(deleteId);
+      let filename: string | null = null;
 
-      if (res.success) {
-        message.success('Xóa khen thưởng thành công');
-        setDeleteModalOpen(false);
-        setDeleteId(null);
-        loadData();
+      // Nếu đã có file_path trong record, dùng luôn
+      if (filePath) {
+        filename = filePath.split('/').pop() || null;
       } else {
-        message.error(res.message || 'Có lỗi xảy ra khi xóa');
+        // Nếu chưa có file_path, tìm từ DB dựa trên số quyết định
+        const response = await apiClient.getDecisionBySoQuyetDinh(soQuyetDinh);
+        if (response.success && response.data?.file_path) {
+          filename = response.data.file_path.split('/').pop() || null;
+        }
       }
-    } catch (error) {
-      message.error('Có lỗi xảy ra khi xóa');
+
+      if (filename) {
+        // Tải file về bằng axios với responseType: 'blob'
+        const response = await axiosInstance.get(`/api/proposals/uploads/${filename}`, {
+          responseType: 'blob',
+        });
+        const blob = response.data;
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename || `${soQuyetDinh}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        message.success('Tải file thành công');
+      } else {
+        message.warning('Không tìm thấy file quyết định');
+      }
+    } catch (error: any) {
+      console.error('Error downloading decision file:', error);
+      message.error('Lỗi khi tải file quyết định');
     }
   };
 
@@ -198,33 +227,132 @@ export default function AnnualRewardsPage() {
       render: (text: string) => text || '-',
     },
     {
+      title: 'Nhận BKBQP',
+      dataIndex: 'nhan_bkbqp',
+      key: 'nhan_bkbqp',
+      width: 120,
+      align: 'center',
+      render: (value: boolean) => (value ? <Tag color="green">Có</Tag> : <Tag>Không</Tag>),
+    },
+    {
+      title: 'Nhận CSTDTQ',
+      dataIndex: 'nhan_cstdtq',
+      key: 'nhan_cstdtq',
+      width: 120,
+      align: 'center',
+      render: (value: boolean) => (value ? <Tag color="green">Có</Tag> : <Tag>Không</Tag>),
+    },
+    {
       title: 'Số quyết định',
       dataIndex: 'so_quyet_dinh',
       key: 'so_quyet_dinh',
-      width: 200,
+      width: 300,
       align: 'center',
       render: (text: string, record: RewardRecord) => {
-        if (!text) return '-';
+        const items = [];
 
-        // Nếu có file PDF, hiển thị link để xem
-        if (record.file_quyet_dinh) {
-          const pdfUrl = `${
-            process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000'
-          }/api/annual-rewards/decision-files/${record.file_quyet_dinh}`;
-          return (
-            <a
-              href={pdfUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:text-blue-800 hover:underline"
-            >
-              <FilePdfOutlined className="mr-1" />
-              {text}
-            </a>
+        if (record.so_quyet_dinh) {
+          items.push(
+            <div key="general">
+              {record.so_quyet_dinh.trim() !== '' ? (
+                record.file_quyet_dinh ? (
+                  <a
+                    onClick={e => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleOpenDecisionFile(record.so_quyet_dinh!, record.file_quyet_dinh);
+                    }}
+                    style={{
+                      color: '#52c41a',
+                      fontWeight: 500,
+                      textDecoration: 'underline',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {record.so_quyet_dinh}
+                  </a>
+                ) : (
+                  <span style={{ color: '#999', fontWeight: 400 }}>{record.so_quyet_dinh}</span>
+                )
+              ) : (
+                <span style={{ color: '#999', fontWeight: 400 }}>Chưa có</span>
+              )}
+            </div>
+          );
+        }
+        if (record.so_quyet_dinh_bkbqp) {
+          items.push(
+            <div key="bkbqp">
+              BKBQP:{' '}
+              {record.so_quyet_dinh_bkbqp.trim() !== '' ? (
+                record.file_quyet_dinh_bkbqp ? (
+                  <a
+                    onClick={e => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleOpenDecisionFile(
+                        record.so_quyet_dinh_bkbqp!,
+                        record.file_quyet_dinh_bkbqp
+                      );
+                    }}
+                    style={{
+                      color: '#52c41a',
+                      fontWeight: 500,
+                      textDecoration: 'underline',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {record.so_quyet_dinh_bkbqp}
+                  </a>
+                ) : (
+                  <span style={{ color: '#999', fontWeight: 400 }}>
+                    {record.so_quyet_dinh_bkbqp}
+                  </span>
+                )
+              ) : (
+                <span style={{ color: '#999', fontWeight: 400 }}>Chưa có</span>
+              )}
+            </div>
           );
         }
 
-        return text;
+        if (record.so_quyet_dinh_cstdtq) {
+          items.push(
+            <div key="cstdtq">
+              CSTDTQ:{' '}
+              {record.so_quyet_dinh_cstdtq.trim() !== '' ? (
+                record.file_quyet_dinh_cstdtq ? (
+                  <a
+                    onClick={e => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleOpenDecisionFile(
+                        record.so_quyet_dinh_cstdtq!,
+                        record.file_quyet_dinh_cstdtq
+                      );
+                    }}
+                    style={{
+                      color: '#52c41a',
+                      fontWeight: 500,
+                      textDecoration: 'underline',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {record.so_quyet_dinh_cstdtq}
+                  </a>
+                ) : (
+                  <span style={{ color: '#999', fontWeight: 400 }}>
+                    {record.so_quyet_dinh_cstdtq}
+                  </span>
+                )
+              ) : (
+                <span style={{ color: '#999', fontWeight: 400 }}>Chưa có</span>
+              )}
+            </div>
+          );
+        }
+
+        return items.length > 0 ? <div>{items}</div> : '-';
       },
     },
   ];

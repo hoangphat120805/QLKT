@@ -1000,11 +1000,12 @@ class ProposalService {
               ten_don_vi: donViInfo?.ten_don_vi || '',
               ma_don_vi: donViInfo?.ma_don_vi || '',
               nam: nam,
-              danh_hieu: item.danh_hieu, // "ĐVQT" | "ĐVTT" | "BKBQP" | "BKTTCP"
+              danh_hieu: item.danh_hieu,
               co_quan_don_vi_cha: coQuanDonViCha,
-              // Thông tin quyết định
               so_quyet_dinh: item.so_quyet_dinh || null,
               file_quyet_dinh: item.file_quyet_dinh || null,
+              nhan_bkbqp: item.danh_hieu === 'BKBQP' ? true : false,
+              nhan_bkttcp: item.danh_hieu === 'BKTTCP' ? true : false,
             };
           })
         );
@@ -1057,6 +1058,8 @@ class ProposalService {
             chuc_vu: item.chuc_vu || personnel?.ChucVu?.ten_chuc_vu || null,
             co_quan_don_vi: coQuanDonVi,
             don_vi_truc_thuoc: donViTrucThuoc,
+            nhan_bkbqp: item.danh_hieu === 'BKBQP' ? true : false,
+            nhan_cstdtq: item.danh_hieu === 'CSTDTQ' ? true : false,
           };
         });
       } else if (type === 'NIEN_HAN' || type === 'HC_QKQT' || type === 'KNC_VSNXD_QDNDVN') {
@@ -2816,18 +2819,22 @@ class ProposalService {
             const nhanBKBQP = item.nhan_bkbqp || false;
             const soQuyetDinhBKBQP =
               item.so_quyet_dinh_bkbqp ||
-              (nhanBKBQP ? specialDecisionMapping.BKBQP?.so_quyet_dinh : null);
+              (nhanBKBQP ? specialDecisionMapping.BKBQP?.so_quyet_dinh : null) ||
+              (nhanBKBQP ? item.so_quyet_dinh : null);
             const fileQuyetDinhBKBQP =
               item.file_quyet_dinh_bkbqp ||
-              (nhanBKBQP ? specialDecisionMapping.BKBQP?.file_pdf : null);
+              (nhanBKBQP ? specialDecisionMapping.BKBQP?.file_pdf : null) ||
+              (nhanBKBQP ? item.file_quyet_dinh : null);
 
             const nhanBKTTCP = item.nhan_bkttcp || false;
             const soQuyetDinhBKTTCP =
               item.so_quyet_dinh_bkttcp ||
-              (nhanBKTTCP ? specialDecisionMapping.CSTDTQ?.so_quyet_dinh : null);
+              (nhanBKTTCP ? specialDecisionMapping.CSTDTQ?.so_quyet_dinh : null) ||
+              (nhanBKTTCP ? item.so_quyet_dinh : null);
             const fileQuyetDinhBKTTCP =
               item.file_quyet_dinh_bkttcp ||
-              (nhanBKTTCP ? specialDecisionMapping.CSTDTQ?.file_pdf : null);
+              (nhanBKTTCP ? specialDecisionMapping.CSTDTQ?.file_pdf : null) ||
+              (nhanBKTTCP ? item.file_quyet_dinh : null);
 
             // Tìm bản ghi DanhHieuDonViHangNam hiện tại
             const whereCondition = {
@@ -2842,25 +2849,34 @@ class ProposalService {
               where: whereCondition,
             });
 
+            const data = {};
+
+            if (item.danh_hieu === 'ĐVQT' || item.danh_hieu === 'ĐVTT') {
+              data.danh_hieu = item.danh_hieu;
+              data.so_quyet_dinh = soQuyetDinh;
+              data.file_quyet_dinh = fileQuyetDinh;
+            }
+            if (item.danh_hieu === 'BKBQP') {
+              data.nhan_bkbqp = nhanBKBQP;
+              data.so_quyet_dinh_bkbqp = soQuyetDinhBKBQP;
+              data.file_quyet_dinh_bkbqp = fileQuyetDinhBKBQP;
+            }
+
+            if (item.danh_hieu === 'BKTTCP') {
+              data.nhan_bkttcp = nhanBKTTCP;
+              data.so_quyet_dinh_bkttcp = soQuyetDinhBKTTCP;
+              data.file_quyet_dinh_bkttcp = fileQuyetDinhBKTTCP;
+            }
+            data.status = 'APPROVED';
+            data.nguoi_duyet_id = adminId;
+            data.ngay_duyet = new Date();
+            data.ghi_chu = item.ghi_chu || null;
+
             let savedAward;
             if (existingAward) {
               savedAward = await prisma.danhHieuDonViHangNam.update({
                 where: { id: existingAward.id },
-                data: {
-                  danh_hieu: item.danh_hieu,
-                  so_quyet_dinh: soQuyetDinh,
-                  file_quyet_dinh: fileQuyetDinh,
-                  nhan_bkbqp: nhanBKBQP,
-                  so_quyet_dinh_bkbqp: soQuyetDinhBKBQP,
-                  file_quyet_dinh_bkbqp: fileQuyetDinhBKBQP,
-                  nhan_bkttcp: nhanBKTTCP,
-                  so_quyet_dinh_bkttcp: soQuyetDinhBKTTCP,
-                  file_quyet_dinh_bkttcp: fileQuyetDinhBKTTCP,
-                  status: 'APPROVED',
-                  nguoi_duyet_id: adminId,
-                  ngay_duyet: new Date(),
-                  ghi_chu: item.ghi_chu || null,
-                },
+                data: data,
               });
             } else {
               savedAward = await prisma.danhHieuDonViHangNam.create({
@@ -3058,9 +3074,13 @@ class ProposalService {
               nhanBKBQP = true;
             }
 
-            if (nhanBKBQP && specialDecisionMapping.BKBQP) {
-              soQuyetDinhBKBQP = soQuyetDinhBKBQP || specialDecisionMapping.BKBQP.so_quyet_dinh;
-              filePdfBKBQP = filePdfBKBQP || specialDecisionMapping.BKBQP.file_pdf;
+            if (nhanBKBQP) {
+              soQuyetDinhBKBQP =
+                soQuyetDinhBKBQP ||
+                specialDecisionMapping.BKBQP.so_quyet_dinh ||
+                item.so_quyet_dinh;
+              filePdfBKBQP =
+                filePdfBKBQP || specialDecisionMapping.BKBQP.file_pdf || item.file_quyet_dinh;
             }
 
             // Nếu có so_quyet_dinh_cstdtq hoặc file_quyet_dinh_cstdtq, tự động set nhan_cstdtq = true
@@ -3073,9 +3093,37 @@ class ProposalService {
               nhanCSTDTQ = true;
             }
 
-            if (nhanCSTDTQ && specialDecisionMapping.CSTDTQ) {
-              soQuyetDinhCSTDTQ = soQuyetDinhCSTDTQ || specialDecisionMapping.CSTDTQ.so_quyet_dinh;
-              filePdfCSTDTQ = filePdfCSTDTQ || specialDecisionMapping.CSTDTQ.file_pdf;
+            if (nhanCSTDTQ) {
+              soQuyetDinhCSTDTQ =
+                soQuyetDinhCSTDTQ ||
+                specialDecisionMapping.CSTDTQ.so_quyet_dinh ||
+                item.so_quyet_dinh;
+              filePdfCSTDTQ =
+                filePdfCSTDTQ || specialDecisionMapping.CSTDTQ.file_pdf || item.file_quyet_dinh;
+            }
+
+            const data = {};
+
+            data.cap_bac = item.cap_bac || null;
+            data.chuc_vu = item.chuc_vu || null;
+            data.ghi_chu = item.ghi_chu || null;
+
+            if (item.danh_hieu === 'CSTT' || item.danh_hieu === 'CSTDCS') {
+              data.danh_hieu = item.danh_hieu;
+              data.so_quyet_dinh = soQuyetDinhDanhHieu;
+              data.file_quyet_dinh = filePdfDanhHieu;
+            }
+
+            if (item.danh_hieu === 'BKBQP') {
+              data.nhan_bkbqp = nhanBKBQP;
+              data.so_quyet_dinh_bkbqp = soQuyetDinhBKBQP;
+              data.file_quyet_dinh_bkbqp = filePdfBKBQP;
+            }
+
+            if (item.danh_hieu === 'CSTDTQ') {
+              data.nhan_cstdtq = nhanCSTDTQ;
+              data.so_quyet_dinh_cstdtq = soQuyetDinhCSTDTQ;
+              data.file_quyet_dinh_cstdtq = filePdfCSTDTQ;
             }
 
             // Upsert vào bảng DanhHieuHangNam
@@ -3087,18 +3135,7 @@ class ProposalService {
                 },
               },
               update: {
-                danh_hieu: item.danh_hieu,
-                cap_bac: item.cap_bac || null,
-                chuc_vu: item.chuc_vu || null,
-                ghi_chu: item.ghi_chu || null,
-                so_quyet_dinh: soQuyetDinhDanhHieu,
-                file_quyet_dinh: filePdfDanhHieu,
-                nhan_bkbqp: nhanBKBQP,
-                so_quyet_dinh_bkbqp: soQuyetDinhBKBQP,
-                file_quyet_dinh_bkbqp: filePdfBKBQP,
-                nhan_cstdtq: nhanCSTDTQ,
-                so_quyet_dinh_cstdtq: soQuyetDinhCSTDTQ,
-                file_quyet_dinh_cstdtq: filePdfCSTDTQ,
+                ...data,
               },
               create: {
                 quan_nhan_id: quanNhan.id,

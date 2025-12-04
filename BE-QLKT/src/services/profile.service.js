@@ -203,10 +203,10 @@ class ProfileService {
   calculateContinuousCSTDCS(danhHieuList, year) {
     let count = 0;
     const sortedRewards = [...danhHieuList].sort((a, b) => b.nam - a.nam);
-    let currentYear = year - 1; // Bắt đầu từ năm gần nhất
-    for (const reward of sortedRewards) {
-      if (reward.nam !== currentYear) continue; // Chỉ xét chuỗi liên tiếp từ năm hiện tại trở lùi
-      // check NCKH trong năm hiện tại
+    const filteredRewards = sortedRewards.filter(r => r.nam <= year - 1);
+    let currentYear = year - 1;
+    for (const reward of filteredRewards) {
+      if (reward.nam !== currentYear) break;
       if (reward.danh_hieu === 'CSTDCS') {
         count++;
         currentYear--;
@@ -226,9 +226,13 @@ class ProfileService {
   calculateContinuousNCKH(thanhTichList, year) {
     let count = 0;
     const sortedRewards = [...thanhTichList].sort((a, b) => b.nam - a.nam);
-    let currentYear = year - 1; // Bắt đầu từ năm gần nhất
-    for (const reward of sortedRewards) {
-      if (reward.nam !== currentYear) continue; // Chỉ xét chuỗi liên tiếp từ năm hiện tại trở lùi
+    const filteredRewards = sortedRewards.filter(r => r.nam <= year - 1);
+    const uniqueRewards = filteredRewards.filter(
+      (item, index, self) => index === self.findIndex(t => t.nam === item.nam)
+    );
+    let currentYear = year - 1;
+    for (const reward of uniqueRewards) {
+      if (reward.nam !== currentYear) break;
       if ((reward.loai === 'NCKH' || reward.loai === 'SKKH') && reward.status === 'APPROVED') {
         count++;
         currentYear--;
@@ -248,18 +252,16 @@ class ProfileService {
   calculateContinuousBKBQP(danhHieuList, year) {
     let count = 0;
     const sortedRewards = [...danhHieuList].sort((a, b) => b.nam - a.nam);
-    let currentYear = year - 1; // Bắt đầu từ năm trước năm gần nhất
+    const filteredRewards = sortedRewards.filter(r => r.nhan_bkbqp === true && r.nam <= year - 1);
+    console.log('Filtered BKBQP Rewards:', filteredRewards);
+    let currentYear = year - 1;
 
-    for (const reward of sortedRewards) {
-      if (reward.nam !== currentYear) continue; // Chỉ xét chuỗi liên tiếp từ năm hiện tại trở lùi
-      if (reward.nhan_bkbqp === true) {
-        count++;
-        currentYear -= 2; // Bước nhảy 2 năm cho BKBQP
-      } else {
-        break;
-      }
+    for (const reward of filteredRewards) {
+      if (reward.nam !== currentYear) break;
+      count++;
+      currentYear -= 2;
     }
-
+    console.log('Continuous BKBQP count:', count);
     return count;
   }
 
@@ -691,12 +693,9 @@ class ProfileService {
 
       const nckh_lien_tuc = this.calculateContinuousNCKH(thanhTichList, year);
 
-      const bkbqp_lien_tuc = this.calculateContinuousBKBQP(
-        danhHieuList.filter(dh => dh.danh_hieu === 'BKBQP'),
-        year
-      );
+      const bkbqp_lien_tuc = this.calculateContinuousBKBQP(danhHieuList, year);
       du_dieu_kien_bkbqp =
-        cstdcs_lien_tuc % 2 === 0 && cstdcs_lien_tuc >= 1 && nckh_lien_tuc >=  cstdcs_lien_tuc;
+        cstdcs_lien_tuc % 2 === 0 && cstdcs_lien_tuc >= 1 && nckh_lien_tuc >= cstdcs_lien_tuc;
       du_dieu_kien_cstdtq =
         cstdcs_lien_tuc === 3 && bkbqp_lien_tuc >= 1 && nckh_lien_tuc >= cstdcs_lien_tuc;
 
