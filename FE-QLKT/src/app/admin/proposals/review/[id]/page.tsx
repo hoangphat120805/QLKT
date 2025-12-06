@@ -1430,8 +1430,7 @@ export default function ProposalDetailPage() {
         <Card
           title="Thành Tích Khoa Học"
           extra={
-            proposal.status === 'PENDING' &&
-            selectedThanhTichKeys.length > 0 && (
+            proposal.status === 'PENDING' && (
               <Button
                 type="primary"
                 icon={<FileTextOutlined />}
@@ -1439,6 +1438,7 @@ export default function ProposalDetailPage() {
                   setDecisionModalType('thanh_tich');
                   setDecisionModalVisible(true);
                 }}
+                disabled={selectedRowKeys.length === 0}
               >
                 Thêm số quyết định ({selectedThanhTichKeys.length} thành tích)
               </Button>
@@ -1474,8 +1474,7 @@ export default function ProposalDetailPage() {
               : 'Kỷ Niệm Chương Vì Sự Nghiệp XD QĐNDVN'
           }
           extra={
-            proposal.status === 'PENDING' &&
-            selectedRowKeys.length > 0 && (
+            proposal.status === 'PENDING' && (
               <Button
                 type="primary"
                 icon={<FileTextOutlined />}
@@ -1483,6 +1482,7 @@ export default function ProposalDetailPage() {
                   setDecisionModalType('danh_hieu');
                   setDecisionModalVisible(true);
                 }}
+                disabled={selectedRowKeys.length === 0}
               >
                 Thêm số quyết định ({selectedRowKeys.length} người)
               </Button>
@@ -1510,8 +1510,7 @@ export default function ProposalDetailPage() {
         <Card
           title="Danh Sách Cống Hiến"
           extra={
-            proposal.status === 'PENDING' &&
-            selectedRowKeys.length > 0 && (
+            proposal.status === 'PENDING' && (
               <Button
                 type="primary"
                 icon={<FileTextOutlined />}
@@ -1519,6 +1518,7 @@ export default function ProposalDetailPage() {
                   setDecisionModalType('danh_hieu');
                   setDecisionModalVisible(true);
                 }}
+                disabled={selectedRowKeys.length === 0}
               >
                 Thêm số quyết định ({selectedRowKeys.length} người)
               </Button>
@@ -1550,8 +1550,7 @@ export default function ProposalDetailPage() {
               : 'Danh Hiệu Hằng Năm'
           }
           extra={
-            proposal.status === 'PENDING' &&
-            selectedRowKeys.length > 0 && (
+            proposal.status === 'PENDING' && (
               <Button
                 type="primary"
                 icon={<FileTextOutlined />}
@@ -1559,6 +1558,7 @@ export default function ProposalDetailPage() {
                   setDecisionModalType('danh_hieu');
                   setDecisionModalVisible(true);
                 }}
+                disabled={selectedRowKeys.length === 0}
               >
                 Thêm số quyết định ({selectedRowKeys.length}{' '}
                 {proposal.loai_de_xuat === 'DON_VI_HANG_NAM' ? 'đơn vị' : 'người'})
