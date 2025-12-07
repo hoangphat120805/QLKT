@@ -311,6 +311,7 @@ model KhenThuongDotXuat {
   ghi_chu                String?  @db.Text // Ghi chú bổ sung (vd: Phó giám đốc tại đơn vị A)
   so_quyet_dinh          String?  @db.VarChar(100) // Số quyết định
   files_quyet_dinh       Json?    
+  files_attached         Json?    // Các file đính kèm khác (không phải file quyết định)
   createdAt              DateTime @default(now()) @db.Timestamptz(6)
   updatedAt              DateTime @updatedAt @db.Timestamptz(6)
 

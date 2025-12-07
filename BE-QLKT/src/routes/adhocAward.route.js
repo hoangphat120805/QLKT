@@ -36,7 +36,10 @@ const upload = multer({
   },
 });
 
-// All routes require authentication and ADMIN role
+// Special route for users to view their own awards
+router.get('/personnel/:personnelId', verifyToken, adhocAwardController.getAdhocAwardsByPersonnel);
+
+// All routes above require authentication and ADMIN role
 router.use(verifyToken);
 router.use(checkRole(['ADMIN']));
 
@@ -45,7 +48,14 @@ router.use(checkRole(['ADMIN']));
  * @desc    Create ad-hoc award
  * @access  Admin only
  */
-router.post('/', upload.array('files', 10), adhocAwardController.createAdhocAward);
+router.post(
+  '/',
+  upload.fields([
+    { name: 'decisionFiles', maxCount: 10 },
+    { name: 'attachedFiles', maxCount: 10 },
+  ]),
+  adhocAwardController.createAdhocAward
+);
 
 /**
  * @route   GET /api/adhoc-awards
@@ -53,13 +63,6 @@ router.post('/', upload.array('files', 10), adhocAwardController.createAdhocAwar
  * @access  Admin only
  */
 router.get('/', adhocAwardController.getAdhocAwards);
-
-/**
- * @route   GET /api/adhoc-awards/personnel/:personnelId
- * @desc    Get all ad-hoc awards for a specific personnel
- * @access  Admin only
- */
-router.get('/personnel/:personnelId', adhocAwardController.getAdhocAwardsByPersonnel);
 
 /**
  * @route   GET /api/adhoc-awards/unit/:unitId
@@ -80,7 +83,14 @@ router.get('/:id', adhocAwardController.getAdhocAwardById);
  * @desc    Update ad-hoc award
  * @access  Admin only
  */
-router.put('/:id', upload.array('files', 10), adhocAwardController.updateAdhocAward);
+router.put(
+  '/:id',
+  upload.fields([
+    { name: 'decisionFiles', maxCount: 10 },
+    { name: 'attachedFiles', maxCount: 10 },
+  ]),
+  adhocAwardController.updateAdhocAward
+);
 
 /**
  * @route   DELETE /api/adhoc-awards/:id

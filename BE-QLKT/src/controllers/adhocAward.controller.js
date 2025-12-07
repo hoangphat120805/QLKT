@@ -52,8 +52,9 @@ class AdhocAwardController {
         });
       }
 
-      // Handle uploaded files
-      const files = req.files || [];
+      // Handle uploaded files - separate decision files and attached files
+      const decisionFiles = req.files?.decisionFiles || [];
+      const attachedFiles = req.files?.attachedFiles || [];
 
       const result = await adhocAwardService.createAdhocAward({
         adminId,
@@ -67,7 +68,8 @@ class AdhocAwardController {
         position,
         note,
         decisionNumber,
-        files,
+        decisionFiles,
+        attachedFiles,
       });
 
       return res.status(201).json({
@@ -148,10 +150,20 @@ class AdhocAwardController {
     try {
       const { id } = req.params;
       const adminId = req.user.id;
-      const { awardForm, year, rank, position, note, decisionNumber, removeFileIndexes } = req.body;
+      const {
+        awardForm,
+        year,
+        rank,
+        position,
+        note,
+        decisionNumber,
+        removeDecisionFileIndexes,
+        removeAttachedFileIndexes,
+      } = req.body;
 
-      // Handle uploaded files
-      const files = req.files || [];
+      // Handle uploaded files - separate decision files and attached files
+      const decisionFiles = req.files?.decisionFiles || [];
+      const attachedFiles = req.files?.attachedFiles || [];
 
       const result = await adhocAwardService.updateAdhocAward({
         id,
@@ -162,8 +174,14 @@ class AdhocAwardController {
         position,
         note,
         decisionNumber,
-        files,
-        removeFileIndexes: removeFileIndexes ? JSON.parse(removeFileIndexes) : [], // Array of indexes to remove
+        decisionFiles,
+        attachedFiles,
+        removeDecisionFileIndexes: removeDecisionFileIndexes
+          ? JSON.parse(removeDecisionFileIndexes)
+          : [],
+        removeAttachedFileIndexes: removeAttachedFileIndexes
+          ? JSON.parse(removeAttachedFileIndexes)
+          : [],
       });
 
       return res.status(200).json({
@@ -210,6 +228,19 @@ class AdhocAwardController {
   async getAdhocAwardsByPersonnel(req, res) {
     try {
       const { personnelId } = req.params;
+      const userPersonnelId = req.user.quan_nhan_id;
+      const userRole = req.user.role;
+
+      // Allow if user is viewing their own awards or is admin/manager
+      if (
+        personnelId !== userPersonnelId &&
+        !['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(userRole)
+      ) {
+        return res.status(403).json({
+          success: false,
+          message: 'Bạn chỉ có thể xem khen thưởng của chính mình.',
+        });
+      }
 
       const result = await adhocAwardService.getAdhocAwardsByPersonnel(personnelId);
 

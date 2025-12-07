@@ -36,6 +36,7 @@ export default function UserProfilePage() {
   const [annualRewards, setAnnualRewards] = useState<any[]>([]);
   const [scientificAchievements, setScientificAchievements] = useState<any[]>([]);
   const [positionHistory, setPositionHistory] = useState<any[]>([]);
+  const [adhocAwards, setAdhocAwards] = useState<any[]>([]);
   const [serviceProfile, setServiceProfile] = useState<any>(null);
   const [annualProfile, setAnnualProfile] = useState<any>(null);
   const [contributionProfile, setContributionProfile] = useState<any>(null);
@@ -116,6 +117,7 @@ export default function UserProfilePage() {
           annualRes,
           scientificRes,
           positionRes,
+          adhocRes,
           serviceRes,
           annualProfileRes,
           contributionRes,
@@ -126,6 +128,7 @@ export default function UserProfilePage() {
           apiClient.getAnnualRewardsByPersonnel(user.quan_nhan_id),
           apiClient.getPersonnelScientificAchievements(user.quan_nhan_id),
           apiClient.getPositionHistory(user.quan_nhan_id),
+          apiClient.getAdhocAwardsByPersonnel(user.quan_nhan_id),
           apiClient.getServiceProfile(user.quan_nhan_id),
           apiClient.getAnnualProfile(user.quan_nhan_id, currentYear),
           apiClient.getContributionProfile(user.quan_nhan_id),
@@ -147,6 +150,10 @@ export default function UserProfilePage() {
 
         if (positionRes.success) {
           setPositionHistory(positionRes.data || []);
+        }
+
+        if (adhocRes.success) {
+          setAdhocAwards(adhocRes.data || []);
         }
 
         if (serviceRes.success) {
@@ -371,6 +378,73 @@ export default function UserProfilePage() {
       render: (_: any, record: any) => {
         if (!record.ngay_bat_dau) return '-';
         return calculateDuration(record.ngay_bat_dau, record.ngay_ket_thuc);
+      },
+    },
+  ];
+
+  // Columns cho bảng khen thưởng đột xuất
+  const adhocColumns = [
+    {
+      title: 'STT',
+      key: 'index',
+      width: 60,
+      align: 'center' as const,
+      render: (_: any, __: any, index: number) => index + 1,
+    },
+    {
+      title: 'Hình thức khen thưởng',
+      dataIndex: 'hinh_thuc_khen_thuong',
+      key: 'hinh_thuc_khen_thuong',
+      render: (text: string) => text || '-',
+    },
+    {
+      title: 'Năm',
+      dataIndex: 'nam',
+      key: 'nam',
+      width: 100,
+      align: 'center' as const,
+      sorter: (a: any, b: any) => a.nam - b.nam,
+    },
+    {
+      title: 'Cấp bậc',
+      dataIndex: 'cap_bac',
+      key: 'cap_bac',
+      render: (text: string) => text || '-',
+    },
+    {
+      title: 'Chức vụ',
+      dataIndex: 'chuc_vu',
+      key: 'chuc_vu',
+      render: (text: string) => text || '-',
+    },
+    {
+      title: 'Số quyết định',
+      dataIndex: 'so_quyet_dinh',
+      key: 'so_quyet_dinh',
+      render: (text: string, record: any) => {
+        if (!text || text.trim() === '') return '-';
+        if (record.files_quyet_dinh && record.files_quyet_dinh.length > 0) {
+          const filePath = record.files_quyet_dinh[0].path; // Lấy file đầu tiên
+          return (
+            <a
+              onClick={e => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleOpenDecisionFile(text, filePath);
+              }}
+              style={{
+                color: '#52c41a',
+                fontWeight: 500,
+                textDecoration: 'underline',
+                cursor: 'pointer',
+              }}
+            >
+              {text}
+            </a>
+          );
+        } else {
+          return <span style={{ color: '#999', fontWeight: 400 }}>{text}</span>;
+        }
       },
     },
   ];
@@ -1315,6 +1389,42 @@ export default function UserProfilePage() {
                 showIcon
               />
             )}
+          </TabPane>
+
+          {/* Tab 6: Khen thưởng đột xuất */}
+          <TabPane
+            tab={
+              <Space>
+                <TrophyOutlined />
+                Khen thưởng đột xuất
+              </Space>
+            }
+            key="6"
+          >
+            <div className="mb-4">
+              <Text strong>Tổng số: {adhocAwards.length}</Text>
+            </div>
+            <Table
+              dataSource={adhocAwards}
+              columns={adhocColumns}
+              rowKey="id"
+              pagination={{
+                pageSize: 10,
+                showTotal: total => `Tổng ${total} bản ghi`,
+              }}
+              scroll={{ x: 800 }}
+              bordered
+              locale={{
+                emptyText: (
+                  <Alert
+                    message="Chưa có dữ liệu"
+                    description="Bạn chưa có khen thưởng đột xuất nào"
+                    type="info"
+                    showIcon
+                  />
+                ),
+              }}
+            />
           </TabPane>
         </Tabs>
       </Card>

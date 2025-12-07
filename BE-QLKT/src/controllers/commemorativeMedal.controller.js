@@ -172,7 +172,7 @@ class CommemorativeMedalController {
       const { personnel_id } = req.params;
       const userId = req.user.id;
       const userRole = req.user.role;
-      const userPersonnelId = req.user.personnel_id;
+      const userPersonnelId = req.user.quan_nhan_id;
 
       // Nếu là USER, chỉ cho phép xem của chính mình
       if (userRole === 'USER' && userPersonnelId !== personnel_id) {

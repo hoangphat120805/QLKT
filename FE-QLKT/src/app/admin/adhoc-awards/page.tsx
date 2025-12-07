@@ -33,6 +33,7 @@ import {
   HomeOutlined,
   UserOutlined,
   TeamOutlined,
+  PaperClipOutlined,
 } from '@ant-design/icons';
 import type { TableColumnsType, UploadFile } from 'antd';
 import { apiClient } from '@/lib/api-client';
@@ -54,6 +55,7 @@ interface AdhocAward {
   ghi_chu?: string;
   so_quyet_dinh?: string;
   files_quyet_dinh?: any[];
+  files_attached?: any[];
   createdAt: string;
   QuanNhan?: {
     ho_ten: string;
@@ -77,6 +79,8 @@ export default function Page() {
     personnelIds: [] as string[], // Changed to array for multiple selection
     unitIds: [] as string[], // Changed to array for multiple selection
     unitType: 'CO_QUAN_DON_VI',
+    rank: '',
+    position: '',
     note: '',
     decisionNumber: '',
     decisionYear: new Date().getFullYear(),
@@ -229,6 +233,8 @@ export default function Page() {
       personnelIds: [],
       unitIds: [],
       unitType: 'CO_QUAN_DON_VI',
+      rank: '',
+      position: '',
       note: '',
       decisionNumber: '',
       decisionYear: new Date().getFullYear(),
@@ -260,15 +266,25 @@ export default function Page() {
       decisionNumber: award.so_quyet_dinh || '',
     });
 
-    // Convert existing files to UploadFile format
-    const existingFiles: UploadFile[] =
+    // Convert existing decision files to UploadFile format
+    const existingDecisionFiles: UploadFile[] =
       award.files_quyet_dinh?.map((file, index) => ({
-        uid: `existing-${index}`,
+        uid: `existing-decision-${index}`,
         name: file.originalName,
         status: 'done',
         url: `/${file.path}`,
       })) || [];
-    setFileList(existingFiles);
+    setDecisionFileList(existingDecisionFiles);
+
+    // Convert existing attached files to UploadFile format
+    const existingAttachedFiles: UploadFile[] =
+      award.files_attached?.map((file, index) => ({
+        uid: `existing-attached-${index}`,
+        name: file.originalName,
+        status: 'done',
+        url: `/${file.path}`,
+      })) || [];
+    setFileList(existingAttachedFiles);
 
     setModalVisible(true);
   };
@@ -356,8 +372,8 @@ export default function Page() {
 
         if (formData.type === 'CA_NHAN') {
           formDataToSend.append('personnelId', targetId);
-          if (formData.rank) formDataToSend.append('rank', formData.rank);
-          if (formData.position) formDataToSend.append('position', formData.position);
+          formDataToSend.append('rank', formData.rank || '');
+          formDataToSend.append('position', formData.position || '');
         } else {
           // Tìm đơn vị thực tế để lấy type đúng
           const unit = units.find(u => u.id === targetId) || subUnits.find(s => s.id === targetId);
@@ -378,28 +394,66 @@ export default function Page() {
         if (formData.decisionNumber)
           formDataToSend.append('decisionNumber', formData.decisionNumber);
 
-        // Add files
+        // Add decision files
+        decisionFileList.forEach(file => {
+          if (file.originFileObj) {
+            formDataToSend.append('decisionFiles', file.originFileObj);
+          }
+        });
+
+        // Add attached files
         fileList.forEach(file => {
           if (file.originFileObj) {
-            formDataToSend.append('files', file.originFileObj);
+            formDataToSend.append('attachedFiles', file.originFileObj);
           }
         });
 
         // If editing, include files to remove
         if (editingAward) {
-          const existingFileCount = editingAward.files_quyet_dinh?.length || 0;
-          const currentExistingFiles = fileList.filter(f => f.uid.startsWith('existing-'));
-          const removedIndexes: number[] = [];
+          // Handle decision files removal
+          const existingDecisionFileCount = editingAward.files_quyet_dinh?.length || 0;
+          const currentExistingDecisionFiles = decisionFileList.filter(f =>
+            f.uid.startsWith('existing-decision-')
+          );
+          const removedDecisionIndexes: number[] = [];
 
-          for (let i = 0; i < existingFileCount; i++) {
-            const existingFile = currentExistingFiles.find(f => f.uid === `existing-${i}`);
+          for (let i = 0; i < existingDecisionFileCount; i++) {
+            const existingFile = currentExistingDecisionFiles.find(
+              f => f.uid === `existing-decision-${i}`
+            );
             if (!existingFile) {
-              removedIndexes.push(i);
+              removedDecisionIndexes.push(i);
             }
           }
 
-          if (removedIndexes.length > 0) {
-            formDataToSend.append('removeFileIndexes', JSON.stringify(removedIndexes));
+          if (removedDecisionIndexes.length > 0) {
+            formDataToSend.append(
+              'removeDecisionFileIndexes',
+              JSON.stringify(removedDecisionIndexes)
+            );
+          }
+
+          // Handle attached files removal
+          const existingAttachedFileCount = editingAward.files_attached?.length || 0;
+          const currentExistingAttachedFiles = fileList.filter(f =>
+            f.uid.startsWith('existing-attached-')
+          );
+          const removedAttachedIndexes: number[] = [];
+
+          for (let i = 0; i < existingAttachedFileCount; i++) {
+            const existingFile = currentExistingAttachedFiles.find(
+              f => f.uid === `existing-attached-${i}`
+            );
+            if (!existingFile) {
+              removedAttachedIndexes.push(i);
+            }
+          }
+
+          if (removedAttachedIndexes.length > 0) {
+            formDataToSend.append(
+              'removeAttachedFileIndexes',
+              JSON.stringify(removedAttachedIndexes)
+            );
           }
         }
 
@@ -500,7 +554,7 @@ export default function Page() {
 
         return (
           <a
-            onClick={() => handleOpenDecisionFile(text)}
+            onClick={() => handleOpenDecisionFile(text, record.files_quyet_dinh?.[0]?.path)}
             style={{ color: '#52c41a', cursor: 'pointer', textDecoration: 'underline' }}
           >
             {text}
@@ -510,13 +564,13 @@ export default function Page() {
     },
     {
       title: 'File đính kèm',
-      key: 'files',
+      key: 'attachedFiles',
       width: 120,
       render: (_, record) => {
-        const fileCount = record.files_quyet_dinh?.length || 0;
+        const fileCount = record.files_attached?.length || 0;
         return fileCount > 0 ? (
-          <Tag color="blue">
-            <FileOutlined /> {fileCount} file
+          <Tag color="green">
+            <PaperClipOutlined /> {fileCount} file
           </Tag>
         ) : (
           '-'
@@ -744,7 +798,21 @@ export default function Page() {
                     rowSelection={{
                       selectedRowKeys: formData.personnelIds,
                       onChange: (selectedRowKeys: React.Key[]) => {
-                        setFormData({ ...formData, personnelIds: selectedRowKeys as string[] });
+                        const selectedPersonnel = selectedRowKeys as string[];
+                        setFormData({
+                          ...formData,
+                          personnelIds: selectedPersonnel,
+                          // Auto-fill rank and position from first selected personnel
+                          ...(selectedPersonnel.length > 0 &&
+                            !formData.rank &&
+                            !formData.position && {
+                              rank:
+                                personnel.find(p => p.id === selectedPersonnel[0])?.cap_bac || '',
+                              position:
+                                personnel.find(p => p.id === selectedPersonnel[0])?.ChucVu
+                                  ?.ten_chuc_vu || '',
+                            }),
+                        });
                       },
                     }}
                     columns={[
