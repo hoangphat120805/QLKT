@@ -212,6 +212,25 @@
     @apply bg-white border-r border-gray-200;
   }
 
+  .ant-layout-sider-trigger {
+    background-color: #ffffff !important;
+    border-top: 1px solid #e5e7eb !important;
+    color: #374151 !important;
+  }
+
+  .ant-layout-sider-trigger:hover {
+    background-color: #f9fafb !important;
+    color: #111827 !important;
+  }
+
+  .ant-layout-sider-trigger .anticon {
+    color: #374151 !important;
+  }
+
+  .ant-layout-sider-trigger:hover .anticon {
+    color: #111827 !important;
+  }
+
   .ant-menu {
     @apply bg-white;
   }
@@ -329,6 +348,25 @@
 
   .dark .ant-layout-sider {
     @apply bg-gray-800 border-r border-gray-700;
+  }
+
+  .dark .ant-layout-sider-trigger {
+    background-color: #1f2937 !important;
+    border-top: 1px solid #374151 !important;
+    color: #d1d5db !important;
+  }
+
+  .dark .ant-layout-sider-trigger:hover {
+    background-color: #374151 !important;
+    color: #ffffff !important;
+  }
+
+  .dark .ant-layout-sider-trigger .anticon {
+    color: #d1d5db !important;
+  }
+
+  .dark .ant-layout-sider-trigger:hover .anticon {
+    color: #ffffff !important;
   }
 
   .dark .ant-menu {
@@ -2135,25 +2173,57 @@ button[class*='bg-primary']:hover:not(:disabled) {
 }
 
 /* Notification Dropdown Styles - Light Mode */
+/* Điều chỉnh vị trí dropdown lên cao hơn */
+.ant-dropdown.ant-dropdown-placement-bottomRight:has(.notification-dropdown),
+.ant-dropdown:has(.notification-dropdown) {
+  margin-top: -8px !important;
+}
+
 .notification-dropdown .ant-dropdown-menu,
 .notification-dropdown .ant-dropdown-menu.ant-dropdown-menu-light {
   max-height: 500px;
   overflow-y: auto;
-  padding: 8px !important;
+  padding: 0 !important;
   background-color: white !important;
   border: 1px solid #e5e7eb !important;
   border-radius: 8px !important;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
 }
 
+.notification-dropdown .ant-dropdown-menu-item:first-child {
+  padding-top: 0 !important;
+  border-radius: 8px 8px 0 0 !important;
+}
+
 .notification-dropdown .ant-dropdown-menu-item {
   padding: 0 !important;
-  margin: 0 0 4px 0 !important;
-  border-radius: 6px !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+}
+
+.notification-dropdown .ant-dropdown-menu-item:first-child {
+  padding-top: 0 !important;
+  border-radius: 8px 8px 0 0 !important;
 }
 
 .notification-dropdown .ant-dropdown-menu-item:last-child {
   margin-bottom: 0 !important;
+  border-radius: 0 0 8px 8px !important;
+}
+
+/* Header item styling */
+.notification-dropdown .ant-dropdown-menu-item[data-menu-id*='notification-header'] {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: white !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  margin-bottom: 0 !important;
+}
+
+.dark .notification-dropdown .ant-dropdown-menu-item[data-menu-id*='notification-header'] {
+  background-color: #1f2937 !important;
+  border-bottom-color: #374151 !important;
 }
 
 .notification-dropdown .ant-dropdown-menu-item:hover {
@@ -2165,6 +2235,7 @@ button[class*='bg-primary']:hover:not(:disabled) {
 .dark .notification-dropdown .ant-dropdown-menu.ant-dropdown-menu-light,
 .dark .notification-dropdown .ant-dropdown-menu-root,
 .dark .notification-dropdown .ant-dropdown-menu-vertical {
+  padding: 0 !important;
   background-color: #1f2937 !important;
   background: #1f2937 !important;
   border: 1px solid #374151 !important;
@@ -2293,4 +2364,61 @@ button[class*='bg-primary']:hover:not(:disabled) {
 
 .dark .ant-cascader-menu-item:hover {
   background-color: #374151 !important;
+}
+
+/* Sider Trigger - Override Ant Design default styles with higher priority */
+/* Light Mode */
+:where(.css-dev-only-do-not-override-rsx901).ant-layout-sider .ant-layout-sider-trigger,
+.ant-layout-sider .ant-layout-sider-trigger,
+.ant-layout-sider-trigger {
+  background-color: #ffffff !important;
+  border-top: 1px solid #e5e7eb !important;
+  color: #374151 !important;
+}
+
+:where(.css-dev-only-do-not-override-rsx901).ant-layout-sider .ant-layout-sider-trigger:hover,
+.ant-layout-sider .ant-layout-sider-trigger:hover,
+.ant-layout-sider-trigger:hover {
+  background-color: #f9fafb !important;
+  color: #111827 !important;
+}
+
+:where(.css-dev-only-do-not-override-rsx901).ant-layout-sider .ant-layout-sider-trigger .anticon,
+.ant-layout-sider .ant-layout-sider-trigger .anticon,
+.ant-layout-sider-trigger .anticon {
+  color: #374151 !important;
+}
+
+:where(.css-dev-only-do-not-override-rsx901).ant-layout-sider .ant-layout-sider-trigger:hover .anticon,
+.ant-layout-sider .ant-layout-sider-trigger:hover .anticon,
+.ant-layout-sider-trigger:hover .anticon {
+  color: #111827 !important;
+}
+
+/* Dark Mode */
+.dark :where(.css-dev-only-do-not-override-rsx901).ant-layout-sider .ant-layout-sider-trigger,
+.dark .ant-layout-sider .ant-layout-sider-trigger,
+.dark .ant-layout-sider-trigger {
+  background-color: #1f2937 !important;
+  border-top: 1px solid #374151 !important;
+  color: #d1d5db !important;
+}
+
+.dark :where(.css-dev-only-do-not-override-rsx901).ant-layout-sider .ant-layout-sider-trigger:hover,
+.dark .ant-layout-sider .ant-layout-sider-trigger:hover,
+.dark .ant-layout-sider-trigger:hover {
+  background-color: #374151 !important;
+  color: #ffffff !important;
+}
+
+.dark :where(.css-dev-only-do-not-override-rsx901).ant-layout-sider .ant-layout-sider-trigger .anticon,
+.dark .ant-layout-sider .ant-layout-sider-trigger .anticon,
+.dark .ant-layout-sider-trigger .anticon {
+  color: #d1d5db !important;
+}
+
+.dark :where(.css-dev-only-do-not-override-rsx901).ant-layout-sider .ant-layout-sider-trigger:hover .anticon,
+.dark .ant-layout-sider .ant-layout-sider-trigger:hover .anticon,
+.dark .ant-layout-sider-trigger:hover .anticon {
+  color: #ffffff !important;
 }
