@@ -197,11 +197,16 @@ class ScientificAchievementService {
    */
   async exportToExcel(filters = {}) {
     const ExcelJS = require('exceljs');
-    const { nam, loai } = filters;
+    const { nam, loai, don_vi_id } = filters;
 
     const where = {};
     if (nam) where.nam = nam;
     if (loai) where.loai = loai;
+    if (don_vi_id) {
+      where.QuanNhan = {
+        OR: [{ co_quan_don_vi_id: don_vi_id }, { don_vi_truc_thuoc_id: don_vi_id }],
+      };
+    }
 
     const achievements = await prisma.thanhTichKhoaHoc.findMany({
       where,

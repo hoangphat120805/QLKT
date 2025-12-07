@@ -25,6 +25,24 @@ class AnnualRewardController {
       if (nam) where.nam = parseInt(nam);
       if (danh_hieu) where.danh_hieu = danh_hieu;
 
+      // Phân quyền: Manager chỉ xem được dữ liệu đơn vị mình
+      const userRole = req.user?.role;
+      const userId = req.user?.id;
+      if (userRole === 'MANAGER' && userId) {
+        const user = await prisma.quanNhan.findUnique({
+          where: { id: userId },
+          select: { co_quan_don_vi_id: true, don_vi_truc_thuoc_id: true },
+        });
+        if (user) {
+          const unitId = user.co_quan_don_vi_id || user.don_vi_truc_thuoc_id;
+          if (unitId) {
+            where.QuanNhan = {
+              OR: [{ co_quan_don_vi_id: unitId }, { don_vi_truc_thuoc_id: unitId }],
+            };
+          }
+        }
+      }
+
       const [awards, total] = await Promise.all([
         prisma.danhHieuHangNam.findMany({
           where,

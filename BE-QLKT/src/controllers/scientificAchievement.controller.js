@@ -26,6 +26,24 @@ class ScientificAchievementController {
       if (nam) where.nam = parseInt(nam);
       if (loai) where.loai = loai;
 
+      // Phân quyền: Manager chỉ xem được dữ liệu đơn vị mình
+      const userRole = req.user?.role;
+      const userId = req.user?.id;
+      if (userRole === 'MANAGER' && userId) {
+        const user = await prisma.quanNhan.findUnique({
+          where: { id: userId },
+          select: { co_quan_don_vi_id: true, don_vi_truc_thuoc_id: true },
+        });
+        if (user) {
+          const unitId = user.co_quan_don_vi_id || user.don_vi_truc_thuoc_id;
+          if (unitId) {
+            where.QuanNhan = {
+              OR: [{ co_quan_don_vi_id: unitId }, { don_vi_truc_thuoc_id: unitId }],
+            };
+          }
+        }
+      }
+
       const [achievements, total] = await Promise.all([
         prisma.thanhTichKhoaHoc.findMany({
           where,
@@ -180,11 +198,18 @@ class ScientificAchievementController {
   async exportToExcel(req, res) {
     try {
       const { nam, loai } = req.query;
+      const role = req.user?.role;
+      const userUnitId = req.user?.co_quan_don_vi_id || req.user?.don_vi_truc_thuoc_id;
 
       const filters = {
         nam: nam ? parseInt(nam) : undefined,
         loai: loai || undefined,
       };
+
+      // Manager chỉ được xuất dữ liệu đơn vị mình
+      if (role === 'MANAGER' && userUnitId) {
+        filters.don_vi_id = userUnitId;
+      }
 
       const workbook = await scientificAchievementService.exportToExcel(filters);
 
