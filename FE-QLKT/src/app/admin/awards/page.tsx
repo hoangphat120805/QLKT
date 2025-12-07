@@ -639,6 +639,12 @@ export default function AdminAwardsPage() {
                 Số QĐ CSTDTQ: {record.so_quyet_dinh_cstdtq}
               </Text>
             )}
+            {record.nhan_bkttcp && <Text>{danhHieuMap['BKTTCP']}</Text>}
+            {record.so_quyet_dinh_bkttcp && (
+              <Text type="secondary" style={{ fontSize: '12px' }}>
+                Số QĐ BKTTCP: {record.so_quyet_dinh_bkttcp}
+              </Text>
+            )}
           </div>
         );
       },
