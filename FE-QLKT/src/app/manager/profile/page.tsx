@@ -649,9 +649,7 @@ export default function UserProfilePage() {
                         }}
                       >
                         {(() => {
-                          const { years, months } = convertMonthsToYearsAndMonths(
-                            contributionProfile?.months_07 || 0
-                          );
+                          const { years, months } = convertMonthsToYearsAndMonths(contributionProfile?.months_07 || 0);
                           return `${years} năm ${months} tháng`;
                         })()}
                       </div>
@@ -679,9 +677,7 @@ export default function UserProfilePage() {
                         }}
                       >
                         {(() => {
-                          const { years, months } = convertMonthsToYearsAndMonths(
-                            contributionProfile?.months_08 || 0
-                          );
+                          const { years, months } = convertMonthsToYearsAndMonths(contributionProfile?.months_08 || 0);
                           return `${years} năm ${months} tháng`;
                         })()}
                       </div>
@@ -709,9 +705,7 @@ export default function UserProfilePage() {
                         }}
                       >
                         {(() => {
-                          const { years, months } = convertMonthsToYearsAndMonths(
-                            contributionProfile?.months_0910 || 0
-                          );
+                          const { years, months } = convertMonthsToYearsAndMonths(contributionProfile?.months_0910 || 0);
                           return `${years} năm ${months} tháng`;
                         })()}
                       </div>

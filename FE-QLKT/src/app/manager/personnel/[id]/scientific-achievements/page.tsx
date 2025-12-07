@@ -212,7 +212,7 @@ export default function ScientificAchievementsPage() {
       title: 'Loại',
       dataIndex: 'loai',
       key: 'loai',
-      width: 150,
+      width: 400,
       align: 'center',
       render: (text: string) => {
         const map: Record<string, string> = {
@@ -226,6 +226,7 @@ export default function ScientificAchievementsPage() {
       title: 'Mô tả',
       dataIndex: 'mo_ta',
       key: 'mo_ta',
+      width: 400,
       ellipsis: true,
       render: (text: string) => text || '-',
     },
@@ -233,7 +234,7 @@ export default function ScientificAchievementsPage() {
       title: 'Trạng thái',
       dataIndex: 'status',
       key: 'status',
-      width: 120,
+      width: 200,
       align: 'center',
       render: (status: string) => {
         if (!status) return '-';

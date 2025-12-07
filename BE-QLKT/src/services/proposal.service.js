@@ -2888,9 +2888,12 @@ class ProposalService {
                     DonViTrucThuoc: { connect: { id: donViTrucThuocId } },
                   }),
                   nam: namValue,
-                  danh_hieu: item.danh_hieu,
-                  so_quyet_dinh: soQuyetDinh,
-                  file_quyet_dinh: fileQuyetDinh,
+                  danh_hieu:
+                    item.danh_hieu === 'ĐVQT' || item.danh_hieu === 'ĐVTT' ? item.danh_hieu : null,
+                  so_quyet_dinh:
+                    item.danh_hieu === 'ĐVQT' || item.danh_hieu === 'ĐVTT' ? soQuyetDinh : null,
+                  file_quyet_dinh:
+                    item.danh_hieu === 'ĐVQT' || item.danh_hieu === 'ĐVTT' ? fileQuyetDinh : null,
                   nhan_bkbqp: nhanBKBQP,
                   so_quyet_dinh_bkbqp: soQuyetDinhBKBQP,
                   file_quyet_dinh_bkbqp: fileQuyetDinhBKBQP,
@@ -3143,9 +3146,14 @@ class ProposalService {
                 cap_bac: item.cap_bac || null,
                 chuc_vu: item.chuc_vu || null,
                 ghi_chu: item.ghi_chu || null,
-                danh_hieu: item.danh_hieu,
-                so_quyet_dinh: soQuyetDinhDanhHieu,
-                file_quyet_dinh: filePdfDanhHieu,
+                danh_hieu:
+                  item.danh_hieu === 'CSTT' || item.danh_hieu === 'CSTDCS' ? item.danh_hieu : null,
+                so_quyet_dinh:
+                  item.danh_hieu === 'CSTT' || item.danh_hieu === 'CSTDCS'
+                    ? soQuyetDinhDanhHieu
+                    : null,
+                file_quyet_dinh:
+                  item.danh_hieu === 'CSTT' || item.danh_hieu === 'CSTDCS' ? filePdfDanhHieu : null,
                 nhan_bkbqp: nhanBKBQP,
                 so_quyet_dinh_bkbqp: soQuyetDinhBKBQP,
                 file_quyet_dinh_bkbqp: filePdfBKBQP,
