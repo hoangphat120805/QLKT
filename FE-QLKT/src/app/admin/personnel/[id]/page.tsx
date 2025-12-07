@@ -396,7 +396,9 @@ export default function PersonnelDetailPage() {
                       <Statistic
                         title="Tháng tích lũy 0.7"
                         value={(() => {
-                          const { years, months } = convertMonthsToYearsAndMonths(contributionProfile.months_07 || 0);
+                          const { years, months } = convertMonthsToYearsAndMonths(
+                            contributionProfile.months_07 || 0
+                          );
                           return `${years} năm ${months} tháng`;
                         })()}
                         valueStyle={{ color: '#3f8600' }}
@@ -408,7 +410,9 @@ export default function PersonnelDetailPage() {
                       <Statistic
                         title="Tháng tích lũy 0.8"
                         value={(() => {
-                          const { years, months } = convertMonthsToYearsAndMonths(contributionProfile.months_08 || 0);
+                          const { years, months } = convertMonthsToYearsAndMonths(
+                            contributionProfile.months_08 || 0
+                          );
                           return `${years} năm ${months} tháng`;
                         })()}
                         valueStyle={{ color: '#3f8600' }}
@@ -420,7 +424,9 @@ export default function PersonnelDetailPage() {
                       <Statistic
                         title="Tháng tích lũy 0.9-1.0"
                         value={(() => {
-                          const { years, months } = convertMonthsToYearsAndMonths(contributionProfile.months_0910 || 0);
+                          const { years, months } = convertMonthsToYearsAndMonths(
+                            contributionProfile.months_0910 || 0
+                          );
                           return `${years} năm ${months} tháng`;
                         })()}
                         valueStyle={{ color: '#3f8600' }}
