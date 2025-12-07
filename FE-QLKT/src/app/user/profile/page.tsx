@@ -49,6 +49,12 @@ export default function UserProfilePage() {
     return Math.floor((now.getTime() - nhapNgu.getTime()) / (1000 * 60 * 60 * 24 * 365));
   };
 
+  const convertMonthsToYearsAndMonths = (totalMonths: number) => {
+    const years = Math.floor(totalMonths / 12);
+    const months = totalMonths % 12;
+    return { years, months };
+  };
+
   const handleOpenDecisionFile = async (soQuyetDinh: string, filePath?: string | null) => {
     try {
       let filename: string | null = null;
@@ -706,7 +712,10 @@ export default function UserProfilePage() {
                           color: 'var(--ant-color-text)',
                         }}
                       >
-                        {contributionProfile?.months_07 || 0} tháng
+                        {(() => {
+                          const { years, months } = convertMonthsToYearsAndMonths(contributionProfile?.months_07 || 0);
+                          return `${years} năm ${months} tháng`;
+                        })()}
                       </div>
                     </div>
 
@@ -730,7 +739,10 @@ export default function UserProfilePage() {
                           color: 'var(--ant-color-text)',
                         }}
                       >
-                        {contributionProfile?.months_08 || 0} tháng
+                        {(() => {
+                          const { years, months } = convertMonthsToYearsAndMonths(contributionProfile?.months_08 || 0);
+                          return `${years} năm ${months} tháng`;
+                        })()}
                       </div>
                     </div>
 
@@ -754,7 +766,10 @@ export default function UserProfilePage() {
                           color: 'var(--ant-color-text)',
                         }}
                       >
-                        {contributionProfile?.months_0910 || 0} tháng
+                        {(() => {
+                          const { years, months } = convertMonthsToYearsAndMonths(contributionProfile?.months_0910 || 0);
+                          return `${years} năm ${months} tháng`;
+                        })()}
                       </div>
                     </div>
 

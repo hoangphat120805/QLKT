@@ -136,6 +136,12 @@ export default function ManagerPersonnelDetailPage() {
     return Math.floor((now.getTime() - nhapNgu.getTime()) / (1000 * 60 * 60 * 24 * 365));
   };
 
+  const convertMonthsToYearsAndMonths = (totalMonths: number) => {
+    const years = Math.floor(totalMonths / 12);
+    const months = totalMonths % 12;
+    return { years, months };
+  };
+
   const InfoGrid = ({ items }: { items: Array<{ label: string; value?: ReactNode }> }) => (
     <div className="overflow-x-auto">
       <table
@@ -391,8 +397,10 @@ export default function ManagerPersonnelDetailPage() {
                     <Card size="small" className="h-full">
                       <Statistic
                         title="Tháng tích lũy 0.7"
-                        value={contributionProfile?.months_07 || 0}
-                        suffix="tháng"
+                        value={(() => {
+                          const { years, months } = convertMonthsToYearsAndMonths(contributionProfile?.months_07 || 0);
+                          return `${years} năm ${months} tháng`;
+                        })()}
                         valueStyle={{ color: '#3f8600' }}
                       />
                     </Card>
@@ -401,8 +409,10 @@ export default function ManagerPersonnelDetailPage() {
                     <Card size="small" className="h-full">
                       <Statistic
                         title="Tháng tích lũy 0.8"
-                        value={contributionProfile?.months_08 || 0}
-                        suffix="tháng"
+                        value={(() => {
+                          const { years, months } = convertMonthsToYearsAndMonths(contributionProfile?.months_08 || 0);
+                          return `${years} năm ${months} tháng`;
+                        })()}
                         valueStyle={{ color: '#3f8600' }}
                       />
                     </Card>
@@ -411,8 +421,10 @@ export default function ManagerPersonnelDetailPage() {
                     <Card size="small" className="h-full">
                       <Statistic
                         title="Tháng tích lũy 0.9-1.0"
-                        value={contributionProfile?.months_0910 || 0}
-                        suffix="tháng"
+                        value={(() => {
+                          const { years, months } = convertMonthsToYearsAndMonths(contributionProfile?.months_0910 || 0);
+                          return `${years} năm ${months} tháng`;
+                        })()}
                         valueStyle={{ color: '#3f8600' }}
                       />
                     </Card>
