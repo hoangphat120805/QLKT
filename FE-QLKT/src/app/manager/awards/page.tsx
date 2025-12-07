@@ -23,16 +23,15 @@ import {
   UploadOutlined,
   FileExcelOutlined,
   HomeOutlined,
-  CheckOutlined,
-  TrophyOutlined,
-  StarOutlined,
-  SafetyCertificateOutlined,
-  FlagOutlined,
-  ExperimentOutlined,
-  UserOutlined,
-  TeamOutlined,
 } from '@ant-design/icons';
 import { apiClient } from '@/lib/api-client';
+import {
+  DANH_HIEU_MAP,
+  COLUMN_STYLES,
+  renderDecision,
+  renderAnnualAwards,
+  getLoaiKhenThuong,
+} from '@/utils/awardsHelpers';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -335,41 +334,6 @@ export default function AdminAwardsPage() {
     fileInputRef.current?.click();
   };
 
-  // Map danh hiệu codes to full names
-  const danhHieuMap: Record<string, string> = {
-    CSTDCS: 'Chiến sĩ thi đua cơ sở',
-    CSTT: 'Chiến sĩ tiên tiến',
-    BKBQP: 'Bằng khen của Bộ trưởng Bộ Quốc phòng',
-    CSTDTQ: 'Chiến sĩ thi đua toàn quân',
-    ĐVQT: 'Đơn vị Quyết thắng',
-    ĐVTT: 'Đơn vị Tiên tiến',
-    BKTTCP: 'Bằng khen Thủ tướng Chính phủ',
-    HCCSVV_HANG_BA: 'Huân chương Chiến sỹ Vẻ vang Hạng Ba',
-    HCCSVV_HANG_NHI: 'Huân chương Chiến sỹ Vẻ vang Hạng Nhì',
-    HCCSVV_HANG_NHAT: 'Huân chương Chiến sỹ Vẻ vang Hạng Nhất',
-    HCBVTQ_HANG_BA: 'Huân chương Bảo vệ Tổ quốc Hạng Ba',
-    HCBVTQ_HANG_NHI: 'Huân chương Bảo vệ Tổ quốc Hạng Nhì',
-    HCBVTQ_HANG_NHAT: 'Huân chương Bảo vệ Tổ quốc Hạng Nhất',
-  };
-
-  // Determine loại khen thưởng based on danh_hieu
-  const getLoaiKhenThuong = (danhHieu: string | null): string => {
-    if (!danhHieu) return '-';
-    if (danhHieu.startsWith('HCBVTQ')) return 'Cống hiến';
-    if (danhHieu.startsWith('HCCSVV')) return 'Niên hạn';
-    if (
-      danhHieu === 'CSTDCS' ||
-      danhHieu === 'CSTT' ||
-      danhHieu === 'BKBQP' ||
-      danhHieu === 'CSTDTQ'
-    ) {
-      return 'Cá nhân Hằng năm';
-    }
-    if (danhHieu === 'ĐVQT' || danhHieu === 'ĐVTT' || danhHieu === 'BKTTCP') {
-      return 'Đơn vị Hằng năm';
-    }
-    return '-';
-  };
 
   const columns: TableColumnsType<Award> = [
     {
@@ -541,112 +505,60 @@ export default function AdminAwardsPage() {
       width: 220,
       align: 'center',
       render: (text: string | null, record: any) => {
+        // Scientific achievements
         if (activeTab === 'scientific') {
           return (
-            <div
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
-            >
+            <div style={COLUMN_STYLES.container}>
               <Text>{text || '-'}</Text>
-              {record.so_quyet_dinh && (
-                <Text type="secondary" style={{ fontSize: '12px' }}>
-                  Số QĐ: {record.so_quyet_dinh}
-                </Text>
-              )}
+              {renderDecision(record.so_quyet_dinh)}
             </div>
           );
         }
 
+        // Commemoration medals
         if (activeTab === 'commemoration') {
+          const hasData = record.so_quyet_dinh || record.ghi_chu;
           return (
-            <div
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
-            >
-              {record.so_quyet_dinh && (
-                <Text type="secondary" style={{ fontSize: '12px' }}>
-                  Số QĐ: {record.so_quyet_dinh}
-                </Text>
-              )}
+            <div style={COLUMN_STYLES.container}>
+              {renderDecision(record.so_quyet_dinh)}
               {record.ghi_chu && (
-                <Text type="secondary" style={{ fontSize: '11px', fontStyle: 'italic' }}>
+                <Text type="secondary" style={COLUMN_STYLES.noteText}>
                   {record.ghi_chu}
                 </Text>
               )}
-              {!record.so_quyet_dinh && !record.ghi_chu && <Text>-</Text>}
+              {!hasData && <Text>-</Text>}
             </div>
           );
         }
 
+        // Military flag
         if (activeTab === 'militaryFlag') {
           return (
-            <div
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
-            >
+            <div style={COLUMN_STYLES.container}>
               <Text>{record.ghi_chu || '-'}</Text>
-              {record.so_quyet_dinh && (
-                <Text type="secondary" style={{ fontSize: '12px' }}>
-                  Số QĐ: {record.so_quyet_dinh}
-                </Text>
-              )}
+              {renderDecision(record.so_quyet_dinh)}
             </div>
           );
         }
 
+        // Contribution awards
         if (activeTab === 'contribution') {
-          const fullName = text ? danhHieuMap[text] || text : '-';
+          const fullName = text ? DANH_HIEU_MAP[text] || text : '-';
           return (
-            <div
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
-            >
+            <div style={COLUMN_STYLES.container}>
               <Text>{fullName}</Text>
               {record.ghi_chu && (
-                <Text type="secondary" style={{ fontSize: '11px', fontStyle: 'italic' }}>
+                <Text type="secondary" style={COLUMN_STYLES.noteText}>
                   {record.ghi_chu}
                 </Text>
               )}
-              {record.so_quyet_dinh && (
-                <Text type="secondary" style={{ fontSize: '12px' }}>
-                  Số QĐ: {record.so_quyet_dinh}
-                </Text>
-              )}
+              {renderDecision(record.so_quyet_dinh)}
             </div>
           );
         }
 
-        if (!text) return <Text type="secondary">-</Text>;
-        const fullName = danhHieuMap[text] || text;
-        const soQuyetDinh =
-          record.so_quyet_dinh || record.so_quyet_dinh_bkbqp || record.so_quyet_dinh_cstdtq;
-
-        return (
-          <div
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
-          >
-            <Text>{fullName}</Text>
-            {soQuyetDinh && (
-              <Text type="secondary" style={{ fontSize: '12px' }}>
-                Số QĐ: {soQuyetDinh}
-              </Text>
-            )}
-            {record.nhan_bkbqp && <Text>{danhHieuMap['BKBQP']}</Text>}
-            {record.so_quyet_dinh_bkbqp && (
-              <Text type="secondary" style={{ fontSize: '12px' }}>
-                Số QĐ BKBQP: {record.so_quyet_dinh_bkbqp}
-              </Text>
-            )}
-            {record.nhan_cstdtq && <Text>{danhHieuMap['CSTDTQ']}</Text>}
-            {record.so_quyet_dinh_cstdtq && (
-              <Text type="secondary" style={{ fontSize: '12px' }}>
-                Số QĐ CSTDTQ: {record.so_quyet_dinh_cstdtq}
-              </Text>
-            )}
-            {record.nhan_bkttcp && <Text>{danhHieuMap['BKTTCP']}</Text>}
-            {record.so_quyet_dinh_bkttcp && (
-              <Text type="secondary" style={{ fontSize: '12px' }}>
-                Số QĐ BKTTCP: {record.so_quyet_dinh_bkttcp}
-              </Text>
-            )}
-          </div>
-        );
+        // Annual awards (default)
+        return renderAnnualAwards(text, record);
       },
     },
   ];
@@ -694,72 +606,37 @@ export default function AdminAwardsPage() {
         items={[
           {
             key: 'annual',
-            label: (
-              <span>
-                <UserOutlined />
-                Cá nhân hằng năm
-              </span>
-            ),
+            label: 'Cá nhân hằng năm',
             children: renderAwardContent(),
           },
           {
             key: 'unit',
-            label: (
-              <span>
-                <TeamOutlined />
-                Đơn vị hằng năm
-              </span>
-            ),
+            label: 'Đơn vị hằng năm',
             children: renderAwardContent(),
           },
           {
             key: 'hccsvv',
-            label: (
-              <span>
-                <StarOutlined />
-                Huân chương Chiến sĩ Vẻ vang
-              </span>
-            ),
+            label: 'Huân chương Chiến sĩ Vẻ vang',
             children: renderAwardContent(),
           },
           {
             key: 'contribution',
-            label: (
-              <span>
-                <SafetyCertificateOutlined />
-                Huân chương Bảo vệ Tổ quốc (Cống hiến)
-              </span>
-            ),
+            label: 'Huân chương Bảo vệ Tổ quốc (Cống hiến)',
             children: renderAwardContent(),
           },
           {
             key: 'commemoration',
-            label: (
-              <span>
-                <SafetyCertificateOutlined />
-                Kỷ niệm chương VSNXD QĐNDVN
-              </span>
-            ),
+            label: 'Kỷ niệm chương VSNXD QĐNDVN',
             children: renderAwardContent(),
           },
           {
             key: 'militaryFlag',
-            label: (
-              <span>
-                <FlagOutlined />
-                Huân chương Quân kỳ Quyết thắng
-              </span>
-            ),
+            label: 'Huân chương Quân kỳ Quyết thắng',
             children: renderAwardContent(),
           },
           {
             key: 'scientific',
-            label: (
-              <span>
-                <ExperimentOutlined />
-                Thành tích khoa học
-              </span>
-            ),
+            label: 'Thành tích khoa học',
             children: renderAwardContent(),
           },
         ]}
