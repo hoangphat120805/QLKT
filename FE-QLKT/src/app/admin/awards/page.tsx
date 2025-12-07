@@ -627,6 +627,18 @@ export default function AdminAwardsPage() {
                 Số QĐ: {soQuyetDinh}
               </Text>
             )}
+            {record.nhan_bkbqp && <Text>{danhHieuMap['BKBQP']}</Text>}
+            {record.so_quyet_dinh_bkbqp && (
+              <Text type="secondary" style={{ fontSize: '12px' }}>
+                Số QĐ BKBQP: {record.so_quyet_dinh_bkbqp}
+              </Text>
+            )}
+            {record.nhan_cstdtq && <Text>{danhHieuMap['CSTDTQ']}</Text>}
+            {record.so_quyet_dinh_cstdtq && (
+              <Text type="secondary" style={{ fontSize: '12px' }}>
+                Số QĐ CSTDTQ: {record.so_quyet_dinh_cstdtq}
+              </Text>
+            )}
           </div>
         );
       },
