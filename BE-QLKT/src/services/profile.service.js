@@ -650,7 +650,7 @@ class ProfileService {
       let du_dieu_kien_cstdtq = false;
       // Chỉ lưu CSTDCS và CSTT trong JSON, BKBQP và CSTDTQ là trường đánh dấu boolean
       const tong_cstdcs_json = danhHieuList
-        .filter(dh => dh.danh_hieu === 'CSTDCS' || dh.danh_hieu === 'CSTT')
+        // .filter(dh => dh.danh_hieu === 'CSTDCS' || dh.danh_hieu === 'CSTT')
         .map(dh => ({
           nam: dh.nam,
           danh_hieu: dh.danh_hieu,
