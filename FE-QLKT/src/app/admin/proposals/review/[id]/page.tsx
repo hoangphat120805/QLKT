@@ -1438,7 +1438,7 @@ export default function ProposalDetailPage() {
                   setDecisionModalType('thanh_tich');
                   setDecisionModalVisible(true);
                 }}
-                disabled={selectedRowKeys.length === 0}
+                disabled={selectedThanhTichKeys.length === 0}
               >
                 Thêm số quyết định ({selectedThanhTichKeys.length} thành tích)
               </Button>
