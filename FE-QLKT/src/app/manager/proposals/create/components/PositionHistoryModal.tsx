@@ -159,7 +159,7 @@ export default function PositionHistoryModal({
       title={
         <span>
           <HistoryOutlined style={{ marginRight: 8 }} />
-          Lịch sử chức vụ (Cống hiến) - {personnel?.ho_ten}
+          Lịch sử chức vụ - {personnel?.ho_ten}
         </span>
       }
       open={visible}

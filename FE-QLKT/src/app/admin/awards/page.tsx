@@ -1,38 +1,35 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Card,
   Button,
   Input,
+  Select,
   Table,
-  Tag,
-  Alert,
   Space,
   Typography,
   Breadcrumb,
   Spin,
   message,
   Tabs,
+  Popconfirm,
 } from 'antd';
-import type { TabsProps, TableColumnsType } from 'antd';
+import type { TableColumnsType } from 'antd';
 import {
   DownloadOutlined,
   FilterOutlined,
-  SearchOutlined,
-  UploadOutlined,
-  FileExcelOutlined,
   HomeOutlined,
-  CheckOutlined,
-  TrophyOutlined,
-  StarOutlined,
-  SafetyCertificateOutlined,
-  FlagOutlined,
-  ExperimentOutlined,
-  UserOutlined,
-  TeamOutlined,
+  DeleteOutlined,
 } from '@ant-design/icons';
 import { apiClient } from '@/lib/api-client';
+import {
+  DANH_HIEU_MAP,
+  COLUMN_STYLES,
+  renderDecision,
+  renderAnnualAwards,
+  getLoaiKhenThuong,
+} from '@/utils/awardsHelpers';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -54,6 +51,8 @@ interface Award {
   so_quyet_dinh_bkbqp?: string | null;
   nhan_cstdtq?: boolean;
   so_quyet_dinh_cstdtq?: string | null;
+  mo_ta?: string | null;
+  ten_de_tai?: string | null;
 }
 
 export default function AdminAwardsPage() {
@@ -61,31 +60,47 @@ export default function AdminAwardsPage() {
   const [awards, setAwards] = useState<Award[]>([]);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
-  const [importing, setImporting] = useState(false);
-  const [downloadingTemplate, setDownloadingTemplate] = useState(false);
-  const [importResult, setImportResult] = useState<{
-    type: 'success' | 'error';
-    message: string;
-    details?: { imported: number; total: number; errors?: string[] };
-  } | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [filters, setFilters] = useState({
     nam: '',
     ho_ten: '',
     danh_hieu: '',
+    de_tai: '',
+    doi_tuong: '', // Cho adhoc: CA_NHAN, TAP_THE hoặc '' (tất cả)
   });
+  const [debouncedFilters, setDebouncedFilters] = useState(filters);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const DANH_HIEU_OPTIONS: Record<string, string[]> = {
+    annual: ['CSTDCS', 'CSTT', 'BKBQP', 'CSTDTQ'],
+    unit: ['ĐVQT', 'ĐVTT', 'BKBQP', 'BKTTCP'],
+    hccsvv: ['HCCSVV_HANG_NHAT', 'HCCSVV_HANG_NHI', 'HCCSVV_HANG_BA'],
+    contribution: ['HCBVTQ_HANG_NHAT', 'HCBVTQ_HANG_NHI', 'HCBVTQ_HANG_BA'],
+  };
 
   useEffect(() => {
     fetchAwards();
   }, [activeTab]);
 
+  // Reset bộ lọc khi đổi tab để không dùng chung giữa các loại
+  useEffect(() => {
+    setFilters({
+      nam: '',
+      ho_ten: '',
+      danh_hieu: '',
+      de_tai: '',
+      doi_tuong: '',
+    });
+  }, [activeTab]);
+
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedFilters(filters), 300);
+    return () => clearTimeout(id);
+  }, [filters]);
+
   const fetchAwards = async () => {
     try {
       setLoading(true);
       const params: any = { limit: 1000 };
-      if (filters.nam) params.nam = parseInt(filters.nam);
-      if (filters.ho_ten) params.ho_ten = filters.ho_ten;
-      if (filters.danh_hieu) params.danh_hieu = filters.danh_hieu;
 
       let result;
       switch (activeTab) {
@@ -141,9 +156,9 @@ export default function AdminAwardsPage() {
     try {
       setExporting(true);
       const params: any = {};
-      if (filters.nam) params.nam = parseInt(filters.nam);
-      if (filters.ho_ten) params.ho_ten = filters.ho_ten;
-      if (filters.danh_hieu) params.danh_hieu = filters.danh_hieu;
+      if (debouncedFilters.nam) params.nam = parseInt(debouncedFilters.nam);
+      if (debouncedFilters.ho_ten) params.ho_ten = debouncedFilters.ho_ten;
+      if (debouncedFilters.danh_hieu) params.danh_hieu = debouncedFilters.danh_hieu;
 
       let blob;
       let filename = `danh_sach_khen_thuong`;
@@ -202,174 +217,151 @@ export default function AdminAwardsPage() {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleApplyFilters = () => {
-    fetchAwards();
-  };
-
-  const handleDownloadTemplate = async () => {
+  const handleDeleteAward = async (id: string) => {
     try {
-      setDownloadingTemplate(true);
-      let blob;
-      let filename = `mau_import_khen_thuong`;
-
-      switch (activeTab) {
-        case 'annual':
-          blob = await apiClient.getAnnualRewardsTemplate();
-          filename = `mau_import_ca_nhan_hang_nam`;
-          break;
-        case 'unit':
-          blob = await apiClient.getUnitAnnualAwardsTemplate();
-          filename = `mau_import_don_vi_hang_nam`;
-          break;
-        case 'scientific':
-          blob = await apiClient.getScientificAchievementsTemplate();
-          filename = `mau_import_thanh_tich_khoa_hoc`;
-          break;
-        case 'hccsvv':
-          blob = await apiClient.getHCCSVVTemplate();
-          filename = `mau_import_hccsvv`;
-          break;
-        case 'contribution':
-          blob = await apiClient.getContributionAwardsTemplate();
-          filename = `mau_import_hcbvtq_cong_hien`;
-          break;
-        case 'commemoration':
-          blob = await apiClient.getCommemorationMedalsTemplate();
-          filename = `mau_import_knc_vsnxd`;
-          break;
-        case 'militaryFlag':
-          blob = await apiClient.getMilitaryFlagTemplate();
-          filename = `mau_import_hc_quan_ky_quyet_thang`;
-          break;
-        default:
-          blob = await apiClient.getAwardsTemplate();
-      }
-
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${filename}_${new Date().toISOString().slice(0, 10)}.xlsx`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      message.success('Tải file mẫu thành công');
-    } catch (error) {
-      console.error('Error downloading template:', error);
-      message.error('Tải file mẫu thất bại');
-    } finally {
-      setDownloadingTemplate(false);
-    }
-  };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      setImporting(true);
-      setImportResult(null);
-
+      setDeletingId(id);
       let result;
+
+      // Gọi API delete tương ứng với từng loại khen thưởng
       switch (activeTab) {
         case 'annual':
-          result = await apiClient.importAnnualRewards(file);
+          result = await apiClient.deleteAnnualReward(id);
           break;
         case 'unit':
-          result = await apiClient.importUnitAnnualAwards(file);
-          break;
-        case 'scientific':
-          result = await apiClient.importScientificAchievements(file);
+          result = await apiClient.deleteUnitAnnualAward(id);
           break;
         case 'hccsvv':
-          result = await apiClient.importHCCSVV(file);
+          result = await apiClient.deleteHCCSVV(id);
           break;
         case 'contribution':
-          result = await apiClient.importContributionAwards(file);
+          result = await apiClient.deleteContributionAward(id);
           break;
         case 'commemoration':
-          result = await apiClient.importCommemorationMedals(file);
+          result = await apiClient.deleteCommemorationMedal(id);
           break;
         case 'militaryFlag':
-          result = await apiClient.importMilitaryFlag(file);
+          result = await apiClient.deleteMilitaryFlag(id);
+          break;
+        case 'scientific':
+          result = await apiClient.deleteScientificAchievement(id);
           break;
         default:
-          message.error('Chức năng import chưa được hỗ trợ cho loại khen thưởng này');
+          message.error('Loại khen thưởng không được hỗ trợ xóa');
           return;
       }
 
       if (result.success) {
-        const { imported, total, errors } = result.data;
-        setImportResult({
-          type: 'success',
-          message: `Đã thêm thành công ${imported}/${total} bản ghi khen thưởng`,
-          details: { imported, total, errors },
-        });
-        message.success(`Đã thêm thành công ${imported}/${total} bản ghi`);
-        // Refresh awards list
+        message.success('Xóa khen thưởng thành công');
         await fetchAwards();
       } else {
-        setImportResult({
-          type: 'error',
-          message: result.message || 'Import thất bại',
-        });
-        message.error(result.message || 'Import thất bại');
+        message.error(result.message || 'Xóa khen thưởng thất bại');
       }
     } catch (error: any) {
-      console.error('Error importing awards:', error);
-      setImportResult({
-        type: 'error',
-        message: error.message || 'Có lỗi xảy ra khi import file',
-      });
-      message.error(error.message || 'Có lỗi xảy ra khi import file');
+      console.error('Error deleting award:', error);
+      message.error(error.message || 'Có lỗi xảy ra khi xóa khen thưởng');
     } finally {
-      setImporting(false);
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+      setDeletingId(null);
+    }
+  };
+
+  const getPersonName = (record: any) =>
+    record?.QuanNhan?.ho_ten || record?.ho_ten || '';
+
+  const getUnitName = (record: any) =>
+    record?.DonViTrucThuoc?.ten_don_vi ||
+    record?.CoQuanDonVi?.ten_don_vi ||
+    record?.don_vi_truc_thuoc ||
+    record?.co_quan_don_vi ||
+    record?.don_vi ||
+    '';
+
+  const danhHieuOptions = useMemo(() => {
+    const options = DANH_HIEU_OPTIONS[activeTab] || [];
+    return options.map(value => ({
+      value,
+      label: DANH_HIEU_MAP[value] || value,
+    }));
+  }, [activeTab]);
+
+  const filteredAwards = useMemo(() => {
+    const yearFilter = debouncedFilters.nam.trim();
+    const nameFilter = debouncedFilters.ho_ten.trim().toLowerCase();
+    const danhHieuFilter = debouncedFilters.danh_hieu.trim();
+    const topicFilter = debouncedFilters.de_tai.trim().toLowerCase();
+    const doiTuongFilter = debouncedFilters.doi_tuong.trim();
+
+    return awards.filter((record: any) => {
+      if (yearFilter && String(record.nam) !== yearFilter) return false;
+
+      // Name / unit search
+      if (activeTab === 'unit') {
+        if (nameFilter) {
+          const unit = getUnitName(record).toLowerCase();
+          if (!unit.includes(nameFilter)) return false;
+        }
+      } else if (activeTab === 'adhoc') {
+        // Adhoc: tìm kiếm theo tên cá nhân, tên đơn vị, hoặc hình thức khen thưởng
+        if (nameFilter) {
+          const doiTuong = record.doi_tuong || record.loai;
+          let searchText = '';
+          if (doiTuong === 'CA_NHAN') {
+            searchText = record.QuanNhan?.ho_ten || '';
+          } else {
+            searchText = record.CoQuanDonVi?.ten_don_vi || record.DonViTrucThuoc?.ten_don_vi || '';
+          }
+          // Thêm hình thức khen thưởng vào tìm kiếm
+          const hinhThuc = record.hinh_thuc_khen_thuong || '';
+          const combined = `${searchText} ${hinhThuc}`.toLowerCase();
+          if (!combined.includes(nameFilter)) return false;
+        }
+        // Filter theo đối tượng (CA_NHAN / TAP_THE)
+        if (doiTuongFilter) {
+          const doiTuong = record.doi_tuong || record.loai;
+          if (doiTuong !== doiTuongFilter) return false;
+        }
+      } else {
+        if (nameFilter) {
+          const name = getPersonName(record).toLowerCase();
+          if (!name.includes(nameFilter)) return false;
+        }
       }
-    }
-  };
 
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
-  };
+      // Danh hiệu filters
+      if (danhHieuFilter) {
+        if (['annual', 'unit', 'hccsvv', 'contribution'].includes(activeTab)) {
+          if (activeTab === 'annual') {
+            const nhanBKBQP = (record as any)?.nhan_bkbqp;
+            const nhanCSTDTQ = (record as any)?.nhan_cstdtq;
 
-  // Map danh hiệu codes to full names
-  const danhHieuMap: Record<string, string> = {
-    CSTDCS: 'Chiến sĩ thi đua cơ sở',
-    CSTT: 'Chiến sĩ tiên tiến',
-    BKBQP: 'Bằng khen của Bộ trưởng Bộ Quốc phòng',
-    CSTDTQ: 'Chiến sĩ thi đua toàn quân',
-    ĐVQT: 'Đơn vị Quyết thắng',
-    ĐVTT: 'Đơn vị Tiên tiến',
-    BKTTCP: 'Bằng khen Thủ tướng Chính phủ',
-    HCCSVV_HANG_BA: 'Huân chương Chiến sỹ Vẻ vang Hạng Ba',
-    HCCSVV_HANG_NHI: 'Huân chương Chiến sỹ Vẻ vang Hạng Nhì',
-    HCCSVV_HANG_NHAT: 'Huân chương Chiến sỹ Vẻ vang Hạng Nhất',
-    HCBVTQ_HANG_BA: 'Huân chương Bảo vệ Tổ quốc Hạng Ba',
-    HCBVTQ_HANG_NHI: 'Huân chương Bảo vệ Tổ quốc Hạng Nhì',
-    HCBVTQ_HANG_NHAT: 'Huân chương Bảo vệ Tổ quốc Hạng Nhất',
-  };
+            const hasBKBQPFlag = nhanBKBQP === true || nhanBKBQP === 'true' || nhanBKBQP === 1;
+            const hasCSTDTQFlag =
+              nhanCSTDTQ === true || nhanCSTDTQ === 'true' || nhanCSTDTQ === 1;
 
-  // Determine loại khen thưởng based on danh_hieu
-  const getLoaiKhenThuong = (danhHieu: string | null): string => {
-    if (!danhHieu) return '-';
-    if (danhHieu.startsWith('HCBVTQ')) return 'Cống hiến';
-    if (danhHieu.startsWith('HCCSVV')) return 'Niên hạn';
-    if (
-      danhHieu === 'CSTDCS' ||
-      danhHieu === 'CSTT' ||
-      danhHieu === 'BKBQP' ||
-      danhHieu === 'CSTDTQ'
-    ) {
-      return 'Cá nhân Hằng năm';
-    }
-    if (danhHieu === 'ĐVQT' || danhHieu === 'ĐVTT' || danhHieu === 'BKTTCP') {
-      return 'Đơn vị Hằng năm';
-    }
-    return '-';
-  };
+            const isBKBQP = danhHieuFilter === 'BKBQP' && hasBKBQPFlag;
+            const isCSTDTQ = danhHieuFilter === 'CSTDTQ' && hasCSTDTQFlag;
+
+            if (!isBKBQP && !isCSTDTQ && record.danh_hieu !== danhHieuFilter) {
+              return false;
+            }
+          } else if (record.danh_hieu !== danhHieuFilter) {
+            return false;
+          }
+        }
+      }
+
+      // Scientific topic filter
+      if (activeTab === 'scientific' && topicFilter) {
+        const topic =
+          record.mo_ta?.toLowerCase() ||
+          record.ten_de_tai?.toLowerCase() ||
+          '';
+        if (!topic.includes(topicFilter)) return false;
+      }
+
+      return true;
+    });
+  }, [awards, debouncedFilters, activeTab]);
+
 
   const columns: TableColumnsType<Award> = [
     {
@@ -395,19 +387,22 @@ export default function AdminAwardsPage() {
           activeTab === 'hccsvv' ||
           activeTab === 'commemoration';
         const hoTen = hasNestedQuanNhan ? record.QuanNhan?.ho_ten : text;
-        const unitInfo = [];
+        const unitInfo: string[] = [];
+        let parentUnit: string | null = null;
 
         if (hasNestedQuanNhan) {
           if (record.QuanNhan?.DonViTrucThuoc?.ten_don_vi) {
             unitInfo.push(record.QuanNhan.DonViTrucThuoc.ten_don_vi);
+            parentUnit = record.QuanNhan.DonViTrucThuoc.CoQuanDonVi?.ten_don_vi || null;
           }
           if (record.QuanNhan?.CoQuanDonVi?.ten_don_vi) {
             unitInfo.push(record.QuanNhan.CoQuanDonVi.ten_don_vi);
           }
         } else {
-          // For unit awards, use direct CoQuanDonVi and DonViTrucThuoc
+          // Unit awards
           if (record.DonViTrucThuoc?.ten_don_vi) {
             unitInfo.push(record.DonViTrucThuoc.ten_don_vi);
+            parentUnit = record.DonViTrucThuoc.CoQuanDonVi?.ten_don_vi || null;
           }
           if (record.CoQuanDonVi?.ten_don_vi) {
             unitInfo.push(record.CoQuanDonVi.ten_don_vi);
@@ -425,6 +420,11 @@ export default function AdminAwardsPage() {
         return (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Text strong>{displayName}</Text>
+            {activeTab === 'unit' && parentUnit && (
+              <Text type="secondary" style={{ fontSize: '12px', marginTop: '4px' }}>
+                Thuộc: {parentUnit}
+              </Text>
+            )}
             {activeTab !== 'unit' && unitInfoText && (
               <Text type="secondary" style={{ fontSize: '12px', marginTop: '4px' }}>
                 {unitInfoText}
@@ -499,7 +499,7 @@ export default function AdminAwardsPage() {
       render: (_: any, record: any) => {
         if (activeTab === 'scientific') {
           const loaiMap: Record<string, string> = {
-            NCKH: 'Nghiên cứu khoa học',
+            NCKH: 'Đề tài khoa học',
             SKKH: 'Sáng kiến khoa học',
             GIAI_PHAP_KY_THUAT: 'Giải pháp kỹ thuật',
           };
@@ -541,111 +541,89 @@ export default function AdminAwardsPage() {
       width: 220,
       align: 'center',
       render: (text: string | null, record: any) => {
+        // Scientific achievements
         if (activeTab === 'scientific') {
           return (
-            <div
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
-            >
+            <div style={COLUMN_STYLES.container}>
               <Text>{text || '-'}</Text>
-              {record.so_quyet_dinh && (
-                <Text type="secondary" style={{ fontSize: '12px' }}>
-                  Số QĐ: {record.so_quyet_dinh}
-                </Text>
-              )}
+              {renderDecision(record.so_quyet_dinh)}
             </div>
           );
         }
 
+        // Commemoration medals
         if (activeTab === 'commemoration') {
+          const hasData = record.so_quyet_dinh || record.ghi_chu;
           return (
-            <div
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
-            >
-              {record.so_quyet_dinh && (
-                <Text type="secondary" style={{ fontSize: '12px' }}>
-                  Số QĐ: {record.so_quyet_dinh}
-                </Text>
-              )}
+            <div style={COLUMN_STYLES.container}>
+              {renderDecision(record.so_quyet_dinh)}
               {record.ghi_chu && (
-                <Text type="secondary" style={{ fontSize: '11px', fontStyle: 'italic' }}>
+                <Text type="secondary" style={COLUMN_STYLES.noteText}>
                   {record.ghi_chu}
                 </Text>
               )}
-              {!record.so_quyet_dinh && !record.ghi_chu && <Text>-</Text>}
+              {!hasData && <Text>-</Text>}
             </div>
           );
         }
 
+        // Military flag
         if (activeTab === 'militaryFlag') {
           return (
-            <div
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
-            >
+            <div style={COLUMN_STYLES.container}>
               <Text>{record.ghi_chu || '-'}</Text>
-              {record.so_quyet_dinh && (
-                <Text type="secondary" style={{ fontSize: '12px' }}>
-                  Số QĐ: {record.so_quyet_dinh}
-                </Text>
-              )}
+              {renderDecision(record.so_quyet_dinh)}
             </div>
           );
         }
 
+        // Contribution awards
         if (activeTab === 'contribution') {
-          const fullName = text ? danhHieuMap[text] || text : '-';
+          const fullName = text ? DANH_HIEU_MAP[text] || text : '-';
           return (
-            <div
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
-            >
+            <div style={COLUMN_STYLES.container}>
               <Text>{fullName}</Text>
               {record.ghi_chu && (
-                <Text type="secondary" style={{ fontSize: '11px', fontStyle: 'italic' }}>
+                <Text type="secondary" style={COLUMN_STYLES.noteText}>
                   {record.ghi_chu}
                 </Text>
               )}
-              {record.so_quyet_dinh && (
-                <Text type="secondary" style={{ fontSize: '12px' }}>
-                  Số QĐ: {record.so_quyet_dinh}
-                </Text>
-              )}
+              {renderDecision(record.so_quyet_dinh)}
             </div>
           );
         }
 
-        if (!text) return <Text type="secondary">-</Text>;
-        const fullName = danhHieuMap[text] || text;
-        const soQuyetDinh =
-          record.so_quyet_dinh || record.so_quyet_dinh_bkbqp || record.so_quyet_dinh_cstdtq;
-
+        // Annual awards (default)
+        return renderAnnualAwards(text, record);
+      },
+    },
+    {
+      title: 'Thao tác',
+      key: 'action',
+      width: 100,
+      align: 'center',
+      fixed: 'right',
+      render: (_: any, record: any) => {
+        // Hiển thị nút xóa cho tất cả các loại khen thưởng
         return (
-          <div
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
+          <Popconfirm
+            title="Xóa khen thưởng"
+            description="Bạn có chắc chắn muốn xóa khen thưởng này? Thao tác này không thể hoàn tác. Lưu ý: Đề xuất khen thưởng sẽ không bị xóa."
+            onConfirm={() => handleDeleteAward(record.id)}
+            okText="Xóa"
+            cancelText="Hủy"
+            okButtonProps={{ danger: true }}
           >
-            <Text>{fullName}</Text>
-            {soQuyetDinh && (
-              <Text type="secondary" style={{ fontSize: '12px' }}>
-                Số QĐ: {soQuyetDinh}
-              </Text>
-            )}
-            {record.nhan_bkbqp && <Text>{danhHieuMap['BKBQP']}</Text>}
-            {record.so_quyet_dinh_bkbqp && (
-              <Text type="secondary" style={{ fontSize: '12px' }}>
-                Số QĐ BKBQP: {record.so_quyet_dinh_bkbqp}
-              </Text>
-            )}
-            {record.nhan_cstdtq && <Text>{danhHieuMap['CSTDTQ']}</Text>}
-            {record.so_quyet_dinh_cstdtq && (
-              <Text type="secondary" style={{ fontSize: '12px' }}>
-                Số QĐ CSTDTQ: {record.so_quyet_dinh_cstdtq}
-              </Text>
-            )}
-            {record.nhan_bkttcp && <Text>{danhHieuMap['BKTTCP']}</Text>}
-            {record.so_quyet_dinh_bkttcp && (
-              <Text type="secondary" style={{ fontSize: '12px' }}>
-                Số QĐ BKTTCP: {record.so_quyet_dinh_bkttcp}
-              </Text>
-            )}
-          </div>
+            <Button
+              type="text"
+              danger
+              icon={<DeleteOutlined />}
+              loading={deletingId === record.id}
+              size="small"
+            >
+              Xóa
+            </Button>
+          </Popconfirm>
         );
       },
     },
@@ -694,72 +672,37 @@ export default function AdminAwardsPage() {
         items={[
           {
             key: 'annual',
-            label: (
-              <span>
-                <UserOutlined />
-                Cá nhân hằng năm
-              </span>
-            ),
+            label: 'Cá nhân hằng năm',
             children: renderAwardContent(),
           },
           {
             key: 'unit',
-            label: (
-              <span>
-                <TeamOutlined />
-                Đơn vị hằng năm
-              </span>
-            ),
+            label: 'Đơn vị hằng năm',
             children: renderAwardContent(),
           },
           {
             key: 'hccsvv',
-            label: (
-              <span>
-                <StarOutlined />
-                Huân chương Chiến sĩ Vẻ vang
-              </span>
-            ),
+            label: 'Huân chương Chiến sĩ Vẻ vang',
             children: renderAwardContent(),
           },
           {
             key: 'contribution',
-            label: (
-              <span>
-                <SafetyCertificateOutlined />
-                Huân chương Bảo vệ Tổ quốc (Cống hiến)
-              </span>
-            ),
+            label: 'Huân chương Bảo vệ Tổ quốc',
             children: renderAwardContent(),
           },
           {
             key: 'commemoration',
-            label: (
-              <span>
-                <SafetyCertificateOutlined />
-                Kỷ niệm chương VSNXD QĐNDVN
-              </span>
-            ),
+            label: 'Kỷ niệm chương VSNXD QĐNDVN',
             children: renderAwardContent(),
           },
           {
             key: 'militaryFlag',
-            label: (
-              <span>
-                <FlagOutlined />
-                Huân chương Quân kỳ Quyết thắng
-              </span>
-            ),
+            label: 'Huân chương Quân kỳ Quyết thắng',
             children: renderAwardContent(),
           },
           {
             key: 'scientific',
-            label: (
-              <span>
-                <ExperimentOutlined />
-                Thành tích khoa học
-              </span>
-            ),
+            label: 'Thành tích khoa học',
             children: renderAwardContent(),
           },
         ]}
@@ -871,41 +814,91 @@ export default function AdminAwardsPage() {
                 size="large"
               />
             </div>
-            <div>
-              <Text strong style={{ display: 'block', marginBottom: '8px' }}>
-                Tìm kiếm theo họ tên
-              </Text>
-              <Input
-                placeholder="Nhập tên để tìm kiếm"
-                value={filters.ho_ten}
-                onChange={e => handleFilterChange('ho_ten', e.target.value)}
-                size="large"
-              />
-            </div>
-            {(activeTab === 'hccsvv' || activeTab === 'contribution') && (
+            {activeTab !== 'unit' && activeTab !== 'adhoc' && (
               <div>
                 <Text strong style={{ display: 'block', marginBottom: '8px' }}>
-                  Danh hiệu
+                  Tìm kiếm theo họ tên
                 </Text>
                 <Input
-                  placeholder="Ví dụ: HCCSVV_HANG_BA"
-                  value={filters.danh_hieu}
-                  onChange={e => handleFilterChange('danh_hieu', e.target.value)}
+                  placeholder="Nhập tên để tìm kiếm"
+                  value={filters.ho_ten}
+                  onChange={e => handleFilterChange('ho_ten', e.target.value)}
                   size="large"
                 />
               </div>
             )}
-            <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-              <Button
-                type="primary"
-                icon={<SearchOutlined />}
-                onClick={handleApplyFilters}
-                style={{ width: '100%' }}
-                size="large"
-              >
-                Tìm kiếm
-              </Button>
-            </div>
+            {activeTab === 'adhoc' && (
+              <>
+                <div>
+                  <Text strong style={{ display: 'block', marginBottom: '8px' }}>
+                    Tìm kiếm
+                  </Text>
+                  <Input
+                    placeholder="Tên cá nhân, đơn vị hoặc hình thức khen thưởng"
+                    value={filters.ho_ten}
+                    onChange={e => handleFilterChange('ho_ten', e.target.value)}
+                    size="large"
+                  />
+                </div>
+                <div>
+                  <Text strong style={{ display: 'block', marginBottom: '8px' }}>
+                    Đối tượng
+                  </Text>
+                  <Select
+                    allowClear
+                    style={{ minWidth: 160 }}
+                    placeholder="Tất cả"
+                    value={filters.doi_tuong || undefined}
+                    onChange={value => handleFilterChange('doi_tuong', value || '')}
+                    size="large"
+                  >
+                    <Select.Option value="CA_NHAN">Cá nhân</Select.Option>
+                    <Select.Option value="TAP_THE">Tập thể</Select.Option>
+                  </Select>
+                </div>
+              </>
+            )}
+            {(activeTab === 'annual' ||
+              activeTab === 'hccsvv' ||
+              activeTab === 'contribution' ||
+              activeTab === 'unit') && (
+              <div>
+                <Text strong style={{ display: 'block', marginBottom: '8px' }}>
+                  Danh hiệu
+                </Text>
+                <Select
+                  allowClear
+                  showSearch
+                  optionFilterProp="label"
+                  optionLabelProp="value" // hiển thị mã ngắn để tránh bị "..."
+                  style={{ minWidth: 260 }}
+                  placeholder={
+                    activeTab === 'unit'
+                      ? 'Chọn danh hiệu đơn vị'
+                      : activeTab === 'annual'
+                      ? 'Chọn danh hiệu cá nhân'
+                      : 'Chọn danh hiệu'
+                  }
+                  value={filters.danh_hieu || undefined}
+                  onChange={value => handleFilterChange('danh_hieu', value || '')}
+                  options={danhHieuOptions}
+                  size="large"
+                />
+              </div>
+            )}
+            {activeTab === 'scientific' && (
+              <div>
+                <Text strong style={{ display: 'block', marginBottom: '8px' }}>
+                  Đề tài
+                </Text>
+                <Input
+                  placeholder="Nhập đề tài / mô tả"
+                  value={filters.de_tai}
+                  onChange={e => handleFilterChange('de_tai', e.target.value)}
+                  size="large"
+                />
+              </div>
+            )}
           </div>
         </Card>
 
@@ -932,7 +925,7 @@ export default function AdminAwardsPage() {
                   }
                   return true;
                 })}
-                dataSource={awards}
+                dataSource={filteredAwards}
                 rowKey="id"
                 pagination={{
                   pageSize: 20,

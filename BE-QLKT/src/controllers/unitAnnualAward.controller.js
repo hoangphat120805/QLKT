@@ -2,12 +2,13 @@ const service = require('../services/unitAnnualAward.service');
 
 exports.list = async (req, res) => {
   try {
-    const { page, limit, year, don_vi_id } = req.query;
+    const { page, limit, year, nam, don_vi_id, danh_hieu } = req.query;
     const data = await service.list({
       page: Number(page) || 1,
       limit: Number(limit) || 10,
-      year,
+      year: year || nam, // Hỗ trợ cả year và nam
       donViId: don_vi_id,
+      danhHieu: danh_hieu,
       userRole: req.user?.role,
       userQuanNhanId: req.user?.quan_nhan_id,
     });
