@@ -64,22 +64,39 @@ class ContributionAwardController {
     try {
       const userId = req.user.id;
       const userRole = req.user.role;
-      const { don_vi_id, nam, danh_hieu, page = 1, limit = 50 } = req.query;
+      const { don_vi_id, nam, danh_hieu, ho_ten, page = 1, limit = 50 } = req.query;
 
       const filters = {};
       if (don_vi_id) filters.don_vi_id = don_vi_id;
       if (nam) filters.nam = nam;
       if (danh_hieu) filters.danh_hieu = danh_hieu;
+      if (ho_ten) filters.ho_ten = ho_ten;
 
       if (userRole === 'MANAGER') {
-        const user = await contributionAwardService.getUserWithUnit(userId);
-        if (!user || !user.QuanNhan) {
+        const userQuanNhanId = req.user?.quan_nhan_id;
+        if (!userQuanNhanId) {
+          return res.status(403).json({
+            success: false,
+            message: 'Không tìm thấy thông tin quân nhân',
+          });
+        }
+        const { prisma } = require('../models');
+        const managerPersonnel = await prisma.quanNhan.findUnique({
+          where: { id: userQuanNhanId },
+          select: { co_quan_don_vi_id: true, don_vi_truc_thuoc_id: true },
+        });
+        if (!managerPersonnel) {
           return res.status(403).json({
             success: false,
             message: 'Không tìm thấy thông tin đơn vị',
           });
         }
-        filters.don_vi_id = user.QuanNhan.co_quan_don_vi_id || user.QuanNhan.don_vi_truc_thuoc_id;
+        if (managerPersonnel.co_quan_don_vi_id) {
+          filters.don_vi_id = managerPersonnel.co_quan_don_vi_id;
+          filters.include_sub_units = true;
+        } else if (managerPersonnel.don_vi_truc_thuoc_id) {
+          filters.don_vi_id = managerPersonnel.don_vi_truc_thuoc_id;
+        }
       }
 
       const result = await contributionAwardService.getAll(filters, page, limit);
@@ -161,6 +178,29 @@ class ContributionAwardController {
       return res.status(500).json({
         success: false,
         message: error.message || 'Lấy thống kê thất bại',
+      });
+    }
+  }
+
+  /**
+   * DELETE /api/contribution-awards/:id
+   * Xóa khen thưởng HCBVTQ (không xóa đề xuất)
+   */
+  async deleteAward(req, res) {
+    try {
+      const { id } = req.params;
+      const adminUsername = req.user?.username || 'Admin';
+      const result = await contributionAwardService.deleteAward(id, adminUsername);
+
+      return res.status(200).json({
+        success: true,
+        message: result.message,
+      });
+    } catch (error) {
+      console.error('Delete contribution award error:', error);
+      return res.status(400).json({
+        success: false,
+        message: error.message || 'Xóa khen thưởng thất bại',
       });
     }
   }

@@ -1,5 +1,7 @@
 const { prisma } = require('../models');
 const proposalService = require('./proposal.service');
+const profileService = require('./profile.service');
+const notificationHelper = require('../helpers/notificationHelper');
 
 class ScientificAchievementService {
   async getAchievements(personnelId) {
@@ -77,7 +79,6 @@ class ScientificAchievementService {
       const finalStatus = status || 'PENDING';
       if (finalStatus === 'APPROVED') {
         try {
-          const profileService = require('./profile.service');
           await profileService.recalculateAnnualProfile(personnel_id);
         } catch (recalcError) {
           console.error(
@@ -138,7 +139,6 @@ class ScientificAchievementService {
       const finalStatus = status || achievement.status;
       if (finalStatus === 'APPROVED') {
         try {
-          const profileService = require('./profile.service');
           await profileService.recalculateAnnualProfile(achievement.quan_nhan_id);
         } catch (recalcError) {
           console.error(
@@ -155,10 +155,18 @@ class ScientificAchievementService {
     }
   }
 
-  async deleteAchievement(id) {
+  /**
+   * Xóa thành tích khoa học
+   * @param {string} id - ID của thành tích
+   * @param {string} adminUsername - Username của admin thực hiện xóa
+   */
+  async deleteAchievement(id, adminUsername = 'Admin') {
     try {
       const achievement = await prisma.thanhTichKhoaHoc.findUnique({
         where: { id },
+        include: {
+          QuanNhan: true,
+        },
       });
 
       if (!achievement) {
@@ -166,6 +174,7 @@ class ScientificAchievementService {
       }
 
       const personnelId = achievement.quan_nhan_id;
+      const personnel = achievement.QuanNhan;
       const wasApproved = achievement.status === 'APPROVED';
 
       await prisma.thanhTichKhoaHoc.delete({
@@ -175,18 +184,28 @@ class ScientificAchievementService {
       // Tự động cập nhật lại hồ sơ hằng năm (chỉ khi thành tích đã được duyệt)
       if (wasApproved) {
         try {
-          const profileService = require('./profile.service');
           await profileService.recalculateAnnualProfile(personnelId);
+          console.log(`✅ Auto-recalculated annual profile for personnel ${personnelId}`);
         } catch (recalcError) {
           console.error(
             `⚠️ Failed to auto-recalculate annual profile for personnel ${personnelId}:`,
             recalcError.message
           );
-          // Không throw error, chỉ log để không ảnh hưởng đến việc xóa thành tích
         }
       }
 
-      return { message: 'Xóa thành tích thành công' };
+      // Gửi thông báo cho Manager và quân nhân
+      try {
+        await notificationHelper.notifyOnAwardDeleted(achievement, personnel, 'NCKH', adminUsername);
+        console.log(`✅ Sent notification for deleted scientific achievement`);
+      } catch (notifyError) {
+        console.error(`⚠️ Failed to send notification:`, notifyError.message);
+      }
+
+      return {
+        message: 'Xóa thành tích thành công',
+        personnelId,
+      };
     } catch (error) {
       throw error;
     }

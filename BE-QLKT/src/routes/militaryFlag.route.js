@@ -1,7 +1,9 @@
 const router = require('express').Router();
 const multer = require('multer');
 const militaryFlagController = require('../controllers/militaryFlag.controller');
-const { verifyToken, checkRole, requireManager } = require('../middlewares/auth');
+const { verifyToken, checkRole, requireManager, requireAdmin } = require('../middlewares/auth');
+const { auditLog } = require('../middlewares/auditLog');
+const { getLogDescription, getResourceId } = require('../helpers/auditLogHelper');
 
 // Cấu hình multer cho file upload
 const upload = multer({
@@ -85,6 +87,24 @@ router.get(
   verifyToken,
   checkRole(['ADMIN', 'MANAGER', 'USER']),
   militaryFlagController.getByPersonnelId
+);
+
+/**
+ * @route   DELETE /api/military-flag/:id
+ * @desc    Xóa khen thưởng HCQKQT (không xóa đề xuất)
+ * @access  ADMIN
+ */
+router.delete(
+  '/:id',
+  verifyToken,
+  requireAdmin,
+  auditLog({
+    action: 'DELETE',
+    resource: 'military-flag',
+    getDescription: getLogDescription('military-flag', 'DELETE'),
+    getResourceId: getResourceId.fromParams('id'),
+  }),
+  militaryFlagController.deleteAward
 );
 
 module.exports = router;

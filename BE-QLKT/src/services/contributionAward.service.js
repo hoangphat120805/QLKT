@@ -1,6 +1,8 @@
 const { prisma } = require('../models');
 const ExcelJS = require('exceljs');
 const proposalService = require('./proposal.service');
+const profileService = require('./profile.service');
+const notificationHelper = require('../helpers/notificationHelper');
 
 class ContributionAwardService {
   /**
@@ -250,10 +252,39 @@ class ContributionAwardService {
     const limitNum = parseInt(limit);
     const where = {};
 
+    // Filter theo họ tên
+    const quanNhanFilter = {};
+    if (filters.ho_ten) {
+      quanNhanFilter.ho_ten = { contains: filters.ho_ten, mode: 'insensitive' };
+    }
+
     if (filters.don_vi_id) {
-      where.QuanNhan = {
-        OR: [{ co_quan_don_vi_id: filters.don_vi_id }, { don_vi_truc_thuoc_id: filters.don_vi_id }],
-      };
+      if (filters.include_sub_units) {
+        // Nếu có flag include_sub_units, lấy tất cả đơn vị trực thuộc của cơ quan đơn vị
+        const donViTrucThuocIds = await prisma.donViTrucThuoc.findMany({
+          where: { co_quan_don_vi_id: filters.don_vi_id },
+          select: { id: true },
+        });
+        const donViTrucThuocIdList = donViTrucThuocIds.map(d => d.id);
+        where.QuanNhan = {
+          ...quanNhanFilter,
+          OR: [
+            { co_quan_don_vi_id: filters.don_vi_id },
+            { don_vi_truc_thuoc_id: { in: donViTrucThuocIdList } },
+          ],
+        };
+      } else {
+        where.QuanNhan = {
+          ...quanNhanFilter,
+          OR: [
+            { co_quan_don_vi_id: filters.don_vi_id },
+            { don_vi_truc_thuoc_id: filters.don_vi_id },
+          ],
+        };
+      }
+    } else if (Object.keys(quanNhanFilter).length > 0) {
+      // Nếu không có filter don_vi_id nhưng có filter ho_ten
+      where.QuanNhan = quanNhanFilter;
     }
 
     if (filters.nam) {
@@ -382,6 +413,61 @@ class ContributionAwardService {
         },
       },
     });
+  }
+
+  /**
+   * Delete Contribution Award
+   * @param {string} id - Award ID
+   * @param {string} adminUsername - Username của admin thực hiện xóa
+   * @returns {Promise<Object>}
+   */
+  async deleteAward(id, adminUsername = 'Admin') {
+    try {
+      const award = await prisma.khenThuongCongHien.findUnique({
+        where: { id },
+        include: {
+          QuanNhan: true,
+        },
+      });
+
+      if (!award) {
+        throw new Error('Bản ghi khen thưởng không tồn tại');
+      }
+
+      const personnelId = award.quan_nhan_id;
+      const personnel = award.QuanNhan;
+
+      // Xóa bản ghi (không xóa đề xuất - proposal)
+      await prisma.khenThuongCongHien.delete({
+        where: { id },
+      });
+
+      // Tự động cập nhật lại hồ sơ cống hiến (giống như khi thêm mới)
+      try {
+        await profileService.recalculateContributionProfile(personnelId);
+        console.log(`✅ Auto-recalculated contribution profile for personnel ${personnelId}`);
+      } catch (recalcError) {
+        console.error(
+          `⚠️ Failed to auto-recalculate contribution profile for personnel ${personnelId}:`,
+          recalcError.message
+        );
+      }
+
+      // Gửi thông báo cho Manager và quân nhân
+      try {
+        await notificationHelper.notifyOnAwardDeleted(award, personnel, 'HCBVTQ', adminUsername);
+        console.log(`✅ Sent notification for deleted HCBVTQ award`);
+      } catch (notifyError) {
+        console.error(`⚠️ Failed to send notification:`, notifyError.message);
+      }
+
+      return {
+        message: 'Xóa khen thưởng HCBVTQ thành công',
+        personnelId,
+      };
+    } catch (error) {
+      throw error;
+    }
   }
 }
 

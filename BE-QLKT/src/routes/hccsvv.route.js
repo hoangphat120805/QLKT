@@ -1,7 +1,9 @@
 const router = require('express').Router();
 const multer = require('multer');
 const hccsvvController = require('../controllers/hccsvv.controller');
-const { verifyToken, checkRole, requireManager } = require('../middlewares/auth');
+const { verifyToken, checkRole, requireManager, requireAdmin } = require('../middlewares/auth');
+const { auditLog } = require('../middlewares/auditLog');
+const { getLogDescription, getResourceId } = require('../helpers/auditLogHelper');
 
 // Cấu hình multer cho file upload
 const upload = multer({
@@ -68,6 +70,24 @@ router.get(
   verifyToken,
   checkRole(['ADMIN', 'MANAGER']),
   hccsvvController.getStatistics
+);
+
+/**
+ * @route   DELETE /api/hccsvv/:id
+ * @desc    Xóa khen thưởng HCCSVV (không xóa đề xuất)
+ * @access  ADMIN
+ */
+router.delete(
+  '/:id',
+  verifyToken,
+  requireAdmin,
+  auditLog({
+    action: 'DELETE',
+    resource: 'hccsvv',
+    getDescription: getLogDescription('hccsvv', 'DELETE'),
+    getResourceId: getResourceId.fromParams('id'),
+  }),
+  hccsvvController.deleteAward
 );
 
 module.exports = router;

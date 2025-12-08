@@ -1,6 +1,8 @@
 const { prisma } = require('../models');
 const ExcelJS = require('exceljs');
 const proposalService = require('./proposal.service');
+const profileService = require('./profile.service');
+const notificationHelper = require('../helpers/notificationHelper');
 
 class AnnualRewardService {
   /**
@@ -101,7 +103,6 @@ class AnnualRewardService {
 
       // Tự động cập nhật lại hồ sơ hằng năm
       try {
-        const profileService = require('./profile.service');
         await profileService.recalculateAnnualProfile(personnel_id);
       } catch (recalcError) {
         console.error(
@@ -175,7 +176,6 @@ class AnnualRewardService {
 
       // Tự động cập nhật lại hồ sơ hằng năm
       try {
-        const profileService = require('./profile.service');
         await profileService.recalculateAnnualProfile(reward.quan_nhan_id);
       } catch (recalcError) {
         console.error(
@@ -193,12 +193,22 @@ class AnnualRewardService {
 
   /**
    * Xóa một bản ghi danh hiệu
+   * @param {string} id - ID của bản ghi danh hiệu
+   * @param {string} adminUsername - Username của admin thực hiện xóa
    */
-  async deleteAnnualReward(id) {
+  async deleteAnnualReward(id, adminUsername = 'Admin') {
     try {
-      // Kiểm tra bản ghi có tồn tại không
+      // Kiểm tra bản ghi có tồn tại không và lấy thông tin quân nhân
       const reward = await prisma.danhHieuHangNam.findUnique({
         where: { id },
+        include: {
+          QuanNhan: {
+            include: {
+              CoQuanDonVi: true,
+              DonViTrucThuoc: true,
+            },
+          },
+        },
       });
 
       if (!reward) {
@@ -206,6 +216,7 @@ class AnnualRewardService {
       }
 
       const personnelId = reward.quan_nhan_id;
+      const personnel = reward.QuanNhan;
 
       // Xóa
       await prisma.danhHieuHangNam.delete({
@@ -214,17 +225,28 @@ class AnnualRewardService {
 
       // Tự động cập nhật lại hồ sơ hằng năm
       try {
-        const profileService = require('./profile.service');
         await profileService.recalculateAnnualProfile(personnelId);
       } catch (recalcError) {
         console.error(
           `⚠️ Failed to auto-recalculate annual profile for personnel ${personnelId}:`,
           recalcError.message
         );
-        // Không throw error, chỉ log để không ảnh hưởng đến việc xóa danh hiệu
       }
 
-      return { message: 'Xóa bản ghi danh hiệu thành công' };
+      // Gửi thông báo cho Manager và quân nhân
+      try {
+        await notificationHelper.notifyOnAwardDeleted(reward, personnel, 'CA_NHAN_HANG_NAM', adminUsername);
+        console.log(`✅ Sent notification for deleted annual reward`);
+      } catch (notifyError) {
+        console.error(`⚠️ Failed to send notification:`, notifyError.message);
+      }
+
+      return {
+        message: 'Xóa bản ghi danh hiệu thành công',
+        personnelId,
+        personnel,
+        reward,
+      };
     } catch (error) {
       throw error;
     }
@@ -480,7 +502,6 @@ class AnnualRewardService {
 
         // Tự động cập nhật lại hồ sơ hằng năm cho quân nhân này
         try {
-          const profileService = require('./profile.service');
           await profileService.recalculateAnnualProfile(personnel.id);
         } catch (recalcError) {
           console.error(
@@ -518,7 +539,6 @@ class AnnualRewardService {
         so_quyet_dinh,
         file_quyet_dinh,
       } = data;
-      const profileService = require('./profile.service');
 
       // Validate danh hiệu
       const validDanhHieu = ['CSTDCS', 'CSTT', 'KHONG_DAT'];

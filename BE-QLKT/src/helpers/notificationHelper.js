@@ -248,6 +248,126 @@ class NotificationHelper {
   }
 
   /**
+   * Gửi thông báo khi Admin xóa khen thưởng
+   * -> Manager của đơn vị và quân nhân (nếu có tài khoản) nhận thông báo
+   * @param {Object} award - Thông tin khen thưởng bị xóa
+   * @param {Object} personnel - Thông tin quân nhân
+   * @param {string} awardType - Loại khen thưởng (HCCSVV, HCBVTQ, KNC_VSNXD, HCQKQT, CA_NHAN_HANG_NAM, NCKH)
+   * @param {string} adminUsername - Username của admin thực hiện xóa
+   */
+  async notifyOnAwardDeleted(award, personnel, awardType, adminUsername) {
+    try {
+      const notifications = [];
+
+      // Map danh hiệu cụ thể sang tên tiếng Việt
+      const danhHieuMap = {
+        // HCCSVV
+        HCCSVV_HANG_BA: 'Hạng Ba',
+        HCCSVV_HANG_NHI: 'Hạng Nhì',
+        HCCSVV_HANG_NHAT: 'Hạng Nhất',
+        // HCBVTQ
+        HCBVTQ_HANG_BA: 'Hạng Ba',
+        HCBVTQ_HANG_NHI: 'Hạng Nhì',
+        HCBVTQ_HANG_NHAT: 'Hạng Nhất',
+        // Danh hiệu hằng năm
+        CSTDCS: 'Chiến sĩ thi đua cơ sở',
+        CSTT: 'Chiến sĩ tiên tiến',
+        CSTDTQ: 'Chiến sĩ thi đua toàn quân',
+        BKBQP: 'Bằng khen của Bộ trưởng BQP',
+        // Thành tích khoa học
+        NCKH: 'Nghiên cứu khoa học',
+        SKKH: 'Sáng kiến khoa học',
+      };
+
+      // Map loại khen thưởng sang tên tiếng Việt
+      const awardTypeMap = {
+        HCCSVV: 'Huân chương Chiến sĩ Vẻ vang',
+        HCBVTQ: 'Huân chương Bảo vệ Tổ quốc',
+        KNC_VSNXD: 'Kỷ niệm chương VSNXD QĐNDVN',
+        HCQKQT: 'Huân chương Quân kỳ Quyết thắng',
+        CA_NHAN_HANG_NAM: 'Danh hiệu hằng năm',
+        NCKH: 'Thành tích khoa học',
+      };
+      const awardTypeName = awardTypeMap[awardType] || awardType;
+
+      // Lấy danh hiệu cụ thể và map sang tên tiếng Việt
+      const rawDanhHieu = award.danh_hieu || award.loai || '';
+      const danhHieu = danhHieuMap[rawDanhHieu] || rawDanhHieu;
+      const nam = award.nam || '';
+
+      // 1. Thông báo cho Manager của đơn vị quân nhân
+      const donViId = personnel.co_quan_don_vi_id || personnel.don_vi_truc_thuoc_id;
+      if (donViId) {
+        const managers = await prisma.taiKhoan.findMany({
+          where: {
+            role: 'MANAGER',
+            QuanNhan: {
+              OR: [
+                { co_quan_don_vi_id: donViId },
+                { don_vi_truc_thuoc_id: donViId },
+              ],
+            },
+          },
+          select: {
+            id: true,
+            role: true,
+          },
+        });
+
+        managers.forEach(manager => {
+          notifications.push({
+            nguoi_nhan_id: manager.id,
+            recipient_role: manager.role,
+            type: NOTIFICATION_TYPES.AWARD_DELETED,
+            title: 'Khen thưởng đã bị xóa',
+            message: `${adminUsername} đã xóa ${awardTypeName}${danhHieu ? ` (${danhHieu})` : ''}${nam ? ` năm ${nam}` : ''} của quân nhân ${personnel.ho_ten}`,
+            resource: RESOURCE_TYPES.AWARDS,
+            tai_nguyen_id: personnel.id,
+            link: `/manager/personnel/${personnel.id}`,
+          });
+        });
+      }
+
+      // 2. Thông báo cho quân nhân (nếu có tài khoản)
+      const personnelAccount = await prisma.taiKhoan.findFirst({
+        where: {
+          quan_nhan_id: personnel.id,
+        },
+        select: {
+          id: true,
+          role: true,
+        },
+      });
+
+      if (personnelAccount) {
+        notifications.push({
+          nguoi_nhan_id: personnelAccount.id,
+          recipient_role: personnelAccount.role,
+          type: NOTIFICATION_TYPES.AWARD_DELETED,
+          title: 'Khen thưởng của bạn đã bị xóa',
+          message: `${awardTypeName}${danhHieu ? ` (${danhHieu})` : ''}${nam ? ` năm ${nam}` : ''} của bạn đã bị ${adminUsername} xóa khỏi hệ thống`,
+          resource: RESOURCE_TYPES.AWARDS,
+          tai_nguyen_id: personnel.id,
+          link: `/user/profile`,
+        });
+      }
+
+      // Tạo thông báo
+      if (notifications.length > 0) {
+        await prisma.thongBao.createMany({
+          data: notifications,
+        });
+      }
+
+      return notifications.length;
+    } catch (error) {
+      console.error('Error sending award deleted notifications:', error);
+      // Không throw error để không ảnh hưởng đến việc xóa khen thưởng
+      return 0;
+    }
+  }
+
+  /**
    * Gửi thông báo hệ thống chung
    */
   async sendSystemNotification(

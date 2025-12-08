@@ -36,11 +36,39 @@ const upload = multer({
   },
 });
 
-// Special route for users to view their own awards
-router.get('/personnel/:personnelId', verifyToken, adhocAwardController.getAdhocAwardsByPersonnel);
-
-// All routes above require authentication and ADMIN role
+// All routes require authentication
 router.use(verifyToken);
+
+// Routes accessible by ADMIN and MANAGER (read-only for MANAGER)
+/**
+ * @route   GET /api/adhoc-awards
+ * @desc    Get all ad-hoc awards with filters
+ * @access  Admin (all), Manager (own unit only)
+ */
+router.get('/', checkRole(['ADMIN', 'MANAGER']), adhocAwardController.getAdhocAwards);
+
+/**
+ * @route   GET /api/adhoc-awards/personnel/:personnelId
+ * @desc    Get all ad-hoc awards for a specific personnel
+ * @access  Admin (all), Manager (own unit only)
+ */
+router.get('/personnel/:personnelId', checkRole(['ADMIN', 'MANAGER']), adhocAwardController.getAdhocAwardsByPersonnel);
+
+/**
+ * @route   GET /api/adhoc-awards/unit/:unitId
+ * @desc    Get all ad-hoc awards for a specific unit
+ * @access  Admin (all), Manager (own unit only)
+ */
+router.get('/unit/:unitId', checkRole(['ADMIN', 'MANAGER']), adhocAwardController.getAdhocAwardsByUnit);
+
+/**
+ * @route   GET /api/adhoc-awards/:id
+ * @desc    Get single ad-hoc award by ID
+ * @access  Admin (all), Manager (own unit only)
+ */
+router.get('/:id', checkRole(['ADMIN', 'MANAGER']), adhocAwardController.getAdhocAwardById);
+
+// Routes accessible by ADMIN only (write operations)
 router.use(checkRole(['ADMIN']));
 
 /**
@@ -48,35 +76,7 @@ router.use(checkRole(['ADMIN']));
  * @desc    Create ad-hoc award
  * @access  Admin only
  */
-router.post(
-  '/',
-  upload.fields([
-    { name: 'decisionFiles', maxCount: 10 },
-    { name: 'attachedFiles', maxCount: 10 },
-  ]),
-  adhocAwardController.createAdhocAward
-);
-
-/**
- * @route   GET /api/adhoc-awards
- * @desc    Get all ad-hoc awards with filters
- * @access  Admin only
- */
-router.get('/', adhocAwardController.getAdhocAwards);
-
-/**
- * @route   GET /api/adhoc-awards/unit/:unitId
- * @desc    Get all ad-hoc awards for a specific unit
- * @access  Admin only
- */
-router.get('/unit/:unitId', adhocAwardController.getAdhocAwardsByUnit);
-
-/**
- * @route   GET /api/adhoc-awards/:id
- * @desc    Get single ad-hoc award by ID
- * @access  Admin only
- */
-router.get('/:id', adhocAwardController.getAdhocAwardById);
+router.post('/', upload.array('files', 10), adhocAwardController.createAdhocAward);
 
 /**
  * @route   PUT /api/adhoc-awards/:id
