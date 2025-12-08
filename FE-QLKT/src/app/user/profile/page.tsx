@@ -524,7 +524,6 @@ export default function UserProfilePage() {
           <TabPane
             tab={
               <Space>
-                <StarOutlined />
                 Thành tích khoa học
               </Space>
             }
@@ -560,7 +559,6 @@ export default function UserProfilePage() {
           <TabPane
             tab={
               <Space>
-                <HistoryOutlined />
                 Lịch sử chức vụ
               </Space>
             }
@@ -593,7 +591,7 @@ export default function UserProfilePage() {
           </TabPane>
 
           {/* Tab 4: Hồ sơ Niên hạn */}
-          <TabPane tab={<Space>🎖️ Hồ sơ Niên hạn</Space>} key="4">
+          <TabPane tab={<Space>Hồ sơ Niên hạn</Space>} key="4">
             {serviceProfile ? (
               <div className="space-y-6 w-full">
                 {/* Huân chương Chiến sỹ Vẻ vang */}
@@ -1195,7 +1193,7 @@ export default function UserProfilePage() {
           </TabPane>
 
           {/* Tab 5: Hồ sơ Hằng năm */}
-          <TabPane tab={<Space>🏅 Hồ sơ Hằng năm</Space>} key="5">
+          <TabPane tab={<Space>Hồ sơ Hằng năm</Space>} key="5">
             {annualProfile ? (
               <div className="space-y-6 w-full">
                 {/* Thống kê */}
@@ -1395,7 +1393,6 @@ export default function UserProfilePage() {
           <TabPane
             tab={
               <Space>
-                <TrophyOutlined />
                 Khen thưởng đột xuất
               </Space>
             }
