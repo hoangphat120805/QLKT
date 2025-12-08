@@ -44,6 +44,7 @@ export default function UserDashboard() {
   const [personnelInfo, setPersonnelInfo] = useState<any>(null);
   const [annualProfile, setAnnualProfile] = useState<any>(null);
   const [serviceProfile, setServiceProfile] = useState<any>(null);
+  const [contributionProfile, setContributionProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -80,6 +81,11 @@ export default function UserDashboard() {
         if (serviceRes.success) {
           setServiceProfile(serviceRes.data);
         }
+
+        const contributionRes = await apiClient.getContributionProfile(user.quan_nhan_id);
+        if (contributionRes.success) {
+          setContributionProfile(contributionRes.data);
+        }
       } catch (err: any) {
         console.error('Error fetching profiles:', err);
         setError(err.message || 'Không thể tải hồ sơ. Vui lòng thử lại.');
@@ -101,7 +107,21 @@ export default function UserDashboard() {
     return diffYears;
   };
 
+  // callculate service month when the years are calculated
+  const calculateServiceMonths = () => {
+    if (!personnelInfo?.ngay_nhap_ngu) return 0;
+    const startDate = new Date(personnelInfo.ngay_nhap_ngu);
+    const today = new Date();
+    let months;
+    months = (today.getFullYear() - startDate.getFullYear()) * 12;
+    months -= startDate.getMonth();
+    months += today.getMonth();
+    months = months % 12;
+    return months;
+  };
+
   const serviceYears = calculateServiceYears();
+  const serviceMonths = calculateServiceMonths();
 
   // Calculate progress for medals
   const getProgressData = (status: string, current: number, target: number) => {
@@ -267,8 +287,7 @@ export default function UserDashboard() {
                       Tháng cống hiến
                     </span>
                   }
-                  value={serviceProfile?.hcbvtq_total_months || 0}
-                  suffix="tháng"
+                  value={serviceYears + ' năm ' + serviceMonths + ' tháng'}
                   prefix={<ClockCircleOutlined className="text-purple-600" />}
                   valueStyle={{ color: '#722ed1', fontWeight: 'bold' }}
                 />
@@ -547,16 +566,16 @@ export default function UserDashboard() {
                         <Text strong>Hạng Ba (180 tháng)</Text>
                         <Badge
                           status={
-                            serviceProfile.hcbvtq_hang_ba_status === 'DA_NHAN'
+                            contributionProfile.hcbvtq_hang_ba_status === 'DA_NHAN'
                               ? 'success'
-                              : serviceProfile.hcbvtq_hang_ba_status === 'DU_DIEU_KIEN'
+                              : contributionProfile.hcbvtq_hang_ba_status === 'DU_DIEU_KIEN'
                               ? 'processing'
                               : 'default'
                           }
                           text={
-                            serviceProfile.hcbvtq_hang_ba_status === 'DA_NHAN'
+                            contributionProfile.hcbvtq_hang_ba_status === 'DA_NHAN'
                               ? 'Đã nhận'
-                              : serviceProfile.hcbvtq_hang_ba_status === 'DU_DIEU_KIEN'
+                              : contributionProfile.hcbvtq_hang_ba_status === 'DU_DIEU_KIEN'
                               ? 'Đủ điều kiện'
                               : 'Chưa đủ'
                           }
@@ -564,11 +583,15 @@ export default function UserDashboard() {
                       </div>
                       <Progress
                         {...getProgressData(
-                          serviceProfile.hcbvtq_hang_ba_status,
-                          serviceProfile.hcbvtq_total_months || 0,
+                          contributionProfile.hcbvtq_hang_ba_status,
+                          contributionProfile.months_07 + contributionProfile.months_08 || 0,
                           180
                         )}
-                        format={() => `${serviceProfile.hcbvtq_total_months || 0}/180 tháng`}
+                        format={() =>
+                          `${
+                            contributionProfile.months_07 + contributionProfile.months_08 || 0
+                          }/180 tháng`
+                        }
                       />
                     </div>
 
@@ -578,16 +601,16 @@ export default function UserDashboard() {
                         <Text strong>Hạng Nhì (240 tháng)</Text>
                         <Badge
                           status={
-                            serviceProfile.hcbvtq_hang_nhi_status === 'DA_NHAN'
+                            contributionProfile.hcbvtq_hang_nhi_status === 'DA_NHAN'
                               ? 'success'
-                              : serviceProfile.hcbvtq_hang_nhi_status === 'DU_DIEU_KIEN'
+                              : contributionProfile.hcbvtq_hang_nhi_status === 'DU_DIEU_KIEN'
                               ? 'processing'
                               : 'default'
                           }
                           text={
-                            serviceProfile.hcbvtq_hang_nhi_status === 'DA_NHAN'
+                            contributionProfile.hcbvtq_hang_nhi_status === 'DA_NHAN'
                               ? 'Đã nhận'
-                              : serviceProfile.hcbvtq_hang_nhi_status === 'DU_DIEU_KIEN'
+                              : contributionProfile.hcbvtq_hang_nhi_status === 'DU_DIEU_KIEN'
                               ? 'Đủ điều kiện'
                               : 'Chưa đủ'
                           }
@@ -595,11 +618,15 @@ export default function UserDashboard() {
                       </div>
                       <Progress
                         {...getProgressData(
-                          serviceProfile.hcbvtq_hang_nhi_status,
-                          serviceProfile.hcbvtq_total_months || 0,
+                          contributionProfile.hcbvtq_hang_nhi_status,
+                          contributionProfile.months_08 + contributionProfile.months_0910 || 0,
                           240
                         )}
-                        format={() => `${serviceProfile.hcbvtq_total_months || 0}/240 tháng`}
+                        format={() =>
+                          `${
+                            contributionProfile.months_08 + contributionProfile.months_0910 || 0
+                          }/240 tháng`
+                        }
                       />
                     </div>
 
@@ -609,16 +636,16 @@ export default function UserDashboard() {
                         <Text strong>Hạng Nhất (300 tháng)</Text>
                         <Badge
                           status={
-                            serviceProfile.hcbvtq_hang_nhat_status === 'DA_NHAN'
+                            contributionProfile.hcbvtq_hang_nhat_status === 'DA_NHAN'
                               ? 'success'
-                              : serviceProfile.hcbvtq_hang_nhat_status === 'DU_DIEU_KIEN'
+                              : contributionProfile.hcbvtq_hang_nhat_status === 'DU_DIEU_KIEN'
                               ? 'processing'
                               : 'default'
                           }
                           text={
-                            serviceProfile.hcbvtq_hang_nhat_status === 'DA_NHAN'
+                            contributionProfile.hcbvtq_hang_nhat_status === 'DA_NHAN'
                               ? 'Đã nhận'
-                              : serviceProfile.hcbvtq_hang_nhat_status === 'DU_DIEU_KIEN'
+                              : contributionProfile.hcbvtq_hang_nhat_status === 'DU_DIEU_KIEN'
                               ? 'Đủ điều kiện'
                               : 'Chưa đủ'
                           }
@@ -626,11 +653,11 @@ export default function UserDashboard() {
                       </div>
                       <Progress
                         {...getProgressData(
-                          serviceProfile.hcbvtq_hang_nhat_status,
-                          serviceProfile.hcbvtq_total_months || 0,
+                          contributionProfile.hcbvtq_hang_nhat_status,
+                          contributionProfile.months_0910 || 0,
                           300
                         )}
-                        format={() => `${serviceProfile.hcbvtq_total_months || 0}/300 tháng`}
+                        format={() => `${contributionProfile.months_0910 || 0}/300 tháng`}
                       />
                     </div>
                   </Space>

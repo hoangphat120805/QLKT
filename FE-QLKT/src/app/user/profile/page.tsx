@@ -354,10 +354,10 @@ export default function UserProfilePage() {
       render: (chucVu: any) => chucVu?.ten_chuc_vu || 'N/A',
     },
     {
-      title: 'Nhóm cống hiến',
+      title: 'Hệ số chức vụ',
       dataIndex: 'ChucVu',
-      key: 'nhom_cong_hien',
-      render: (chucVu: any) => chucVu?.NhomCongHien?.ten_nhom || 'N/A',
+      key: 'he_so_chuc_vu',
+      render: (chucVu: any) => chucVu?.he_so_chuc_vu || 'N/A',
     },
     {
       title: 'Ngày bắt đầu',
@@ -764,7 +764,7 @@ export default function UserProfilePage() {
                   >
                     Huân chương Bảo vệ Tổ quốc
                   </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 w-full">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 w-full">
                     {/* Tháng cống hiến tích lũy */}
                     <div
                       className="p-4 border rounded-lg"
