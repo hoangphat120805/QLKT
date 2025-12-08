@@ -2176,7 +2176,7 @@ button[class*='bg-primary']:hover:not(:disabled) {
 /* Điều chỉnh vị trí dropdown lên cao hơn */
 .ant-dropdown.ant-dropdown-placement-bottomRight:has(.notification-dropdown),
 .ant-dropdown:has(.notification-dropdown) {
-  margin-top: -8px !important;
+  margin-top: -30px !important;
 }
 
 .notification-dropdown .ant-dropdown-menu,
@@ -2188,6 +2188,7 @@ button[class*='bg-primary']:hover:not(:disabled) {
   border: 1px solid #e5e7eb !important;
   border-radius: 8px !important;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  margin-top: -35px !important;
 }
 
 .notification-dropdown .ant-dropdown-menu-item:first-child {
@@ -2223,7 +2224,28 @@ button[class*='bg-primary']:hover:not(:disabled) {
 
 .dark .notification-dropdown .ant-dropdown-menu-item[data-menu-id*='notification-header'] {
   background-color: #1f2937 !important;
+  background: #1f2937 !important;
   border-bottom-color: #374151 !important;
+  border-color: #374151 !important;
+}
+
+/* Override header div inside menu item in dark mode */
+.dark .notification-dropdown .ant-dropdown-menu-item[data-menu-id*='notification-header'] div {
+  background-color: #1f2937 !important;
+  background: #1f2937 !important;
+  border-bottom-color: #374151 !important;
+  border-color: #374151 !important;
+}
+
+.dark .notification-dropdown .ant-dropdown-menu-item[data-menu-id*='notification-header'] .bg-white {
+  background-color: #1f2937 !important;
+  background: #1f2937 !important;
+  --tw-bg-opacity: 1 !important;
+}
+
+.dark .notification-dropdown .ant-dropdown-menu-item[data-menu-id*='notification-header'] .border-gray-200 {
+  border-color: #374151 !important;
+  --tw-border-opacity: 1 !important;
 }
 
 .notification-dropdown .ant-dropdown-menu-item:hover {
@@ -2247,12 +2269,89 @@ button[class*='bg-primary']:hover:not(:disabled) {
 /* Override Ant Design's default light menu colors in dark mode */
 .dark .notification-dropdown .ant-dropdown-menu-item,
 .dark .notification-dropdown .ant-dropdown-menu-item-active {
-  /* Remove background override to allow notification item backgrounds to show */
+  background-color: transparent !important;
+  background: transparent !important;
 }
 
 .dark .notification-dropdown .ant-dropdown-menu-item:hover,
 .dark .notification-dropdown .ant-dropdown-menu-item-active:hover {
-  /* Remove background override to allow notification item backgrounds to show */
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+/* Force dark mode colors for notification items - Override ALL light mode classes with high specificity */
+.dark .notification-dropdown .ant-dropdown-menu-item div {
+  /* Override bg-blue-50 in dark mode */
+}
+
+.dark .notification-dropdown .ant-dropdown-menu-item div.bg-blue-50,
+.dark .notification-dropdown .ant-dropdown-menu-item div[class*='bg-blue-50']:not([class*='dark:']) {
+  background-color: rgba(55, 65, 81, 0.8) !important;
+  --tw-bg-opacity: 1 !important;
+}
+
+.dark .notification-dropdown .ant-dropdown-menu-item div.bg-gray-50,
+.dark .notification-dropdown .ant-dropdown-menu-item div[class*='bg-gray-50']:not([class*='dark:']) {
+  background-color: rgba(55, 65, 81, 0.6) !important;
+  --tw-bg-opacity: 1 !important;
+}
+
+.dark .notification-dropdown .ant-dropdown-menu-item div.bg-blue-50:hover,
+.dark .notification-dropdown .ant-dropdown-menu-item div[class*='bg-blue-50']:hover:not([class*='dark:']),
+.dark .notification-dropdown .ant-dropdown-menu-item div[class*='hover:bg-blue-100']:hover {
+  background-color: rgba(75, 85, 99, 1) !important;
+  --tw-bg-opacity: 1 !important;
+}
+
+.dark .notification-dropdown .ant-dropdown-menu-item div.bg-gray-50:hover,
+.dark .notification-dropdown .ant-dropdown-menu-item div[class*='bg-gray-50']:hover:not([class*='dark:']),
+.dark .notification-dropdown .ant-dropdown-menu-item div[class*='hover:bg-gray-100']:hover {
+  background-color: rgba(75, 85, 99, 1) !important;
+  --tw-bg-opacity: 1 !important;
+}
+
+/* Override border colors in dark mode */
+.dark .notification-dropdown .ant-dropdown-menu-item div[class*='border-gray-200']:not([class*='dark:']) {
+  border-color: rgba(75, 85, 99, 1) !important;
+}
+
+.dark .notification-dropdown .ant-dropdown-menu-item div[class*='border-blue-500']:not([class*='dark:border-blue']) {
+  border-color: rgba(96, 165, 250, 1) !important;
+}
+
+/* Override "Đã đọc" badge colors in dark mode */
+.dark .notification-dropdown .ant-dropdown-menu-item span[class*='bg-gray-100'] {
+  background-color: rgba(75, 85, 99, 1) !important;
+  --tw-bg-opacity: 1 !important;
+}
+
+.dark .notification-dropdown .ant-dropdown-menu-item span[class*='text-gray-400'] {
+  color: rgba(156, 163, 175, 1) !important;
+  --tw-text-opacity: 1 !important;
+}
+
+/* Override loading state colors in dark mode */
+.dark .notification-dropdown .ant-dropdown-menu-item [class*='bg-white']:not([class*='dark:']) {
+  background-color: #1f2937 !important;
+  --tw-bg-opacity: 1 !important;
+}
+
+.dark .notification-dropdown .ant-dropdown-menu-item [class*='bg-gray-800']:not([class*='dark:']) {
+  background-color: #1f2937 !important;
+  --tw-bg-opacity: 1 !important;
+}
+
+.dark .notification-dropdown .ant-dropdown-menu-item [class*='text-gray-600']:not([class*='dark:']),
+.dark .notification-dropdown .ant-dropdown-menu-item [class*='text-gray-300']:not([class*='dark:']) {
+  color: rgba(209, 213, 219, 1) !important;
+  --tw-text-opacity: 1 !important;
+}
+
+/* Override empty state colors in dark mode */
+.dark .notification-dropdown .ant-dropdown-menu-item [class*='text-gray-400']:not([class*='dark:']),
+.dark .notification-dropdown .ant-dropdown-menu-item [class*='text-gray-500']:not([class*='dark:']) {
+  color: rgba(156, 163, 175, 1) !important;
+  --tw-text-opacity: 1 !important;
 }
 
 /* Override divider in dark mode */
@@ -2421,4 +2520,15 @@ button[class*='bg-primary']:hover:not(:disabled) {
 .dark .ant-layout-sider .ant-layout-sider-trigger:hover .anticon,
 .dark .ant-layout-sider-trigger:hover .anticon {
   color: #ffffff !important;
+}
+
+/* Prevent body scroll when modal is open */
+body.ant-modal-open {
+  overflow: hidden !important;
+}
+
+/* Ensure modal body scrolls independently */
+.ant-modal-body {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Card,
   Button,
@@ -12,13 +12,15 @@ import {
   theme as antdTheme,
   Spin,
   Space,
-  Tag,
+  Input,
+  Select,
 } from 'antd';
 import { useTheme } from '@/components/theme-provider';
-import { HomeOutlined, EyeOutlined, TrophyOutlined } from '@ant-design/icons';
+import { HomeOutlined } from '@ant-design/icons';
 import type { TableColumnsType } from 'antd';
 import { apiClient } from '@/lib/api-client';
 import axiosInstance from '@/utils/axiosInstance';
+import { renderAnnualAwards, COLUMN_STYLES } from '@/utils/awardsHelpers';
 
 const { Title, Text } = Typography;
 
@@ -40,6 +42,14 @@ export default function ManagerUnitsPage() {
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
   const [allAwards, setAllAwards] = useState<any[]>([]);
   const [awardsLoading, setAwardsLoading] = useState(false);
+  const [unitSearch, setUnitSearch] = useState('');
+  const [debouncedUnitSearch, setDebouncedUnitSearch] = useState('');
+  const [filters, setFilters] = useState({
+    nam: '',
+    ten_don_vi: '',
+    danh_hieu: '',
+  });
+  const [debouncedFilters, setDebouncedFilters] = useState(filters);
 
   useEffect(() => {
     fetchUnits();
@@ -98,6 +108,16 @@ export default function ManagerUnitsPage() {
     }
   };
 
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedFilters(filters), 300);
+    return () => clearTimeout(id);
+  }, [filters]);
+
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedUnitSearch(unitSearch.trim().toLowerCase()), 300);
+    return () => clearTimeout(id);
+  }, [unitSearch]);
+
   const handleOpenDecisionFile = async (soQuyetDinh: string, filePath?: string | null) => {
     try {
       let filename: string | null = null;
@@ -137,10 +157,6 @@ export default function ManagerUnitsPage() {
     }
   };
 
-  const handleViewUnit = (unitId: string) => {
-    setSelectedUnitId(unitId);
-  };
-
   const columns: TableColumnsType<Unit> = [
     {
       title: 'Mã đơn vị',
@@ -166,6 +182,50 @@ export default function ManagerUnitsPage() {
       width: 200,
     },
   ];
+
+  const filteredAwards = useMemo(() => {
+    const yearFilter = debouncedFilters.nam.trim();
+    const nameFilter = debouncedFilters.ten_don_vi.trim().toLowerCase();
+    const danhHieuFilter = debouncedFilters.danh_hieu.trim();
+
+    return allAwards.filter(record => {
+      if (yearFilter && String(record.nam) !== yearFilter) return false;
+
+      if (nameFilter) {
+        const name =
+          record?.DonViTrucThuoc?.ten_don_vi?.toLowerCase() ||
+          record?.CoQuanDonVi?.ten_don_vi?.toLowerCase() ||
+          '';
+        if (!name.includes(nameFilter)) return false;
+      }
+
+      if (danhHieuFilter) {
+        // BKBQP và BKTTCP là trường boolean, ĐVQT và ĐVTT là danh_hieu
+        const isBKBQP = danhHieuFilter === 'BKBQP' && record.nhan_bkbqp === true;
+        const isBKTTCP = danhHieuFilter === 'BKTTCP' && record.nhan_bkttcp === true;
+
+        if (!isBKBQP && !isBKTTCP && record.danh_hieu !== danhHieuFilter) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [allAwards, debouncedFilters]);
+
+  const filteredUnits = useMemo(() => {
+    if (!debouncedUnitSearch) return units;
+    return units.filter(u => {
+      const name = u.ten_don_vi?.toLowerCase() || '';
+      const code = u.ma_don_vi?.toLowerCase() || '';
+      const parent = u.CoQuanDonVi?.ten_don_vi?.toLowerCase() || '';
+      return (
+        name.includes(debouncedUnitSearch) ||
+        code.includes(debouncedUnitSearch) ||
+        parent.includes(debouncedUnitSearch)
+      );
+    });
+  }, [units, debouncedUnitSearch]);
 
   if (loading) {
     return (
@@ -213,9 +273,19 @@ export default function ManagerUnitsPage() {
         </div>
 
         <Card className="mt-6">
+          <Space style={{ marginBottom: 12 }} wrap>
+            <Input
+              placeholder="Tìm đơn vị (tên/mã/cơ quan)"
+              value={unitSearch}
+              onChange={e => setUnitSearch(e.target.value)}
+              allowClear
+              style={{ width: 260 }}
+            />
+            <Button onClick={() => setUnitSearch('')}>Xóa lọc</Button>
+          </Space>
           <Table
             columns={columns}
-            dataSource={units}
+            dataSource={filteredUnits}
             rowKey="id"
             pagination={{
               pageSize: 10,
@@ -255,65 +325,110 @@ export default function ManagerUnitsPage() {
 
         <Card className="mt-6">
           <Title level={3}>Tất cả khen thưởng của các đơn vị</Title>
+          <Space style={{ marginBottom: 16 }} wrap>
+            <Input
+              placeholder="Tìm tên đơn vị"
+              value={filters.ten_don_vi}
+              onChange={e => setFilters(prev => ({ ...prev, ten_don_vi: e.target.value }))}
+              allowClear
+              style={{ width: 240 }}
+            />
+            <Input
+              placeholder="Năm (VD: 2024)"
+              value={filters.nam}
+              onChange={e => setFilters(prev => ({ ...prev, nam: e.target.value }))}
+              allowClear
+              style={{ width: 160 }}
+            />
+            <Select
+              placeholder="Danh hiệu"
+              value={filters.danh_hieu || undefined}
+              onChange={value => setFilters(prev => ({ ...prev, danh_hieu: value || '' }))}
+              allowClear
+              style={{ width: 280 }}
+              popupMatchSelectWidth={false}
+              options={[
+                { label: 'Đơn vị quyết thắng (ĐVQT)', value: 'ĐVQT' },
+                { label: 'Đơn vị tiên tiến (ĐVTT)', value: 'ĐVTT' },
+                { label: 'Bằng khen của Bộ trưởng BQP', value: 'BKBQP' },
+                { label: 'Bằng khen của TTCP', value: 'BKTTCP' },
+              ]}
+            />
+            <Button onClick={() => setFilters({ nam: '', ten_don_vi: '', danh_hieu: '' })}>
+              Xóa bộ lọc
+            </Button>
+          </Space>
           {awardsLoading ? (
             <Spin size="large" />
           ) : (
             <Table
               columns={[
                 {
-                  title: 'Mã đơn vị',
-                  key: 'ma_don_vi',
-                  render: (_, record) =>
-                    record?.DonViTrucThuoc?.ma_don_vi ?? record?.CoQuanDonVi?.ma_don_vi ?? '',
-                },
-                {
-                  title: 'Tên đơn vị',
-                  key: 'ten_don_vi',
-                  render: (_, record) =>
-                    record?.DonViTrucThuoc?.ten_don_vi ?? record?.CoQuanDonVi?.ten_don_vi ?? '',
-                },
-                {
-                  title: 'Danh hiệu',
-                  dataIndex: 'danh_hieu',
-                  key: 'danh_hieu',
-                  render: danhHieu => <Tag color="blue">{danhHieu || 'Chưa có'}</Tag>,
-                },
-                {
-                  title: 'Số quyết định',
-                  dataIndex: 'so_quyet_dinh',
-                  key: 'so_quyet_dinh',
-                  render: (text: string, record: any) => {
-                    if (!text || text.trim() === '') return '-';
-                    if (record.file_quyet_dinh) {
-                      return (
-                        <a
-                          onClick={e => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleOpenDecisionFile(text, record.file_quyet_dinh);
-                          }}
-                          style={{
-                            color: '#52c41a',
-                            fontWeight: 500,
-                            textDecoration: 'underline',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          {text}
-                        </a>
-                      );
-                    } else {
-                      return <span style={{ color: '#999', fontWeight: 400 }}>{text}</span>;
-                    }
-                  },
+                  title: 'STT',
+                  key: 'stt',
+                  width: 60,
+                  align: 'center',
+                  render: (_: any, __: any, index: number) => index + 1,
                 },
                 {
                   title: 'Năm',
                   dataIndex: 'nam',
                   key: 'nam',
+                  width: 80,
+                  align: 'center',
+                },
+                {
+                  title: 'Tên đơn vị',
+                  key: 'ten_don_vi',
+                  width: 200,
+                  align: 'center',
+                  render: (_: any, record: any) => {
+                    const unitName =
+                      record?.DonViTrucThuoc?.ten_don_vi ?? record?.CoQuanDonVi?.ten_don_vi ?? '';
+                    const parentName = record?.DonViTrucThuoc?.CoQuanDonVi?.ten_don_vi;
+                    if (parentName) {
+                      return (
+                        <div style={{ textAlign: 'center' }}>
+                          <div>{unitName}</div>
+                          <Text type="secondary" style={{ fontSize: 12 }}>
+                            Thuộc: {parentName}
+                          </Text>
+                        </div>
+                      );
+                    }
+                    return unitName;
+                  },
+                },
+                {
+                  title: 'Danh hiệu',
+                  dataIndex: 'danh_hieu',
+                  key: 'danh_hieu',
+                  width: 320,
+                  align: 'center',
+                  render: (text: string | null, record: any) => {
+                    return renderAnnualAwards(text, record, {
+                      onDownload: handleOpenDecisionFile,
+                    });
+                  },
+                },
+                {
+                  title: 'Ghi chú',
+                  key: 'ghi_chu',
+                  width: 200,
+                  align: 'center',
+                  render: (_: any, record: any) => {
+                    if (record.ghi_chu) {
+                      return (
+                        <Text type="secondary" style={COLUMN_STYLES.noteText}>
+                          {record.ghi_chu}
+                        </Text>
+                      );
+                    }
+                    return <Text type="secondary">-</Text>;
+                  },
                 },
               ]}
-              dataSource={allAwards}
+              dataSource={filteredAwards}
               rowKey="id"
               pagination={{
                 pageSize: 10,

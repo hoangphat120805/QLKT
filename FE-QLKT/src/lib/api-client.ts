@@ -800,6 +800,15 @@ export const apiClient = {
     }
   },
 
+  async deleteHCCSVV(id: string): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.delete(`/api/hccsvv/${id}`);
+      return { success: true, data: res.data?.data || res.data };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
   // Contribution Awards (Huân chương Bảo vệ Tổ quốc - Cống hiến)
   async getContributionAwardsTemplate(): Promise<Blob> {
     try {
@@ -864,6 +873,15 @@ export const apiClient = {
   }): Promise<ApiResponse> {
     try {
       const res = await axiosInstance.get('/api/contribution-awards/statistics', { params });
+      return { success: true, data: res.data?.data || res.data };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async deleteContributionAward(id: string): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.delete(`/api/contribution-awards/${id}`);
       return { success: true, data: res.data?.data || res.data };
     } catch (e: any) {
       return { success: false, message: e?.response?.data?.message || e.message };
@@ -935,6 +953,15 @@ export const apiClient = {
     }
   },
 
+  async deleteCommemorationMedal(id: string): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.delete(`/api/commemorative-medals/${id}`);
+      return { success: true, data: res.data?.data || res.data };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
   // Military Flag (Huân chương Quân kỳ Quyết thắng)
   async getMilitaryFlagTemplate(): Promise<Blob> {
     try {
@@ -994,6 +1021,15 @@ export const apiClient = {
   }): Promise<ApiResponse> {
     try {
       const res = await axiosInstance.get('/api/military-flag/statistics', { params });
+      return { success: true, data: res.data?.data || res.data };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async deleteMilitaryFlag(id: string): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.delete(`/api/military-flag/${id}`);
       return { success: true, data: res.data?.data || res.data };
     } catch (e: any) {
       return { success: false, message: e?.response?.data?.message || e.message };
@@ -1326,6 +1362,15 @@ export const apiClient = {
       return res.data;
     } catch (e: any) {
       throw new Error(e?.response?.data?.message || e.message);
+    }
+  },
+
+  async deleteUnitAnnualAward(id: string): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.delete(`/api/awards/units/annual/${id}`);
+      return { success: true, data: res.data?.data || res.data };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
     }
   },
 

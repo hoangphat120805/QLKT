@@ -5,7 +5,7 @@ class UnitAnnualAwardService {
   /**
    * Lấy danh sách khen thưởng đơn vị hằng năm với phân trang
    */
-  async list({ page = 1, limit = 10, year, donViId, userRole, userQuanNhanId }) {
+  async list({ page = 1, limit = 10, year, donViId, danhHieu, userRole, userQuanNhanId }) {
     const skip = (page - 1) * limit;
     const where = { status: 'APPROVED' };
 
@@ -13,22 +13,35 @@ class UnitAnnualAwardService {
       where.nam = parseInt(year);
     }
 
-    if (donViId) {
-      where.OR = [{ co_quan_don_vi_id: donViId }, { don_vi_truc_thuoc_id: donViId }];
+    if (danhHieu) {
+      where.danh_hieu = danhHieu;
     }
 
-    // Role-based filtering
+    // Role-based filtering - ưu tiên filter manager trước
     if (userRole === 'MANAGER' && userQuanNhanId) {
-      const user = await prisma.quanNhan.findUnique({
+      const managerPersonnel = await prisma.quanNhan.findUnique({
         where: { id: userQuanNhanId },
         select: { co_quan_don_vi_id: true, don_vi_truc_thuoc_id: true },
       });
 
-      if (user?.co_quan_don_vi_id) {
-        where.co_quan_don_vi_id = user.co_quan_don_vi_id;
-      } else if (user?.don_vi_truc_thuoc_id) {
-        where.don_vi_truc_thuoc_id = user.don_vi_truc_thuoc_id;
+      if (managerPersonnel?.co_quan_don_vi_id) {
+        // Manager thuộc cơ quan đơn vị - lấy tất cả đơn vị trực thuộc của cơ quan đó
+        const donViTrucThuocIds = await prisma.donViTrucThuoc.findMany({
+          where: { co_quan_don_vi_id: managerPersonnel.co_quan_don_vi_id },
+          select: { id: true },
+        });
+        const donViTrucThuocIdList = donViTrucThuocIds.map(d => d.id);
+        where.OR = [
+          { co_quan_don_vi_id: managerPersonnel.co_quan_don_vi_id },
+          { don_vi_truc_thuoc_id: { in: donViTrucThuocIdList } },
+        ];
+      } else if (managerPersonnel?.don_vi_truc_thuoc_id) {
+        // Manager thuộc đơn vị trực thuộc - chỉ lấy đơn vị đó
+        where.don_vi_truc_thuoc_id = managerPersonnel.don_vi_truc_thuoc_id;
       }
+    } else if (donViId) {
+      // Chỉ áp dụng filter donViId nếu không phải manager (manager đã được filter ở trên)
+      where.OR = [{ co_quan_don_vi_id: donViId }, { don_vi_truc_thuoc_id: donViId }];
     }
 
     const [awards, total] = await Promise.all([
@@ -100,7 +113,7 @@ class UnitAnnualAwardService {
     const records = await prisma.danhHieuDonViHangNam.findMany({
       where: {
         OR: [{ co_quan_don_vi_id: donViId }, { don_vi_truc_thuoc_id: donViId }],
-        nam: { lte: year-1 },
+        nam: { lte: year - 1 },
         danh_hieu: 'ĐVQT',
       },
       orderBy: { nam: 'desc' },
@@ -122,7 +135,7 @@ class UnitAnnualAwardService {
     const records = await prisma.danhHieuDonViHangNam.findMany({
       where: {
         OR: [{ co_quan_don_vi_id: donViId }, { don_vi_truc_thuoc_id: donViId }],
-        nam: { lte: year-1 },
+        nam: { lte: year - 1 },
         nhan_bkbqp: true,
       },
       orderBy: { nam: 'desc' },

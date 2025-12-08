@@ -17,6 +17,9 @@ import {
   Descriptions,
   Tag,
   Table,
+  Input,
+  Row,
+  Col,
 } from 'antd';
 import {
   UploadOutlined,
@@ -29,6 +32,7 @@ import {
   ExperimentOutlined,
   CheckCircleOutlined,
   ArrowLeftOutlined,
+  EditOutlined,
 } from '@ant-design/icons';
 import Link from 'next/link';
 import type { UploadFile } from 'antd/es/upload/interface';
@@ -75,6 +79,13 @@ interface Personnel {
   };
 }
 
+// Interface để lưu thông tin cấp bậc/chức vụ có thể chỉnh sửa cho mỗi quân nhân
+interface PersonnelAwardInfo {
+  personnelId: string;
+  rank: string; // Cấp bậc tại thời điểm đề xuất
+  position: string; // Chức vụ tại thời điểm đề xuất
+}
+
 export default function CreateProposalPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
@@ -97,6 +108,10 @@ export default function CreateProposalPage() {
   // Step 5: Personnel/Unit details for review
   const [personnelDetails, setPersonnelDetails] = useState<Personnel[]>([]);
   const [unitDetails, setUnitDetails] = useState<any[]>([]);
+
+  // Step 5: Editable rank/position per personnel and note
+  const [personnelAwardInfo, setPersonnelAwardInfo] = useState<PersonnelAwardInfo[]>([]);
+  const [proposalNote, setProposalNote] = useState<string>('');
 
   // Proposal type config
   const proposalTypeConfig: Record<
@@ -171,6 +186,8 @@ export default function CreateProposalPage() {
       setAttachedFiles([]);
       setPersonnelDetails([]);
       setUnitDetails([]);
+      setPersonnelAwardInfo([]);
+      setProposalNote('');
     }
   }, [currentStep]);
 
@@ -183,6 +200,8 @@ export default function CreateProposalPage() {
     setAttachedFiles([]);
     setPersonnelDetails([]);
     setUnitDetails([]);
+    setPersonnelAwardInfo([]);
+    setProposalNote('');
     // Reset về năm hiện tại khi đổi loại đề xuất
     setNam(new Date().getFullYear());
   }, [proposalType]);
@@ -204,6 +223,14 @@ export default function CreateProposalPage() {
       const responses = await Promise.all(promises);
       const personnelData = responses.filter(r => r.data.success).map(r => r.data.data);
       setPersonnelDetails(personnelData);
+
+      // Khởi tạo personnelAwardInfo với cấp bậc/chức vụ từ thông tin quân nhân để manager có thể chỉnh sửa hoặc xóa
+      const initialAwardInfo: PersonnelAwardInfo[] = personnelData.map((p: Personnel) => ({
+        personnelId: p.id,
+        rank: p.cap_bac || '',
+        position: p.ChucVu?.ten_chuc_vu || '',
+      }));
+      setPersonnelAwardInfo(initialAwardInfo);
     } catch (error) {
       console.error('Error fetching personnel details:', error);
     }
@@ -478,6 +505,22 @@ export default function CreateProposalPage() {
         }
       }
 
+      // Validation cho cấp bậc và chức vụ bắt buộc (cho tất cả loại trừ DON_VI_HANG_NAM)
+      if (proposalType !== 'DON_VI_HANG_NAM' && selectedPersonnelIds.length > 0) {
+        const missingInfo = personnelAwardInfo.filter(
+          info => !info.rank || !info.position
+        );
+        if (missingInfo.length > 0) {
+          const missingNames = missingInfo
+            .map(info => personnelDetails.find(p => p.id === info.personnelId)?.ho_ten)
+            .filter(Boolean)
+            .join(', ');
+          antMessage.error(`Vui lòng nhập đầy đủ cấp bậc và chức vụ cho: ${missingNames}`);
+          setLoading(false);
+          return;
+        }
+      }
+
       // Validation cho HC_QKQT: Kiểm tra >= 25 năm phục vụ
       if (proposalType === 'HC_QKQT' && selectedPersonnelIds.length > 0) {
         try {
@@ -547,8 +590,25 @@ export default function CreateProposalPage() {
         formData.append('selected_personnel', JSON.stringify(selectedPersonnelIds));
       }
 
-      formData.append('title_data', JSON.stringify(titleData));
-      console.log('Submitting proposal with title_data:', titleData);
+      // Merge personnelAwardInfo vào titleData để gửi thông tin cấp bậc/chức vụ đã chỉnh sửa
+      const mergedTitleData = titleData.map(t => {
+        const awardInfo = personnelAwardInfo.find(
+          info => info.personnelId === t.personnel_id || info.personnelId === t.personnelId
+        );
+        return {
+          ...t,
+          cap_bac: awardInfo?.rank || t.cap_bac || '',
+          chuc_vu: awardInfo?.position || t.chuc_vu || '',
+        };
+      });
+
+      formData.append('title_data', JSON.stringify(mergedTitleData));
+      console.log('Submitting proposal with title_data:', mergedTitleData);
+
+      // Gửi ghi chú nếu có
+      if (proposalNote.trim()) {
+        formData.append('ghi_chu', proposalNote.trim());
+      }
 
       // Upload các file đính kèm (optional, multiple)
       if (attachedFiles.length > 0) {
@@ -577,6 +637,8 @@ export default function CreateProposalPage() {
       setAttachedFiles([]);
       setPersonnelDetails([]);
       setUnitDetails([]);
+      setPersonnelAwardInfo([]);
+      setProposalNote('');
 
       // Chuyển về trang danh sách đề xuất sau 1 giây
       setTimeout(() => {
@@ -1246,6 +1308,120 @@ export default function CreateProposalPage() {
                 locale={{
                   emptyText: 'Không có dữ liệu',
                 }}
+              />
+            </Card>
+
+            {/* Chỉnh sửa cấp bậc/chức vụ cho từng quân nhân - Trừ DON_VI_HANG_NAM */}
+            {proposalType !== 'DON_VI_HANG_NAM' && personnelDetails.length > 0 && (
+              <Card
+                title={
+                  <Space>
+                    <EditOutlined />
+                    <span>Cấp bậc / Chức vụ <Text type="danger">*</Text></span>
+                  </Space>
+                }
+                style={{ marginTop: 16 }}
+              >
+                <Alert
+                  message="Vui lòng kiểm tra và điền đầy đủ cấp bậc và chức vụ cho từng quân nhân tại thời điểm đề xuất (bắt buộc)."
+                  type="warning"
+                  showIcon
+                  style={{ marginBottom: 16 }}
+                />
+                <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                  {personnelDetails.map((person, index) => {
+                    const awardInfo = personnelAwardInfo.find(
+                      info => info.personnelId === person.id
+                    );
+                    const isMissingRank = !awardInfo?.rank;
+                    const isMissingPosition = !awardInfo?.position;
+                    return (
+                      <Card
+                        key={person.id}
+                        size="small"
+                        style={{
+                          backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                          border: '1px solid rgba(0, 0, 0, 0.06)',
+                        }}
+                      >
+                        <Row gutter={16} align="middle">
+                          <Col span={1}>
+                            <Text strong>{index + 1}.</Text>
+                          </Col>
+                          <Col span={7}>
+                            <Text strong>{person.ho_ten}</Text>
+                            <br />
+                            <Text type="secondary" style={{ fontSize: '12px' }}>
+                              CCCD: {person.cccd}
+                            </Text>
+                          </Col>
+                          <Col span={8}>
+                            <Text type="secondary" style={{ fontSize: '12px', marginBottom: 4, display: 'block' }}>
+                              Cấp bậc <Text type="danger">*</Text>
+                            </Text>
+                            <Input
+                              placeholder="Nhập cấp bậc *"
+                              value={awardInfo?.rank || ''}
+                              status={isMissingRank ? 'error' : undefined}
+                              onChange={e => {
+                                const newValue = e.target.value;
+                                setPersonnelAwardInfo(prev =>
+                                  prev.map(info =>
+                                    info.personnelId === person.id
+                                      ? { ...info, rank: newValue }
+                                      : info
+                                  )
+                                );
+                              }}
+                              style={{ width: '100%' }}
+                            />
+                          </Col>
+                          <Col span={8}>
+                            <Text type="secondary" style={{ fontSize: '12px', marginBottom: 4, display: 'block' }}>
+                              Chức vụ <Text type="danger">*</Text>
+                            </Text>
+                            <Input
+                              placeholder="Nhập chức vụ *"
+                              value={awardInfo?.position || ''}
+                              status={isMissingPosition ? 'error' : undefined}
+                              onChange={e => {
+                                const newValue = e.target.value;
+                                setPersonnelAwardInfo(prev =>
+                                  prev.map(info =>
+                                    info.personnelId === person.id
+                                      ? { ...info, position: newValue }
+                                      : info
+                                  )
+                                );
+                              }}
+                              style={{ width: '100%' }}
+                            />
+                          </Col>
+                        </Row>
+                      </Card>
+                    );
+                  })}
+                </Space>
+              </Card>
+            )}
+
+            {/* Ghi chú */}
+            <Card
+              title={
+                <Space>
+                  <EditOutlined />
+                  <span>Ghi chú (tùy chọn)</span>
+                </Space>
+              }
+              style={{ marginTop: 16 }}
+            >
+              <Input.TextArea
+                placeholder="Nhập ghi chú cho đề xuất này (không bắt buộc)..."
+                value={proposalNote}
+                onChange={e => setProposalNote(e.target.value)}
+                rows={3}
+                maxLength={1000}
+                showCount
               />
             </Card>
           </div>

@@ -142,7 +142,7 @@ export default function NCKHProposalForm({
       align: 'center',
       render: (loai: string) => (
         <Tag color={loai === 'NCKH' ? 'blue' : 'green'}>
-          {loai === 'NCKH' ? 'Nghiên cứu KH' : 'Sáng kiến KN'}
+          {loai === 'NCKH' ? 'Đề tài KH' : 'Sáng kiến KH'}
         </Tag>
       ),
     },
@@ -293,8 +293,8 @@ export default function NCKHProposalForm({
                 popupMatchSelectWidth={false}
                 styles={{ popup: { root: { minWidth: 'max-content' } } }}
               >
-                <Select.Option value="NCKH">Nghiên cứu Khoa học (NCKH)</Select.Option>
-                <Select.Option value="SKKH">Sáng kiến Kinh nghiệm (SKKH)</Select.Option>
+                <Select.Option value="NCKH">Đề tài Khoa học (ĐTKH)</Select.Option>
+                <Select.Option value="SKKH">Sáng kiến Khoa học (SKKH)</Select.Option>
               </Select>
             </Form.Item>
           </div>

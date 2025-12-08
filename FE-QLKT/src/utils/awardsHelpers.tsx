@@ -32,12 +32,28 @@ export const COLUMN_STYLES: {
   noteText: { fontSize: '11px', fontStyle: 'italic' },
 };
 
-// Helper: Render quyết định
-export const renderDecision = (soQuyetDinh: string | null | undefined) =>
+// Helper: Render quyết định (có thể click để tải file)
+export const renderDecision = (
+  soQuyetDinh: string | null | undefined,
+  onDownload?: (soQuyetDinh: string, filePath?: string | null) => void,
+  filePath?: string | null
+) =>
   soQuyetDinh ? (
-    <Text type="secondary" style={COLUMN_STYLES.decisionText}>
-      Số QĐ: {soQuyetDinh}
-    </Text>
+    onDownload ? (
+      <a
+        onClick={e => {
+          e.stopPropagation();
+          onDownload(soQuyetDinh, filePath);
+        }}
+        style={{ ...COLUMN_STYLES.decisionText, cursor: 'pointer', color: '#1890ff' }}
+      >
+        Số QĐ: {soQuyetDinh}
+      </a>
+    ) : (
+      <Text type="secondary" style={COLUMN_STYLES.decisionText}>
+        Số QĐ: {soQuyetDinh}
+      </Text>
+    )
   ) : null;
 
 // Helper: Render danh hiệu item
@@ -45,34 +61,74 @@ export const renderAwardItem = (
   key: string,
   title: string,
   soQuyetDinh: string | null | undefined,
-  isStrong = false
+  isStrong = false,
+  onDownload?: (soQuyetDinh: string, filePath?: string | null) => void,
+  filePath?: string | null
 ) => (
   <div key={key} style={COLUMN_STYLES.item}>
     {isStrong ? <Text strong>{title}</Text> : <Text>{title}</Text>}
-    {renderDecision(soQuyetDinh)}
+    {renderDecision(soQuyetDinh, onDownload, filePath)}
   </div>
 );
 
+export interface RenderAnnualAwardsOptions {
+  onDownload?: (soQuyetDinh: string, filePath?: string | null) => void;
+}
+
 // Helper: Render danh hiệu hằng năm và các bằng khen
-export const renderAnnualAwards = (text: string | null, record: any) => {
+export const renderAnnualAwards = (
+  text: string | null,
+  record: any,
+  options?: RenderAnnualAwardsOptions
+) => {
   const items = [];
+  const onDownload = options?.onDownload;
 
   // Danh hiệu hằng năm
   if (text) {
     const fullName = DANH_HIEU_MAP[text] || text;
-    items.push(renderAwardItem('danh_hieu', fullName, record.so_quyet_dinh, true));
+    items.push(
+      renderAwardItem(
+        'danh_hieu',
+        fullName,
+        record.so_quyet_dinh,
+        true,
+        onDownload,
+        record.file_quyet_dinh
+      )
+    );
   }
 
   // Các bằng khen bổ sung
   const additionalAwards = [
-    { key: 'bkbqp', flag: record.nhan_bkbqp, decision: record.so_quyet_dinh_bkbqp, code: 'BKBQP' },
-    { key: 'cstdtq', flag: record.nhan_cstdtq, decision: record.so_quyet_dinh_cstdtq, code: 'CSTDTQ' },
-    { key: 'bkttcp', flag: record.nhan_bkttcp, decision: record.so_quyet_dinh_bkttcp, code: 'BKTTCP' },
+    {
+      key: 'bkbqp',
+      flag: record.nhan_bkbqp,
+      decision: record.so_quyet_dinh_bkbqp,
+      code: 'BKBQP',
+      filePath: record.file_quyet_dinh_bkbqp,
+    },
+    {
+      key: 'cstdtq',
+      flag: record.nhan_cstdtq,
+      decision: record.so_quyet_dinh_cstdtq,
+      code: 'CSTDTQ',
+      filePath: record.file_quyet_dinh_cstdtq,
+    },
+    {
+      key: 'bkttcp',
+      flag: record.nhan_bkttcp,
+      decision: record.so_quyet_dinh_bkttcp,
+      code: 'BKTTCP',
+      filePath: record.file_quyet_dinh_bkttcp,
+    },
   ];
 
-  additionalAwards.forEach(({ key, flag, decision, code }) => {
+  additionalAwards.forEach(({ key, flag, decision, code, filePath }) => {
     if (flag && decision) {
-      items.push(renderAwardItem(key, DANH_HIEU_MAP[code] || code, decision));
+      items.push(
+        renderAwardItem(key, DANH_HIEU_MAP[code] || code, decision, false, onDownload, filePath)
+      );
     }
   });
 

@@ -25,22 +25,46 @@ class AnnualRewardController {
       if (nam) where.nam = parseInt(nam);
       if (danh_hieu) where.danh_hieu = danh_hieu;
 
+      // Filter theo họ tên
+      const quanNhanFilter = {};
+      if (ho_ten) {
+        quanNhanFilter.ho_ten = { contains: ho_ten, mode: 'insensitive' };
+      }
+
       // Phân quyền: Manager chỉ xem được dữ liệu đơn vị mình
       const userRole = req.user?.role;
-      const userId = req.user?.id;
-      if (userRole === 'MANAGER' && userId) {
-        const user = await prisma.quanNhan.findUnique({
-          where: { id: userId },
+      const userQuanNhanId = req.user?.quan_nhan_id;
+      if (userRole === 'MANAGER' && userQuanNhanId) {
+        const managerPersonnel = await prisma.quanNhan.findUnique({
+          where: { id: userQuanNhanId },
           select: { co_quan_don_vi_id: true, don_vi_truc_thuoc_id: true },
         });
-        if (user) {
-          const unitId = user.co_quan_don_vi_id || user.don_vi_truc_thuoc_id;
-          if (unitId) {
+        if (managerPersonnel) {
+          if (managerPersonnel.co_quan_don_vi_id) {
+            // Manager thuộc cơ quan đơn vị - lấy tất cả quân nhân trong cơ quan đơn vị và các đơn vị trực thuộc
+            const donViTrucThuocIds = await prisma.donViTrucThuoc.findMany({
+              where: { co_quan_don_vi_id: managerPersonnel.co_quan_don_vi_id },
+              select: { id: true },
+            });
+            const donViTrucThuocIdList = donViTrucThuocIds.map(d => d.id);
             where.QuanNhan = {
-              OR: [{ co_quan_don_vi_id: unitId }, { don_vi_truc_thuoc_id: unitId }],
+              ...quanNhanFilter,
+              OR: [
+                { co_quan_don_vi_id: managerPersonnel.co_quan_don_vi_id },
+                { don_vi_truc_thuoc_id: { in: donViTrucThuocIdList } },
+              ],
+            };
+          } else if (managerPersonnel.don_vi_truc_thuoc_id) {
+            // Manager thuộc đơn vị trực thuộc - chỉ lấy quân nhân trong đơn vị đó
+            where.QuanNhan = {
+              ...quanNhanFilter,
+              don_vi_truc_thuoc_id: managerPersonnel.don_vi_truc_thuoc_id,
             };
           }
         }
+      } else if (Object.keys(quanNhanFilter).length > 0) {
+        // Nếu không phải manager nhưng có filter ho_ten
+        where.QuanNhan = quanNhanFilter;
       }
 
       const [awards, total] = await Promise.all([
@@ -193,18 +217,9 @@ class AnnualRewardController {
   async deleteAnnualReward(req, res) {
     try {
       const { id } = req.params;
+      const adminUsername = req.user?.username || 'Admin';
 
-      const result = await annualRewardService.deleteAnnualReward(id);
-
-      // Tự động cập nhật lại hồ sơ sau khi xóa danh hiệu
-      if (result.personnelId) {
-        try {
-          await profileService.recalculateAnnualProfile(result.personnelId);
-          console.log(`✅ Auto-recalculated profile for personnel ${result.personnelId}`);
-        } catch (recalcError) {
-          console.error(`⚠️ Failed to auto-recalculate profile:`, recalcError.message);
-        }
-      }
+      const result = await annualRewardService.deleteAnnualReward(id, adminUsername);
 
       return res.status(200).json({
         success: true,

@@ -12,6 +12,7 @@ import {
   ConfigProvider,
   App,
   theme as antdTheme,
+  Spin,
 } from 'antd';
 import {
   DashboardOutlined,
@@ -284,6 +285,11 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
           label: <Link href="/manager/units">Khen thưởng đơn vị</Link>,
         },
         {
+          key: 'adhoc-awards',
+          icon: <TrophyOutlined />,
+          label: <Link href="/manager/adhoc-awards">Khen thưởng đột xuất</Link>,
+        },
+        {
           key: 'system-logs',
           icon: <FileTextOutlined />,
           label: <Link href="/manager/system-logs">Nhật ký hệ thống</Link>,
@@ -515,8 +521,9 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
                           {
                             key: 'loading',
                             label: (
-                              <div className="text-center py-8 text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 rounded-lg">
-                                <span className="text-sm font-medium">Đang tải...</span>
+                              <div className="text-center py-12 px-6 min-w-[320px] max-w-[420px] text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 rounded-lg">
+                                <Spin size="large" className="mb-3" />
+                                <div className="text-sm font-medium">Đang tải thông báo...</div>
                               </div>
                             ),
                           },
@@ -526,8 +533,16 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
                           {
                             key: 'empty',
                             label: (
-                              <div className="text-center py-8 text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 rounded-lg">
-                                <span className="text-sm font-medium">Không có thông báo</span>
+                              <div className="text-center py-12 px-6 min-w-[320px] max-w-[420px]">
+                                <div className="flex flex-col items-center justify-center">
+                                  <BellOutlined className="text-4xl text-gray-300 dark:text-gray-600 mb-4" />
+                                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                                    Không có thông báo
+                                  </p>
+                                  <p className="text-xs text-gray-400 dark:text-gray-500">
+                                    Các thông báo mới sẽ xuất hiện ở đây
+                                  </p>
+                                </div>
                               </div>
                             ),
                           },
@@ -565,8 +580,8 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
                               <div
                                 className={`max-w-xs cursor-pointer p-4 rounded-lg transition-all duration-200 mx-2 mb-2 ${
                                   notif.is_read
-                                    ? 'bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700'
-                                    : 'bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 border-l-4 border-blue-500 dark:border-blue-400 shadow-sm'
+                                    ? 'bg-gray-50 dark:bg-gray-700/60 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600'
+                                    : 'bg-blue-50 dark:bg-gray-700/80 hover:bg-blue-100 dark:hover:bg-gray-600 border-l-4 border-blue-500 dark:border-blue-400 shadow-sm'
                                 }`}
                                 onClick={() => {
                                   handleMarkAsRead(notif.id, notif.is_read, notif.link);
@@ -574,7 +589,7 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
                               >
                                 <div className="flex items-start gap-3">
                                   {!notif.is_read && (
-                                    <div className="w-2.5 h-2.5 bg-blue-500 dark:bg-blue-400 rounded-full mt-1.5 flex-shrink-0 animate-pulse"></div>
+                                    <div className="w-2.5 h-2.5 bg-blue-500 dark:bg-blue-300 rounded-full mt-1.5 flex-shrink-0 animate-pulse"></div>
                                   )}
                                   {notif.is_read && (
                                     <div className="w-2.5 h-2.5 mt-1.5 flex-shrink-0"></div>
@@ -590,7 +605,7 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
                                       {notif.title}
                                     </p>
                                     <p
-                                      className={`text-sm mt-1.5 leading-relaxed line-clamp-2 ${
+                                      className={`text-sm mt-1.5 leading-relaxed ${
                                         notif.is_read
                                           ? 'text-gray-600 dark:text-gray-400'
                                           : 'text-gray-800 dark:text-gray-200'
@@ -609,7 +624,7 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
                                         <span>{formatNotificationTime(notif.created_at)}</span>
                                       </p>
                                       {notif.is_read && (
-                                        <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500 px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">
+                                        <span className="text-[10px] font-medium text-gray-400 dark:text-gray-400 px-2 py-0.5 bg-gray-100 dark:bg-gray-600 rounded">
                                           Đã đọc
                                         </span>
                                       )}
@@ -628,7 +643,7 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
                       loadNotifications();
                     }
                   }}
-                  overlayStyle={{ maxWidth: '420px', marginTop: '-8px' }}
+                  overlayStyle={{ maxWidth: '420px', marginTop: '-35px' }}
                   overlayClassName="notification-dropdown"
                 >
                   <div className="relative cursor-pointer group inline-block p-2 -m-2 rounded-lg">

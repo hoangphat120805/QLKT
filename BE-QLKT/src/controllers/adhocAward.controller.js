@@ -1,4 +1,28 @@
 const adhocAwardService = require('../services/adhocAward.service');
+const { prisma } = require('../models');
+
+/**
+ * Helper: Get manager's unit info
+ */
+async function getManagerUnitInfo(quanNhanId) {
+  if (!quanNhanId) return null;
+  const managerPersonnel = await prisma.quanNhan.findUnique({
+    where: { id: quanNhanId },
+    select: { co_quan_don_vi_id: true, don_vi_truc_thuoc_id: true },
+  });
+  return managerPersonnel;
+}
+
+/**
+ * Helper: Get all subordinate unit IDs for a co_quan_don_vi
+ */
+async function getSubordinateUnitIds(coQuanDonViId) {
+  const donViTrucThuocList = await prisma.donViTrucThuoc.findMany({
+    where: { co_quan_don_vi_id: coQuanDonViId },
+    select: { id: true },
+  });
+  return donViTrucThuocList.map(d => d.id);
+}
 
 class AdhocAwardController {
   /**
@@ -87,20 +111,54 @@ class AdhocAwardController {
   /**
    * GET /api/adhoc-awards
    * Get all ad-hoc awards with filters
-   * Query: type?, year?, personnelId?, unitId?
+   * Query: type?, year?, personnelId?, unitId?, ho_ten?
+   * Manager only sees awards for their unit
    */
   async getAdhocAwards(req, res) {
     try {
-      const { type, year, personnelId, unitId, page = 1, limit = 20 } = req.query;
+      const { type, year, personnelId, unitId, ho_ten, page = 1, limit = 1000 } = req.query;
+      const userRole = req.user?.role;
+      const userQuanNhanId = req.user?.quan_nhan_id;
 
-      const result = await adhocAwardService.getAdhocAwards({
+      // Build filter options
+      const filterOptions = {
         type,
         year: year ? parseInt(year) : undefined,
         personnelId,
         unitId,
+        ho_ten,
         page: parseInt(page),
         limit: parseInt(limit),
-      });
+      };
+
+      // For Manager, filter by their unit
+      if (userRole === 'MANAGER') {
+        if (!userQuanNhanId) {
+          return res.status(403).json({
+            success: false,
+            message: 'Không tìm thấy thông tin quân nhân',
+          });
+        }
+
+        const managerPersonnel = await getManagerUnitInfo(userQuanNhanId);
+        if (!managerPersonnel) {
+          return res.status(403).json({
+            success: false,
+            message: 'Không tìm thấy thông tin đơn vị',
+          });
+        }
+
+        if (managerPersonnel.co_quan_don_vi_id) {
+          filterOptions.managerCoQuanId = managerPersonnel.co_quan_don_vi_id;
+          filterOptions.managerDonViTrucThuocIds = await getSubordinateUnitIds(
+            managerPersonnel.co_quan_don_vi_id
+          );
+        } else if (managerPersonnel.don_vi_truc_thuoc_id) {
+          filterOptions.managerDonViTrucThuocId = managerPersonnel.don_vi_truc_thuoc_id;
+        }
+      }
+
+      const result = await adhocAwardService.getAdhocAwards(filterOptions);
 
       return res.status(200).json({
         success: true,
@@ -187,8 +245,9 @@ class AdhocAwardController {
   async deleteAdhocAward(req, res) {
     try {
       const { id } = req.params;
+      const adminId = req.user.id;
 
-      await adhocAwardService.deleteAdhocAward(id);
+      await adhocAwardService.deleteAdhocAward(id, adminId);
 
       return res.status(200).json({
         success: true,

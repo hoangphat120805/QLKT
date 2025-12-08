@@ -99,7 +99,7 @@ class ProposalController {
       }
 
       // Lấy title_data từ body
-      const { title_data, selected_personnel, nam } = req.body;
+      const { title_data, selected_personnel, nam, ghi_chu } = req.body;
 
       if (!title_data) {
         return res.status(400).json({
@@ -128,7 +128,8 @@ class ProposalController {
         so_quyet_dinh,
         userId,
         type,
-        nam
+        nam,
+        ghi_chu
       );
 
       // Gửi thông báo cho tất cả ADMIN

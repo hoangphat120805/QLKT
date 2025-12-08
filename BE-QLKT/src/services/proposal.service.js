@@ -710,7 +710,8 @@ class ProposalService {
     soQuyetDinh,
     userId,
     type = 'CA_NHAN_HANG_NAM',
-    nam
+    nam,
+    ghiChu = null
   ) {
     try {
       // Lấy thông tin user và đơn vị
@@ -1721,7 +1722,7 @@ class ProposalService {
         data_nien_han: dataNienHan,
         data_cong_hien: dataCongHien,
         files_attached: filesInfo.length > 0 ? filesInfo : null,
-        ghi_chu: null,
+        ghi_chu: ghiChu || null,
       };
 
       if (isCoQuanDonVi) {

@@ -1,7 +1,9 @@
 const router = require('express').Router();
 const multer = require('multer');
 const commemorativeMedalController = require('../controllers/commemorativeMedal.controller');
-const { verifyToken, checkRole } = require('../middlewares/auth');
+const { verifyToken, checkRole, requireAdmin } = require('../middlewares/auth');
+const { auditLog } = require('../middlewares/auditLog');
+const { getLogDescription, getResourceId } = require('../helpers/auditLogHelper');
 
 // Cấu hình multer cho file upload
 const upload = multer({
@@ -90,6 +92,24 @@ router.get(
   verifyToken,
   checkRole(['ADMIN', 'MANAGER', 'USER']),
   commemorativeMedalController.getByPersonnelId
+);
+
+/**
+ * @route   DELETE /api/commemorative-medals/:id
+ * @desc    Xóa khen thưởng KNC VSNXD (không xóa đề xuất)
+ * @access  ADMIN
+ */
+router.delete(
+  '/:id',
+  verifyToken,
+  requireAdmin,
+  auditLog({
+    action: 'DELETE',
+    resource: 'commemorative-medals',
+    getDescription: getLogDescription('commemorative-medals', 'DELETE'),
+    getResourceId: getResourceId.fromParams('id'),
+  }),
+  commemorativeMedalController.deleteAward
 );
 
 module.exports = router;

@@ -490,7 +490,7 @@ export function AccountCreateForm() {
 
                 return (
                   <FormItem>
-                    <FormLabel>Chức vụ *</FormLabel>
+                    <FormLabel>Chức vụ</FormLabel>
                     <Select
                       onValueChange={value => field.onChange(value)}
                       value={field.value}

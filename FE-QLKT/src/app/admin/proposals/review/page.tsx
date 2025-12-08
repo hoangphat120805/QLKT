@@ -87,7 +87,7 @@ export default function ProposalReviewPage() {
       HC_QKQT: 'Huy chương Quân kỳ Quyết thắng',
       KNC_VSNXD_QDNDVN: 'Kỷ niệm chương VSNXD QĐNDVN',
       CONG_HIEN: 'Cống hiến',
-      NCKH: 'Nghiên cứu khoa học',
+      NCKH: 'ĐTKH/SKKH',
       DOT_XUAT: 'Đột xuất',
     };
     return loaiDeXuat ? typeMap[loaiDeXuat] || loaiDeXuat : '-';

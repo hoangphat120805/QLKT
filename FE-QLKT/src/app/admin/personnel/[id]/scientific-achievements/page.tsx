@@ -335,7 +335,7 @@ export default function ScientificAchievementsPage() {
               popupMatchSelectWidth={false}
               styles={{ popup: { root: { minWidth: 'max-content' } } }}
             >
-              <Select.Option value="NCKH">Nghiên cứu khoa học (NCKH)</Select.Option>
+              <Select.Option value="NCKH">Đề tài khoa học (ĐTKH)</Select.Option>
               <Select.Option value="SKKH">Sáng kiến khoa học (SKKH)</Select.Option>
             </Select>
           </Form.Item>

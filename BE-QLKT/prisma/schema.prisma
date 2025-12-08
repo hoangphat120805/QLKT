@@ -300,11 +300,12 @@ model KhenThuongHCCSVV {
 // 13. Bảng Khen thưởng Đột xuất (OUTPUT)
 model KhenThuongDotXuat {
   id                     String   @id @default(cuid()) @db.VarChar(30)
-  loai                   String   @db.VarChar(20) // CA_NHAN, TAP_THE
-  quan_nhan_id           String?  @db.VarChar(30) // ID quân nhân (khi loai = CA_NHAN)
-  co_quan_don_vi_id      String?  @db.VarChar(30) // ID cơ quan đơn vị (khi loai = TAP_THE và don_vi_type = CO_QUAN_DON_VI)
-  don_vi_truc_thuoc_id   String?  @db.VarChar(30) // ID đơn vị trực thuộc (khi loai = TAP_THE và don_vi_type = DON_VI_TRUC_THUOC)
-  hinh_thuc_khen_thuong  String   @db.VarChar(255) // Ví dụ: "Giấy khen của abc", "Bằng khen của def"
+  loai                   String   @default("KHEN_THUONG_DOT_XUAT") @db.VarChar(30) // KHEN_THUONG_DOT_XUAT
+  doi_tuong              String   @default("CA_NHAN") @db.VarChar(20) // CA_NHAN, TAP_THE - để phân biệt đối tượng
+  quan_nhan_id           String?  @db.VarChar(30) // ID quân nhân (khi doi_tuong = CA_NHAN)
+  co_quan_don_vi_id      String?  @db.VarChar(30) // ID cơ quan đơn vị (khi doi_tuong = TAP_THE và don_vi_type = CO_QUAN_DON_VI)
+  don_vi_truc_thuoc_id   String?  @db.VarChar(30) // ID đơn vị trực thuộc (khi doi_tuong = TAP_THE và don_vi_type = DON_VI_TRUC_THUOC)
+  hinh_thuc_khen_thuong  String   @db.VarChar(255) // Ví dụ: "Giấy khen của HV", "Bằng khen của TC"
   nam                    Int // Năm nhận khen thưởng
   cap_bac                String?  @db.VarChar(50) // Cấp bậc tại thời điểm được đề xuất (cho CA_NHAN)
   chuc_vu                String?  @db.VarChar(255) // Chức vụ tại thời điểm được đề xuất (cho CA_NHAN, text tự do)
