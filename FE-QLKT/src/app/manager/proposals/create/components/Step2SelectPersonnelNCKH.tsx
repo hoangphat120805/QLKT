@@ -133,28 +133,9 @@ export default function Step2SelectPersonnelNCKH({
       title: 'Họ và tên',
       dataIndex: 'ho_ten',
       key: 'ho_ten',
-      width: 250,
+      width: 200,
       align: 'center',
-      render: (text: string, record: Personnel) => {
-        const donViTrucThuoc = record.DonViTrucThuoc?.ten_don_vi;
-        const coQuanDonVi =
-          record.CoQuanDonVi?.ten_don_vi || record.DonViTrucThuoc?.CoQuanDonVi?.ten_don_vi;
-        const parts = [];
-        if (donViTrucThuoc) parts.push(donViTrucThuoc);
-        if (coQuanDonVi) parts.push(coQuanDonVi);
-        const unitInfo = parts.length > 0 ? parts.join(', ') : null;
-
-        return (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Text strong>{text}</Text>
-            {unitInfo && (
-              <Text type="secondary" style={{ fontSize: '12px', marginTop: '4px' }}>
-                {unitInfo}
-              </Text>
-            )}
-          </div>
-        );
-      },
+      render: (text: string) => <Text strong>{text}</Text>,
     },
     {
       title: 'Ngày sinh',
