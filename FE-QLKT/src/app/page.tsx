@@ -2,18 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  Trophy,
-  Users,
-  BarChart3,
-  FileText,
-  Award,
-  Star,
-  CheckCircle,
-  ArrowRight,
-  Shield,
-} from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
+import { TrophyOutlined } from '@ant-design/icons';
 
 export default function HomePage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -59,333 +50,291 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-900 via-slate-900 to-slate-950">
+        <div className="relative">
+          <div className="w-16 h-16 border-4 border-blue-400/30 rounded-full animate-spin border-t-blue-400"></div>
+        </div>
       </div>
     );
   }
 
+  const features = [
+    {
+      icon: (
+        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      ),
+      title: 'Hồ sơ quân nhân',
+      desc: 'Thông tin, cấp bậc, cơ cấu đơn vị tập trung'
+    },
+    {
+      icon: (
+        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+        </svg>
+      ),
+      title: 'Khen thưởng',
+      desc: 'Danh hiệu, quyết định, minh chứng file tập trung'
+    },
+    {
+      icon: (
+        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      ),
+      title: 'Đề xuất khen thưởng',
+      desc: 'Luồng phê duyệt rõ ràng, cảnh báo trùng lặp'
+    },
+    {
+      icon: (
+        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+      ),
+      title: 'Báo cáo & thống kê',
+      desc: 'Số liệu khen thưởng, tình trạng đề xuất, tiến độ xử lý'
+    },
+  ];
+
   return (
     <div
-      className="min-h-screen"
+      className="min-h-screen relative overflow-hidden"
       style={{
-        background: `linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 58, 138, 0.8) 30%, rgba(79, 70, 229, 0.7) 70%, rgba(147, 51, 234, 0.6) 100%), url('/login-bg.jpg')`,
+        backgroundImage:
+          'linear-gradient(120deg, rgba(8, 47, 73, 0.75), rgba(15, 23, 42, 0.88)), url("/BG%20HVKHQS.jpg")',
         backgroundSize: 'cover',
-        backgroundPosition: 'center center',
-        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'center',
         backgroundAttachment: 'fixed',
       }}
     >
-      {/* Header */}
-      <header className="fixed top-0 w-full z-50 bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 backdrop-blur-md border-b-2 border-white/30 shadow-lg">
-        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-2 hover:cursor-pointer transition-all duration-300 hover:opacity-80">
-              <Image
-                src="/logo-msa.png"
-                alt="Logo"
-                width={48}
-                height={48}
-                className="my-1 transition-all duration-300 hover:scale-105 hover:cursor-pointer"
-                priority
-              />
-              <span className="text-xl font-bold text-blue-100 hover:cursor-pointer transition-all duration-300 hover:text-white drop-shadow-lg">
-                HỌC VIỆN KHOA HỌC QUÂN SỰ
-              </span>
-            </div>
-            <div className="hidden md:flex items-center space-x-8">
-              <a
-                href="#features"
-                className="text-blue-100 hover:text-white transition-colors font-bold drop-shadow-md"
-              >
-                Tính năng
-              </a>
-              <a
-                href="#about"
-                className="text-blue-100 hover:text-white transition-colors font-bold drop-shadow-md"
-              >
-                Giới thiệu
-              </a>
-              <a
-                href="#contact"
-                className="text-blue-100 hover:text-white transition-colors font-bold drop-shadow-md"
-              >
-                Liên hệ
-              </a>
-              <button
-                onClick={handleRedirect}
-                className="bg-white text-blue-600 px-4 py-2 rounded-full font-black hover:bg-white/90 transition-colors shadow-md"
-              >
-                {isLoggedIn ? 'Quản lý Khen thưởng' : 'Đăng nhập'}
-              </button>
-            </div>
-          </div>
-        </nav>
-      </header>
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-30">
+        <div
+          className="absolute top-0 left-0 w-full h-full"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+          }}
+        />
+      </div>
 
-      {/* Hero Section */}
-      <section id="about" className="pt-24 pb-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="text-white">
-              <h1 className="text-3xl md:text-5xl font-bold leading-tight mb-6 drop-shadow-lg">
+      {/* Floating Elements */}
+      <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/20 rounded-full blur-3xl"></div>
+      <div className="absolute bottom-20 right-10 w-96 h-96 bg-indigo-500/15 rounded-full blur-3xl"></div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-600/5 rounded-full blur-3xl"></div>
+
+      {/* Main Content - Split Layout */}
+      <div className="relative z-10 min-h-screen flex">
+        {/* Left Side - Branding & Info */}
+        <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 xl:p-16">
+          {/* Logo */}
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-white/20 rounded-2xl blur-xl"></div>
+                  <Image
+                    src="/logo-msa.png"
+                    alt="Logo"
+                    width={64}
+                    height={64}
+                    className="relative rounded-2xl"
+                    priority
+                  />
+                </div>
+                <h2 className="text-xl font-bold text-white">HỌC VIỆN KHOA HỌC QUÂN SỰ</h2>
+              </div>
+
+          {/* Main Content */}
+          <div className="space-y-8">
+            <div>
+              <h1 className="text-5xl xl:text-6xl font-bold text-white leading-tight mb-6">
                 Hệ thống
                 <br />
-                <span className="bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent drop-shadow-md">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-400">
                   Quản lý Khen thưởng
                 </span>
               </h1>
-              <p className="text-lg md:text-xl text-white mb-8 leading-relaxed drop-shadow-md font-medium">
-                Giải pháp công nghệ tiên tiến cho việc quản lý khen thưởng, danh hiệu và thành tích
-                khoa học toàn diện tại Học viện Khoa học Quân sự. Tối ưu hóa quy trình hành chính,
-                nâng cao hiệu quả công tác khen thưởng.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <button
-                  onClick={handleRedirect}
-                  className="bg-white text-blue-600 px-8 py-4 rounded-full font-semibold hover:bg-white/90 transition-all hover:scale-105 flex items-center justify-center group shadow-lg"
-                >
-                  {isLoggedIn ? 'Quản lý Khen thưởng' : 'Truy cập hệ thống'}
-                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                </button>
-                <a
-                  href="#features"
-                  className="border-2 border-white text-white px-8 py-4 rounded-full font-semibold hover:bg-white hover:text-blue-600 transition-all hover:scale-105 flex items-center justify-center backdrop-blur-sm"
-                >
-                  Khám phá tính năng
-                </a>
-              </div>
-            </div>
-            <div className="relative">
-              <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-8 border border-white/20 shadow-2xl">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white/20 rounded-2xl p-6 text-center backdrop-blur-sm">
-                    <Users className="h-12 w-12 text-white mx-auto mb-2" />
-                    <div className="text-2xl font-bold text-white">100+</div>
-                    <div className="text-white/80 text-sm">Quân nhân</div>
-                  </div>
-                  <div className="bg-white/20 rounded-2xl p-6 text-center backdrop-blur-sm">
-                    <Trophy className="h-12 w-12 text-white mx-auto mb-2" />
-                    <div className="text-2xl font-bold text-white">500+</div>
-                    <div className="text-white/80 text-sm">Khen thưởng</div>
-                  </div>
-                  <div className="bg-white/20 rounded-2xl p-6 text-center backdrop-blur-sm">
-                    <CheckCircle className="h-12 w-12 text-white mx-auto mb-2" />
-                    <div className="text-2xl font-bold text-white">99%</div>
-                    <div className="text-white/80 text-sm">Độ chính xác</div>
-                  </div>
-                  <div className="bg-white/20 rounded-2xl p-6 text-center backdrop-blur-sm">
-                    <Star className="h-12 w-12 text-white mx-auto mb-2" />
-                    <div className="text-2xl font-bold text-white">24/7</div>
-                    <div className="text-white/80 text-sm">Hỗ trợ</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section id="features" className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="bg-gradient-to-br from-slate-100 via-blue-100 to-indigo-100 rounded-3xl p-8 md:p-12 border-2 border-blue-200 shadow-2xl">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-4 !text-gray-900">
-                Tính năng vượt trội
-              </h2>
-              <p
-                className="text-base md:text-lg max-w-4xl mx-auto font-semibold"
-                style={{ color: 'rgb(107, 108, 110)' }}
-              >
-                Khám phá hệ sinh thái tính năng toàn diện, được thiết kế để tối ưu hóa hiệu quả quản
-                lý khen thưởng tại Học viện Khoa học Quân sự
+              <p className="text-xl text-blue-100/80 leading-relaxed max-w-lg">
+                Giải pháp số hóa toàn diện cho công tác quản lý khen thưởng, danh hiệu và thành tích khoa học.
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {[
-                {
-                  icon: Users,
-                  title: 'Quản lý quân nhân',
-                  description:
-                    'Hệ thống lưu trữ và quản lý thông tin quân nhân toàn diện với bảo mật cao và khả năng truy xuất nhanh chóng.',
-                  color: 'bg-blue-600',
-                },
-                {
-                  icon: Trophy,
-                  title: 'Quản lý khen thưởng',
-                  description:
-                    'Theo dõi và quản lý các danh hiệu khen thưởng, thành tích hàng năm và lịch sử khen thưởng của quân nhân.',
-                  color: 'bg-emerald-600',
-                },
-                {
-                  icon: Award,
-                  title: 'Quản lý danh hiệu hàng năm',
-                  description:
-                    'Quản lý các danh hiệu khen thưởng hàng năm, phân loại và đánh giá thành tích một cách khoa học.',
-                  color: 'bg-violet-600',
-                },
-                {
-                  icon: FileText,
-                  title: 'Quản lý đề xuất khen thưởng',
-                  description:
-                    'Xử lý các đề xuất khen thưởng từ cấp đơn vị, theo dõi quy trình phê duyệt và quản lý hồ sơ đề xuất.',
-                  color: 'bg-amber-600',
-                },
-                {
-                  icon: BarChart3,
-                  title: 'Thống kê & báo cáo',
-                  description:
-                    'Tạo lập báo cáo thống kê đa chiều về tình hình khen thưởng, thành tích và phân tích dữ liệu chuyên sâu.',
-                  color: 'bg-red-600',
-                },
-                {
-                  icon: Shield,
-                  title: 'Phân quyền đa cấp',
-                  description:
-                    'Hệ thống phân quyền linh hoạt với Super Admin, Admin, Manager và User đảm bảo an toàn thông tin.',
-                  color: 'bg-indigo-600',
-                },
-              ].map((feature, index) => (
+            {/* Features Grid */}
+            <div className="grid grid-cols-2 gap-4">
+              {features.map((feature, index) => (
                 <div
                   key={index}
-                  className="group bg-blue-50/80 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border border-blue-200/50 backdrop-blur-sm"
+                  className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border border-white/10 hover:bg-white/10 transition-all group"
                 >
-                  <div
-                    className={`${feature.color} w-14 h-14 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg`}
-                  >
-                    <feature.icon className="h-7 w-7 text-white" />
+                  <div className="text-blue-400 mb-3 group-hover:scale-110 group-hover:text-cyan-400 transition-all">
+                    {feature.icon}
                   </div>
-                  <h3 className="text-xl font-black text-black mb-3 !text-black">
-                    {feature.title}
-                  </h3>
-                  <p className="leading-relaxed font-bold" style={{ color: 'rgb(107, 108, 110)' }}>
-                    {feature.description}
-                  </p>
+                  <h3 className="text-white font-semibold mb-1">{feature.title}</h3>
+                  <p className="text-blue-200/60 text-sm">{feature.desc}</p>
                 </div>
               ))}
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Stats Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-8 md:p-12 border border-white/20">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl font-bold text-white mb-4 drop-shadow-lg">
-                Hiệu quả được chứng minh
-              </h2>
-              <p className="text-lg md:text-xl text-white max-w-3xl mx-auto font-semibold drop-shadow-md">
-                Những chỉ số thực tế khẳng định độ tin cậy và hiệu quả vượt trội của hệ thống
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Stats Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {[
-                {
-                  number: '100+',
-                  label: 'Quân nhân được quản lý',
-                  icon: Users,
-                },
-                {
-                  number: '500+',
-                  label: 'Khen thưởng đã xử lý',
-                  icon: Trophy,
-                },
-                {
-                  number: '99%',
-                  label: 'Độ tin cậy hệ thống',
-                  icon: CheckCircle,
-                },
-                { number: '24/7', label: 'Hỗ trợ kỹ thuật', icon: Star },
+                { value: '100+', label: 'Quân nhân' },
+                { value: '500+', label: 'Khen thưởng' },
+                { value: '99%', label: 'Độ chính xác' },
               ].map((stat, index) => (
-                <div key={index} className="text-center group">
-                  <div className="bg-white/20 rounded-2xl p-6 mb-4 group-hover:bg-white/30 transition-colors">
-                    <stat.icon className="h-12 w-12 text-white mx-auto mb-4" />
-                    <div className="text-4xl font-bold text-white mb-2 drop-shadow-lg">
-                      {stat.number}
-                    </div>
-                    <div className="text-white font-semibold drop-shadow-md">{stat.label}</div>
+                <div
+                  key={index}
+                  className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-4 shadow-lg"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-white/0" />
+                  <div className="relative">
+                    <div className="text-3xl font-bold text-white leading-none mb-1">{stat.value}</div>
+                    <div className="text-blue-300/70 text-sm">{stat.label}</div>
                   </div>
                 </div>
               ))}
             </div>
           </div>
+
+          {/* Footer */}
+          <div className="text-blue-300/50 text-sm">
+            © 2025 Học viện Khoa học Quân sự
+          </div>
         </div>
-      </section>
 
-      {/* Footer */}
-      <footer
-        id="contact"
-        className="bg-black/30 backdrop-blur-sm border-t border-white/20 py-16 px-4 sm:px-6 lg:px-8"
-      >
-        <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-3 gap-8 mb-8">
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <Image src="/logo-msa.png" alt="Logo" width={32} height={32} className="h-8 w-8" />
-                <span className="text-xl font-bold text-white">Học viện Khoa học Quân sự</span>
-              </div>
-              <p className="text-white leading-relaxed font-medium drop-shadow-sm">
-                Nền tảng quản lý khen thưởng hàng đầu, cung cấp giải pháp công nghệ toàn diện cho
-                Học viện Khoa học Quân sự trong kỷ nguyên chuyển đổi số.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-bold text-white mb-4 drop-shadow-sm">Điều hướng</h3>
-              <div className="space-y-2">
-                {[
-                  {
-                    label: isLoggedIn ? 'Quản lý Khen thưởng' : 'Truy cập hệ thống',
-                    href: '#',
-                    onClick: handleRedirect,
-                  },
-                  { label: 'Tính năng', href: '#features' },
-                  { label: 'Về chúng tôi', href: '#about' },
-                  { label: 'Liên hệ', href: '#contact' },
-                ].map((link, index) => (
-                  <a
-                    key={index}
-                    href={link.href}
-                    onClick={
-                      link.onClick
-                        ? e => {
-                            e.preventDefault();
-                            link.onClick?.();
-                          }
-                        : undefined
-                    }
-                    className="block text-white hover:text-blue-300 transition-colors font-medium drop-shadow-sm"
-                  >
-                    {link.label}
-                  </a>
-                ))}
+        {/* Right Side - Login/CTA Card */}
+        <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
+          <div className="w-full max-w-md">
+            {/* Mobile Logo */}
+            <div className="lg:hidden flex items-center justify-center gap-3 mb-10">
+              <Image
+                src="/logo-msa.png"
+                alt="Logo"
+                width={56}
+                height={56}
+                className="rounded-xl"
+                priority
+              />
+              <div>
+                <h2 className="text-lg font-bold text-white">HỌC VIỆN KHOA HỌC QUÂN SỰ</h2>
               </div>
             </div>
 
-            <div>
-              <h3 className="text-lg font-bold text-white mb-4 drop-shadow-sm">Hỗ trợ</h3>
-              <div className="space-y-2 text-white font-medium drop-shadow-sm">
-                <p>Email: support@hvkhqs.edu.vn</p>
-                <p>Điện thoại: (+84) 12345678</p>
-                <p>
-                  Địa chỉ: 322E Lê Trọng Tấn, Phường Phương Liệt, Quận Thanh Xuân, Thành phố Hà Nội
+            {/* Card */}
+              <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 sm:p-10 border border-white/20 shadow-2xl">
+                <div className="text-center mb-8">
+                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 via-cyan-500 to-blue-600 mb-6 shadow-lg shadow-blue-500/30">
+                    <TrophyOutlined className="text-white drop-shadow-lg" style={{ fontSize: 40 }} />
+                  </div>
+                <h2 className="text-2xl font-bold text-white mb-2">
+                  {isLoggedIn ? 'Chào mừng trở lại!' : 'Truy cập Hệ thống'}
+                </h2>
+                <p className="text-blue-200/70">
+                  {isLoggedIn
+                    ? 'Bạn đã đăng nhập thành công'
+                    : 'Đăng nhập để quản lý khen thưởng'}
                 </p>
               </div>
+
+              <button
+                onClick={handleRedirect}
+                className="w-full py-4 px-6 rounded-xl font-semibold text-white bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 transition-all shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-0.5 flex items-center justify-center gap-3"
+              >
+                {isLoggedIn ? 'Vào Dashboard' : 'Đăng nhập ngay'}
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </button>
+
+              {/* Quick Links */}
+              <div className="mt-8 pt-6 border-t border-white/10">
+                <div className="flex justify-center gap-6 text-sm">
+                  <a href="#features" className="text-blue-300/70 hover:text-white transition-colors">Tính năng</a>
+                  <a href="#contact" className="text-blue-300/70 hover:text-white transition-colors">Liên hệ</a>
+                  <a href="#about" className="text-blue-300/70 hover:text-white transition-colors">Giới thiệu</a>
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile Features */}
+            <div className="lg:hidden mt-8 grid grid-cols-2 gap-3">
+              {features.map((feature, index) => (
+                <div
+                  key={index}
+                  className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10"
+                >
+                  <div className="text-blue-400 mb-2">{feature.icon}</div>
+                  <h3 className="text-white font-medium text-sm">{feature.title}</h3>
+                </div>
+              ))}
+            </div>
+
+            {/* Mobile Footer */}
+            <div className="lg:hidden mt-8 text-center text-blue-300/50 text-sm">
+              © 2025 Học viện Khoa học Quân sự
             </div>
           </div>
+        </div>
+      </div>
 
-          <div className="border-t border-white/20 pt-8 text-center">
-            <p className="text-white/60">
-              &copy; 2025 Học viện Khoa học Quân sự. Bảo lưu mọi quyền sở hữu trí tuệ.
-            </p>
+      {/* Bottom Info Section (Desktop) */}
+      <div id="features" className="hidden lg:block relative z-10 border-t border-white/10 bg-black/20 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-12 py-16">
+          <div className="grid grid-cols-4 gap-8">
+            {/* About */}
+            <div className="col-span-2">
+              <h3 className="text-white font-bold text-lg mb-4">Về Hệ thống Quản lý Khen thưởng</h3>
+              <p className="text-blue-200/60 leading-relaxed mb-6">
+                Hệ thống Quản lý Khen thưởng là giải pháp công nghệ hiện đại được phát triển
+                dành riêng cho Học viện Khoa học Quân sự, hỗ trợ số hóa toàn bộ quy trình quản lý
+                khen thưởng, danh hiệu và thành tích khoa học.
+              </p>
+              <div className="flex gap-8">
+                <div>
+                  <div className="text-2xl font-bold text-white">24/7</div>
+                  <div className="text-blue-300/60 text-sm">Hỗ trợ kỹ thuật</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-white">100%</div>
+                  <div className="text-blue-300/60 text-sm">Bảo mật dữ liệu</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Features List */}
+            <div>
+              <h3 className="text-white font-bold text-lg mb-4">Tính năng</h3>
+              <ul className="space-y-3 text-blue-200/60">
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-blue-400 rounded-full"></span>
+                  Quản lý quân nhân
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-blue-400 rounded-full"></span>
+                  Khen thưởng hằng năm
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-blue-400 rounded-full"></span>
+                  Đề xuất & phê duyệt
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-blue-400 rounded-full"></span>
+                  Thống kê báo cáo
+                </li>
+              </ul>
+            </div>
+
+            {/* Contact */}
+            <div id="contact">
+              <h3 className="text-white font-bold text-lg mb-4">Liên hệ</h3>
+              <div className="space-y-3 text-blue-200/60">
+                <p>Email: support@hvkhqs.edu.vn</p>
+                <p>Hotline: (+84) 12345678</p>
+                <p>Địa chỉ: 322E Lê Trọng Tấn, Thanh Xuân, Hà Nội</p>
+              </div>
+            </div>
           </div>
         </div>
-      </footer>
+      </div>
     </div>
   );
 }
