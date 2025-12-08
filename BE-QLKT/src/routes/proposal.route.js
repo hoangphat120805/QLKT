@@ -174,7 +174,7 @@ router.get(
 router.get(
   '/uploads/:filename',
   verifyToken,
-  checkRole(['MANAGER', 'ADMIN']),
+  checkRole(['MANAGER', 'ADMIN', 'USER']),
   proposalController.getPdfFile
 );
 

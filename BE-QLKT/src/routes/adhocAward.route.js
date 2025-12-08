@@ -83,7 +83,14 @@ router.post('/', upload.array('files', 10), adhocAwardController.createAdhocAwar
  * @desc    Update ad-hoc award
  * @access  Admin only
  */
-router.put('/:id', upload.array('files', 10), adhocAwardController.updateAdhocAward);
+router.put(
+  '/:id',
+  upload.fields([
+    { name: 'decisionFiles', maxCount: 10 },
+    { name: 'attachedFiles', maxCount: 10 },
+  ]),
+  adhocAwardController.updateAdhocAward
+);
 
 /**
  * @route   DELETE /api/adhoc-awards/:id

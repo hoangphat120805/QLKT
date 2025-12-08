@@ -20,7 +20,8 @@ class AdhocAwardService {
     position,
     note,
     decisionNumber,
-    files,
+    decisionFiles,
+    attachedFiles,
   }) {
     try {
       // Verify admin exists
@@ -64,13 +65,17 @@ class AdhocAwardService {
         }
       }
 
-      // Handle file uploads
-      const uploadsDir = path.join(__dirname, '..', '..', 'uploads', 'adhoc-awards');
-      await fs.mkdir(uploadsDir, { recursive: true });
+      // Handle file uploads - separate decision files and attached files
+      const decisionsDir = path.join(__dirname, '..', '..', 'uploads', 'decisions');
+      const proposalsDir = path.join(__dirname, '..', '..', 'storage', 'proposals');
+      await fs.mkdir(decisionsDir, { recursive: true });
+      await fs.mkdir(proposalsDir, { recursive: true });
 
-      const uploadedFiles = [];
+      const uploadedDecisionFiles = [];
+      const uploadedAttachedFiles = [];
 
-      for (const file of files) {
+      // Handle decision files
+      for (const file of decisionFiles) {
         const timestamp = Date.now();
         // Decode UTF-8 filename properly (multer may encode non-ASCII characters)
         let decodedName = file.originalname;
@@ -87,7 +92,7 @@ class AdhocAwardService {
 
         await fs.writeFile(filePath, file.buffer);
 
-        uploadedFiles.push({
+        uploadedDecisionFiles.push({
           filename: uniqueName,
           originalName: decodedName,
           path: `uploads/adhoc-awards/${uniqueName}`,
@@ -113,7 +118,8 @@ class AdhocAwardService {
           chuc_vu: position || null,
           ghi_chu: note || null,
           so_quyet_dinh: decisionNumber || null,
-          files_quyet_dinh: uploadedFiles.length > 0 ? uploadedFiles : null,
+          files_quyet_dinh: uploadedDecisionFiles.length > 0 ? uploadedDecisionFiles : null,
+          files_attached: uploadedAttachedFiles.length > 0 ? uploadedAttachedFiles : null,
         },
         include: {
           QuanNhan: {
@@ -483,8 +489,10 @@ class AdhocAwardService {
     position,
     note,
     decisionNumber,
-    files,
-    removeFileIndexes,
+    decisionFiles,
+    attachedFiles,
+    removeDecisionFileIndexes,
+    removeAttachedFileIndexes,
   }) {
     try {
       // Verify admin exists
@@ -505,33 +513,77 @@ class AdhocAwardService {
         throw new Error('Khen thưởng đột xuất không tồn tại');
       }
 
-      // Handle existing files
-      let existingFiles = existing.files_quyet_dinh || [];
+      // Handle existing decision files
+      let existingDecisionFiles = existing.files_quyet_dinh || [];
 
-      // Remove files at specified indexes
-      if (removeFileIndexes && removeFileIndexes.length > 0) {
-        const filesToRemove = removeFileIndexes
+      // Remove decision files at specified indexes
+      if (removeDecisionFileIndexes && removeDecisionFileIndexes.length > 0) {
+        const filesToRemove = removeDecisionFileIndexes
           .sort((a, b) => b - a)
-          .filter(index => index >= 0 && index < existingFiles.length);
+          .filter(index => index >= 0 && index < existingDecisionFiles.length);
 
         for (const index of filesToRemove) {
-          const fileToRemove = existingFiles[index];
+          const fileToRemove = existingDecisionFiles[index];
           try {
             const fullPath = path.join(__dirname, '..', '..', fileToRemove.path);
             await fs.unlink(fullPath);
           } catch (err) {
-            console.error(`Failed to delete file: ${fileToRemove.path}`, err);
+            console.error(`Failed to delete decision file: ${fileToRemove.path}`, err);
           }
-          existingFiles.splice(index, 1);
+          existingDecisionFiles.splice(index, 1);
         }
       }
 
-      // Handle new file uploads
-      if (files && files.length > 0) {
-        const uploadsDir = path.join(__dirname, '..', '..', 'uploads', 'adhoc-awards');
-        await fs.mkdir(uploadsDir, { recursive: true });
+      // Handle existing attached files
+      let existingAttachedFiles = existing.files_attached || [];
 
-        for (const file of files) {
+      // Remove attached files at specified indexes
+      if (removeAttachedFileIndexes && removeAttachedFileIndexes.length > 0) {
+        const filesToRemove = removeAttachedFileIndexes
+          .sort((a, b) => b - a)
+          .filter(index => index >= 0 && index < existingAttachedFiles.length);
+
+        for (const index of filesToRemove) {
+          const fileToRemove = existingAttachedFiles[index];
+          try {
+            const fullPath = path.join(__dirname, '..', '..', fileToRemove.path);
+            await fs.unlink(fullPath);
+          } catch (err) {
+            console.error(`Failed to delete attached file: ${fileToRemove.path}`, err);
+          }
+          existingAttachedFiles.splice(index, 1);
+        }
+      }
+
+      // Handle new decision file uploads
+      if (decisionFiles && decisionFiles.length > 0) {
+        const decisionsDir = path.join(__dirname, '..', '..', 'uploads', 'decisions');
+        await fs.mkdir(decisionsDir, { recursive: true });
+
+        for (const file of decisionFiles) {
+          const timestamp = Date.now();
+          const uniqueName = `${timestamp}_${file.originalname}`;
+          const filePath = path.join(decisionsDir, uniqueName);
+
+          await fs.writeFile(filePath, file.buffer);
+
+          existingDecisionFiles.push({
+            filename: uniqueName,
+            originalName: file.originalname,
+            path: `uploads/decisions/${uniqueName}`,
+            size: file.size,
+            mimeType: file.mimetype,
+            uploadedAt: new Date().toISOString(),
+          });
+        }
+      }
+
+      // Handle new attached file uploads
+      if (attachedFiles && attachedFiles.length > 0) {
+        const proposalsDir = path.join(__dirname, '..', '..', 'storage', 'proposals');
+        await fs.mkdir(proposalsDir, { recursive: true });
+
+        for (const file of attachedFiles) {
           const timestamp = Date.now();
           // Decode UTF-8 filename properly (multer may encode non-ASCII characters)
           let decodedName = file.originalname;
@@ -547,7 +599,7 @@ class AdhocAwardService {
 
           await fs.writeFile(filePath, file.buffer);
 
-          existingFiles.push({
+          existingAttachedFiles.push({
             filename: uniqueName,
             originalName: decodedName,
             path: `uploads/adhoc-awards/${uniqueName}`,
@@ -568,7 +620,8 @@ class AdhocAwardService {
       if (note !== undefined) updateData.ghi_chu = note;
       if (decisionNumber !== undefined) updateData.so_quyet_dinh = decisionNumber;
 
-      updateData.files_quyet_dinh = existingFiles.length > 0 ? existingFiles : null;
+      updateData.files_quyet_dinh = existingDecisionFiles.length > 0 ? existingDecisionFiles : null;
+      updateData.files_attached = existingAttachedFiles.length > 0 ? existingAttachedFiles : null;
 
       const updated = await prisma.khenThuongDotXuat.update({
         where: { id },
