@@ -245,15 +245,18 @@ export default function CreateProposalPage() {
       case 2: // Step 3: All personnel/units must have titles set
         const expectedLength =
           proposalType === 'DON_VI_HANG_NAM' ? selectedUnitIds.length : selectedPersonnelIds.length;
-        return (
-          titleData.length === expectedLength &&
-          titleData.every(d => {
-            if (proposalType === 'NCKH') {
-              return d.loai && d.mo_ta;
-            } else {
-              return d.danh_hieu;
-            }
-          })
+        if (titleData.length !== expectedLength) return false;
+
+        if (proposalType === 'NCKH') {
+          return titleData.every(d => d.loai && d.mo_ta);
+        }
+
+        if (proposalType === 'DON_VI_HANG_NAM') {
+          return titleData.every(d => d.danh_hieu);
+        }
+
+        return titleData.every(
+          d => d.danh_hieu && d.cap_bac?.trim() && d.chuc_vu?.trim()
         );
       case 3: // Step 4: Always allow to continue (attachedFiles is optional)
         return true;
@@ -855,33 +858,9 @@ export default function CreateProposalPage() {
               title: 'Họ và tên',
               dataIndex: 'ho_ten',
               key: 'ho_ten',
-              width: 250,
+              width: 200,
               align: 'center',
-              render: (text: string, record: any) => {
-                // Kiểm tra cả hai cấu trúc: từ API (CoQuanDonVi) và từ JSON (co_quan_don_vi)
-                const coQuanDonVi =
-                  record.co_quan_don_vi?.ten_co_quan_don_vi ||
-                  record.CoQuanDonVi?.ten_don_vi ||
-                  record.don_vi_truc_thuoc?.co_quan_don_vi?.ten_don_vi ||
-                  record.DonViTrucThuoc?.CoQuanDonVi?.ten_don_vi;
-                const donViTrucThuoc =
-                  record.don_vi_truc_thuoc?.ten_don_vi || record.DonViTrucThuoc?.ten_don_vi;
-                const parts = [];
-                if (donViTrucThuoc) parts.push(donViTrucThuoc);
-                if (coQuanDonVi) parts.push(coQuanDonVi);
-                const unitInfo = parts.length > 0 ? parts.join(', ') : null;
-
-                return (
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <Text strong>{text}</Text>
-                    {unitInfo && (
-                      <Text type="secondary" style={{ fontSize: '12px', marginTop: '4px' }}>
-                        {unitInfo}
-                      </Text>
-                    )}
-                  </div>
-                );
-              },
+              render: (text: string) => <Text strong>{text}</Text>,
             },
             {
               title: 'Cấp bậc / Chức vụ',

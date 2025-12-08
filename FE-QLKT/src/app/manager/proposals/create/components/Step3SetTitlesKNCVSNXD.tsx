@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Table, Alert, Typography, Space, message, Button } from 'antd';
+import { Table, Alert, Typography, Space, message, Button, Select, Input } from 'antd';
 import { EditOutlined, ReloadOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import axiosInstance from '@/utils/axiosInstance';
 import { formatDate } from '@/lib/utils';
+import { MILITARY_RANKS } from '@/lib/constants/military-ranks';
 
 const { Text } = Typography;
 
@@ -36,6 +37,8 @@ interface Personnel {
 interface TitleData {
   personnel_id?: string;
   danh_hieu?: string;
+  cap_bac?: string;
+  chuc_vu?: string;
 }
 
 interface Step3SetTitlesKNCVSNXDProps {
@@ -78,17 +81,24 @@ export default function Step3SetTitlesKNCVSNXD({
         const initialData = personnelData.map((p: Personnel) => ({
           personnel_id: p.id,
           danh_hieu: 'KNC_VSNXD_QDNDVN',
+          cap_bac: p.cap_bac || '',
+          chuc_vu: p.ChucVu?.ten_chuc_vu || '',
         }));
         onTitleDataChange(initialData);
       } else {
-        // Nếu đã có titleData nhưng chưa có danh_hieu, tự động set
+        // Nếu đã có titleData, cập nhật danh_hieu và cap_bac/chuc_vu nếu chưa có
         const updatedData = titleData.map(item => {
-          if (!item.danh_hieu) {
-            return { ...item, danh_hieu: 'KNC_VSNXD_QDNDVN' };
-          }
-          return item;
+          const p = personnelData.find((pd: Personnel) => pd.id === item.personnel_id);
+          return {
+            ...item,
+            danh_hieu: item.danh_hieu || 'KNC_VSNXD_QDNDVN',
+            cap_bac: item.cap_bac || p?.cap_bac || '',
+            chuc_vu: item.chuc_vu || p?.ChucVu?.ten_chuc_vu || '',
+          };
         });
-        onTitleDataChange(updatedData);
+        if (JSON.stringify(updatedData) !== JSON.stringify(titleData)) {
+          onTitleDataChange(updatedData);
+        }
       }
     } catch (error) {
       console.error('Error fetching personnel details:', error);
@@ -144,6 +154,21 @@ export default function Step3SetTitlesKNCVSNXD({
     }
   };
 
+  const getTitleData = (id: string) => {
+    return titleData.find(d => d.personnel_id === id) || { personnel_id: id };
+  };
+
+  const updateTitle = (id: string, field: string, value: any) => {
+    const newData = [...titleData];
+    const index = newData.findIndex(d => d.personnel_id === id);
+    if (index >= 0) {
+      newData[index] = { ...newData[index], [field]: value };
+    } else {
+      newData.push({ personnel_id: id, [field]: value });
+    }
+    onTitleDataChange(newData);
+  };
+
   const columns: ColumnsType<Personnel> = [
     {
       title: 'STT',
@@ -156,28 +181,9 @@ export default function Step3SetTitlesKNCVSNXD({
       title: 'Họ và tên',
       dataIndex: 'ho_ten',
       key: 'ho_ten',
-      width: 250,
+      width: 200,
       align: 'center',
-      render: (text, record) => {
-        const donViTrucThuoc = record.DonViTrucThuoc?.ten_don_vi;
-        const coQuanDonVi =
-          record.CoQuanDonVi?.ten_don_vi || record.DonViTrucThuoc?.CoQuanDonVi?.ten_don_vi;
-        const parts = [];
-        if (donViTrucThuoc) parts.push(donViTrucThuoc);
-        if (coQuanDonVi) parts.push(coQuanDonVi);
-        const unitInfo = parts.length > 0 ? parts.join(', ') : null;
-
-        return (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Text strong>{text}</Text>
-            {unitInfo && (
-              <Text type="secondary" style={{ fontSize: '12px', marginTop: '4px' }}>
-                {unitInfo}
-              </Text>
-            )}
-          </div>
-        );
-      },
+      render: (text: string) => <Text strong>{text}</Text>,
     },
     {
       title: 'Ngày sinh',
@@ -188,22 +194,51 @@ export default function Step3SetTitlesKNCVSNXD({
       render: (date: string) => (date ? formatDate(date) : '-'),
     },
     {
-      title: 'Cấp bậc / Chức vụ',
-      key: 'cap_bac_chuc_vu',
-      width: 200,
+      title: (
+        <span className="ant-form-item-required" aria-required>
+          Cấp bậc
+        </span>
+      ),
+      key: 'cap_bac',
+      width: 150,
       align: 'center',
       render: (_, record) => {
-        const capBac = record.cap_bac;
-        const chucVu = record.ChucVu?.ten_chuc_vu;
+        const data = getTitleData(record.id);
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Text strong style={{ marginBottom: '4px' }}>
-              {capBac || '-'}
-            </Text>
-            <Text type="secondary" style={{ fontSize: '12px' }}>
-              {chucVu || '-'}
-            </Text>
-          </div>
+          <Select
+            value={data.cap_bac ?? record.cap_bac ?? undefined}
+            onChange={value => updateTitle(record.id, 'cap_bac', value)}
+            placeholder="Chọn cấp bậc"
+            style={{ width: '100%', height: 40 }}
+            size="middle"
+            showSearch
+            optionFilterProp="label"
+            allowClear
+            options={MILITARY_RANKS.map(rank => ({ label: rank, value: rank }))}
+          />
+        );
+      },
+    },
+    {
+      title: (
+        <span className="ant-form-item-required" aria-required>
+          Chức vụ
+        </span>
+      ),
+      key: 'chuc_vu',
+      width: 180,
+      align: 'center',
+      render: (_, record) => {
+        const data = getTitleData(record.id);
+        return (
+          <Input
+            value={data.chuc_vu ?? record.ChucVu?.ten_chuc_vu ?? ''}
+            onChange={e => updateTitle(record.id, 'chuc_vu', e.target.value)}
+            placeholder="Nhập chức vụ"
+            style={{ width: '100%', height: 40 }}
+            size="middle"
+            allowClear
+          />
         );
       },
     },

@@ -273,30 +273,9 @@ export default function Step2SelectPersonnelHCQKQT({
       title: 'Họ và tên',
       dataIndex: 'ho_ten',
       key: 'ho_ten',
-      width: 300,
+      width: 200,
       align: 'center',
-      render: (text, record) => {
-        const donViTrucThuoc = record.DonViTrucThuoc?.ten_don_vi;
-        const coQuanDonVi =
-          record.CoQuanDonVi?.ten_don_vi || record.DonViTrucThuoc?.CoQuanDonVi?.ten_don_vi;
-        const parts = [];
-        if (donViTrucThuoc) parts.push(donViTrucThuoc);
-        if (coQuanDonVi) parts.push(coQuanDonVi);
-        const donViText = parts.length > 0 ? parts.join(', ') : '-';
-
-        return (
-          <div style={{ lineHeight: '1.5' }}>
-            <div>
-              <Text strong>{text}</Text>
-            </div>
-            <div style={{ marginTop: 4 }}>
-              <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>
-                {donViText}
-              </Text>
-            </div>
-          </div>
-        );
-      },
+      render: (text: string) => <Text strong>{text}</Text>,
     },
     {
       title: 'Ngày sinh',

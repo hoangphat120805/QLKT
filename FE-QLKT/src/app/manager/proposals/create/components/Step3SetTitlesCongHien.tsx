@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Table, Select, Alert, Typography, Space, message, Button } from 'antd';
+import { Table, Select, Alert, Typography, Space, message, Button, Input } from 'antd';
 import { EditOutlined, HistoryOutlined, ReloadOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import axiosInstance from '@/utils/axiosInstance';
 import { formatDate } from '@/lib/utils';
 import { apiClient } from '@/lib/api-client';
 import PositionHistoryModal from './PositionHistoryModal';
-import { get } from 'http';
+import { MILITARY_RANKS } from '@/lib/constants/military-ranks';
 
 const { Text } = Typography;
 
@@ -37,6 +37,8 @@ interface Personnel {
 interface TitleData {
   personnel_id?: string;
   danh_hieu?: string;
+  cap_bac?: string;
+  chuc_vu?: string;
 }
 
 interface Step3SetTitlesCongHienProps {
@@ -107,8 +109,26 @@ export default function Step3SetTitlesCongHien({
         const initialData = personnelData.map((p: Personnel) => ({
           personnel_id: p.id,
           danh_hieu: getHighestEligibleAward(profilesMap[p.id]),
+          cap_bac: p.cap_bac || '',
+          chuc_vu: p.ChucVu?.ten_chuc_vu || '',
         }));
         onTitleDataChange(initialData);
+      } else {
+        // Cập nhật cap_bac và chuc_vu nếu chưa có
+        const updatedData = titleData.map(item => {
+          const p = personnelData.find((pd: Personnel) => pd.id === item.personnel_id);
+          if (p && (!item.cap_bac || !item.chuc_vu)) {
+            return {
+              ...item,
+              cap_bac: item.cap_bac || p.cap_bac || '',
+              chuc_vu: item.chuc_vu || p.ChucVu?.ten_chuc_vu || '',
+            };
+          }
+          return item;
+        });
+        if (JSON.stringify(updatedData) !== JSON.stringify(titleData)) {
+          onTitleDataChange(updatedData);
+        }
       }
     } catch (error) {
       console.error('Error fetching personnel details:', error);
@@ -251,36 +271,9 @@ export default function Step3SetTitlesCongHien({
       title: 'Họ và tên',
       dataIndex: 'ho_ten',
       key: 'ho_ten',
-      width: 250,
+      width: 200,
       align: 'center',
-      render: (text, record) => {
-        const donViTrucThuoc = record.DonViTrucThuoc?.ten_don_vi;
-        const coQuanDonVi =
-          record.CoQuanDonVi?.ten_don_vi || record.DonViTrucThuoc?.CoQuanDonVi?.ten_don_vi;
-        const parts = [];
-        if (donViTrucThuoc) parts.push(donViTrucThuoc);
-        if (coQuanDonVi) parts.push(coQuanDonVi);
-        const unitInfo = parts.length > 0 ? parts.join(', ') : null;
-
-        const genderText =
-          record.gioi_tinh === 'NAM' ? 'Nam' : record.gioi_tinh === 'NU' ? 'Nữ' : null;
-
-        return (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Text strong>{text}</Text>
-            {genderText && (
-              <Text type="secondary" style={{ fontSize: '12px', marginTop: '4px' }}>
-                {genderText}
-              </Text>
-            )}
-            {unitInfo && (
-              <Text type="secondary" style={{ fontSize: '12px', marginTop: '2px' }}>
-                {unitInfo}
-              </Text>
-            )}
-          </div>
-        );
-      },
+      render: (text: string) => <Text strong>{text}</Text>,
     },
     {
       title: 'Ngày sinh',
@@ -291,22 +284,49 @@ export default function Step3SetTitlesCongHien({
       render: (date: string) => (date ? formatDate(date) : '-'),
     },
     {
-      title: 'Cấp bậc / Chức vụ',
-      key: 'cap_bac_chuc_vu',
-      width: 200,
+      title: (
+        <span>
+          Cấp bậc <Text type="danger">*</Text>
+        </span>
+      ),
+      key: 'cap_bac',
+      width: 150,
       align: 'center',
       render: (_, record) => {
-        const capBac = record.cap_bac;
-        const chucVu = record.ChucVu?.ten_chuc_vu;
+        const data = getTitleData(record.id);
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Text strong style={{ marginBottom: '4px' }}>
-              {capBac || '-'}
-            </Text>
-            <Text type="secondary" style={{ fontSize: '12px' }}>
-              {chucVu || '-'}
-            </Text>
-          </div>
+          <Select
+            value={data.cap_bac || record.cap_bac}
+            onChange={value => updateTitle(record.id, 'cap_bac', value)}
+            placeholder="Chọn cấp bậc"
+            style={{ width: '100%' }}
+            size="middle"
+            showSearch
+            optionFilterProp="label"
+            options={MILITARY_RANKS.map(rank => ({ label: rank, value: rank }))}
+          />
+        );
+      },
+    },
+    {
+      title: (
+        <span>
+          Chức vụ <Text type="danger">*</Text>
+        </span>
+      ),
+      key: 'chuc_vu',
+      width: 180,
+      align: 'center',
+      render: (_, record) => {
+        const data = getTitleData(record.id);
+        return (
+          <Input
+            value={data.chuc_vu || record.ChucVu?.ten_chuc_vu || ''}
+            onChange={e => updateTitle(record.id, 'chuc_vu', e.target.value)}
+            placeholder="Nhập chức vụ"
+            style={{ width: '100%' }}
+            size="middle"
+          />
         );
       },
     },
