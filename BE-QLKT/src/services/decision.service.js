@@ -112,6 +112,209 @@ class DecisionService {
   }
 
   /**
+   * Lấy file path từ số quyết định
+   * @param {string} soQuyetDinh - Số quyết định
+   * @returns {Promise<{success: boolean, file_path: string|null, decision: object|null, error: string|null}>}
+   */
+  async getFilePathBySoQuyetDinh(soQuyetDinh) {
+    try {
+      if (!soQuyetDinh || soQuyetDinh.trim() === '') {
+        return {
+          success: false,
+          file_path: null,
+          decision: null,
+          error: 'Số quyết định không được để trống',
+        };
+      }
+
+      const decision = await prisma.fileQuyetDinh.findUnique({
+        where: { so_quyet_dinh: soQuyetDinh.trim() },
+      });
+
+      if (!decision) {
+        return {
+          success: false,
+          file_path: null,
+          decision: null,
+          error: 'Không tìm thấy quyết định với số này',
+        };
+      }
+
+      if (!decision.file_path) {
+        return {
+          success: false,
+          file_path: null,
+          decision: decision,
+          error: 'Quyết định này chưa có file đính kèm',
+        };
+      }
+
+      return {
+        success: true,
+        file_path: decision.file_path,
+        decision: decision,
+        error: null,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        file_path: null,
+        decision: null,
+        error: error.message || 'Có lỗi xảy ra khi lấy file quyết định',
+      };
+    }
+  }
+
+  /**
+   * Lấy file path và kiểm tra file tồn tại để download
+   * @param {string} soQuyetDinh - Số quyết định
+   * @returns {Promise<Object>} - { success, filePath, filename, error }
+   */
+  async getDecisionFileForDownload(soQuyetDinh) {
+    const fs = require('fs').promises;
+    const path = require('path');
+
+    try {
+      if (!soQuyetDinh || soQuyetDinh.trim() === '') {
+        return {
+          success: false,
+          filePath: null,
+          filename: null,
+          error: 'Số quyết định không được để trống',
+        };
+      }
+
+      const decision = await prisma.fileQuyetDinh.findUnique({
+        where: { so_quyet_dinh: soQuyetDinh.trim() },
+      });
+
+      if (!decision) {
+        return {
+          success: false,
+          filePath: null,
+          filename: null,
+          error: 'Không tìm thấy quyết định với số này',
+        };
+      }
+
+      if (!decision.file_path) {
+        return {
+          success: false,
+          filePath: null,
+          filename: null,
+          error: 'Quyết định này chưa có file đính kèm',
+        };
+      }
+
+      // Kiểm tra file có tồn tại không
+      // file_path có thể là: "uploads/decisions/filename.pdf" hoặc đường dẫn đầy đủ
+      let filePath = decision.file_path;
+      
+      // Nếu là đường dẫn tương đối, tạo đường dẫn đầy đủ
+      if (!path.isAbsolute(filePath)) {
+        filePath = path.join(__dirname, '..', '..', filePath);
+      }
+
+      try {
+        await fs.access(filePath);
+        // File tồn tại, lấy filename từ path
+        const filename = path.basename(filePath);
+        
+        return {
+          success: true,
+          filePath: filePath,
+          filename: filename,
+          error: null,
+        };
+      } catch (accessError) {
+        return {
+          success: false,
+          filePath: null,
+          filename: null,
+          error: 'File không tồn tại trên server',
+        };
+      }
+    } catch (error) {
+      console.error('Get decision file for download error:', error);
+      return {
+        success: false,
+        filePath: null,
+        filename: null,
+        error: error.message || 'Có lỗi xảy ra khi lấy file quyết định',
+      };
+    }
+  }
+
+  /**
+   * Lấy file paths từ nhiều số quyết định
+   * @param {string[]} soQuyetDinhs - Mảng các số quyết định
+   * @returns {Promise<Object.<string, {success: boolean, file_path: string|null, decision: object|null, error: string|null}>>}
+   */
+  async getFilePathsBySoQuyetDinhs(soQuyetDinhs) {
+    try {
+      if (!Array.isArray(soQuyetDinhs) || soQuyetDinhs.length === 0) {
+        return {};
+      }
+
+      // Lọc các số quyết định hợp lệ
+      const validSoQDs = soQuyetDinhs
+        .filter((sq) => sq && sq.trim() !== '')
+        .map((sq) => sq.trim());
+
+      if (validSoQDs.length === 0) {
+        return {};
+      }
+
+      // Query tất cả quyết định cùng lúc
+      const decisions = await prisma.fileQuyetDinh.findMany({
+        where: {
+          so_quyet_dinh: {
+            in: validSoQDs,
+          },
+        },
+      });
+
+      // Tạo map từ số quyết định -> decision
+      const decisionMap = {};
+      decisions.forEach((d) => {
+        decisionMap[d.so_quyet_dinh] = d;
+      });
+
+      // Tạo kết quả cho mỗi số quyết định
+      const result = {};
+      validSoQDs.forEach((soQD) => {
+        const decision = decisionMap[soQD];
+        if (!decision) {
+          result[soQD] = {
+            success: false,
+            file_path: null,
+            decision: null,
+            error: 'Không tìm thấy quyết định',
+          };
+        } else if (!decision.file_path) {
+          result[soQD] = {
+            success: false,
+            file_path: null,
+            decision: decision,
+            error: 'Chưa có file đính kèm',
+          };
+        } else {
+          result[soQD] = {
+            success: true,
+            file_path: decision.file_path,
+            decision: decision,
+            error: null,
+          };
+        }
+      });
+
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
    * Tạo quyết định mới
    * @param {Object} data - Dữ liệu quyết định
    */

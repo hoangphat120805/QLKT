@@ -26,6 +26,7 @@ import {
   renderAnnualAwards,
   getLoaiKhenThuong,
 } from '@/utils/awardsHelpers';
+import { downloadDecisionFile } from '@/utils/downloadDecisionFile';
 import AwardDetailModal from '@/components/awards/AwardDetailModal';
 
 const { Title, Paragraph, Text } = Typography;
@@ -337,6 +338,10 @@ export default function AdminAwardsPage() {
     fileInputRef.current?.click();
   };
 
+  const handleDownloadDecision = async (soQuyetDinh: string) => {
+    await downloadDecisionFile(soQuyetDinh);
+  };
+
   const getPersonName = (record: any) =>
     record?.QuanNhan?.ho_ten || record?.ho_ten || '';
 
@@ -539,9 +544,8 @@ export default function AdminAwardsPage() {
       render: (_: any, record: any) => {
         if (activeTab === 'scientific') {
           const loaiMap: Record<string, string> = {
-            NCKH: 'Nghiên cứu khoa học',
-            SKKH: 'Sáng kiến khoa học',
-            GIAI_PHAP_KY_THUAT: 'Giải pháp kỹ thuật',
+            DTKH: 'ĐTKH',
+            SKKH: 'SKKH',
           };
           return <Text>{loaiMap[record.loai] || record.loai || '-'}</Text>;
         }
@@ -586,7 +590,7 @@ export default function AdminAwardsPage() {
           return (
             <div style={COLUMN_STYLES.container}>
               <Text>{text || '-'}</Text>
-              {renderDecision(record.so_quyet_dinh)}
+              {renderDecision(record.so_quyet_dinh, handleDownloadDecision)}
             </div>
           );
         }
@@ -596,7 +600,7 @@ export default function AdminAwardsPage() {
           const hasData = record.so_quyet_dinh || record.ghi_chu;
           return (
             <div style={COLUMN_STYLES.container}>
-              {renderDecision(record.so_quyet_dinh)}
+              {renderDecision(record.so_quyet_dinh, handleDownloadDecision)}
               {record.ghi_chu && (
                 <Text type="secondary" style={COLUMN_STYLES.noteText}>
                   {record.ghi_chu}
@@ -612,7 +616,7 @@ export default function AdminAwardsPage() {
           return (
             <div style={COLUMN_STYLES.container}>
               <Text>{record.ghi_chu || '-'}</Text>
-              {renderDecision(record.so_quyet_dinh)}
+              {renderDecision(record.so_quyet_dinh, handleDownloadDecision)}
             </div>
           );
         }
@@ -628,13 +632,29 @@ export default function AdminAwardsPage() {
                   {record.ghi_chu}
                 </Text>
               )}
-              {renderDecision(record.so_quyet_dinh)}
+              {renderDecision(record.so_quyet_dinh, handleDownloadDecision)}
+            </div>
+          );
+        }
+
+        // HCCSVV awards
+        if (activeTab === 'hccsvv') {
+          const fullName = text ? DANH_HIEU_MAP[text] || text : '-';
+          return (
+            <div style={COLUMN_STYLES.container}>
+              <Text>{fullName}</Text>
+              {record.ghi_chu && (
+                <Text type="secondary" style={COLUMN_STYLES.noteText}>
+                  {record.ghi_chu}
+                </Text>
+              )}
+              {renderDecision(record.so_quyet_dinh, handleDownloadDecision)}
             </div>
           );
         }
 
         // Annual awards (default)
-        return renderAnnualAwards(text, record);
+        return renderAnnualAwards(text, record, { onDownload: handleDownloadDecision });
       },
     },
   ];

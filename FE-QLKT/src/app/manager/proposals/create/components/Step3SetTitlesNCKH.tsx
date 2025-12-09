@@ -36,7 +36,7 @@ interface Personnel {
 
 interface TitleData {
   personnel_id?: string;
-  loai?: 'NCKH' | 'SKKH';
+  loai?: 'DTKH' | 'SKKH';
   mo_ta?: string;
   cap_bac?: string;
   chuc_vu?: string;
@@ -286,8 +286,8 @@ export default function Step3SetTitlesNCKH({
             popupMatchSelectWidth={false}
             styles={{ popup: { root: { minWidth: 'max-content' } } }}
             options={[
-              { label: 'Đề tài khoa học', value: 'NCKH' },
-              { label: 'Sáng kiến khoa học', value: 'SKKH' },
+              { label: 'Đề tài khoa học (ĐTKH)', value: 'DTKH' },
+              { label: 'Sáng kiến khoa học (SKKH)', value: 'SKKH' },
             ]}
           />
         );

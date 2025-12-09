@@ -35,17 +35,16 @@ export const COLUMN_STYLES: {
 // Helper: Render quyết định (có thể click để tải file)
 export const renderDecision = (
   soQuyetDinh: string | null | undefined,
-  onDownload?: (soQuyetDinh: string, filePath?: string | null) => void,
-  filePath?: string | null
+  onDownload?: (soQuyetDinh: string) => void
 ) =>
   soQuyetDinh ? (
     onDownload ? (
       <a
         onClick={e => {
           e.stopPropagation();
-          onDownload(soQuyetDinh, filePath);
+          onDownload(soQuyetDinh);
         }}
-        style={{ ...COLUMN_STYLES.decisionText, cursor: 'pointer', color: '#1890ff' }}
+        style={{ ...COLUMN_STYLES.decisionText, cursor: 'pointer', color: '#52c41a' }}
       >
         Số QĐ: {soQuyetDinh}
       </a>
@@ -62,17 +61,16 @@ export const renderAwardItem = (
   title: string,
   soQuyetDinh: string | null | undefined,
   isStrong = false,
-  onDownload?: (soQuyetDinh: string, filePath?: string | null) => void,
-  filePath?: string | null
+  onDownload?: (soQuyetDinh: string) => void
 ) => (
   <div key={key} style={COLUMN_STYLES.item}>
     {isStrong ? <Text strong>{title}</Text> : <Text>{title}</Text>}
-    {renderDecision(soQuyetDinh, onDownload, filePath)}
+    {renderDecision(soQuyetDinh, onDownload)}
   </div>
 );
 
 export interface RenderAnnualAwardsOptions {
-  onDownload?: (soQuyetDinh: string, filePath?: string | null) => void;
+  onDownload?: (soQuyetDinh: string) => void;
 }
 
 // Helper: Render danh hiệu hằng năm và các bằng khen
@@ -93,8 +91,7 @@ export const renderAnnualAwards = (
         fullName,
         record.so_quyet_dinh,
         true,
-        onDownload,
-        record.file_quyet_dinh
+        onDownload
       )
     );
   }
@@ -106,28 +103,25 @@ export const renderAnnualAwards = (
       flag: record.nhan_bkbqp,
       decision: record.so_quyet_dinh_bkbqp,
       code: 'BKBQP',
-      filePath: record.file_quyet_dinh_bkbqp,
     },
     {
       key: 'cstdtq',
       flag: record.nhan_cstdtq,
       decision: record.so_quyet_dinh_cstdtq,
       code: 'CSTDTQ',
-      filePath: record.file_quyet_dinh_cstdtq,
     },
     {
       key: 'bkttcp',
       flag: record.nhan_bkttcp,
       decision: record.so_quyet_dinh_bkttcp,
       code: 'BKTTCP',
-      filePath: record.file_quyet_dinh_bkttcp,
     },
   ];
 
-  additionalAwards.forEach(({ key, flag, decision, code, filePath }) => {
+  additionalAwards.forEach(({ key, flag, decision, code }) => {
     if (flag && decision) {
       items.push(
-        renderAwardItem(key, DANH_HIEU_MAP[code] || code, decision, false, onDownload, filePath)
+        renderAwardItem(key, DANH_HIEU_MAP[code] || code, decision, false, onDownload)
       );
     }
   });

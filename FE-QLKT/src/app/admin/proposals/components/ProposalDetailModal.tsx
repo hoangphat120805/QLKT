@@ -146,8 +146,8 @@ export default function ProposalDetailModal({
         key: 'loai',
         width: 120,
         render: (loai: string) => (
-          <Tag color={loai === 'NCKH' ? 'blue' : 'green'}>
-            {loai === 'NCKH' ? 'Đề tài KH' : 'Sáng kiến KH'}
+          <Tag color={loai === 'DTKH' ? 'blue' : 'green'}>
+            {loai === 'DTKH' ? 'ĐTKH' : 'SKKH'}
           </Tag>
         ),
       },

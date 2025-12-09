@@ -28,7 +28,7 @@ import {
   FilePdfOutlined,
 } from '@ant-design/icons';
 import { apiClient } from '@/lib/api-client';
-import axiosInstance from '@/utils/axiosInstance';
+import { downloadDecisionFile } from '@/utils/downloadDecisionFile';
 
 const { Title, Paragraph } = Typography;
 
@@ -161,43 +161,8 @@ export default function AnnualRewardsPage() {
     }
   };
 
-  const handleOpenDecisionFile = async (soQuyetDinh: string, filePath?: string | null) => {
-    try {
-      let filename: string | null = null;
-
-      // Nếu đã có file_path trong record, dùng luôn
-      if (filePath) {
-        filename = filePath.split('/').pop() || null;
-      } else {
-        // Nếu chưa có file_path, tìm từ DB dựa trên số quyết định
-        const response = await apiClient.getDecisionBySoQuyetDinh(soQuyetDinh);
-        if (response.success && response.data?.file_path) {
-          filename = response.data.file_path.split('/').pop() || null;
-        }
-      }
-
-      if (filename) {
-        // Tải file về bằng axios với responseType: 'blob'
-        const response = await axiosInstance.get(`/api/proposals/uploads/${filename}`, {
-          responseType: 'blob',
-        });
-        const blob = response.data;
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename || `${soQuyetDinh}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        message.success('Tải file thành công');
-      } else {
-        message.warning('Không tìm thấy file quyết định');
-      }
-    } catch (error: any) {
-      console.error('Error downloading decision file:', error);
-      message.error('Lỗi khi tải file quyết định');
-    }
+  const handleOpenDecisionFile = async (soQuyetDinh: string) => {
+    await downloadDecisionFile(soQuyetDinh);
   };
 
   const columns: ColumnsType<RewardRecord> = [
@@ -244,18 +209,14 @@ export default function AnnualRewardsPage() {
       render: (text: string, record: RewardRecord) => {
         if (!text) return '-';
 
-        if (record.file_quyet_dinh) {
-          return (
-            <a
-              onClick={() => handleOpenDecisionFile(text, record.file_quyet_dinh)}
-              style={{ color: '#52c41a', cursor: 'pointer', textDecoration: 'underline' }}
-            >
-              {text}
-            </a>
-          );
-        }
-
-        return <span style={{ color: '#999' }}>{text}</span>;
+        return (
+          <a
+            onClick={() => handleOpenDecisionFile(text)}
+            style={{ color: '#52c41a', cursor: 'pointer', textDecoration: 'underline' }}
+          >
+            {text}
+          </a>
+        );
       },
     },
   ];

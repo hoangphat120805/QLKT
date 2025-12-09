@@ -79,13 +79,6 @@ interface Personnel {
   };
 }
 
-// Interface để lưu thông tin cấp bậc/chức vụ có thể chỉnh sửa cho mỗi quân nhân
-interface PersonnelAwardInfo {
-  personnelId: string;
-  rank: string; // Cấp bậc tại thời điểm đề xuất
-  position: string; // Chức vụ tại thời điểm đề xuất
-}
-
 export default function CreateProposalPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
@@ -109,8 +102,7 @@ export default function CreateProposalPage() {
   const [personnelDetails, setPersonnelDetails] = useState<Personnel[]>([]);
   const [unitDetails, setUnitDetails] = useState<any[]>([]);
 
-  // Step 5: Editable rank/position per personnel and note
-  const [personnelAwardInfo, setPersonnelAwardInfo] = useState<PersonnelAwardInfo[]>([]);
+  // Step 5: Note
   const [proposalNote, setProposalNote] = useState<string>('');
 
   // Proposal type config
@@ -186,7 +178,6 @@ export default function CreateProposalPage() {
       setAttachedFiles([]);
       setPersonnelDetails([]);
       setUnitDetails([]);
-      setPersonnelAwardInfo([]);
       setProposalNote('');
     }
   }, [currentStep]);
@@ -200,7 +191,6 @@ export default function CreateProposalPage() {
     setAttachedFiles([]);
     setPersonnelDetails([]);
     setUnitDetails([]);
-    setPersonnelAwardInfo([]);
     setProposalNote('');
     // Reset về năm hiện tại khi đổi loại đề xuất
     setNam(new Date().getFullYear());
@@ -224,13 +214,6 @@ export default function CreateProposalPage() {
       const personnelData = responses.filter(r => r.data.success).map(r => r.data.data);
       setPersonnelDetails(personnelData);
 
-      // Khởi tạo personnelAwardInfo với cấp bậc/chức vụ từ thông tin quân nhân để manager có thể chỉnh sửa hoặc xóa
-      const initialAwardInfo: PersonnelAwardInfo[] = personnelData.map((p: Personnel) => ({
-        personnelId: p.id,
-        rank: p.cap_bac || '',
-        position: p.ChucVu?.ten_chuc_vu || '',
-      }));
-      setPersonnelAwardInfo(initialAwardInfo);
     } catch (error) {
       console.error('Error fetching personnel details:', error);
     }
@@ -275,7 +258,8 @@ export default function CreateProposalPage() {
         if (titleData.length !== expectedLength) return false;
 
         if (proposalType === 'NCKH') {
-          return titleData.every(d => d.loai && d.mo_ta);
+          // Kiểm tra loại, mô tả, cấp bậc và chức vụ
+          return titleData.every(d => d.loai && d.mo_ta && d.cap_bac && d.chuc_vu);
         }
 
         if (proposalType === 'DON_VI_HANG_NAM') {
@@ -509,13 +493,14 @@ export default function CreateProposalPage() {
       }
 
       // Validation cho cấp bậc và chức vụ bắt buộc (cho tất cả loại trừ DON_VI_HANG_NAM)
+      // Cấp bậc/chức vụ đã được nhập ở bước 3 (Set Titles), kiểm tra trong titleData
       if (proposalType !== 'DON_VI_HANG_NAM' && selectedPersonnelIds.length > 0) {
-        const missingInfo = personnelAwardInfo.filter(
-          info => !info.rank || !info.position
+        const missingInfo = titleData.filter(
+          item => !item.cap_bac || !item.chuc_vu
         );
         if (missingInfo.length > 0) {
           const missingNames = missingInfo
-            .map(info => personnelDetails.find(p => p.id === info.personnelId)?.ho_ten)
+            .map(item => personnelDetails.find(p => p.id === item.personnel_id || p.id === item.personnelId)?.ho_ten)
             .filter(Boolean)
             .join(', ');
           antMessage.error(`Vui lòng nhập đầy đủ cấp bậc và chức vụ cho: ${missingNames}`);
@@ -593,20 +578,11 @@ export default function CreateProposalPage() {
         formData.append('selected_personnel', JSON.stringify(selectedPersonnelIds));
       }
 
-      // Merge personnelAwardInfo vào titleData để gửi thông tin cấp bậc/chức vụ đã chỉnh sửa
-      const mergedTitleData = titleData.map(t => {
-        const awardInfo = personnelAwardInfo.find(
-          info => info.personnelId === t.personnel_id || info.personnelId === t.personnelId
-        );
-        return {
-          ...t,
-          cap_bac: awardInfo?.rank || t.cap_bac || '',
-          chuc_vu: awardInfo?.position || t.chuc_vu || '',
-        };
-      });
-
-      formData.append('title_data', JSON.stringify(mergedTitleData));
-      console.log('Submitting proposal with title_data:', mergedTitleData);
+      // titleData đã có cap_bac và chuc_vu từ bước 3 (Set Titles)
+      // Gửi đúng dữ liệu đã sửa ở bước 3, KHÔNG fallback về personnel (giống khen thưởng đột xuất)
+      // Cấp bậc/chức vụ từ personnel chỉ để điền sẵn ở bước 3, không dùng khi submit
+      formData.append('title_data', JSON.stringify(titleData));
+      console.log('Submitting proposal with title_data:', titleData);
 
       // Gửi ghi chú nếu có
       if (proposalNote.trim()) {
@@ -640,7 +616,6 @@ export default function CreateProposalPage() {
       setAttachedFiles([]);
       setPersonnelDetails([]);
       setUnitDetails([]);
-      setPersonnelAwardInfo([]);
       setProposalNote('');
 
       // Chuyển về trang danh sách đề xuất sau 1 giây
@@ -852,11 +827,17 @@ export default function CreateProposalPage() {
             };
           });
         } else {
+          // Merge titleData vào reviewTableData
+          // titleData đã có cap_bac và chuc_vu từ bước 3 (đã được sửa hoặc điền sẵn)
+          // Ưu tiên dữ liệu từ titleData, không fallback về personnel details
           reviewTableData = personnelDetails.map(p => {
             const titleInfo = titleData.find(t => String(t.personnel_id) === String(p.id));
             return {
               ...p,
               ...titleInfo,
+              // Đảm bảo cap_bac và chuc_vu từ titleData được ưu tiên (giống khen thưởng đột xuất)
+              cap_bac: titleInfo?.cap_bac || '',
+              chuc_vu: titleInfo?.chuc_vu || '',
             };
           });
         }
@@ -930,12 +911,11 @@ export default function CreateProposalPage() {
               width: 200,
               align: 'center',
               render: (_, record: any) => {
-                // Lấy thông tin từ personnel details nếu có
-                const personnelDetail = personnelDetails.find(
-                  (p: any) => p.id === record.personnel_id || p.id === record.id
-                );
-                const capBac = record.cap_bac || personnelDetail?.cap_bac;
-                const chucVu = record.chuc_vu || personnelDetail?.ChucVu?.ten_chuc_vu;
+                // Hiển thị cấp bậc/chức vụ từ titleData (đã được sửa ở bước 3)
+                // KHÔNG fallback về personnel details (giống khen thưởng đột xuất)
+                // Cấp bậc/chức vụ từ personnel chỉ để điền sẵn ở bước 3, không dùng ở bước 5
+                const capBac = record.cap_bac;
+                const chucVu = record.chuc_vu;
                 return (
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                     <Text strong style={{ marginBottom: '4px' }}>
@@ -1290,99 +1270,6 @@ export default function CreateProposalPage() {
               />
             </Card>
 
-            {/* Chỉnh sửa cấp bậc/chức vụ cho từng quân nhân - Trừ DON_VI_HANG_NAM */}
-            {proposalType !== 'DON_VI_HANG_NAM' && personnelDetails.length > 0 && (
-              <Card
-                title={
-                  <Space>
-                    <EditOutlined />
-                    <span>Cấp bậc / Chức vụ <Text type="danger">*</Text></span>
-                  </Space>
-                }
-                style={{ marginTop: 16 }}
-              >
-                <Alert
-                  message="Vui lòng kiểm tra và điền đầy đủ cấp bậc và chức vụ cho từng quân nhân tại thời điểm đề xuất (bắt buộc)."
-                  type="warning"
-                  showIcon
-                  style={{ marginBottom: 16 }}
-                />
-                <Space direction="vertical" style={{ width: '100%' }} size="middle">
-                  {personnelDetails.map((person, index) => {
-                    const awardInfo = personnelAwardInfo.find(
-                      info => info.personnelId === person.id
-                    );
-                    const isMissingRank = !awardInfo?.rank;
-                    const isMissingPosition = !awardInfo?.position;
-                    return (
-                      <Card
-                        key={person.id}
-                        size="small"
-                        style={{
-                          backgroundColor: 'rgba(0, 0, 0, 0.02)',
-                          border: '1px solid rgba(0, 0, 0, 0.06)',
-                        }}
-                      >
-                        <Row gutter={16} align="middle">
-                          <Col span={1}>
-                            <Text strong>{index + 1}.</Text>
-                          </Col>
-                          <Col span={7}>
-                            <Text strong>{person.ho_ten}</Text>
-                            <br />
-                            <Text type="secondary" style={{ fontSize: '12px' }}>
-                              CCCD: {person.cccd}
-                            </Text>
-                          </Col>
-                          <Col span={8}>
-                            <Text type="secondary" style={{ fontSize: '12px', marginBottom: 4, display: 'block' }}>
-                              Cấp bậc <Text type="danger">*</Text>
-                            </Text>
-                            <Input
-                              placeholder="Nhập cấp bậc *"
-                              value={awardInfo?.rank || ''}
-                              status={isMissingRank ? 'error' : undefined}
-                              onChange={e => {
-                                const newValue = e.target.value;
-                                setPersonnelAwardInfo(prev =>
-                                  prev.map(info =>
-                                    info.personnelId === person.id
-                                      ? { ...info, rank: newValue }
-                                      : info
-                                  )
-                                );
-                              }}
-                              style={{ width: '100%' }}
-                            />
-                          </Col>
-                          <Col span={8}>
-                            <Text type="secondary" style={{ fontSize: '12px', marginBottom: 4, display: 'block' }}>
-                              Chức vụ <Text type="danger">*</Text>
-                            </Text>
-                            <Input
-                              placeholder="Nhập chức vụ *"
-                              value={awardInfo?.position || ''}
-                              status={isMissingPosition ? 'error' : undefined}
-                              onChange={e => {
-                                const newValue = e.target.value;
-                                setPersonnelAwardInfo(prev =>
-                                  prev.map(info =>
-                                    info.personnelId === person.id
-                                      ? { ...info, position: newValue }
-                                      : info
-                                  )
-                                );
-                              }}
-                              style={{ width: '100%' }}
-                            />
-                          </Col>
-                        </Row>
-                      </Card>
-                    );
-                  })}
-                </Space>
-              </Card>
-            )}
 
             {/* Ghi chú */}
             <Card

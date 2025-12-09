@@ -231,11 +231,10 @@ export default function AwardDetailModal({
   const getAllFiles = () => {
     const files: { path: string; filename: string; originalName?: string; label?: string }[] = [];
 
-    // files_quyet_dinh (JSON array) - used by adhoc and some new models
-    addFilesFromJson(files, award.files_quyet_dinh, 'File quyết định');
-
-    // file_quyet_dinh (string path) - used by older models
-    addFileFromPath(files, award.file_quyet_dinh, 'File quyết định');
+    // files_dinh_kem (JSON array) - used by adhoc awards for attached files
+    // Note: File quyết định không còn lưu trong award, chỉ lưu số quyết định (so_quyet_dinh)
+    // File path sẽ được query từ DB khi cần tải file
+    addFilesFromJson(files, award.files_dinh_kem, 'File đính kèm');
 
     // BKBQP files (for annual awards)
     addFilesFromJson(files, award.files_quyet_dinh_bkbqp, 'File QĐ Bằng khen BQP');

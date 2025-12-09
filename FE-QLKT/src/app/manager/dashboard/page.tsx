@@ -33,11 +33,12 @@ import {
   RoleDistributionChart,
 } from '@/components/charts';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 export default function ManagerDashboard() {
   const { theme } = useTheme();
   const [loading, setLoading] = useState(true);
+  const [displayName, setDisplayName] = useState('Trưởng phòng');
   const [stats, setStats] = useState({
     totalPersonnel: 156,
     totalCSTDCS: 89,
@@ -62,6 +63,19 @@ export default function ManagerDashboard() {
 
         // Lấy thông tin đơn vị của manager
         const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (user) {
+          const name = (user.ho_ten || '').trim();
+          const username = (user.username || '').trim();
+          const role = (user.role || '').toUpperCase();
+          const roleDisplayMap: Record<string, string> = {
+            SUPER_ADMIN: 'Super Admin',
+            ADMIN: 'Quản trị viên',
+            MANAGER: 'Trưởng phòng',
+            USER: 'Người dùng',
+          };
+          const roleFallback = roleDisplayMap[role] || 'Trưởng phòng';
+          setDisplayName(name || username || roleFallback);
+        }
         let unitId = null;
 
         if (user?.quan_nhan_id) {
@@ -191,7 +205,7 @@ export default function ManagerDashboard() {
             level={2}
             className="!mb-3 !text-4xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-purple-400"
           >
-            Xin chào, Trưởng phòng
+            Xin chào, {displayName}
           </Title>
           <p className={`text-lg ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
             Quản lý quân nhân và thành tích của đơn vị
@@ -204,31 +218,97 @@ export default function ManagerDashboard() {
             <Spin size="large" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+              gap: '16px',
+              marginBottom: '24px',
+            }}
+          >
             {statCards.map((stat, index) => {
               const Icon = stat.icon;
+              const statTextColor = theme === 'dark' ? '#e5e7eb' : '#0f172a';
+              const statSubTextColor = theme === 'dark' ? '#cbd5e1' : '#475569';
+              const cardShadow =
+                theme === 'dark'
+                  ? '0 1px 6px rgba(0, 0, 0, 0.35)'
+                  : '0 1px 4px rgba(0, 0, 0, 0.06)';
+              const iconShadows = {
+                blue: theme === 'dark' ? '0 1px 3px rgba(59, 130, 246, 0.3)' : '0 1px 3px rgba(59, 130, 246, 0.2)',
+                green: theme === 'dark' ? '0 1px 3px rgba(16, 185, 129, 0.3)' : '0 1px 3px rgba(16, 185, 129, 0.2)',
+                yellow: theme === 'dark' ? '0 1px 3px rgba(234, 179, 8, 0.3)' : '0 1px 3px rgba(234, 179, 8, 0.2)',
+                purple: theme === 'dark' ? '0 1px 3px rgba(139, 92, 246, 0.3)' : '0 1px 3px rgba(139, 92, 246, 0.2)',
+              };
+              const iconBgs = {
+                blue: theme === 'dark' ? '#1e3a8a' : '#e6f0ff',
+                green: theme === 'dark' ? '#0b3d2e' : '#e8f5e9',
+                yellow: theme === 'dark' ? '#78350f' : '#fef9c3',
+                purple: theme === 'dark' ? '#3b0764' : '#f3e8ff',
+              };
+              const iconColors = {
+                blue: theme === 'dark' ? '#60a5fa' : '#2563eb',
+                green: theme === 'dark' ? '#34d399' : '#059669',
+                yellow: theme === 'dark' ? '#fbbf24' : '#d97706',
+                purple: theme === 'dark' ? '#a78bfa' : '#7c3aed',
+              };
+              const iconKeys = ['blue', 'green', 'yellow', 'purple'];
+              const iconKey = iconKeys[index] || 'blue';
+
               return (
                 <Link key={index} href={stat.link}>
-                  <Card className="shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1 overflow-hidden">
-                    <div className="flex items-center justify-between p-1">
-                      <div className="flex-1">
-                        <p
-                          className={`text-sm mb-2 font-medium uppercase tracking-wide ${
-                            theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-                          }`}
+                  <Card
+                    hoverable
+                    style={{
+                      borderRadius: '10px',
+                      boxShadow: cardShadow,
+                      transition: 'all 0.3s ease',
+                    }}
+                    bodyStyle={{ padding: '20px' }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                      <div
+                        style={{
+                          width: '56px',
+                          height: '56px',
+                          borderRadius: '12px',
+                          background: iconBgs[iconKey as keyof typeof iconBgs],
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxShadow: iconShadows[iconKey as keyof typeof iconShadows],
+                        }}
+                      >
+                        <Icon
+                          style={{
+                            fontSize: '26px',
+                            color: iconColors[iconKey as keyof typeof iconColors],
+                          }}
+                        />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <Text
+                          type="secondary"
+                          style={{
+                            fontSize: '14px',
+                            fontWeight: 500,
+                            display: 'block',
+                            marginBottom: '4px',
+                            color: statSubTextColor,
+                          }}
                         >
                           {stat.title}
-                        </p>
-                        <p
-                          className={`text-4xl font-bold mb-1 ${
-                            theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
-                          }`}
+                        </Text>
+                        <div
+                          style={{
+                            fontSize: index === 0 ? '32px' : '28px',
+                            fontWeight: 'bold',
+                            color: statTextColor,
+                            lineHeight: '1.1',
+                          }}
                         >
                           {stat.value.toLocaleString()}
-                        </p>
-                      </div>
-                      <div className={`p-4 rounded-2xl ${stat.bgColor} shadow-inner`}>
-                        <Icon className={`h-8 w-8 ${stat.iconColor}`} />
+                        </div>
                       </div>
                     </div>
                   </Card>
@@ -310,7 +390,7 @@ export default function ManagerDashboard() {
           <Col xs={24} lg={8}>
             <PieChart
               data={chartData.scientificAchievementsByType.map((item: any) => ({
-                label: item.type === 'NCKH' ? 'Đề tài khoa học' : 'Sáng kiến khoa học',
+                label: item.type === 'DTKH' ? 'ĐTKH' : 'SKKH',
                 value: item.count,
               }))}
               title="Thành tích khoa học theo loại"

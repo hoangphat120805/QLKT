@@ -17,6 +17,8 @@ import {
   Tag,
   message,
   Select,
+  ConfigProvider,
+  theme as antdTheme,
 } from 'antd';
 import {
   HomeOutlined,
@@ -34,6 +36,8 @@ import { EditableCell } from '@/components/EditableCell';
 import DecisionModal from '@/components/DecisionModal';
 import { format } from 'date-fns';
 import { apiClient } from '@/lib/api-client';
+import { downloadDecisionFile } from '@/utils/downloadDecisionFile';
+import { useTheme } from '@/components/theme-provider';
 import axiosInstance from '@/utils/axiosInstance';
 
 const { Title, Paragraph, Text } = Typography;
@@ -139,6 +143,7 @@ interface ProposalDetail {
 }
 
 export default function ProposalDetailPage() {
+  const { theme } = useTheme();
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
@@ -431,7 +436,7 @@ export default function ProposalDetailPage() {
       Modal.warning({
         title: 'Thiếu số quyết định',
         content: (
-          <div>
+          <div style={{ borderRadius: 0 }}>
             <p style={{ marginBottom: 12 }}>
               Vui lòng thêm số quyết định cho tất cả các mục trước khi phê duyệt:
             </p>
@@ -450,6 +455,11 @@ export default function ProposalDetailPage() {
         okText: 'Đã hiểu',
         width: 600,
         centered: true,
+        style: { borderRadius: 8 },
+        styles: { 
+          body: { borderRadius: 8 },
+          content: { borderRadius: 0 },
+        },
       });
       return;
     }
@@ -672,44 +682,9 @@ export default function ProposalDetailPage() {
     setEditedCongHien(newData);
   };
 
-  // Hàm để tải file quyết định
-  const handleOpenDecisionFile = async (soQuyetDinh: string, filePath?: string | null) => {
-    try {
-      let filename: string | null = null;
-
-      // Nếu đã có file_path trong record, dùng luôn
-      if (filePath) {
-        filename = filePath.split('/').pop() || null;
-      } else {
-        // Nếu chưa có file_path, tìm từ DB dựa trên số quyết định
-        const response = await apiClient.getDecisionBySoQuyetDinh(soQuyetDinh);
-        if (response.success && response.data?.file_path) {
-          filename = response.data.file_path.split('/').pop() || null;
-        }
-      }
-
-      if (filename) {
-        // Tải file về bằng axios với responseType: 'blob'
-        const response = await axiosInstance.get(`/api/proposals/uploads/${filename}`, {
-          responseType: 'blob',
-        });
-        const blob = response.data;
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename || `${soQuyetDinh}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        message.success('Tải file thành công');
-      } else {
-        message.warning('Không tìm thấy file quyết định');
-      }
-    } catch (error: any) {
-      console.error('Error downloading decision file:', error);
-      message.error('Lỗi khi tải file quyết định');
-    }
+  // Hàm để tải file quyết định - backend tự động query DB để lấy file path
+  const handleOpenDecisionFile = async (soQuyetDinh: string) => {
+    await downloadDecisionFile(soQuyetDinh);
   };
 
   if (loading) {
@@ -931,8 +906,6 @@ export default function ProposalDetailPage() {
         // Kiểm tra cả so_quyet_dinh và các trường cũ để tương thích với dữ liệu cũ
         const soQuyetDinh =
           record.so_quyet_dinh || record.so_quyet_dinh_bkbqp || record.so_quyet_dinh_cstdtq;
-        const fileQuyetDinh =
-          record.file_quyet_dinh || record.file_quyet_dinh_bkbqp || record.file_quyet_dinh_cstdtq;
 
         if (!soQuyetDinh || (typeof soQuyetDinh === 'string' && soQuyetDinh.trim() === '')) {
           return <span style={{ color: '#999', fontWeight: 400 }}>Chưa có</span>;
@@ -942,7 +915,7 @@ export default function ProposalDetailPage() {
             onClick={e => {
               e.preventDefault();
               e.stopPropagation();
-              handleOpenDecisionFile(soQuyetDinh, fileQuyetDinh);
+              handleOpenDecisionFile(soQuyetDinh);
             }}
             style={{
               color: '#52c41a',
@@ -1039,20 +1012,17 @@ export default function ProposalDetailPage() {
         // Kiểm tra cả so_quyet_dinh và các trường cũ để tương thích với dữ liệu cũ
         const soQuyetDinh =
           record.so_quyet_dinh || record.so_quyet_dinh_bkbqp || record.so_quyet_dinh_cstdtq;
-        const fileQuyetDinh =
-          record.file_quyet_dinh || record.file_quyet_dinh_bkbqp || record.file_quyet_dinh_cstdtq;
 
         if (!soQuyetDinh || (typeof soQuyetDinh === 'string' && soQuyetDinh.trim() === '')) {
           return <span style={{ color: '#999', fontWeight: 400 }}>Chưa có</span>;
         }
 
-        if (fileQuyetDinh) {
           return (
             <a
               onClick={e => {
                 e.preventDefault();
                 e.stopPropagation();
-                handleOpenDecisionFile(soQuyetDinh, fileQuyetDinh);
+              handleOpenDecisionFile(soQuyetDinh);
               }}
               style={{
                 color: '#52c41a',
@@ -1064,9 +1034,6 @@ export default function ProposalDetailPage() {
               {soQuyetDinh}
             </a>
           );
-        } else {
-          return <span style={{ color: '#999', fontWeight: 400 }}>{soQuyetDinh}</span>;
-        }
       },
     },
   ];
@@ -1111,7 +1078,8 @@ export default function ProposalDetailPage() {
       width: 180,
       align: 'center' as const,
       render: (_: any, record: ThanhTichItem) => {
-        // Chỉ hiển thị nếu có dữ liệu trong dataJSON
+        // Hiển thị cấp bậc/chức vụ từ DB đề xuất (đã được lưu khi tạo đề xuất)
+        // Dữ liệu này được lưu từ bước 3 (Set Titles) khi manager nhập cấp bậc/chức vụ
         const capBac = record.cap_bac;
         const chucVu = record.chuc_vu;
 
@@ -1156,7 +1124,7 @@ export default function ProposalDetailPage() {
           value={record.loai}
           type="select"
           options={[
-            { label: 'NCKH', value: 'NCKH' },
+            { label: 'ĐTKH', value: 'DTKH' },
             { label: 'SKKH', value: 'SKKH' },
           ]}
           onSave={val => updateThanhTich(index, 'loai', val)}
@@ -1188,13 +1156,12 @@ export default function ProposalDetailPage() {
           return <span style={{ color: '#999', fontWeight: 400 }}>Chưa có</span>;
         }
 
-        if (record.file_quyet_dinh) {
           return (
             <a
               onClick={e => {
                 e.preventDefault();
                 e.stopPropagation();
-                handleOpenDecisionFile(soQuyetDinh, record.file_quyet_dinh);
+              handleOpenDecisionFile(soQuyetDinh);
               }}
               style={{
                 color: '#52c41a',
@@ -1206,9 +1173,6 @@ export default function ProposalDetailPage() {
               {soQuyetDinh}
             </a>
           );
-        } else {
-          return <span style={{ color: '#999', fontWeight: 400 }}>{soQuyetDinh}</span>;
-        }
       },
     },
   ];
@@ -1228,7 +1192,12 @@ export default function ProposalDetailPage() {
   };
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1600px', margin: '0 auto' }}>
+    <ConfigProvider
+      theme={{
+        algorithm: theme === 'dark' ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+      }}
+    >
+      <div style={{ padding: '24px', maxWidth: '1600px', margin: '0 auto' }}>
       <Breadcrumb style={{ marginBottom: '16px' }}>
         <Breadcrumb.Item href="/">
           <HomeOutlined />
@@ -1354,6 +1323,24 @@ export default function ProposalDetailPage() {
           )}
         </div>
       </Card>
+
+      {/* Ghi chú */}
+      {proposal.ghi_chu && (
+        <Card title="Ghi chú" style={{ marginBottom: '24px' }}>
+          <div
+            style={{
+              padding: '12px',
+              background: theme === 'dark' ? '#1f2937' : '#fafafa',
+              borderRadius: 4,
+              border: `1px solid ${theme === 'dark' ? '#374151' : '#e5e7eb'}`,
+            }}
+          >
+            <Text style={{ color: theme === 'dark' ? '#f3f4f6' : '#111827' }}>
+              {proposal.ghi_chu}
+            </Text>
+          </div>
+        </Card>
+      )}
 
       {/* File đính kèm */}
       <Card title="File đính kèm" style={{ marginBottom: '24px' }}>
@@ -1652,5 +1639,6 @@ export default function ProposalDetailPage() {
         loaiKhenThuong="CA_NHAN_HANG_NAM"
       />
     </div>
+    </ConfigProvider>
   );
 }

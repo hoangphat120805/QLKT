@@ -286,6 +286,120 @@ class DecisionController {
       });
     }
   }
+
+  /**
+   * GET /api/decisions/file-path/:soQuyetDinh
+   * Lấy file path từ số quyết định
+   */
+  async getFilePath(req, res) {
+    try {
+      const { soQuyetDinh } = req.params;
+      const result = await decisionService.getFilePathBySoQuyetDinh(decodeURIComponent(soQuyetDinh));
+
+      if (!result.success) {
+        return res.status(result.decision ? 200 : 404).json({
+          success: false,
+          message: result.error,
+          data: result.decision,
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: 'Lấy file path thành công',
+        data: {
+          file_path: result.file_path,
+          decision: result.decision,
+        },
+      });
+    } catch (error) {
+      console.error('Get file path error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Lấy file path thất bại',
+      });
+    }
+  }
+
+  /**
+   * POST /api/decisions/file-paths
+   * Lấy file paths từ nhiều số quyết định
+   * Body: { soQuyetDinhs: ['SQD001', 'SQD002', ...] }
+   */
+  async getFilePaths(req, res) {
+    try {
+      const { soQuyetDinhs } = req.body;
+
+      if (!Array.isArray(soQuyetDinhs)) {
+        return res.status(400).json({
+          success: false,
+          message: 'soQuyetDinhs phải là một mảng',
+        });
+      }
+
+      const result = await decisionService.getFilePathsBySoQuyetDinhs(soQuyetDinhs);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Lấy file paths thành công',
+        data: result,
+      });
+    } catch (error) {
+      console.error('Get file paths error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Lấy file paths thất bại',
+      });
+    }
+  }
+
+  /**
+   * GET /api/decisions/download/:soQuyetDinh
+   * Tải file quyết định theo số quyết định
+   * Backend tự động query DB để lấy file path và trả về file để download
+   */
+  async downloadDecisionFile(req, res) {
+    try {
+      const { soQuyetDinh } = req.params;
+      const decodedSoQuyetDinh = decodeURIComponent(soQuyetDinh);
+
+      const result = await decisionService.getDecisionFileForDownload(decodedSoQuyetDinh);
+
+      if (!result.success) {
+        return res.status(404).json({
+          success: false,
+          message: result.error || 'Không tìm thấy file quyết định',
+        });
+      }
+
+      const path = require('path');
+      const filename = result.filename;
+
+      // Xác định Content-Type dựa trên extension
+      const ext = path.extname(filename).toLowerCase();
+      let contentType = 'application/octet-stream';
+      if (ext === '.pdf') {
+        contentType = 'application/pdf';
+      } else if (ext === '.doc') {
+        contentType = 'application/msword';
+      } else if (ext === '.docx') {
+        contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      }
+
+      // Set headers để download file
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
+
+      // Trả về file
+      return res.sendFile(result.filePath);
+    } catch (error) {
+      console.error('Download decision file error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Không thể tải file quyết định',
+      });
+    }
+  }
 }
 
 module.exports = new DecisionController();

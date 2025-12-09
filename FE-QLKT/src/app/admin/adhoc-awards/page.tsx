@@ -45,7 +45,7 @@ import {
 } from '@ant-design/icons';
 import type { TableColumnsType, UploadFile } from 'antd';
 import { apiClient } from '@/lib/api-client';
-import axiosInstance from '@/utils/axiosInstance';
+import { downloadDecisionFile } from '@/utils/downloadDecisionFile';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -67,7 +67,7 @@ interface AdhocAward {
   chuc_vu?: string;
   ghi_chu?: string;
   so_quyet_dinh?: string;
-  files_quyet_dinh?: FileInfo[];
+  files_dinh_kem?: FileInfo[];
   createdAt: string;
   QuanNhan?: {
     id: string;
@@ -128,6 +128,7 @@ interface CreateFormData {
   decisionYear: number;
   signer: string;
   signDate: string;
+  decisionFilePath?: string | null; // File path từ số quyết định đã chọn
   currentStep: number;
 }
 
@@ -217,14 +218,14 @@ export default function AdhocAwardsPage() {
   // Create modal states
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [createFormData, setCreateFormData] = useState<CreateFormData>(INITIAL_CREATE_FORM);
-  const [createFileList, setCreateFileList] = useState<UploadFile[]>([]);
+  const [createAttachedFileList, setCreateAttachedFileList] = useState<UploadFile[]>([]);
 
   // Edit modal states
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editingAward, setEditingAward] = useState<AdhocAward | null>(null);
   const [editFormData, setEditFormData] = useState<EditFormData>(INITIAL_EDIT_FORM);
-  const [editFileList, setEditFileList] = useState<UploadFile[]>([]);
-  const [removedFileIndexes, setRemovedFileIndexes] = useState<number[]>([]);
+  const [editAttachedFileList, setEditAttachedFileList] = useState<UploadFile[]>([]);
+  const [removedAttachedFileIndexes, setRemovedAttachedFileIndexes] = useState<number[]>([]);
 
   // Detail modal states
   const [detailModalVisible, setDetailModalVisible] = useState(false);
@@ -367,39 +368,8 @@ export default function AdhocAwardsPage() {
   // =============================================================================
   // FILE HANDLING
   // =============================================================================
-  const handleOpenDecisionFile = async (soQuyetDinh: string, filePath?: string | null) => {
-    try {
-      let filename: string | null = null;
-
-      if (filePath) {
-        filename = filePath.split('/').pop() || null;
-      } else {
-        const response = await apiClient.getDecisionBySoQuyetDinh(soQuyetDinh);
-        if (response.success && response.data?.file_path) {
-          filename = response.data.file_path.split('/').pop() || null;
-        }
-      }
-
-      if (filename) {
-        const response = await axiosInstance.get(`/api/proposals/uploads/${filename}`, {
-          responseType: 'blob',
-        });
-        const blob = response.data;
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename || `${soQuyetDinh}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        message.success('Tải file thành công');
-      } else {
-        message.warning('Không tìm thấy file quyết định');
-      }
-    } catch {
-      message.error('Lỗi khi tải file quyết định');
-    }
+  const handleOpenDecisionFile = async (soQuyetDinh: string) => {
+    await downloadDecisionFile(soQuyetDinh);
   };
 
   // =============================================================================
@@ -407,7 +377,7 @@ export default function AdhocAwardsPage() {
   // =============================================================================
   const handleOpenCreateModal = () => {
     setCreateFormData(INITIAL_CREATE_FORM);
-    setCreateFileList([]);
+    setCreateAttachedFileList([]);
     setSelectedDecision(null);
     setDecisionOptions([]);
     setPersonnelFilters({ coQuanId: '', donViId: '', searchName: '' });
@@ -481,9 +451,10 @@ export default function AdhocAwardsPage() {
         if (note) formData.append('note', note);
         if (decisionNumber) formData.append('decisionNumber', decisionNumber);
 
-        createFileList.forEach(file => {
+        // Append attached files (file đính kèm)
+        createAttachedFileList.forEach(file => {
           if (file.originFileObj) {
-            formData.append('files', file.originFileObj);
+            formData.append('attachedFiles', file.originFileObj);
           }
         });
 
@@ -518,17 +489,17 @@ export default function AdhocAwardsPage() {
       decisionNumber: award.so_quyet_dinh || '',
     });
 
-    // Convert existing files to UploadFile format
-    const existingFiles: UploadFile[] =
-      award.files_quyet_dinh?.map((file, index) => ({
-        uid: `existing-${index}`,
+    // Convert existing attached files to UploadFile format
+    const existingAttachedFiles: UploadFile[] =
+      award.files_dinh_kem?.map((file, index) => ({
+        uid: `existing-attached-${index}`,
         name: file.originalName,
         status: 'done' as const,
         url: `/${file.path}`,
       })) || [];
 
-    setEditFileList(existingFiles);
-    setRemovedFileIndexes([]);
+    setEditAttachedFileList(existingAttachedFiles);
+    setRemovedAttachedFileIndexes([]);
     setSelectedDecision(null);
     setDecisionOptions([]);
     setEditModalVisible(true);
@@ -538,17 +509,17 @@ export default function AdhocAwardsPage() {
     setEditModalVisible(false);
     setEditingAward(null);
     setEditFormData(INITIAL_EDIT_FORM);
-    setEditFileList([]);
-    setRemovedFileIndexes([]);
+    setEditAttachedFileList([]);
+    setRemovedAttachedFileIndexes([]);
   };
 
-  const handleRemoveExistingFile = (fileUid: string) => {
-    const match = fileUid.match(/existing-(\d+)/);
+  const handleRemoveExistingAttachedFile = (fileUid: string) => {
+    const match = fileUid.match(/existing-attached-(\d+)/);
     if (match) {
       const index = parseInt(match[1]);
-      setRemovedFileIndexes(prev => [...prev, index]);
+      setRemovedAttachedFileIndexes(prev => [...prev, index]);
     }
-    setEditFileList(prev => prev.filter(f => f.uid !== fileUid));
+    setEditAttachedFileList(prev => prev.filter(f => f.uid !== fileUid));
   };
 
   const handleEditSubmit = async () => {
@@ -573,16 +544,16 @@ export default function AdhocAwardsPage() {
       if (note) formData.append('note', note);
       if (decisionNumber) formData.append('decisionNumber', decisionNumber);
 
-      // Add new files
-      editFileList.forEach(file => {
+      // Add new attached files (file đính kèm)
+      editAttachedFileList.forEach(file => {
         if (file.originFileObj) {
-          formData.append('files', file.originFileObj);
+          formData.append('attachedFiles', file.originFileObj);
         }
       });
 
       // Add removed file indexes
-      if (removedFileIndexes.length > 0) {
-        formData.append('removeFileIndexes', JSON.stringify(removedFileIndexes));
+      if (removedAttachedFileIndexes.length > 0) {
+        formData.append('removeAttachedFileIndexes', JSON.stringify(removedAttachedFileIndexes));
       }
 
       const result = await apiClient.updateAdhocAward(editingAward.id, formData);
@@ -1227,21 +1198,21 @@ export default function AdhocAwardsPage() {
           <div>
             <div style={{ marginBottom: 12 }}>
               <Text strong style={{ display: 'block', marginBottom: 4 }}>
-                Tải tệp đính kèm
+                Tải file đính kèm
               </Text>
               <Text type="secondary">
-                Tải lên các tệp đính kèm (không bắt buộc)
+                Tải lên các file đính kèm (không bắt buộc)
               </Text>
             </div>
             <Upload
-              fileList={createFileList}
-              onChange={({ fileList }) => setCreateFileList(fileList)}
+              fileList={createAttachedFileList}
+              onChange={({ fileList }) => setCreateAttachedFileList(fileList)}
               beforeUpload={() => false}
               multiple
               accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
             >
               <Button icon={<UploadOutlined />} size="large" style={{ width: '100%' }}>
-                Chọn file
+                Chọn file đính kèm
               </Button>
             </Upload>
             <Text type="secondary" style={{ display: 'block', marginTop: 8 }}>
@@ -1414,10 +1385,10 @@ export default function AdhocAwardsPage() {
               </Descriptions>
             </Card>
 
-            {createFileList.length > 0 && (
-              <Card size="small" title={`File đính kèm (${createFileList.length} file)`}>
+            {createAttachedFileList.length > 0 && (
+              <Card size="small" title={`File đính kèm (${createAttachedFileList.length} file)`}>
                 <Space direction="vertical" style={{ width: '100%' }} size="small">
-                  {createFileList.map((file, index) => (
+                  {createAttachedFileList.map((file, index) => (
                     <div
                       key={index}
                       style={{
@@ -1863,12 +1834,11 @@ export default function AdhocAwardsPage() {
               />
             </div>
 
-            {/* Files */}
-            <div>
-              <Text style={{ display: 'block', marginBottom: 8 }}>File đính kèm</Text>
-              {editFileList.length > 0 && (
+            {/* File đính kèm */}
+            <Card size="small" title="File đính kèm">
+              {editAttachedFileList.length > 0 && (
                 <div style={{ marginBottom: 12 }}>
-                  {editFileList.map(file => (
+                  {editAttachedFileList.map(file => (
                     <div
                       key={file.uid}
                       style={{
@@ -1884,7 +1854,7 @@ export default function AdhocAwardsPage() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <FileOutlined style={{ color: '#1890ff' }} />
                         <Text>{file.name}</Text>
-                        {file.uid.startsWith('existing-') && <Tag color="green">Đã lưu</Tag>}
+                        {file.uid.startsWith('existing-attached-') && <Tag color="blue">Đã lưu</Tag>}
                       </div>
                       <Button
                         type="text"
@@ -1892,10 +1862,10 @@ export default function AdhocAwardsPage() {
                         size="small"
                         icon={<DeleteOutlined />}
                         onClick={() => {
-                          if (file.uid.startsWith('existing-')) {
-                            handleRemoveExistingFile(file.uid);
+                          if (file.uid.startsWith('existing-attached-')) {
+                            handleRemoveExistingAttachedFile(file.uid);
                           } else {
-                            setEditFileList(prev => prev.filter(f => f.uid !== file.uid));
+                            setEditAttachedFileList(prev => prev.filter(f => f.uid !== file.uid));
                           }
                         }}
                       />
@@ -1904,19 +1874,19 @@ export default function AdhocAwardsPage() {
                 </div>
               )}
               <Upload
-                fileList={editFileList.filter(f => !f.uid.startsWith('existing-'))}
+                fileList={editAttachedFileList.filter(f => !f.uid.startsWith('existing-attached-'))}
                 onChange={({ fileList }) => {
-                  const existingFiles = editFileList.filter(f => f.uid.startsWith('existing-'));
-                  setEditFileList([...existingFiles, ...fileList]);
+                  const existingFiles = editAttachedFileList.filter(f => f.uid.startsWith('existing-attached-'));
+                  setEditAttachedFileList([...existingFiles, ...fileList]);
                 }}
                 beforeUpload={() => false}
                 multiple
                 accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
                 showUploadList={false}
               >
-                <Button icon={<UploadOutlined />}>Thêm file mới</Button>
+                <Button icon={<UploadOutlined />}>Thêm file đính kèm</Button>
               </Upload>
-            </div>
+            </Card>
 
             {/* Footer */}
             <div
@@ -2054,11 +2024,12 @@ export default function AdhocAwardsPage() {
               </Descriptions>
             </Card>
 
-            {detailAward.files_quyet_dinh && detailAward.files_quyet_dinh.length > 0 && (
-              <Card size="small" title={`File đính kèm (${detailAward.files_quyet_dinh.length} file)`}>
+            {/* File đính kèm */}
+            {detailAward.files_dinh_kem && detailAward.files_dinh_kem.length > 0 && (
+              <Card size="small" title={`File đính kèm (${detailAward.files_dinh_kem.length})`}>
                 <List
                   size="small"
-                  dataSource={detailAward.files_quyet_dinh}
+                  dataSource={detailAward.files_dinh_kem}
                   renderItem={(file, index) => (
                     <List.Item
                       actions={[

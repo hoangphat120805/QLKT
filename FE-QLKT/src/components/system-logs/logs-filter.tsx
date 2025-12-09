@@ -38,6 +38,34 @@ const actionLabels: Record<string, string> = {
   IMPORT: 'Import',
   EXPORT: 'Xuất dữ liệu',
   BULK: 'Thêm đồng loạt',
+  VIEW: 'Xem',
+  SEARCH: 'Tìm kiếm',
+  DOWNLOAD: 'Tải xuống',
+  UPLOAD: 'Tải lên',
+};
+
+// Helper function để map action với format khác nhau
+const getActionLabel = (action: string): string => {
+  if (!action) return action;
+  
+  // Nếu action có format như "CREATE_PERSONNEL", chỉ lấy phần đầu
+  const baseAction = action.split('_')[0];
+  
+  // Thử tìm label cho base action
+  if (actionLabels[baseAction]) {
+    return actionLabels[baseAction];
+  }
+  
+  // Nếu không tìm thấy, thử tìm cho toàn bộ action
+  if (actionLabels[action]) {
+    return actionLabels[action];
+  }
+  
+  // Nếu vẫn không có, format lại action
+  return action
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
 };
 
 // Mapping cho resources tiếng Việt
@@ -48,10 +76,57 @@ const resourceLabels: Record<string, string> = {
   positions: 'Chức vụ',
   proposals: 'Đề xuất',
   'annual-rewards': 'Danh hiệu hằng năm',
+  'annual_rewards': 'Danh hiệu hằng năm',
   'position-history': 'Lịch sử chức vụ',
+  'position_history': 'Lịch sử chức vụ',
   'scientific-achievements': 'Thành tích khoa học',
+  'scientific_achievements': 'Thành tích khoa học',
   decisions: 'Quyết định',
   auth: 'Xác thực',
+  'adhoc-awards': 'Khen thưởng đột xuất',
+  'adhoc_awards': 'Khen thưởng đột xuất',
+  'commemorative-medals': 'Kỷ niệm chương',
+  'commemorative_medals': 'Kỷ niệm chương',
+  'contribution-awards': 'Khen thưởng cống hiến',
+  'contribution_awards': 'Khen thưởng cống hiến',
+  'military-flag': 'Cờ thi đua',
+  'military_flag': 'Cờ thi đua',
+  'service-rewards': 'Khen thưởng niên hạn',
+  'service_rewards': 'Khen thưởng niên hạn',
+  'unit-annual-awards': 'Khen thưởng đơn vị hằng năm',
+  'unit_annual_awards': 'Khen thưởng đơn vị hằng năm',
+  'hccsvv': 'Huân chương Chiến sỹ Vẻ vang',
+  categories: 'Danh mục',
+  dashboard: 'Bảng điều khiển',
+  'system-logs': 'Nhật ký hệ thống',
+  'system_logs': 'Nhật ký hệ thống',
+};
+
+// Helper function để map resource với format khác nhau
+const getResourceLabel = (resource: string): string => {
+  if (!resource) return resource;
+  
+  // Thử tìm label trực tiếp
+  if (resourceLabels[resource]) {
+    return resourceLabels[resource];
+  }
+  
+  // Thử với format khác (dash vs underscore)
+  const normalized = resource.replace(/_/g, '-');
+  if (resourceLabels[normalized]) {
+    return resourceLabels[normalized];
+  }
+  
+  const normalized2 = resource.replace(/-/g, '_');
+  if (resourceLabels[normalized2]) {
+    return resourceLabels[normalized2];
+  }
+  
+  // Nếu không tìm thấy, format lại resource
+  return resource
+    .split(/[-_]/)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
 };
 
 export function LogsFilter({ onFilterChange }: LogsFilterProps) {
@@ -76,11 +151,27 @@ export function LogsFilter({ onFilterChange }: LogsFilterProps) {
         ]);
 
         if (actionsRes.success && Array.isArray(actionsRes.data)) {
-          setActions(actionsRes.data);
+          // Loại bỏ null/undefined và trùng lặp, sắp xếp
+          const uniqueActions = Array.from(
+            new Set(actionsRes.data.filter((a): a is string => Boolean(a)))
+          ).sort();
+          setActions(uniqueActions);
+        } else {
+          console.warn('Invalid actions response:', actionsRes);
+          // Fallback to default values
+          setActions(['CREATE', 'UPDATE', 'DELETE', 'APPROVE', 'REJECT', 'LOGIN', 'LOGOUT']);
         }
 
         if (resourcesRes.success && Array.isArray(resourcesRes.data)) {
-          setResources(resourcesRes.data);
+          // Loại bỏ null/undefined và trùng lặp, sắp xếp
+          const uniqueResources = Array.from(
+            new Set(resourcesRes.data.filter((r): r is string => Boolean(r)))
+          ).sort();
+          setResources(uniqueResources);
+        } else {
+          console.warn('Invalid resources response:', resourcesRes);
+          // Fallback to default values
+          setResources(['accounts', 'personnel', 'units', 'positions', 'proposals', 'annual-rewards']);
         }
       } catch (error) {
         console.error('Error fetching filter options:', error);
@@ -95,82 +186,51 @@ export function LogsFilter({ onFilterChange }: LogsFilterProps) {
     fetchFilterOptions();
   }, []);
 
-  const handleSearch = (value: string) => {
-    setSearch(value);
-    // Debounce search
-    setTimeout(() => {
+  // Sync filter changes to parent component
+  useEffect(() => {
+    // Debounce search - only delay if there's search text
+    const timeout = setTimeout(() => {
       onFilterChange({
-        search: value,
+        search: search.trim() || undefined,
         startDate: startDate?.toISOString(),
         endDate: endDate?.toISOString(),
         actorRole,
         action,
         resource,
       });
-    }, 300);
+    }, search ? 300 : 0); // No delay if clearing search
+
+    return () => {
+      clearTimeout(timeout);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, startDate, endDate, actorRole, action, resource]);
+
+  const handleSearch = (value: string) => {
+    setSearch(value);
   };
 
   const handleStartDateChange = (date: Dayjs | null) => {
     setStartDate(date);
-    onFilterChange({
-      search,
-      startDate: date?.toISOString(),
-      endDate: endDate?.toISOString(),
-      actorRole,
-      action,
-      resource,
-    });
   };
 
   const handleEndDateChange = (date: Dayjs | null) => {
     setEndDate(date);
-    onFilterChange({
-      search,
-      startDate: startDate?.toISOString(),
-      endDate: date?.toISOString(),
-      actorRole,
-      action,
-      resource,
-    });
   };
 
   const handleRoleChange = (value: string) => {
     const role = value === 'ALL' ? undefined : value;
     setActorRole(role);
-    onFilterChange({
-      search,
-      startDate: startDate?.toISOString(),
-      endDate: endDate?.toISOString(),
-      actorRole: role,
-      action,
-      resource,
-    });
   };
 
   const handleActionChange = (value: string) => {
     const a = value === 'ALL' ? undefined : value;
     setAction(a);
-    onFilterChange({
-      search,
-      startDate: startDate?.toISOString(),
-      endDate: endDate?.toISOString(),
-      actorRole,
-      action: a,
-      resource,
-    });
   };
 
   const handleResourceChange = (value: string) => {
     const r = value === 'ALL' ? undefined : value;
     setResource(r);
-    onFilterChange({
-      search,
-      startDate: startDate?.toISOString(),
-      endDate: endDate?.toISOString(),
-      actorRole,
-      action,
-      resource: r,
-    });
   };
 
   const handleReset = () => {
@@ -180,14 +240,7 @@ export function LogsFilter({ onFilterChange }: LogsFilterProps) {
     setActorRole(undefined);
     setAction(undefined);
     setResource(undefined);
-    onFilterChange({
-      search: '',
-      startDate: undefined,
-      endDate: undefined,
-      actorRole: undefined,
-      action: undefined,
-      resource: undefined,
-    });
+    // useEffect will handle the filter change automatically
   };
 
   const hasActiveFilters = search || startDate || endDate || actorRole || action || resource;
@@ -213,7 +266,7 @@ export function LogsFilter({ onFilterChange }: LogsFilterProps) {
   const actionOptions: SelectProps['options'] = [
     { label: 'Tất cả', value: 'ALL' },
     ...actions.map(a => ({
-      label: actionLabels[a] || a,
+      label: getActionLabel(a),
       value: a,
     })),
   ];
@@ -221,7 +274,7 @@ export function LogsFilter({ onFilterChange }: LogsFilterProps) {
   const resourceOptions: SelectProps['options'] = [
     { label: 'Tất cả', value: 'ALL' },
     ...resources.map(r => ({
-      label: resourceLabels[r] || r,
+      label: getResourceLabel(r),
       value: r,
     })),
   ];

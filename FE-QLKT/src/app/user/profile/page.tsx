@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ReactNode } from 'react';
 import {
   Card,
   Tabs,
@@ -13,6 +13,13 @@ import {
   message,
   Space,
   Descriptions,
+  ConfigProvider,
+  theme as antdTheme,
+  Row,
+  Col,
+  Statistic,
+  Divider,
+  Empty,
 } from 'antd';
 import {
   HomeOutlined,
@@ -20,16 +27,24 @@ import {
   StarOutlined,
   HistoryOutlined,
   UserOutlined,
+  TeamOutlined,
+  SafetyOutlined,
+  ExperimentOutlined,
+  CrownOutlined,
+  FireOutlined,
+  FileTextOutlined,
+  CalendarOutlined,
 } from '@ant-design/icons';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
-import axiosInstance from '@/utils/axiosInstance';
 import { calculateDuration, formatDate } from '@/lib/utils';
+import { useTheme } from '@/components/theme-provider';
+import { downloadDecisionFile } from '@/utils/downloadDecisionFile';
 
 const { Title, Text } = Typography;
-const { TabPane } = Tabs;
 
 export default function UserProfilePage() {
+  const { theme: currentTheme } = useTheme();
   const [loading, setLoading] = useState(true);
   const [personnelId, setPersonnelId] = useState<string | null>(null);
   const [personnelInfo, setPersonnelInfo] = useState<any>(null);
@@ -42,6 +57,8 @@ export default function UserProfilePage() {
   const [contributionProfile, setContributionProfile] = useState<any>(null);
   const [militaryFlag, setMilitaryFlag] = useState<any>(null);
   const [commemorationMedals, setCommemorationMedals] = useState<any>(null);
+
+  const isDarkMode = currentTheme === 'dark';
 
   const calculateYearsOfService = (ngayNhapNgu: string) => {
     if (!ngayNhapNgu) return 0;
@@ -56,43 +73,54 @@ export default function UserProfilePage() {
     return { years, months };
   };
 
-  const handleOpenDecisionFile = async (soQuyetDinh: string, filePath?: string | null) => {
-    try {
-      let filename: string | null = null;
+  const getStatusTag = (status: string) => {
+    const statusMap: Record<string, { label: string; color: string }> = {
+      DA_NHAN: { label: 'Đã nhận', color: 'green' },
+      DU_DIEU_KIEN: { label: 'Đủ điều kiện', color: 'orange' },
+      CHUA_DU: { label: 'Chưa đủ', color: 'default' },
+    };
+    const s = statusMap[status] || statusMap.CHUA_DU;
+    return <Tag color={s.color}>{s.label}</Tag>;
+  };
 
-      // Nếu đã có file_path trong record, dùng luôn
-      if (filePath) {
-        filename = filePath.split('/').pop() || null;
-      } else {
-        // Nếu chưa có file_path, tìm từ DB dựa trên số quyết định
-        const response = await apiClient.getDecisionBySoQuyetDinh(soQuyetDinh);
-        if (response.success && response.data?.file_path) {
-          filename = response.data.file_path.split('/').pop() || null;
-        }
-      }
+  const InfoGrid = ({ items }: { items: Array<{ label: string; value?: ReactNode }> }) => (
+    <div className="overflow-x-auto">
+      <table
+        className={`min-w-full rounded-lg border ${
+          isDarkMode ? 'border-gray-700 bg-gray-900/60' : 'border-gray-200 bg-white'
+        }`}
+      >
+        <tbody>
+          {items.map(item => (
+            <tr
+              key={item.label}
+              className={`border-b last:border-b-0 ${
+                isDarkMode ? 'border-gray-800' : 'border-gray-100'
+              }`}
+            >
+              <td
+                className={`px-4 py-3 text-sm font-semibold w-48 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}
+              >
+                {item.label}
+              </td>
+              <td
+                className={`px-4 py-3 text-base break-words ${
+                  isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                }`}
+              >
+                {item.value ?? '-'}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 
-      if (filename) {
-        // Tải file về bằng axios với responseType: 'blob'
-        const response = await axiosInstance.get(`/api/proposals/uploads/${filename}`, {
-          responseType: 'blob',
-        });
-        const blob = response.data;
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename || `${soQuyetDinh}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        message.success('Tải file thành công');
-      } else {
-        message.warning('Không tìm thấy file quyết định');
-      }
-    } catch (error: any) {
-      console.error('Error downloading decision file:', error);
-      message.error('Lỗi khi tải file quyết định');
-    }
+  const handleOpenDecisionFile = async (soQuyetDinh: string) => {
+    await downloadDecisionFile(soQuyetDinh);
   };
 
   useEffect(() => {
@@ -191,7 +219,7 @@ export default function UserProfilePage() {
     {
       title: 'STT',
       key: 'index',
-      width: 60,
+      width: 80,
       align: 'center' as const,
       render: (_: any, __: any, index: number) => index + 1,
     },
@@ -207,89 +235,65 @@ export default function UserProfilePage() {
       title: 'Danh hiệu',
       dataIndex: 'danh_hieu',
       key: 'danh_hieu',
-      render: (text: string) => {
-        const colorMap: Record<string, string> = {
-          CSTDCS: 'blue',
-          CSTT: 'green',
-          KHONG_DAT: 'red',
-        };
-        return <Tag color={colorMap[text] || 'default'}>{text}</Tag>;
-      },
-    },
-    {
-      title: 'Bằng khen BQP',
-      dataIndex: 'nhan_bkbqp',
-      key: 'nhan_bkbqp',
+      width: 300,
       align: 'center' as const,
-      render: (value: boolean) => (
-        <Tag color={value ? 'green' : 'default'}>{value ? 'Có' : 'Không'}</Tag>
-      ),
-    },
-    {
-      title: 'Số QĐ BKBQP',
-      dataIndex: 'so_quyet_dinh_bkbqp',
-      key: 'so_quyet_dinh_bkbqp',
       render: (text: string, record: any) => {
-        if (!text || text.trim() === '') return '-';
-        if (record.file_quyet_dinh_bkbqp) {
-          return (
-            <a
-              onClick={e => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleOpenDecisionFile(text, record.file_quyet_dinh_bkbqp);
-              }}
-              style={{
-                color: '#52c41a',
-                fontWeight: 500,
-                textDecoration: 'underline',
-                cursor: 'pointer',
-              }}
-            >
-              {text}
-            </a>
+        if (!text) return '-';
+        
+        const decisions: ReactNode[] = [];
+        
+        // Bằng khen BQP
+        if (record.so_quyet_dinh_bkbqp && record.so_quyet_dinh_bkbqp.trim() !== '') {
+          decisions.push(
+            <div key="bkbqp" style={{ marginTop: '8px', fontSize: '13px', textAlign: 'center' }}>
+              <Text type="secondary">Bằng khen BQP:</Text>{' '}
+              <a
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleOpenDecisionFile(record.so_quyet_dinh_bkbqp);
+                }}
+                style={{
+                  color: '#52c41a',
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                }}
+              >
+                {record.so_quyet_dinh_bkbqp}
+              </a>
+            </div>
           );
-        } else {
-          return <span style={{ color: '#999', fontWeight: 400 }}>{text}</span>;
         }
-      },
-    },
-    {
-      title: 'CSTĐ Toàn quân',
-      dataIndex: 'nhan_cstdtq',
-      key: 'nhan_cstdtq',
-      align: 'center' as const,
-      render: (value: boolean) => (
-        <Tag color={value ? 'blue' : 'default'}>{value ? 'Có' : 'Không'}</Tag>
-      ),
-    },
-    {
-      title: 'Số QĐ CSTDTQ',
-      dataIndex: 'so_quyet_dinh_cstdtq',
-      key: 'so_quyet_dinh_cstdtq',
-      render: (text: string, record: any) => {
-        if (!text || text.trim() === '') return '-';
-        if (record.file_quyet_dinh_cstdtq) {
-          return (
-            <a
-              onClick={e => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleOpenDecisionFile(text, record.file_quyet_dinh_cstdtq);
-              }}
-              style={{
-                color: '#52c41a',
-                fontWeight: 500,
-                textDecoration: 'underline',
-                cursor: 'pointer',
-              }}
-            >
-              {text}
-            </a>
+        
+        // CSTĐ Toàn quân
+        if (record.so_quyet_dinh_cstdtq && record.so_quyet_dinh_cstdtq.trim() !== '') {
+          decisions.push(
+            <div key="cstdtq" style={{ marginTop: '8px', fontSize: '13px', textAlign: 'center' }}>
+              <Text type="secondary">CSTĐ Toàn quân:</Text>{' '}
+              <a
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleOpenDecisionFile(record.so_quyet_dinh_cstdtq);
+                }}
+                style={{
+                  color: '#52c41a',
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                }}
+              >
+                {record.so_quyet_dinh_cstdtq}
+              </a>
+            </div>
           );
-        } else {
-          return <span style={{ color: '#999', fontWeight: 400 }}>{text}</span>;
         }
+        
+        return (
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontWeight: 500 }}>{text}</div>
+            {decisions.length > 0 && <div>{decisions}</div>}
+          </div>
+        );
       },
     },
   ];
@@ -299,7 +303,7 @@ export default function UserProfilePage() {
     {
       title: 'STT',
       key: 'index',
-      width: 60,
+      width: 80,
       align: 'center' as const,
       render: (_: any, __: any, index: number) => index + 1,
     },
@@ -315,14 +319,50 @@ export default function UserProfilePage() {
       title: 'Loại',
       dataIndex: 'loai',
       key: 'loai',
-      width: 100,
-      render: (text: string) => <Tag color={text === 'NCKH' ? 'purple' : 'orange'}>{text}</Tag>,
+      width: 120,
+      align: 'center' as const,
+      render: (text: string) => text || '-',
     },
     {
       title: 'Mô tả',
       dataIndex: 'mo_ta',
       key: 'mo_ta',
-      ellipsis: true,
+      minWidth: 200,
+      align: 'center' as const,
+      ellipsis: {
+        showTitle: false,
+      },
+      render: (text: string) => (
+        <span title={text} style={{ display: 'block', maxWidth: '100%' }}>
+          {text || '-'}
+        </span>
+      ),
+    },
+    {
+      title: 'Số quyết định',
+      dataIndex: 'so_quyet_dinh',
+      key: 'so_quyet_dinh',
+      width: 150,
+      align: 'center' as const,
+      render: (text: string, record: any) => {
+        if (!text || text.trim() === '') return '-';
+        return (
+          <a
+            onClick={e => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleOpenDecisionFile(text);
+            }}
+            style={{
+              color: '#52c41a',
+              cursor: 'pointer',
+              textDecoration: 'underline',
+            }}
+          >
+            {text}
+          </a>
+        );
+      },
     },
     {
       title: 'Trạng thái',
@@ -330,11 +370,12 @@ export default function UserProfilePage() {
       key: 'status',
       width: 120,
       align: 'center' as const,
-      render: (text: string) => (
-        <Tag color={text === 'APPROVED' ? 'green' : 'gold'}>
-          {text === 'APPROVED' ? 'Đã duyệt' : 'Chờ duyệt'}
-        </Tag>
-      ),
+      render: (text: string) => {
+        if (text === 'APPROVED') {
+          return <span style={{ color: '#52c41a' }}>Đã duyệt</span>;
+        }
+        return <span style={{ color: '#faad14' }}>Chờ duyệt</span>;
+      },
     },
   ];
 
@@ -343,37 +384,47 @@ export default function UserProfilePage() {
     {
       title: 'STT',
       key: 'index',
-      width: 60,
+      width: 80,
       align: 'center' as const,
+      fixed: 'left' as const,
       render: (_: any, __: any, index: number) => index + 1,
     },
     {
       title: 'Chức vụ',
       dataIndex: 'ChucVu',
       key: 'ChucVu',
+      width: 200,
+      align: 'center' as const,
       render: (chucVu: any) => chucVu?.ten_chuc_vu || 'N/A',
     },
     {
       title: 'Hệ số chức vụ',
       dataIndex: 'ChucVu',
       key: 'he_so_chuc_vu',
+      width: 130,
+      align: 'center' as const,
       render: (chucVu: any) => chucVu?.he_so_chuc_vu || 'N/A',
     },
     {
       title: 'Ngày bắt đầu',
       dataIndex: 'ngay_bat_dau',
       key: 'ngay_bat_dau',
+      width: 130,
+      align: 'center' as const,
       render: (date: string) => (date ? formatDate(date) : 'N/A'),
     },
     {
       title: 'Ngày kết thúc',
       dataIndex: 'ngay_ket_thuc',
       key: 'ngay_ket_thuc',
+      width: 130,
+      align: 'center' as const,
       render: (date: string) => (date ? formatDate(date) : 'Hiện tại'),
     },
     {
       title: 'Thời gian',
       key: 'duration',
+      width: 120,
       align: 'center' as const,
       render: (_: any, record: any) => {
         if (!record.ngay_bat_dau) return '-';
@@ -387,15 +438,25 @@ export default function UserProfilePage() {
     {
       title: 'STT',
       key: 'index',
-      width: 60,
+      width: 80,
       align: 'center' as const,
+      fixed: 'left' as const,
       render: (_: any, __: any, index: number) => index + 1,
     },
     {
       title: 'Hình thức khen thưởng',
       dataIndex: 'hinh_thuc_khen_thuong',
       key: 'hinh_thuc_khen_thuong',
-      render: (text: string) => text || '-',
+      width: 200,
+      align: 'center' as const,
+      ellipsis: {
+        showTitle: false,
+      },
+      render: (text: string) => (
+        <span title={text} style={{ display: 'block', maxWidth: '100%' }}>
+          {text || '-'}
+        </span>
+      ),
     },
     {
       title: 'Năm',
@@ -409,42 +470,52 @@ export default function UserProfilePage() {
       title: 'Cấp bậc',
       dataIndex: 'cap_bac',
       key: 'cap_bac',
+      width: 120,
+      align: 'center' as const,
       render: (text: string) => text || '-',
     },
     {
       title: 'Chức vụ',
       dataIndex: 'chuc_vu',
       key: 'chuc_vu',
-      render: (text: string) => text || '-',
+      width: 150,
+      align: 'center' as const,
+      ellipsis: {
+        showTitle: false,
+      },
+      render: (text: string) => (
+        <span title={text} style={{ display: 'block', maxWidth: '100%' }}>
+          {text || '-'}
+        </span>
+      ),
     },
     {
       title: 'Số quyết định',
       dataIndex: 'so_quyet_dinh',
       key: 'so_quyet_dinh',
+      width: 180,
+      align: 'center' as const,
       render: (text: string, record: any) => {
         if (!text || text.trim() === '') return '-';
-        if (record.files_quyet_dinh && record.files_quyet_dinh.length > 0) {
-          const filePath = record.files_quyet_dinh[0].path; // Lấy file đầu tiên
-          return (
-            <a
-              onClick={e => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleOpenDecisionFile(text, filePath);
-              }}
-              style={{
-                color: '#52c41a',
-                fontWeight: 500,
-                textDecoration: 'underline',
-                cursor: 'pointer',
-              }}
-            >
-              {text}
-            </a>
-          );
-        } else {
-          return <span style={{ color: '#999', fontWeight: 400 }}>{text}</span>;
-        }
+        
+        // Luôn cho phép bấm để truy vấn DB và tải file
+        return (
+          <a
+            onClick={e => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleOpenDecisionFile(text);
+            }}
+            style={{
+              color: '#52c41a',
+              fontWeight: 500,
+              textDecoration: 'underline',
+              cursor: 'pointer',
+            }}
+          >
+            {text}
+          </a>
+        );
       },
     },
   ];
@@ -457,974 +528,878 @@ export default function UserProfilePage() {
     );
   }
 
-  return (
-    <div className="space-y-6 p-6">
-      {/* Breadcrumb */}
-      <Breadcrumb>
-        <Breadcrumb.Item>
-          <Link href="/manager/dashboard">
-            <HomeOutlined />
-          </Link>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item>Lịch sử chi tiết</Breadcrumb.Item>
-      </Breadcrumb>
+  if (!personnelInfo) {
+    return (
+      <ConfigProvider
+        theme={{
+          algorithm: currentTheme === 'dark' ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+        }}
+      >
+        <div className="space-y-4 p-6">
+          <Title level={2}>Không tìm thấy thông tin</Title>
+          <Alert message="Không thể tải thông tin cá nhân" type="error" />
+        </div>
+      </ConfigProvider>
+    );
+  }
 
-      {/* Header */}
-      <div>
-        <Title level={2}>
-          <UserOutlined /> Lịch sử chi tiết
-        </Title>
-        <Text type="secondary">Xem lịch sử danh hiệu, thành tích khoa học và chức vụ của bạn</Text>
-      </div>
+  const tabItems = [
+    {
+      key: '1',
+      label: 'Hồ sơ khen thưởng',
+      children: (
+        <div className="space-y-6">
+          {/* Hồ sơ Niên hạn */}
+          {serviceProfile && (
+            <Card
+              title={
+                <span className="flex items-center gap-2">
+                  <SafetyOutlined /> Hồ sơ Niên hạn
+                </span>
+              }
+              size="small"
+            >
+              {/* HC Chiến sỹ Vẻ vang */}
+              <div className="mb-6">
+                <Text strong className="text-base">
+                  Huân chương Chiến sỹ Vẻ vang
+                </Text>
+                <Divider className="my-3" />
+                <Row gutter={[16, 16]}>
+                  <Col xs={24} md={8}>
+                    <Card size="small" className="h-full">
+                      <Statistic
+                        title="Hạng Ba"
+                        value={0}
+                        valueStyle={{ fontSize: '14px' }}
+                        valueRender={() => getStatusTag(serviceProfile.hccsvv_hang_ba_status)}
+                      />
+                      {serviceProfile.hccsvv_hang_ba_ngay && (
+                        <Text type="secondary" className="text-xs">
+                          {formatDate(serviceProfile.hccsvv_hang_ba_ngay)}
+                        </Text>
+                      )}
+                    </Card>
+                  </Col>
+                  <Col xs={24} md={8}>
+                    <Card size="small" className="h-full">
+                      <Statistic
+                        title="Hạng Nhì"
+                        value={0}
+                        valueStyle={{ fontSize: '14px' }}
+                        valueRender={() => getStatusTag(serviceProfile.hccsvv_hang_nhi_status)}
+                      />
+                      {serviceProfile.hccsvv_hang_nhi_ngay && (
+                        <Text type="secondary" className="text-xs">
+                          {formatDate(serviceProfile.hccsvv_hang_nhi_ngay)}
+                        </Text>
+                      )}
+                    </Card>
+                  </Col>
+                  <Col xs={24} md={8}>
+                    <Card size="small" className="h-full">
+                      <Statistic
+                        title="Hạng Nhất"
+                        value={0}
+                        valueStyle={{ fontSize: '14px' }}
+                        valueRender={() => getStatusTag(serviceProfile.hccsvv_hang_nhat_status)}
+                      />
+                      {serviceProfile.hccsvv_hang_nhat_ngay && (
+                        <Text type="secondary" className="text-xs">
+                          {formatDate(serviceProfile.hccsvv_hang_nhat_ngay)}
+                        </Text>
+                      )}
+                    </Card>
+                  </Col>
+                </Row>
+                {serviceProfile.goi_y && (
+                  <>
+                    <Divider className="my-4" />
+                    <Card size="small" className="bg-blue-50 dark:bg-gray-800">
+                      <Text strong>💡 Gợi ý: </Text>
+                      <Text>{serviceProfile.goi_y}</Text>
+                    </Card>
+                  </>
+                )}
+              </div>
 
-      {/* Thông tin cá nhân */}
-      {personnelInfo && (
-        <Card className="shadow-sm" bodyStyle={{ padding: '24px' }}>
-          <Descriptions bordered column={{ xs: 1, sm: 2, md: 3 }} size="middle">
-            <Descriptions.Item label="Họ và tên" labelStyle={{ fontWeight: 600 }}>
-              <Text strong style={{ fontSize: '16px' }}>
-                {personnelInfo.ho_ten || '-'}
-              </Text>
-            </Descriptions.Item>
-            <Descriptions.Item label="Cấp bậc" labelStyle={{ fontWeight: 600 }}>
-              {personnelInfo.cap_bac ? (
-                <Tag color="purple" style={{ fontSize: '14px', padding: '4px 12px' }}>
-                  {personnelInfo.cap_bac}
-                </Tag>
-              ) : (
-                '-'
-              )}
-            </Descriptions.Item>
-            <Descriptions.Item label="Chức vụ" labelStyle={{ fontWeight: 600 }}>
-              {personnelInfo.ChucVu?.ten_chuc_vu ? (
-                <Tag color="green">{personnelInfo.ChucVu.ten_chuc_vu}</Tag>
-              ) : (
-                '-'
-              )}
-            </Descriptions.Item>
-            <Descriptions.Item label="CCCD" labelStyle={{ fontWeight: 600 }}>
-              {personnelInfo.cccd || '-'}
-            </Descriptions.Item>
-            <Descriptions.Item label="Đơn vị" labelStyle={{ fontWeight: 600 }}>
-              {personnelInfo.DonViTrucThuoc?.ten_don_vi ||
-                personnelInfo.CoQuanDonVi?.ten_don_vi ||
-                '-'}
-            </Descriptions.Item>
-            <Descriptions.Item label="Ngày sinh" labelStyle={{ fontWeight: 600 }}>
-              {personnelInfo.ngay_sinh ? formatDate(personnelInfo.ngay_sinh) : '-'}
-            </Descriptions.Item>
-          </Descriptions>
-        </Card>
-      )}
-
-      {/* Tabs */}
-      <Card className="shadow-sm" bodyStyle={{ padding: '24px', overflow: 'visible' }}>
-        <Tabs defaultActiveKey="1" size="large">
-          {/* Tab 2: Thành tích khoa học */}
-          <TabPane
-            tab={
-              <Space>
-                Thành tích khoa học
-              </Space>
-            }
-            key="2"
-          >
-            <div className="mb-4">
-              <Text strong>Tổng số: {scientificAchievements.length}</Text>
-            </div>
-            <Table
-              dataSource={scientificAchievements}
-              columns={scientificColumns}
-              rowKey="id"
-              pagination={{
-                pageSize: 10,
-                showTotal: total => `Tổng ${total} bản ghi`,
-              }}
-              scroll={{ x: 800 }}
-              bordered
-              locale={{
-                emptyText: (
-                  <Alert
-                    message="Chưa có dữ liệu"
-                    description="Bạn chưa có thành tích khoa học nào"
-                    type="info"
-                    showIcon
-                  />
-                ),
-              }}
-            />
-          </TabPane>
-
-          {/* Tab 3: Lịch sử chức vụ */}
-          <TabPane
-            tab={
-              <Space>
-                Lịch sử chức vụ
-              </Space>
-            }
-            key="3"
-          >
-            <div className="mb-4">
-              <Text strong>Tổng số: {positionHistory.length}</Text>
-            </div>
-            <Table
-              dataSource={positionHistory}
-              columns={positionHistoryColumns}
-              rowKey="id"
-              pagination={{
-                pageSize: 10,
-                showTotal: total => `Tổng ${total} bản ghi`,
-              }}
-              scroll={{ x: 900 }}
-              bordered
-              locale={{
-                emptyText: (
-                  <Alert
-                    message="Chưa có dữ liệu"
-                    description="Bạn chưa có lịch sử chức vụ nào"
-                    type="info"
-                    showIcon
-                  />
-                ),
-              }}
-            />
-          </TabPane>
-
-          {/* Tab 4: Hồ sơ Niên hạn */}
-          <TabPane tab={<Space>Hồ sơ Niên hạn</Space>} key="4">
-            {serviceProfile ? (
-              <div className="space-y-6 w-full">
-                {/* Huân chương Chiến sỹ Vẻ vang */}
-                <div className="w-full">
-                  <h3
-                    style={{
-                      fontSize: '16px',
-                      fontWeight: 600,
-                      color: 'var(--ant-color-text)',
-                      marginBottom: '16px',
-                    }}
-                  >
-                    Huân chương Chiến sỹ Vẻ vang
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 w-full">
-                    {/* HC Chiến sỹ VV - Hạng Ba */}
-                    <div
-                      className="p-4 border rounded-lg"
-                      style={{
-                        borderColor: 'var(--ant-color-border)',
-                        backgroundColor: 'var(--ant-color-bg-container)',
-                      }}
-                    >
-                      <div
-                        className="text-sm font-semibold mb-2"
-                        style={{ color: 'var(--ant-color-text-secondary)' }}
-                      >
-                        HC Chiến sỹ VV - Hạng Ba
-                      </div>
-                      <div className="space-y-2">
-                        <Tag
-                          color={
-                            serviceProfile.hccsvv_hang_ba_status === 'DA_NHAN'
-                              ? 'green'
-                              : serviceProfile.hccsvv_hang_ba_status === 'DU_DIEU_KIEN'
-                              ? 'orange'
-                              : 'default'
-                          }
-                          style={{
-                            margin: 0,
-                            fontSize: '14px',
-                            padding: '4px 12px',
-                            whiteSpace: 'normal',
-                            wordBreak: 'break-word',
-                            display: 'inline-block',
-                            maxWidth: '100%',
-                          }}
-                        >
-                          {serviceProfile.hccsvv_hang_ba_status === 'DA_NHAN'
-                            ? 'Đã nhận'
-                            : serviceProfile.hccsvv_hang_ba_status === 'DU_DIEU_KIEN'
-                            ? 'Đủ điều kiện'
-                            : 'Chưa đủ điều kiện'}
-                        </Tag>
-                        {serviceProfile.hccsvv_hang_ba_ngay && (
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            Ngày: {formatDate(serviceProfile.hccsvv_hang_ba_ngay)}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* HC Chiến sỹ VV - Hạng Nhì */}
-                    <div
-                      className="p-4 border rounded-lg"
-                      style={{
-                        borderColor: 'var(--ant-color-border)',
-                        backgroundColor: 'var(--ant-color-bg-container)',
-                      }}
-                    >
-                      <div
-                        className="text-sm font-semibold mb-2"
-                        style={{ color: 'var(--ant-color-text-secondary)' }}
-                      >
-                        HC Chiến sỹ VV - Hạng Nhì
-                      </div>
-                      <div className="space-y-2">
-                        <Tag
-                          color={
-                            serviceProfile.hccsvv_hang_nhi_status === 'DA_NHAN'
-                              ? 'green'
-                              : serviceProfile.hccsvv_hang_nhi_status === 'DU_DIEU_KIEN'
-                              ? 'orange'
-                              : 'default'
-                          }
-                          style={{
-                            margin: 0,
-                            fontSize: '14px',
-                            padding: '4px 12px',
-                            whiteSpace: 'normal',
-                            wordBreak: 'break-word',
-                            display: 'inline-block',
-                            maxWidth: '100%',
-                          }}
-                        >
-                          {serviceProfile.hccsvv_hang_nhi_status === 'DA_NHAN'
-                            ? 'Đã nhận'
-                            : serviceProfile.hccsvv_hang_nhi_status === 'DU_DIEU_KIEN'
-                            ? 'Đủ điều kiện'
-                            : 'Chưa đủ điều kiện'}
-                        </Tag>
-                        {serviceProfile.hccsvv_hang_nhi_ngay && (
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            Ngày: {formatDate(serviceProfile.hccsvv_hang_nhi_ngay)}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* HC Chiến sỹ VV - Hạng Nhất */}
-                    <div
-                      className="p-4 border rounded-lg"
-                      style={{
-                        borderColor: 'var(--ant-color-border)',
-                        backgroundColor: 'var(--ant-color-bg-container)',
-                      }}
-                    >
-                      <div
-                        className="text-sm font-semibold mb-2"
-                        style={{ color: 'var(--ant-color-text-secondary)' }}
-                      >
-                        HC Chiến sỹ VV - Hạng Nhất
-                      </div>
-                      <div className="space-y-2">
-                        <Tag
-                          color={
-                            serviceProfile.hccsvv_hang_nhat_status === 'DA_NHAN'
-                              ? 'green'
-                              : serviceProfile.hccsvv_hang_nhat_status === 'DU_DIEU_KIEN'
-                              ? 'orange'
-                              : 'default'
-                          }
-                          style={{
-                            margin: 0,
-                            fontSize: '14px',
-                            padding: '4px 12px',
-                            whiteSpace: 'normal',
-                            wordBreak: 'break-word',
-                            display: 'inline-block',
-                            maxWidth: '100%',
-                          }}
-                        >
-                          {serviceProfile.hccsvv_hang_nhat_status === 'DA_NHAN'
-                            ? 'Đã nhận'
-                            : serviceProfile.hccsvv_hang_nhat_status === 'DU_DIEU_KIEN'
-                            ? 'Đủ điều kiện'
-                            : 'Chưa đủ điều kiện'}
-                        </Tag>
-                        {serviceProfile.hccsvv_hang_nhat_ngay && (
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            Ngày: {formatDate(serviceProfile.hccsvv_hang_nhat_ngay)}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Huân chương Bảo vệ Tổ quốc */}
-                <div className="w-full">
-                  <h3
-                    style={{
-                      fontSize: '16px',
-                      fontWeight: 600,
-                      color: 'var(--ant-color-text)',
-                      marginBottom: '16px',
-                    }}
-                  >
-                    Huân chương Bảo vệ Tổ quốc
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 w-full">
-                    {/* Tháng cống hiến tích lũy */}
-                    <div
-                      className="p-4 border rounded-lg"
-                      style={{
-                        borderColor: 'var(--ant-color-border)',
-                        backgroundColor: 'var(--ant-color-bg-container)',
-                      }}
-                    >
-                      <div
-                        className="text-sm font-semibold mb-2"
-                        style={{ color: 'var(--ant-color-text-secondary)' }}
-                      >
-                        Tháng cống hiến tích lũy 0.7
-                      </div>
-                      <div
-                        style={{
-                          fontSize: '16px',
-                          fontWeight: 500,
-                          color: 'var(--ant-color-text)',
-                        }}
-                      >
-                        {(() => {
+              {/* HC Bảo vệ Tổ quốc */}
+              <div className="mb-6">
+                <Text strong className="text-base">
+                  Huân chương Bảo vệ Tổ quốc
+                </Text>
+                <Divider className="my-3" />
+                <Row gutter={[16, 16]}>
+                  <Col xs={24} md={8}>
+                    <Card size="small" className="h-full">
+                      <Statistic
+                        title="Tháng tích lũy 0.7"
+                        value={(() => {
                           const { years, months } = convertMonthsToYearsAndMonths(
                             contributionProfile?.months_07 || 0
                           );
                           return `${years} năm ${months} tháng`;
                         })()}
-                      </div>
-                    </div>
-
-                    <div
-                      className="p-4 border rounded-lg"
-                      style={{
-                        borderColor: 'var(--ant-color-border)',
-                        backgroundColor: 'var(--ant-color-bg-container)',
-                      }}
-                    >
-                      <div
-                        className="text-sm font-semibold mb-2"
-                        style={{ color: 'var(--ant-color-text-secondary)' }}
-                      >
-                        Tháng cống hiến tích lũy 0.8
-                      </div>
-                      <div
-                        style={{
-                          fontSize: '16px',
-                          fontWeight: 500,
-                          color: 'var(--ant-color-text)',
-                        }}
-                      >
-                        {(() => {
+                        valueStyle={{ color: '#3f8600' }}
+                      />
+                    </Card>
+                  </Col>
+                  <Col xs={24} md={8}>
+                    <Card size="small" className="h-full">
+                      <Statistic
+                        title="Tháng tích lũy 0.8"
+                        value={(() => {
                           const { years, months } = convertMonthsToYearsAndMonths(
                             contributionProfile?.months_08 || 0
                           );
                           return `${years} năm ${months} tháng`;
                         })()}
-                      </div>
-                    </div>
-
-                    <div
-                      className="p-4 border rounded-lg"
-                      style={{
-                        borderColor: 'var(--ant-color-border)',
-                        backgroundColor: 'var(--ant-color-bg-container)',
-                      }}
-                    >
-                      <div
-                        className="text-sm font-semibold mb-2"
-                        style={{ color: 'var(--ant-color-text-secondary)' }}
-                      >
-                        Tháng cống hiến tích lũy 0.9-1.0
-                      </div>
-                      <div
-                        style={{
-                          fontSize: '16px',
-                          fontWeight: 500,
-                          color: 'var(--ant-color-text)',
-                        }}
-                      >
-                        {(() => {
+                        valueStyle={{ color: '#3f8600' }}
+                      />
+                    </Card>
+                  </Col>
+                  <Col xs={24} md={8}>
+                    <Card size="small" className="h-full">
+                      <Statistic
+                        title="Tháng tích lũy 0.9-1.0"
+                        value={(() => {
                           const { years, months } = convertMonthsToYearsAndMonths(
                             contributionProfile?.months_0910 || 0
                           );
                           return `${years} năm ${months} tháng`;
                         })()}
-                      </div>
-                    </div>
-
-                    {/* HC Bảo vệ TQ - Hạng Ba */}
-                    <div
-                      className="p-4 border rounded-lg"
-                      style={{
-                        borderColor: 'var(--ant-color-border)',
-                        backgroundColor: 'var(--ant-color-bg-container)',
-                      }}
-                    >
-                      <div
-                        className="text-sm font-semibold mb-2"
-                        style={{ color: 'var(--ant-color-text-secondary)' }}
-                      >
-                        HC Bảo vệ TQ - Hạng Ba
-                      </div>
-                      <Tag
-                        color={
-                          contributionProfile?.hcbvtq_hang_ba_status === 'DA_NHAN'
-                            ? 'green'
-                            : contributionProfile?.hcbvtq_hang_ba_status === 'DU_DIEU_KIEN'
-                            ? 'orange'
-                            : 'default'
-                        }
-                        style={{
-                          margin: 0,
-                          fontSize: '14px',
-                          padding: '4px 12px',
-                          whiteSpace: 'normal',
-                          wordBreak: 'break-word',
-                          display: 'inline-block',
-                          maxWidth: '100%',
-                        }}
-                      >
-                        {contributionProfile?.hcbvtq_hang_ba_status === 'DA_NHAN'
-                          ? 'Đã nhận'
-                          : contributionProfile?.hcbvtq_hang_ba_status === 'DU_DIEU_KIEN'
-                          ? 'Đủ điều kiện'
-                          : 'Chưa đủ điều kiện'}
-                      </Tag>
-                    </div>
-
-                    {/* HC Bảo vệ TQ - Hạng Nhì */}
-                    <div
-                      className="p-4 border rounded-lg"
-                      style={{
-                        borderColor: 'var(--ant-color-border)',
-                        backgroundColor: 'var(--ant-color-bg-container)',
-                      }}
-                    >
-                      <div
-                        className="text-sm font-semibold mb-2"
-                        style={{ color: 'var(--ant-color-text-secondary)' }}
-                      >
-                        HC Bảo vệ TQ - Hạng Nhì
-                      </div>
-                      <Tag
-                        color={
-                          contributionProfile?.hcbvtq_hang_nhi_status === 'DA_NHAN'
-                            ? 'green'
-                            : contributionProfile?.hcbvtq_hang_nhi_status === 'DU_DIEU_KIEN'
-                            ? 'orange'
-                            : 'default'
-                        }
-                        style={{
-                          margin: 0,
-                          fontSize: '14px',
-                          padding: '4px 12px',
-                          whiteSpace: 'normal',
-                          wordBreak: 'break-word',
-                          display: 'inline-block',
-                          maxWidth: '100%',
-                        }}
-                      >
-                        {contributionProfile?.hcbvtq_hang_nhi_status === 'DA_NHAN'
-                          ? 'Đã nhận'
-                          : contributionProfile?.hcbvtq_hang_nhi_status === 'DU_DIEU_KIEN'
-                          ? 'Đủ điều kiện'
-                          : 'Chưa đủ điều kiện'}
-                      </Tag>
-                    </div>
-
-                    {/* HC Bảo vệ TQ - Hạng Nhất */}
-                    <div
-                      className="p-4 border rounded-lg"
-                      style={{
-                        borderColor: 'var(--ant-color-border)',
-                        backgroundColor: 'var(--ant-color-bg-container)',
-                      }}
-                    >
-                      <div
-                        className="text-sm font-semibold mb-2"
-                        style={{ color: 'var(--ant-color-text-secondary)' }}
-                      >
-                        HC Bảo vệ TQ - Hạng Nhất
-                      </div>
-                      <Tag
-                        color={
-                          contributionProfile?.hcbvtq_hang_nhat_status === 'DA_NHAN'
-                            ? 'green'
-                            : contributionProfile?.hcbvtq_hang_nhat_status === 'DU_DIEU_KIEN'
-                            ? 'orange'
-                            : 'default'
-                        }
-                        style={{
-                          margin: 0,
-                          fontSize: '14px',
-                          padding: '4px 12px',
-                          whiteSpace: 'normal',
-                          wordBreak: 'break-word',
-                          display: 'inline-block',
-                          maxWidth: '100%',
-                        }}
-                      >
-                        {contributionProfile?.hcbvtq_hang_nhat_status === 'DA_NHAN'
-                          ? 'Đã nhận'
-                          : contributionProfile?.hcbvtq_hang_nhat_status === 'DU_DIEU_KIEN'
-                          ? 'Đủ điều kiện'
-                          : 'Chưa đủ điều kiện'}
-                      </Tag>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Huân chương Quân kỳ Quyết thắng */}
-                <div className="w-full">
-                  <h3
-                    style={{
-                      fontSize: '16px',
-                      fontWeight: 600,
-                      color: 'var(--ant-color-text)',
-                      marginBottom: '16px',
-                    }}
-                  >
-                    Huân chương Quân kỳ Quyết thắng
-                  </h3>
-                  <div className="grid grid-cols-1 gap-4 w-full">
-                    <div
-                      className="p-4 border rounded-lg"
-                      style={{
-                        borderColor: 'var(--ant-color-border)',
-                        backgroundColor: 'var(--ant-color-bg-container)',
-                      }}
-                    >
-                      <div
-                        className="text-sm font-semibold mb-2"
-                        style={{ color: 'var(--ant-color-text-secondary)' }}
-                      >
-                        Huân chương Quân kỳ Quyết thắng
-                      </div>
-                      <div className="space-y-2">
-                        {militaryFlag && militaryFlag.hasReceived ? (
-                          <Tag
-                            color="green"
-                            style={{
-                              margin: 0,
-                              fontSize: '14px',
-                              padding: '4px 12px',
-                              whiteSpace: 'normal',
-                              wordBreak: 'break-word',
-                              display: 'inline-block',
-                              maxWidth: '100%',
-                            }}
-                          >
-                            Đã nhận
-                          </Tag>
-                        ) : (
-                          <div>
-                            <Tag
-                              color="default"
-                              style={{
-                                margin: 0,
-                                fontSize: '14px',
-                                padding: '4px 12px',
-                                whiteSpace: 'normal',
-                                wordBreak: 'break-word',
-                                display: 'inline-block',
-                                maxWidth: '100%',
-                              }}
-                            >
-                              HC QKQT 25 năm
-                            </Tag>
-                            {(() => {
-                              const yearsRequired = 25;
-                              const yearsOfService = calculateYearsOfService(
-                                personnelInfo?.ngay_nhap_ngu
-                              );
-                              const eligible = yearsOfService >= yearsRequired;
-                              return eligible ? (
-                                <Tag color="orange" style={{ marginLeft: 8 }}>
-                                  Đủ điều kiện
-                                </Tag>
-                              ) : (
-                                <Tag color="default" style={{ marginLeft: 8 }}>
-                                  Chưa đủ ({yearsOfService}/{yearsRequired} năm)
-                                </Tag>
-                              );
-                            })()}
-                          </div>
-                        )}
-                        {militaryFlag &&
-                          militaryFlag.hasReceived &&
-                          militaryFlag.data &&
-                          militaryFlag.data.length > 0 &&
-                          militaryFlag.data[0].ngay_cap && (
-                            <div className="text-xs text-gray-500 dark:text-gray-400">
-                              Ngày: {formatDate(militaryFlag.data[0].ngay_cap)}
-                            </div>
-                          )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Kỷ niệm chương Vì sự nghiệp xây dựng QĐNDVN */}
-                <div className="w-full">
-                  <h3
-                    style={{
-                      fontSize: '16px',
-                      fontWeight: 600,
-                      color: 'var(--ant-color-text)',
-                      marginBottom: '16px',
-                    }}
-                  >
-                    Kỷ niệm chương Vì sự nghiệp xây dựng Quân đội Nhân dân Việt Nam
-                  </h3>
-                  <div className="grid grid-cols-1 gap-4 w-full">
-                    <div
-                      className="p-4 border rounded-lg"
-                      style={{
-                        borderColor: 'var(--ant-color-border)',
-                        backgroundColor: 'var(--ant-color-bg-container)',
-                      }}
-                    >
-                      <div
-                        className="text-sm font-semibold mb-2"
-                        style={{ color: 'var(--ant-color-text-secondary)' }}
-                      >
-                        Kỷ niệm chương Vì sự nghiệp xây dựng QĐNDVN
-                      </div>
-                      <div className="space-y-2">
-                        {commemorationMedals && commemorationMedals.hasReceived ? (
-                          <Tag
-                            color="green"
-                            style={{
-                              margin: 0,
-                              fontSize: '14px',
-                              padding: '4px 12px',
-                              whiteSpace: 'normal',
-                              wordBreak: 'break-word',
-                              display: 'inline-block',
-                              maxWidth: '100%',
-                            }}
-                          >
-                            Đã nhận
-                          </Tag>
-                        ) : (
-                          <div>
-                            <Tag
-                              color="default"
-                              style={{
-                                margin: 0,
-                                fontSize: '14px',
-                                padding: '4px 12px',
-                                whiteSpace: 'normal',
-                                wordBreak: 'break-word',
-                                display: 'inline-block',
-                                maxWidth: '100%',
-                              }}
-                            >
-                              KNC VSNXD QDNDVN {personnelInfo?.gioi_tinh === 'NAM' ? 25 : 20} năm
-                            </Tag>
-                            {(() => {
-                              const yearsRequired = personnelInfo?.gioi_tinh === 'NAM' ? 25 : 20;
-                              const yearsOfService = calculateYearsOfService(
-                                personnelInfo?.ngay_nhap_ngu
-                              );
-                              const eligible = yearsOfService >= yearsRequired;
-                              return eligible ? (
-                                <Tag color="orange" style={{ marginLeft: 8 }}>
-                                  Đủ điều kiện
-                                </Tag>
-                              ) : (
-                                <Tag color="default" style={{ marginLeft: 8 }}>
-                                  Chưa đủ ({yearsOfService}/{yearsRequired} năm)
-                                </Tag>
-                              );
-                            })()}
-                          </div>
-                        )}
-                        {commemorationMedals &&
-                          commemorationMedals.hasReceived &&
-                          commemorationMedals.data &&
-                          commemorationMedals.data.length > 0 &&
-                          commemorationMedals.data[0].ngay_cap && (
-                            <div className="text-xs text-gray-500 dark:text-gray-400">
-                              Ngày: {formatDate(commemorationMedals.data[0].ngay_cap)}
-                            </div>
-                          )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Gợi ý */}
-                {serviceProfile.goi_y && (
-                  <div
-                    className="w-full p-4 border rounded-lg mt-4"
-                    style={{
-                      borderColor: 'var(--ant-color-border)',
-                      backgroundColor: 'var(--ant-color-info-bg)',
-                    }}
-                  >
-                    <div
-                      className="text-sm font-semibold mb-2"
-                      style={{ color: 'var(--ant-color-text-secondary)' }}
-                    >
-                      💡 Gợi ý
-                    </div>
-                    <div
-                      style={{
-                        fontSize: '14px',
-                        color: 'var(--ant-color-text)',
-                        lineHeight: '1.6',
-                        whiteSpace: 'pre-wrap',
-                        wordBreak: 'break-word',
-                      }}
-                    >
-                      {serviceProfile.goi_y}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <Alert
-                message="Chưa có dữ liệu"
-                description="Hồ sơ niên hạn chưa được tính toán"
-                type="info"
-                showIcon
-              />
-            )}
-          </TabPane>
-
-          {/* Tab 5: Hồ sơ Hằng năm */}
-          <TabPane tab={<Space>Hồ sơ Hằng năm</Space>} key="5">
-            {annualProfile ? (
-              <div className="space-y-6 w-full">
-                {/* Thống kê */}
-                <div className="w-full">
-                  <h3
-                    style={{
-                      fontSize: '16px',
-                      fontWeight: 600,
-                      color: 'var(--ant-color-text)',
-                      marginBottom: '16px',
-                    }}
-                  >
-                    Thống kê
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 w-full">
-                    {/* Tổng CSTDCS */}
-                    <div
-                      className="p-4 border rounded-lg"
-                      style={{
-                        borderColor: 'var(--ant-color-border)',
-                        backgroundColor: 'var(--ant-color-bg-container)',
-                      }}
-                    >
-                      <div
-                        className="text-sm font-semibold mb-2"
-                        style={{ color: 'var(--ant-color-text-secondary)' }}
-                      >
-                        Tổng CSTDCS
-                      </div>
-                      <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                        {annualProfile.tong_cstdcs || 0}{' '}
-                        <span className="text-base font-normal">năm</span>
-                      </div>
-                    </div>
-
-                    {/* CSTDCS liên tục */}
-                    <div
-                      className="p-4 border rounded-lg"
-                      style={{
-                        borderColor: 'var(--ant-color-border)',
-                        backgroundColor: 'var(--ant-color-bg-container)',
-                      }}
-                    >
-                      <div
-                        className="text-sm font-semibold mb-2"
-                        style={{ color: 'var(--ant-color-text-secondary)' }}
-                      >
-                        CSTDCS liên tục
-                      </div>
-                      <div className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">
-                        {annualProfile.cstdcs_lien_tuc || 0}{' '}
-                        <span className="text-base font-normal">năm</span>
-                      </div>
-                    </div>
-
-                    {/* Tổng ĐTKH/SKKH */}
-                    <div
-                      className="p-4 border rounded-lg"
-                      style={{
-                        borderColor: 'var(--ant-color-border)',
-                        backgroundColor: 'var(--ant-color-bg-container)',
-                      }}
-                    >
-                      <div
-                        className="text-sm font-semibold mb-2"
-                        style={{ color: 'var(--ant-color-text-secondary)' }}
-                      >
-                        Tổng ĐTKH/SKKH
-                      </div>
-                      <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                        {annualProfile.tong_nckh || 0}{' '}
-                        <span className="text-base font-normal"></span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {/* Điều kiện khen thưởng */}
-                <div className="w-full">
-                  <h3
-                    style={{
-                      fontSize: '16px',
-                      fontWeight: 600,
-                      color: 'var(--ant-color-text)',
-                      marginBottom: '16px',
-                    }}
-                  >
-                    Điều kiện khen thưởng
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                    {/* Điều kiện BKBQP */}
-                    <div
-                      className="p-4 border rounded-lg"
-                      style={{
-                        borderColor: 'var(--ant-color-border)',
-                        backgroundColor: 'var(--ant-color-bg-container)',
-                      }}
-                    >
-                      <div
-                        className="text-sm font-semibold mb-2"
-                        style={{ color: 'var(--ant-color-text-secondary)' }}
-                      >
-                        Bằng khen BQP
-                      </div>
-                      <Tag
-                        color={annualProfile.du_dieu_kien_bkbqp ? 'green' : 'default'}
-                        style={{ margin: 0, fontSize: '14px', padding: '4px 12px' }}
-                      >
-                        {annualProfile.du_dieu_kien_bkbqp ? 'Đủ điều kiện' : 'Chưa đủ điều kiện'}
-                      </Tag>
-                    </div>
-
-                    {/* Điều kiện CSTDTQ */}
-                    <div
-                      className="p-4 border rounded-lg"
-                      style={{
-                        borderColor: 'var(--ant-color-border)',
-                        backgroundColor: 'var(--ant-color-bg-container)',
-                      }}
-                    >
-                      <div
-                        className="text-sm font-semibold mb-2"
-                        style={{ color: 'var(--ant-color-text-secondary)' }}
-                      >
-                        Chiến sỹ thi đua Toàn quân
-                      </div>
-                      <Tag
-                        color={annualProfile.du_dieu_kien_cstdtq ? 'green' : 'default'}
-                        style={{ margin: 0, fontSize: '14px', padding: '4px 12px' }}
-                      >
-                        {annualProfile.du_dieu_kien_cstdtq ? 'Đủ điều kiện' : 'Chưa đủ điều kiện'}
-                      </Tag>
-                    </div>
-                  </div>
-                </div>
-                {/* Gợi ý */}
-                {annualProfile.goi_y && (
-                  <div
-                    className="w-full p-4 border rounded-lg"
-                    style={{
-                      borderColor: 'var(--ant-color-border)',
-                      backgroundColor: 'var(--ant-color-info-bg)',
-                    }}
-                  >
-                    <div
-                      className="text-sm font-semibold mb-2"
-                      style={{ color: 'var(--ant-color-text-secondary)' }}
-                    >
-                      💡 Gợi ý
-                    </div>
-                    <div
-                      style={{
-                        fontSize: '14px',
-                        color: 'var(--ant-color-text)',
-                        lineHeight: '1.6',
-                        whiteSpace: 'pre-wrap',
-                        wordBreak: 'break-word',
-                      }}
-                    >
-                      {annualProfile.goi_y}
-                    </div>
-                  </div>
-                )}
-
-                <Table
-                  dataSource={annualRewards}
-                  columns={annualRewardsColumns}
-                  rowKey="id"
-                  pagination={{
-                    pageSize: 10,
-                    showTotal: total => `Tổng ${total} bản ghi`,
-                  }}
-                  scroll={{ x: 1000 }}
-                  bordered
-                  locale={{
-                    emptyText: (
-                      <Alert
-                        message="Chưa có dữ liệu"
-                        description="Bạn chưa có danh hiệu hằng năm nào"
-                        type="info"
-                        showIcon
+                        valueStyle={{ color: '#3f8600' }}
                       />
-                    ),
+                    </Card>
+                  </Col>
+                  <Col xs={24} md={8}>
+                    <Card size="small" className="h-full">
+                      <Statistic
+                        title="Hạng Ba"
+                        value={0}
+                        valueStyle={{ fontSize: '14px' }}
+                        valueRender={() => getStatusTag(contributionProfile?.hcbvtq_hang_ba_status)}
+                      />
+                    </Card>
+                  </Col>
+                  <Col xs={24} md={8}>
+                    <Card size="small" className="h-full">
+                      <Statistic
+                        title="Hạng Nhì"
+                        value={0}
+                        valueStyle={{ fontSize: '14px' }}
+                        valueRender={() =>
+                          getStatusTag(contributionProfile?.hcbvtq_hang_nhi_status)
+                        }
+                      />
+                    </Card>
+                  </Col>
+                  <Col xs={24} md={8}>
+                    <Card size="small" className="h-full">
+                      <Statistic
+                        title="Hạng Nhất"
+                        value={0}
+                        valueStyle={{ fontSize: '14px' }}
+                        valueRender={() =>
+                          getStatusTag(contributionProfile?.hcbvtq_hang_nhat_status)
+                        }
+                      />
+                    </Card>
+                  </Col>
+                </Row>
+              </div>
+              {/* HC Quân kỳ Quyết thắng */}
+              <div className="mb-6">
+                <Text strong className="text-base">
+                  Huân chương Quân kỳ Quyết thắng
+                </Text>
+                <Divider className="my-3" />
+                <Row gutter={[16, 16]}>
+                  <Col xs={24} md={24}>
+                    <Card size="small" className="h-full">
+                      <Statistic
+                        title="Huân chương Quân kỳ Quyết thắng"
+                        value={0}
+                        valueStyle={{ fontSize: '14px' }}
+                        valueRender={() => {
+                          const hasReceived = militaryFlag && militaryFlag.hasReceived;
+                          if (hasReceived) {
+                            return getStatusTag('DA_NHAN');
+                          } else {
+                            const yearsRequired = 25;
+                            const yearsOfService = calculateYearsOfService(
+                              personnelInfo.ngay_nhap_ngu
+                            );
+                            const eligible = yearsOfService >= yearsRequired;
+                            return (
+                              <div>
+                                <Text>HC QKQT {yearsRequired} năm</Text>
+                                {eligible ? (
+                                  <Tag color="orange" style={{ marginLeft: 8 }}>
+                                    Đủ điều kiện
+                                  </Tag>
+                                ) : (
+                                  <Tag color="default" style={{ marginLeft: 8 }}>
+                                    Chưa đủ ({yearsOfService}/{yearsRequired} năm)
+                                  </Tag>
+                                )}
+                              </div>
+                            );
+                          }
+                        }}
+                      />
+                      {militaryFlag &&
+                        militaryFlag.hasReceived &&
+                        militaryFlag.data &&
+                        militaryFlag.data.length > 0 &&
+                        militaryFlag.data[0].ngay_cap && (
+                          <Text type="secondary" className="text-xs">
+                            {formatDate(militaryFlag.data[0].ngay_cap)}
+                          </Text>
+                        )}
+                    </Card>
+                  </Col>
+                </Row>
+              </div>
+
+              {/* Kỷ niệm chương Vì sự nghiệp xây dựng QĐNDVN */}
+              <div>
+                <Text strong className="text-base">
+                  Kỷ niệm chương Vì sự nghiệp xây dựng Quân đội Nhân dân Việt Nam
+                </Text>
+                <Divider className="my-3" />
+                <Row gutter={[16, 16]}>
+                  <Col xs={24} md={24}>
+                    <Card size="small" className="h-full">
+                      <Statistic
+                        title="Kỷ niệm chương Vì sự nghiệp xây dựng QĐNDVN"
+                        value={0}
+                        valueStyle={{ fontSize: '14px' }}
+                        valueRender={() => {
+                          const hasReceived =
+                            commemorationMedals && commemorationMedals.hasReceived;
+                          if (hasReceived) {
+                            return getStatusTag('DA_NHAN');
+                          } else {
+                            const yearsRequired = personnelInfo.gioi_tinh === 'NAM' ? 25 : 20;
+                            const yearsOfService = calculateYearsOfService(
+                              personnelInfo.ngay_nhap_ngu
+                            );
+                            const eligible = yearsOfService >= yearsRequired;
+                            return (
+                              <div>
+                                <Text>KNC VSNXD QDNDVN {yearsRequired} năm</Text>
+                                {eligible ? (
+                                  <Tag color="orange" style={{ marginLeft: 8 }}>
+                                    Đủ điều kiện
+                                  </Tag>
+                                ) : (
+                                  <Tag color="default" style={{ marginLeft: 8 }}>
+                                    Chưa đủ ({yearsOfService}/{yearsRequired} năm)
+                                  </Tag>
+                                )}
+                              </div>
+                            );
+                          }
+                        }}
+                      />
+                      {commemorationMedals &&
+                        commemorationMedals.hasReceived &&
+                        commemorationMedals.data &&
+                        commemorationMedals.data.length > 0 &&
+                        commemorationMedals.data[0].ngay_cap && (
+                          <Text type="secondary" className="text-xs">
+                            {formatDate(commemorationMedals.data[0].ngay_cap)}
+                          </Text>
+                        )}
+                    </Card>
+                  </Col>
+                </Row>
+              </div>
+            </Card>
+          )}
+
+          {/* Hồ sơ Hằng năm */}
+          {annualProfile && (
+            <Card
+              title={
+                <span className="flex items-center gap-2">
+                  <TrophyOutlined /> Hồ sơ Hằng năm
+                </span>
+              }
+              size="small"
+            >
+              {/* Thống kê */}
+              <div className="mb-6">
+                <Text strong className="text-base">
+                  Thống kê
+                </Text>
+                <Divider className="my-3" />
+                <Row gutter={[16, 16]}>
+                  <Col xs={24} md={8}>
+                    <Card size="small">
+                      <Statistic
+                        title="Tổng CSTDCS"
+                        value={
+                          Array.isArray(annualProfile.tong_cstdcs)
+                            ? annualProfile.tong_cstdcs.length
+                            : annualProfile.tong_cstdcs || 0
+                        }
+                        suffix="năm"
+                        valueStyle={{ color: '#1890ff' }}
+                      />
+                    </Card>
+                  </Col>
+                  <Col xs={24} md={8}>
+                    <Card size="small">
+                      <Statistic
+                        title="CSTDCS liên tục"
+                        value={annualProfile.cstdcs_lien_tuc || 0}
+                        suffix="năm"
+                        valueStyle={{ color: '#13c2c2' }}
+                      />
+                    </Card>
+                  </Col>
+                  <Col xs={24} md={8}>
+                    <Card size="small">
+                      <Statistic
+                        title="Tổng ĐTKH/SKKH"
+                        value={
+                          Array.isArray(annualProfile.tong_nckh)
+                            ? annualProfile.tong_nckh.length
+                            : annualProfile.tong_nckh || 0
+                        }
+                        suffix=""
+                        valueStyle={{ color: '#722ed1' }}
+                      />
+                    </Card>
+                  </Col>
+                </Row>
+              </div>
+
+              {/* Điều kiện */}
+              <div>
+                <Text strong className="text-base">
+                  Điều kiện khen thưởng
+                </Text>
+                <Divider className="my-3" />
+                <Row gutter={[16, 16]}>
+                  <Col xs={24} md={12}>
+                    <Card size="small">
+                      <Statistic
+                        title="Bằng khen BQP"
+                        value={0}
+                        valueStyle={{ fontSize: '14px' }}
+                        valueRender={() => (
+                          <Tag color={annualProfile.du_dieu_kien_bkbqp ? 'green' : 'default'}>
+                            {annualProfile.du_dieu_kien_bkbqp ? 'Đủ điều kiện' : 'Chưa đủ'}
+                          </Tag>
+                        )}
+                      />
+                    </Card>
+                  </Col>
+                  <Col xs={24} md={12}>
+                    <Card size="small">
+                      <Statistic
+                        title="CSTD Toàn quân"
+                        value={0}
+                        valueStyle={{ fontSize: '14px' }}
+                        valueRender={() => (
+                          <Tag color={annualProfile.du_dieu_kien_cstdtq ? 'green' : 'default'}>
+                            {annualProfile.du_dieu_kien_cstdtq ? 'Đủ điều kiện' : 'Chưa đủ'}
+                          </Tag>
+                        )}
+                      />
+                    </Card>
+                  </Col>
+                </Row>
+              </div>
+
+              {annualProfile.goi_y && (
+                <>
+                  <Divider className="my-4" />
+                  <Card size="small" className="bg-blue-50 dark:bg-gray-800">
+                    <Text strong>💡 Gợi ý: </Text>
+                    <Text style={{ whiteSpace: 'pre-wrap' }}>{annualProfile.goi_y}</Text>
+                  </Card>
+                </>
+              )}
+            </Card>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: '2',
+      label: 'Danh hiệu cá nhân hằng năm',
+      children: (
+        <div className="space-y-4">
+          {annualRewards.length === 0 ? (
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description={
+                <span style={{ color: isDarkMode ? '#9ca3af' : '#6b7280' }}>
+                  Chưa có dữ liệu danh hiệu hằng năm
+                </span>
+              }
+              style={{ padding: '60px 0' }}
+            />
+          ) : (
+            <div className="space-y-5">
+              {/* Summary Stats */}
+              <Row gutter={[16, 16]} className="mb-6">
+                <Col xs={24} sm={8}>
+                  <Card
+                    size="small"
+                    className="text-center"
+                    style={{
+                      background: isDarkMode
+                        ? 'linear-gradient(135deg, #1e3a5f 0%, #1e293b 100%)'
+                        : 'linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%)',
+                      border: 'none',
+                    }}
+                  >
+                    <Statistic
+                      title={<span style={{ color: isDarkMode ? '#93c5fd' : '#1e40af' }}>Tổng số năm</span>}
+                      value={Object.keys(annualRewards.reduce((acc: Record<number, any[]>, r: any) => {
+                        if (!acc[r.nam]) acc[r.nam] = [];
+                        acc[r.nam].push(r);
+                        return acc;
+                      }, {})).length}
+                      valueStyle={{ color: isDarkMode ? '#60a5fa' : '#2563eb', fontWeight: 700 }}
+                    />
+                  </Card>
+                </Col>
+                <Col xs={24} sm={8}>
+                  <Card
+                    size="small"
+                    className="text-center"
+                    style={{
+                      background: isDarkMode
+                        ? 'linear-gradient(135deg, #134e4a 0%, #1e293b 100%)'
+                        : 'linear-gradient(135deg, #d1fae5 0%, #ecfdf5 100%)',
+                      border: 'none',
+                    }}
+                  >
+                    <Statistic
+                      title={<span style={{ color: isDarkMode ? '#6ee7b7' : '#047857' }}>CSTĐ Cơ sở</span>}
+                      value={annualRewards.filter((r: any) => r.danh_hieu === 'CSTDCS').length}
+                      valueStyle={{ color: isDarkMode ? '#34d399' : '#059669', fontWeight: 700 }}
+                    />
+                  </Card>
+                </Col>
+                <Col xs={24} sm={8}>
+                  <Card
+                    size="small"
+                    className="text-center"
+                    style={{
+                      background: isDarkMode
+                        ? 'linear-gradient(135deg, #713f12 0%, #1e293b 100%)'
+                        : 'linear-gradient(135deg, #fef3c7 0%, #fffbeb 100%)',
+                      border: 'none',
+                    }}
+                  >
+                    <Statistic
+                      title={<span style={{ color: isDarkMode ? '#fcd34d' : '#b45309' }}>Bằng khen BQP</span>}
+                      value={annualRewards.filter((r: any) => r.nhan_bkbqp).length}
+                      valueStyle={{ color: isDarkMode ? '#fbbf24' : '#d97706', fontWeight: 700 }}
+                    />
+                  </Card>
+                </Col>
+              </Row>
+
+              {/* Timeline View */}
+              <div className="relative">
+                {/* Timeline line */}
+                <div
+                  className="absolute left-6 top-0 bottom-0 w-0.5"
+                  style={{
+                    backgroundColor: isDarkMode ? '#374151' : '#e5e7eb',
+                    marginLeft: '7px',
                   }}
                 />
-              </div>
-            ) : (
-              <Alert
-                message="Chưa có dữ liệu"
-                description="Hồ sơ hằng năm chưa được tính toán"
-                type="info"
-                showIcon
-              />
-            )}
-          </TabPane>
 
-          {/* Tab 6: Khen thưởng đột xuất */}
-          <TabPane
-            tab={
-              <Space>
-                Khen thưởng đột xuất
-              </Space>
-            }
-            key="6"
-          >
-            <div className="mb-4">
-              <Text strong>Tổng số: {adhocAwards.length}</Text>
+                {Object.entries(
+                  annualRewards.reduce((acc: Record<number, any[]>, reward: any) => {
+                    const year = reward.nam;
+                    if (!acc[year]) {
+                      acc[year] = [];
+                    }
+                    acc[year].push(reward);
+                    return acc;
+                  }, {})
+                )
+                  .sort(([a], [b]) => Number(b) - Number(a))
+                  .map(([year, rewards]: [string, any[]]) => (
+                    <div key={year} className="relative pl-16 pb-6">
+                      {/* Year marker */}
+                      <div
+                        className="absolute left-0 flex items-center justify-center w-14 h-14 rounded-full shadow-lg"
+                        style={{
+                          background: isDarkMode
+                            ? 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)'
+                            : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                          top: '0px',
+                        }}
+                      >
+                        <span className="text-white font-bold text-lg">{year}</span>
+                      </div>
+
+                      {/* Year content card */}
+                      <Card
+                        size="small"
+                        className="shadow-md hover:shadow-lg transition-shadow duration-300"
+                        style={{
+                          borderRadius: '12px',
+                          border: isDarkMode ? '1px solid #374151' : '1px solid #e5e7eb',
+                          background: isDarkMode ? '#1f2937' : '#ffffff',
+                        }}
+                      >
+                        <div className="space-y-4">
+                          {rewards.flatMap((reward: any) => {
+                            const items: ReactNode[] = [];
+
+                            // Danh hiệu chính (CSTDCS, CSTT)
+                            if (reward.danh_hieu) {
+                              const danhHieuConfig = {
+                                CSTDCS: {
+                                  text: 'Chiến sĩ thi đua cơ sở',
+                                  icon: <StarOutlined />,
+                                  color: isDarkMode ? '#34d399' : '#059669',
+                                  bgColor: isDarkMode ? 'rgba(52, 211, 153, 0.1)' : 'rgba(5, 150, 105, 0.1)',
+                                  borderColor: isDarkMode ? '#10b981' : '#059669',
+                                },
+                                CSTT: {
+                                  text: 'Chiến sĩ tiên tiến',
+                                  icon: <FireOutlined />,
+                                  color: isDarkMode ? '#60a5fa' : '#2563eb',
+                                  bgColor: isDarkMode ? 'rgba(96, 165, 250, 0.1)' : 'rgba(37, 99, 235, 0.1)',
+                                  borderColor: isDarkMode ? '#3b82f6' : '#2563eb',
+                                },
+                              };
+
+                              const config = danhHieuConfig[reward.danh_hieu as keyof typeof danhHieuConfig] || {
+                                text: reward.danh_hieu,
+                                icon: <TrophyOutlined />,
+                                color: isDarkMode ? '#9ca3af' : '#6b7280',
+                                bgColor: isDarkMode ? 'rgba(156, 163, 175, 0.1)' : 'rgba(107, 114, 128, 0.1)',
+                                borderColor: isDarkMode ? '#6b7280' : '#9ca3af',
+                              };
+
+                              items.push(
+                                <div
+                                  key={`${reward.id}-danh-hieu`}
+                                  className="flex items-start gap-3 p-3 rounded-lg transition-all hover:scale-[1.01]"
+                                  style={{
+                                    background: config.bgColor,
+                                    border: `1px solid ${config.borderColor}`,
+                                  }}
+                                >
+                                  <div
+                                    className="flex items-center justify-center w-10 h-10 rounded-full flex-shrink-0"
+                                    style={{
+                                      backgroundColor: config.color,
+                                      color: '#fff',
+                                    }}
+                                  >
+                                    {config.icon}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div
+                                      className="font-semibold text-base"
+                                      style={{ color: config.color }}
+                                    >
+                                      {config.text}
+                                    </div>
+                                    {reward.so_quyet_dinh && reward.so_quyet_dinh.trim() !== '' && (
+                                      <div className="flex items-center gap-1.5 mt-1" style={{ color: isDarkMode ? '#9ca3af' : '#6b7280', fontSize: '13px' }}>
+                                        <FileTextOutlined style={{ fontSize: '12px' }} />
+                                        <span>Số QĐ: </span>
+                                        <a
+                                          onClick={e => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            handleOpenDecisionFile(reward.so_quyet_dinh);
+                                          }}
+                                          className="hover:underline"
+                                          style={{ color: '#52c41a', cursor: 'pointer' }}
+                                        >
+                                          {reward.so_quyet_dinh}
+                                        </a>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            // Bằng khen BQP
+                            if (reward.nhan_bkbqp && reward.so_quyet_dinh_bkbqp && reward.so_quyet_dinh_bkbqp.trim() !== '') {
+                              items.push(
+                                <div
+                                  key={`${reward.id}-bkbqp`}
+                                  className="flex items-start gap-3 p-3 rounded-lg transition-all hover:scale-[1.01]"
+                                  style={{
+                                    background: isDarkMode ? 'rgba(251, 191, 36, 0.1)' : 'rgba(217, 119, 6, 0.1)',
+                                    border: `1px solid ${isDarkMode ? '#f59e0b' : '#d97706'}`,
+                                  }}
+                                >
+                                  <div
+                                    className="flex items-center justify-center w-10 h-10 rounded-full flex-shrink-0"
+                                    style={{
+                                      backgroundColor: isDarkMode ? '#f59e0b' : '#d97706',
+                                      color: '#fff',
+                                    }}
+                                  >
+                                    <CrownOutlined />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div
+                                      className="font-semibold text-base"
+                                      style={{ color: isDarkMode ? '#fbbf24' : '#b45309' }}
+                                    >
+                                      Bằng khen của Bộ trưởng BQP
+                                    </div>
+                                    <div className="flex items-center gap-1.5 mt-1" style={{ color: isDarkMode ? '#9ca3af' : '#6b7280', fontSize: '13px' }}>
+                                      <FileTextOutlined style={{ fontSize: '12px' }} />
+                                      <span>Số QĐ: </span>
+                                      <a
+                                        onClick={e => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          handleOpenDecisionFile(reward.so_quyet_dinh_bkbqp);
+                                        }}
+                                        className="hover:underline"
+                                        style={{ color: '#52c41a', cursor: 'pointer' }}
+                                      >
+                                        {reward.so_quyet_dinh_bkbqp}
+                                      </a>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            // CSTĐ Toàn quân
+                            if (reward.nhan_cstdtq && reward.so_quyet_dinh_cstdtq && reward.so_quyet_dinh_cstdtq.trim() !== '') {
+                              items.push(
+                                <div
+                                  key={`${reward.id}-cstdtq`}
+                                  className="flex items-start gap-3 p-3 rounded-lg transition-all hover:scale-[1.01]"
+                                  style={{
+                                    background: isDarkMode ? 'rgba(168, 85, 247, 0.1)' : 'rgba(147, 51, 234, 0.1)',
+                                    border: `1px solid ${isDarkMode ? '#a855f7' : '#9333ea'}`,
+                                  }}
+                                >
+                                  <div
+                                    className="flex items-center justify-center w-10 h-10 rounded-full flex-shrink-0"
+                                    style={{
+                                      backgroundColor: isDarkMode ? '#a855f7' : '#9333ea',
+                                      color: '#fff',
+                                    }}
+                                  >
+                                    <TrophyOutlined />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div
+                                      className="font-semibold text-base"
+                                      style={{ color: isDarkMode ? '#c084fc' : '#7c3aed' }}
+                                    >
+                                      Chiến sĩ thi đua Toàn quân
+                                    </div>
+                                    <div className="flex items-center gap-1.5 mt-1" style={{ color: isDarkMode ? '#9ca3af' : '#6b7280', fontSize: '13px' }}>
+                                      <FileTextOutlined style={{ fontSize: '12px' }} />
+                                      <span>Số QĐ: </span>
+                                      <a
+                                        onClick={e => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          handleOpenDecisionFile(reward.so_quyet_dinh_cstdtq);
+                                        }}
+                                        className="hover:underline"
+                                        style={{ color: '#52c41a', cursor: 'pointer' }}
+                                      >
+                                        {reward.so_quyet_dinh_cstdtq}
+                                      </a>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            return items;
+                          })}
+                        </div>
+                      </Card>
+                    </div>
+                  ))}
+              </div>
             </div>
-            <Table
-              dataSource={adhocAwards}
-              columns={adhocColumns}
-              rowKey="id"
-              pagination={{
-                pageSize: 10,
-                showTotal: total => `Tổng ${total} bản ghi`,
-              }}
-              scroll={{ x: 800 }}
-              bordered
-              locale={{
-                emptyText: (
-                  <Alert
-                    message="Chưa có dữ liệu"
-                    description="Bạn chưa có khen thưởng đột xuất nào"
-                    type="info"
-                    showIcon
-                  />
-                ),
-              }}
-            />
-          </TabPane>
-        </Tabs>
-      </Card>
-    </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: '3',
+      label: 'Thành tích khoa học',
+      children: (
+        <div className="space-y-4">
+          <div className="mb-4">
+            <Text strong>Tổng số: {scientificAchievements.length}</Text>
+          </div>
+          <Table
+            dataSource={scientificAchievements}
+            columns={scientificColumns}
+            rowKey="id"
+            pagination={{
+              pageSize: 10,
+              showTotal: total => `Tổng ${total} bản ghi`,
+              showSizeChanger: true,
+            }}
+            scroll={{ x: 'max-content' }}
+            bordered
+            size="middle"
+            locale={{
+              emptyText: (
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description={
+                    <span style={{ color: isDarkMode ? '#9ca3af' : '#6b7280' }}>
+                      Chưa có thành tích khoa học nào
+                    </span>
+                  }
+                  style={{ padding: '40px 0' }}
+                />
+              ),
+            }}
+          />
+        </div>
+      ),
+    },
+    {
+      key: '4',
+      label: 'Lịch sử chức vụ',
+      children: (
+        <div className="space-y-4">
+          <div className="mb-4">
+            <Text strong>Tổng số: {positionHistory.length}</Text>
+          </div>
+          <Table
+            dataSource={positionHistory}
+            columns={positionHistoryColumns}
+            rowKey="id"
+            pagination={{
+              pageSize: 10,
+              showTotal: total => `Tổng ${total} bản ghi`,
+              showSizeChanger: true,
+            }}
+            scroll={{ x: 'max-content' }}
+            bordered
+            size="middle"
+            locale={{
+              emptyText: (
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description={
+                    <span style={{ color: isDarkMode ? '#9ca3af' : '#6b7280' }}>
+                      Chưa có lịch sử chức vụ nào
+                    </span>
+                  }
+                  style={{ padding: '40px 0' }}
+                />
+              ),
+            }}
+          />
+        </div>
+      ),
+    },
+    {
+      key: '5',
+      label: 'Khen thưởng đột xuất',
+      children: (
+        <div className="space-y-4">
+          <div className="mb-4">
+            <Text strong>Tổng số: {adhocAwards.length}</Text>
+          </div>
+          <Table
+            dataSource={adhocAwards}
+            columns={adhocColumns}
+            rowKey="id"
+            pagination={{
+              pageSize: 10,
+              showTotal: total => `Tổng ${total} bản ghi`,
+              showSizeChanger: true,
+            }}
+            scroll={{ x: 'max-content' }}
+            bordered
+            size="middle"
+            locale={{
+              emptyText: (
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description={
+                    <span style={{ color: isDarkMode ? '#9ca3af' : '#6b7280' }}>
+                      Chưa có khen thưởng đột xuất nào
+                    </span>
+                  }
+                  style={{ padding: '40px 0' }}
+                />
+              ),
+            }}
+          />
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <ConfigProvider
+      theme={{
+        algorithm: currentTheme === 'dark' ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+      }}
+    >
+      <div className="p-6 space-y-6">
+        {/* Breadcrumb */}
+        <Breadcrumb
+          items={[
+            { title: <Link href="/user/dashboard">Dashboard</Link> },
+            { title: 'Hồ sơ của tôi' },
+          ]}
+        />
+
+        {/* Header Card */}
+        <Card className="shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-start gap-4">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
+                <UserOutlined className="text-3xl text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <Title level={3} className="!mb-1">
+                  {personnelInfo.ho_ten}
+                </Title>
+                <div>
+                  <Text type="secondary">{personnelInfo.cccd}</Text>
+                </div>
+                <div>
+                  <Text type="secondary">{personnelInfo.ChucVu?.ten_chuc_vu || '-'}</Text>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Main Content Tabs */}
+        <Card className="shadow-sm">
+          <Tabs
+            defaultActiveKey="1"
+            items={tabItems}
+            tabBarGutter={32}
+            centered
+            tabBarStyle={{ marginBottom: 24 }}
+          />
+        </Card>
+      </div>
+    </ConfigProvider>
   );
 }

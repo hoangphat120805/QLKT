@@ -20,7 +20,6 @@ class AdhocAwardService {
     position,
     note,
     decisionNumber,
-    decisionFiles,
     attachedFiles,
   }) {
     try {
@@ -65,41 +64,43 @@ class AdhocAwardService {
         }
       }
 
-      // Handle file uploads - separate decision files and attached files
-      const decisionsDir = path.join(__dirname, '..', '..', 'uploads', 'decisions');
+      // Handle file uploads - chỉ xử lý attached files
       const proposalsDir = path.join(__dirname, '..', '..', 'storage', 'proposals');
-      await fs.mkdir(decisionsDir, { recursive: true });
       await fs.mkdir(proposalsDir, { recursive: true });
 
-      const uploadedDecisionFiles = [];
       const uploadedAttachedFiles = [];
 
-      // Handle decision files
-      for (const file of decisionFiles) {
-        const timestamp = Date.now();
-        // Decode UTF-8 filename properly (multer may encode non-ASCII characters)
-        let decodedName = file.originalname;
-        try {
-          // Try to decode if it looks like it was encoded incorrectly
-          decodedName = Buffer.from(file.originalname, 'latin1').toString('utf8');
-        } catch {
-          decodedName = file.originalname;
+      // Handle attached files
+      if (attachedFiles && attachedFiles.length > 0) {
+        const attachedDir = path.join(__dirname, '..', '..', 'storage', 'proposals');
+        await fs.mkdir(attachedDir, { recursive: true });
+
+        for (const file of attachedFiles) {
+          const timestamp = Date.now();
+          // Decode UTF-8 filename properly (multer may encode non-ASCII characters)
+          let decodedName = file.originalname;
+          try {
+            // Try to decode if it looks like it was encoded incorrectly
+            decodedName = Buffer.from(file.originalname, 'latin1').toString('utf8');
+          } catch {
+            decodedName = file.originalname;
+          }
+          // Sanitize filename: remove special characters but keep Vietnamese
+          const sanitizedName = decodedName.replace(/[<>:"/\\|?*]/g, '_');
+          const uniqueName = `${timestamp}_${sanitizedName}`;
+          const filePath = path.join(attachedDir, uniqueName);
+
+          await fs.writeFile(filePath, file.buffer);
+
+          uploadedAttachedFiles.push({
+            filename: uniqueName,
+            originalName: decodedName,
+            path: `storage/proposals/${uniqueName}`,
+            size: file.size,
+            mimeType: file.mimetype,
+            uploadedAt: new Date().toISOString(),
+          });
         }
-        // Sanitize filename: remove special characters but keep Vietnamese
-        const sanitizedName = decodedName.replace(/[<>:"/\\|?*]/g, '_');
-        const uniqueName = `${timestamp}_${sanitizedName}`;
-        const filePath = path.join(uploadsDir, uniqueName);
-
-        await fs.writeFile(filePath, file.buffer);
-
-        uploadedDecisionFiles.push({
-          filename: uniqueName,
-          originalName: decodedName,
-          path: `uploads/adhoc-awards/${uniqueName}`,
-          size: file.size,
-          mimeType: file.mimetype,
-          uploadedAt: new Date().toISOString(),
-        });
       }
 
       // Create ad-hoc award
@@ -118,8 +119,7 @@ class AdhocAwardService {
           chuc_vu: position || null,
           ghi_chu: note || null,
           so_quyet_dinh: decisionNumber || null,
-          files_quyet_dinh: uploadedDecisionFiles.length > 0 ? uploadedDecisionFiles : null,
-          files_attached: uploadedAttachedFiles.length > 0 ? uploadedAttachedFiles : null,
+          files_dinh_kem: uploadedAttachedFiles.length > 0 ? uploadedAttachedFiles : null,
         },
         include: {
           QuanNhan: {
@@ -261,7 +261,9 @@ class AdhocAwardService {
               recipient_role: manager.role,
               type: NOTIFICATION_TYPES.AWARD_ADDED,
               title: 'Đơn vị trực thuộc được khen thưởng đột xuất',
-              message: `${adminUsername} đã thêm khen thưởng đột xuất "${awardName}" năm ${year} cho đơn vị ${unitName}${parentUnitName ? ` (thuộc ${parentUnitName})` : ''}`,
+              message: `${adminUsername} đã thêm khen thưởng đột xuất "${awardName}" năm ${year} cho đơn vị ${unitName}${
+                parentUnitName ? ` (thuộc ${parentUnitName})` : ''
+              }`,
               resource: RESOURCE_TYPES.AWARDS,
               tai_nguyen_id: adhocAward.id,
               link: `/manager/awards`,
@@ -489,9 +491,7 @@ class AdhocAwardService {
     position,
     note,
     decisionNumber,
-    decisionFiles,
     attachedFiles,
-    removeDecisionFileIndexes,
     removeAttachedFileIndexes,
   }) {
     try {
@@ -513,29 +513,8 @@ class AdhocAwardService {
         throw new Error('Khen thưởng đột xuất không tồn tại');
       }
 
-      // Handle existing decision files
-      let existingDecisionFiles = existing.files_quyet_dinh || [];
-
-      // Remove decision files at specified indexes
-      if (removeDecisionFileIndexes && removeDecisionFileIndexes.length > 0) {
-        const filesToRemove = removeDecisionFileIndexes
-          .sort((a, b) => b - a)
-          .filter(index => index >= 0 && index < existingDecisionFiles.length);
-
-        for (const index of filesToRemove) {
-          const fileToRemove = existingDecisionFiles[index];
-          try {
-            const fullPath = path.join(__dirname, '..', '..', fileToRemove.path);
-            await fs.unlink(fullPath);
-          } catch (err) {
-            console.error(`Failed to delete decision file: ${fileToRemove.path}`, err);
-          }
-          existingDecisionFiles.splice(index, 1);
-        }
-      }
-
       // Handle existing attached files
-      let existingAttachedFiles = existing.files_attached || [];
+      let existingAttachedFiles = existing.files_dinh_kem || [];
 
       // Remove attached files at specified indexes
       if (removeAttachedFileIndexes && removeAttachedFileIndexes.length > 0) {
@@ -552,29 +531,6 @@ class AdhocAwardService {
             console.error(`Failed to delete attached file: ${fileToRemove.path}`, err);
           }
           existingAttachedFiles.splice(index, 1);
-        }
-      }
-
-      // Handle new decision file uploads
-      if (decisionFiles && decisionFiles.length > 0) {
-        const decisionsDir = path.join(__dirname, '..', '..', 'uploads', 'decisions');
-        await fs.mkdir(decisionsDir, { recursive: true });
-
-        for (const file of decisionFiles) {
-          const timestamp = Date.now();
-          const uniqueName = `${timestamp}_${file.originalname}`;
-          const filePath = path.join(decisionsDir, uniqueName);
-
-          await fs.writeFile(filePath, file.buffer);
-
-          existingDecisionFiles.push({
-            filename: uniqueName,
-            originalName: file.originalname,
-            path: `uploads/decisions/${uniqueName}`,
-            size: file.size,
-            mimeType: file.mimetype,
-            uploadedAt: new Date().toISOString(),
-          });
         }
       }
 
@@ -595,14 +551,14 @@ class AdhocAwardService {
           // Sanitize filename: remove special characters but keep Vietnamese
           const sanitizedName = decodedName.replace(/[<>:"/\\|?*]/g, '_');
           const uniqueName = `${timestamp}_${sanitizedName}`;
-          const filePath = path.join(uploadsDir, uniqueName);
+          const filePath = path.join(proposalsDir, uniqueName);
 
           await fs.writeFile(filePath, file.buffer);
 
           existingAttachedFiles.push({
             filename: uniqueName,
             originalName: decodedName,
-            path: `uploads/adhoc-awards/${uniqueName}`,
+            path: `storage/proposals/${uniqueName}`,
             size: file.size,
             mimeType: file.mimetype,
             uploadedAt: new Date().toISOString(),
@@ -620,8 +576,7 @@ class AdhocAwardService {
       if (note !== undefined) updateData.ghi_chu = note;
       if (decisionNumber !== undefined) updateData.so_quyet_dinh = decisionNumber;
 
-      updateData.files_quyet_dinh = existingDecisionFiles.length > 0 ? existingDecisionFiles : null;
-      updateData.files_attached = existingAttachedFiles.length > 0 ? existingAttachedFiles : null;
+      updateData.files_dinh_kem = existingAttachedFiles.length > 0 ? existingAttachedFiles : null;
 
       const updated = await prisma.khenThuongDotXuat.update({
         where: { id },
@@ -761,7 +716,9 @@ class AdhocAwardService {
               recipient_role: manager.role,
               type: NOTIFICATION_TYPES.AWARD_UPDATED,
               title: 'Khen thưởng đơn vị trực thuộc đã được cập nhật',
-              message: `${adminUsername} đã cập nhật khen thưởng đột xuất "${awardName}" năm ${year} của đơn vị ${unitName}${parentUnitName ? ` (thuộc ${parentUnitName})` : ''}`,
+              message: `${adminUsername} đã cập nhật khen thưởng đột xuất "${awardName}" năm ${year} của đơn vị ${unitName}${
+                parentUnitName ? ` (thuộc ${parentUnitName})` : ''
+              }`,
               resource: RESOURCE_TYPES.AWARDS,
               tai_nguyen_id: adhocAward.id,
               link: `/manager/awards`,
@@ -813,9 +770,10 @@ class AdhocAwardService {
       // Lưu thông tin để gửi thông báo trước khi xóa
       const awardInfo = { ...adhocAward };
 
-      // Delete associated files
-      const files = adhocAward.files_quyet_dinh || [];
-      for (const file of files) {
+      // Delete associated attached files (file quyết định không lưu trong award, chỉ lưu số quyết định)
+      const attachedFiles = adhocAward.files_dinh_kem || [];
+
+      for (const file of attachedFiles) {
         try {
           const fullPath = path.join(__dirname, '..', '..', file.path);
           await fs.unlink(fullPath);
@@ -947,7 +905,9 @@ class AdhocAwardService {
               recipient_role: manager.role,
               type: NOTIFICATION_TYPES.AWARD_DELETED,
               title: 'Khen thưởng đơn vị trực thuộc đã bị xóa',
-              message: `${adminUsername} đã xóa khen thưởng đột xuất "${awardName}" năm ${year} của đơn vị ${unitName}${parentUnitName ? ` (thuộc ${parentUnitName})` : ''}`,
+              message: `${adminUsername} đã xóa khen thưởng đột xuất "${awardName}" năm ${year} của đơn vị ${unitName}${
+                parentUnitName ? ` (thuộc ${parentUnitName})` : ''
+              }`,
               resource: RESOURCE_TYPES.AWARDS,
               tai_nguyen_id: adhocAward.don_vi_truc_thuoc_id,
               link: `/manager/awards`,

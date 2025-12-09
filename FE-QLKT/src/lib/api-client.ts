@@ -1298,6 +1298,48 @@ export const apiClient = {
     }
   },
 
+  /**
+   * Lấy file path từ số quyết định
+   * @param soQuyetDinh - Số quyết định
+   * @returns { success: boolean, data: { file_path: string, decision: object } }
+   */
+  async getDecisionFilePath(soQuyetDinh: string): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.get(
+        `/api/decisions/file-path/${encodeURIComponent(soQuyetDinh)}`
+      );
+      return { success: res.data?.success, data: res.data?.data, message: res.data?.message };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  /**
+   * Tải file quyết định theo số quyết định
+   * Backend tự động query DB để lấy file path và trả về file để download
+   * @param soQuyetDinh - Số quyết định
+   */
+  async downloadDecisionFile(soQuyetDinh: string): Promise<Blob> {
+    const res = await axiosInstance.get(`/api/decisions/download/${encodeURIComponent(soQuyetDinh)}`, {
+      responseType: 'blob',
+    });
+    return res.data;
+  },
+
+  /**
+   * Lấy file paths từ nhiều số quyết định
+   * @param soQuyetDinhs - Mảng các số quyết định
+   * @returns { success: boolean, data: { [soQD]: { success, file_path, decision, error } } }
+   */
+  async getDecisionFilePaths(soQuyetDinhs: string[]): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.post('/api/decisions/file-paths', { soQuyetDinhs });
+      return { success: true, data: res.data?.data || res.data };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
   // Unit Annual Awards
   async getUnitAnnualAwards(params?: {
     page?: number;

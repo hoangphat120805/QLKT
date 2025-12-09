@@ -14,7 +14,7 @@ interface Personnel {
 interface ScientificAchievement {
   id: string;
   nam: number;
-  loai: 'NCKH' | 'SKKH';
+  loai: 'DTKH' | 'SKKH';
   mo_ta: string;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
 }
@@ -50,7 +50,7 @@ export default function ScientificAchievementHistoryModal({
       align: 'center',
       render: (loai: string) => {
         const map: Record<string, { text: string; color: string }> = {
-          NCKH: { text: 'NCKH', color: 'blue' },
+          DTKH: { text: 'ĐTKH', color: 'blue' },
           SKKH: { text: 'SKKH', color: 'green' },
         };
         const item = map[loai] || { text: loai, color: 'default' };

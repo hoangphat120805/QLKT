@@ -27,7 +27,7 @@ import {
   HomeOutlined,
 } from '@ant-design/icons';
 import { apiClient } from '@/lib/api-client';
-import axiosInstance from '@/utils/axiosInstance';
+import { downloadDecisionFile } from '@/utils/downloadDecisionFile';
 
 const { Title, Paragraph } = Typography;
 
@@ -168,22 +168,8 @@ export default function ScientificAchievementsPage() {
     }
   };
 
-  const handleOpenDecisionFile = async (fileUrl: string) => {
-    try {
-      const response = await axiosInstance.get(fileUrl, {
-        responseType: 'blob',
-      });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', fileUrl.split('/').pop() || 'decision_file');
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      message.error('Không thể tải file quyết định');
-    }
+  const handleOpenDecisionFile = async (soQuyetDinh: string) => {
+    await downloadDecisionFile(soQuyetDinh);
   };
 
   const columns: ColumnsType<AchievementRecord> = [
@@ -200,8 +186,8 @@ export default function ScientificAchievementsPage() {
       width: 150,
       render: (text: string) => {
         const map: Record<string, string> = {
-          NCKH: 'Đề tài khoa học',
-          SKKH: 'Sáng kiến khoa học',
+          DTKH: 'ĐTKH',
+          SKKH: 'SKKH',
         };
         return map[text] || text || '-';
       },
@@ -221,17 +207,14 @@ export default function ScientificAchievementsPage() {
       width: 150,
       align: 'center',
       render: (so_quyet_dinh: string, record: AchievementRecord) => {
-        if (record.file_quyet_dinh) {
-          return (
-            <a
-              onClick={() => handleOpenDecisionFile(record.file_quyet_dinh!)}
-              style={{ color: '#52c41a', textDecoration: 'underline', cursor: 'pointer' }}
-            >
-              {so_quyet_dinh || 'N/A'}
-            </a>
-          );
-        }
-        return <span style={{ color: '#999' }}>{so_quyet_dinh || 'N/A'}</span>;
+        return (
+          <a
+            onClick={() => handleOpenDecisionFile(so_quyet_dinh!)}
+            style={{ color: '#52c41a', textDecoration: 'underline', cursor: 'pointer' }}
+          >
+            {so_quyet_dinh || 'N/A'}
+          </a>
+        );
       },
     },
   ];
@@ -335,7 +318,7 @@ export default function ScientificAchievementsPage() {
               popupMatchSelectWidth={false}
               styles={{ popup: { root: { minWidth: 'max-content' } } }}
             >
-              <Select.Option value="NCKH">Đề tài khoa học (ĐTKH)</Select.Option>
+              <Select.Option value="DTKH">Đề tài khoa học (ĐTKH)</Select.Option>
               <Select.Option value="SKKH">Sáng kiến khoa học (SKKH)</Select.Option>
             </Select>
           </Form.Item>

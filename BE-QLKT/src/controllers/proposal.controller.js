@@ -297,7 +297,8 @@ class ProposalController {
    */
   async getPdfFile(req, res) {
     try {
-      const { filename } = req.params;
+      // Decode filename để xử lý ký tự đặc biệt (tiếng Việt)
+      const filename = decodeURIComponent(req.params.filename);
 
       const result = await proposalService.getPdfFile(filename);
 

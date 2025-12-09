@@ -124,18 +124,13 @@ export default function AdminSystemLogsPage() {
         </Breadcrumb>
 
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-          <div style={{ padding: '8px', backgroundColor: '#e0f2fe', borderRadius: '8px' }}>
-            <FundOutlined style={{ fontSize: '24px', color: '#0284c7' }} />
-          </div>
-          <div>
+        <div style={{ marginBottom: '24px' }}>
             <Title level={1} style={{ margin: 0 }}>
               Nhật ký Hệ thống
             </Title>
             <Text type="secondary" style={{ display: 'block', marginTop: '4px' }}>
               Xem lịch sử hoạt động và thay đổi trong hệ thống (USER, MANAGER, ADMIN)
             </Text>
-          </div>
         </div>
 
         {/* Filter Section */}

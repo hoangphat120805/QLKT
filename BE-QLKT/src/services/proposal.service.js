@@ -35,7 +35,7 @@ const CELL_INDICES = {
   STATUS: 6,
 };
 
-const VALID_LOAI_THANH_TICH = ['NCKH', 'SKKH'];
+const VALID_LOAI_THANH_TICH = ['DTKH', 'SKKH'];
 const VALID_STATUS = ['APPROVED', 'PENDING'];
 const SAMPLE_ROW_KEYWORDS = ['ví dụ', 'example'];
 
@@ -917,8 +917,10 @@ class ProposalService {
       let dataCongHien = null;
 
       if (type === 'NCKH') {
-        // NCKH: titleData = [{ personnel_id, loai: 'NCKH'|'SKKH', mo_ta }]
+        // NCKH: titleData = [{ personnel_id, loai: 'NCKH'|'SKKH', mo_ta, cap_bac, chuc_vu }]
         // Không lưu cccd, thêm thông tin đơn vị
+        // Lấy cap_bac và chuc_vu từ titleData (đã được sửa ở bước 3)
+        // KHÔNG fallback về personnel (giống khen thưởng đột xuất)
         dataThanhTich = titleData.map(item => {
           const personnel = personnelMap[item.personnel_id];
           return {
@@ -930,8 +932,8 @@ class ProposalService {
             status: item.status || 'PENDING',
             so_quyet_dinh: item.so_quyet_dinh || null,
             file_quyet_dinh: item.file_quyet_dinh || null,
-            cap_bac: item.cap_bac || personnel?.cap_bac || null,
-            chuc_vu: item.chuc_vu || personnel?.ChucVu?.ten_chuc_vu || null,
+            cap_bac: item.cap_bac || null,
+            chuc_vu: item.chuc_vu || null,
             co_quan_don_vi: personnel?.CoQuanDonVi
               ? {
                   id: personnel.CoQuanDonVi.id,
@@ -1055,8 +1057,10 @@ class ProposalService {
             ho_ten: personnel?.ho_ten || '',
             nam: nam,
             danh_hieu: item.danh_hieu,
-            cap_bac: item.cap_bac || personnel?.cap_bac || null,
-            chuc_vu: item.chuc_vu || personnel?.ChucVu?.ten_chuc_vu || null,
+            // Lấy cap_bac và chuc_vu từ titleData (đã được sửa ở bước 3)
+            // KHÔNG fallback về personnel (giống khen thưởng đột xuất)
+            cap_bac: item.cap_bac || null,
+            chuc_vu: item.chuc_vu || null,
             co_quan_don_vi: coQuanDonVi,
             don_vi_truc_thuoc: donViTrucThuoc,
             nhan_bkbqp: item.danh_hieu === 'BKBQP' ? true : false,
@@ -1109,8 +1113,10 @@ class ProposalService {
             so_quyet_dinh: item.so_quyet_dinh || null,
             file_quyet_dinh: item.file_quyet_dinh || null,
             thoi_gian: thoiGian, // Lưu mốc thời gian vào JSON
-            cap_bac: item.cap_bac || personnel?.cap_bac || null,
-            chuc_vu: item.chuc_vu || personnel?.ChucVu?.ten_chuc_vu || null,
+            // Lấy cap_bac và chuc_vu từ titleData (đã được sửa ở bước 3)
+            // KHÔNG fallback về personnel (giống khen thưởng đột xuất)
+            cap_bac: item.cap_bac || null,
+            chuc_vu: item.chuc_vu || null,
             co_quan_don_vi: personnel?.CoQuanDonVi
               ? {
                   id: personnel.CoQuanDonVi.id,
@@ -1145,8 +1151,10 @@ class ProposalService {
               ho_ten: personnel?.ho_ten || '',
               nam: nam,
               danh_hieu: item.danh_hieu,
-              cap_bac: item.cap_bac || personnel?.cap_bac || null,
-              chuc_vu: item.chuc_vu || personnel?.ChucVu?.ten_chuc_vu || null,
+              // Lấy cap_bac và chuc_vu từ titleData (đã được sửa ở bước 3)
+              // KHÔNG fallback về personnel (giống khen thưởng đột xuất)
+              cap_bac: item.cap_bac || null,
+              chuc_vu: item.chuc_vu || null,
               co_quan_don_vi: personnel?.CoQuanDonVi
                 ? {
                     id: personnel.CoQuanDonVi.id,
@@ -2855,18 +2863,15 @@ class ProposalService {
             if (item.danh_hieu === 'ĐVQT' || item.danh_hieu === 'ĐVTT') {
               data.danh_hieu = item.danh_hieu;
               data.so_quyet_dinh = soQuyetDinh;
-              data.file_quyet_dinh = fileQuyetDinh;
             }
             if (item.danh_hieu === 'BKBQP') {
               data.nhan_bkbqp = nhanBKBQP;
               data.so_quyet_dinh_bkbqp = soQuyetDinhBKBQP;
-              data.file_quyet_dinh_bkbqp = fileQuyetDinhBKBQP;
             }
 
             if (item.danh_hieu === 'BKTTCP') {
               data.nhan_bkttcp = nhanBKTTCP;
               data.so_quyet_dinh_bkttcp = soQuyetDinhBKTTCP;
-              data.file_quyet_dinh_bkttcp = fileQuyetDinhBKTTCP;
             }
             data.status = 'APPROVED';
             data.nguoi_duyet_id = adminId;
@@ -2893,14 +2898,10 @@ class ProposalService {
                     item.danh_hieu === 'ĐVQT' || item.danh_hieu === 'ĐVTT' ? item.danh_hieu : null,
                   so_quyet_dinh:
                     item.danh_hieu === 'ĐVQT' || item.danh_hieu === 'ĐVTT' ? soQuyetDinh : null,
-                  file_quyet_dinh:
-                    item.danh_hieu === 'ĐVQT' || item.danh_hieu === 'ĐVTT' ? fileQuyetDinh : null,
                   nhan_bkbqp: nhanBKBQP,
                   so_quyet_dinh_bkbqp: soQuyetDinhBKBQP,
-                  file_quyet_dinh_bkbqp: fileQuyetDinhBKBQP,
                   nhan_bkttcp: nhanBKTTCP,
                   so_quyet_dinh_bkttcp: soQuyetDinhBKTTCP,
-                  file_quyet_dinh_bkttcp: fileQuyetDinhBKTTCP,
                   status: 'APPROVED',
                   nguoi_tao_id: adminId,
                   nguoi_duyet_id: adminId,
@@ -2985,7 +2986,6 @@ class ProposalService {
                     chuc_vu: item.chuc_vu || null,
                     ghi_chu: item.ghi_chu || null,
                     so_quyet_dinh: soQuyetDinhDanhHieu,
-                    file_quyet_dinh: filePdfDanhHieu,
                     thoi_gian_nhom_0_7: thoiGianNhom0_7,
                     thoi_gian_nhom_0_8: thoiGianNhom0_8,
                     thoi_gian_nhom_0_9_1_0: thoiGianNhom0_9_1_0,
@@ -3011,7 +3011,6 @@ class ProposalService {
                   chuc_vu: item.chuc_vu || null,
                   ghi_chu: item.ghi_chu || null,
                   so_quyet_dinh: soQuyetDinhDanhHieu,
-                  file_quyet_dinh: filePdfDanhHieu,
                   thoi_gian_nhom_0_7: thoiGianNhom0_7,
                   thoi_gian_nhom_0_8: thoiGianNhom0_8,
                   thoi_gian_nhom_0_9_1_0: thoiGianNhom0_9_1_0,
@@ -3115,22 +3114,20 @@ class ProposalService {
             if (item.danh_hieu === 'CSTT' || item.danh_hieu === 'CSTDCS') {
               data.danh_hieu = item.danh_hieu;
               data.so_quyet_dinh = soQuyetDinhDanhHieu;
-              data.file_quyet_dinh = filePdfDanhHieu;
             }
 
             if (item.danh_hieu === 'BKBQP') {
               data.nhan_bkbqp = nhanBKBQP;
               data.so_quyet_dinh_bkbqp = soQuyetDinhBKBQP;
-              data.file_quyet_dinh_bkbqp = filePdfBKBQP;
             }
 
             if (item.danh_hieu === 'CSTDTQ') {
               data.nhan_cstdtq = nhanCSTDTQ;
               data.so_quyet_dinh_cstdtq = soQuyetDinhCSTDTQ;
-              data.file_quyet_dinh_cstdtq = filePdfCSTDTQ;
             }
 
             // Upsert vào bảng DanhHieuHangNam
+            // file_quyet_dinh đã xóa khỏi schema - file path lấy từ bảng FileQuyetDinh qua so_quyet_dinh
             const savedDanhHieu = await prisma.danhHieuHangNam.upsert({
               where: {
                 quan_nhan_id_nam: {
@@ -3153,14 +3150,10 @@ class ProposalService {
                   item.danh_hieu === 'CSTT' || item.danh_hieu === 'CSTDCS'
                     ? soQuyetDinhDanhHieu
                     : null,
-                file_quyet_dinh:
-                  item.danh_hieu === 'CSTT' || item.danh_hieu === 'CSTDCS' ? filePdfDanhHieu : null,
                 nhan_bkbqp: nhanBKBQP,
                 so_quyet_dinh_bkbqp: soQuyetDinhBKBQP,
-                file_quyet_dinh_bkbqp: filePdfBKBQP,
                 nhan_cstdtq: nhanCSTDTQ,
                 so_quyet_dinh_cstdtq: soQuyetDinhCSTDTQ,
-                file_quyet_dinh_cstdtq: filePdfCSTDTQ,
               },
             });
 
@@ -3261,7 +3254,6 @@ class ProposalService {
                   chuc_vu: item.chuc_vu || null,
                   ghi_chu: item.ghi_chu || null,
                   so_quyet_dinh: soQuyetDinh,
-                  file_quyet_dinh: filePdf,
                   thoi_gian: thoiGian,
                 },
                 create: {
@@ -3272,7 +3264,6 @@ class ProposalService {
                   chuc_vu: item.chuc_vu || null,
                   ghi_chu: item.ghi_chu || null,
                   so_quyet_dinh: soQuyetDinh,
-                  file_quyet_dinh: filePdf,
                   thoi_gian: thoiGian,
                 },
               });
@@ -3364,7 +3355,6 @@ class ProposalService {
                   chuc_vu: item.chuc_vu || null,
                   ghi_chu: item.ghi_chu || null,
                   so_quyet_dinh: soQuyetDinh,
-                  file_quyet_dinh: filePdf,
                   thoi_gian: thoiGian,
                 },
               });
@@ -3378,7 +3368,6 @@ class ProposalService {
                   chuc_vu: item.chuc_vu || null,
                   ghi_chu: item.ghi_chu || null,
                   so_quyet_dinh: soQuyetDinh,
-                  file_quyet_dinh: filePdf,
                   thoi_gian: thoiGian,
                 },
               });
@@ -3469,7 +3458,6 @@ class ProposalService {
                   chuc_vu: item.chuc_vu || null,
                   ghi_chu: item.ghi_chu || null,
                   so_quyet_dinh: soQuyetDinh,
-                  file_quyet_dinh: filePdf,
                   thoi_gian: thoiGian,
                 },
               });
@@ -3483,7 +3471,6 @@ class ProposalService {
                   chuc_vu: item.chuc_vu || null,
                   ghi_chu: item.ghi_chu || null,
                   so_quyet_dinh: soQuyetDinh,
-                  file_quyet_dinh: filePdf,
                   thoi_gian: thoiGian,
                 },
               });
@@ -3525,7 +3512,7 @@ class ProposalService {
             continue;
           }
 
-          if (!item.loai || !['NCKH', 'SKKH'].includes(item.loai)) {
+          if (!item.loai || !['DTKH', 'SKKH'].includes(item.loai)) {
             errors.push(
               `Thành tích có loại không hợp lệ cho quân nhân ${quanNhan.id}: ${item.loai}`
             );
@@ -3537,21 +3524,13 @@ class ProposalService {
             continue;
           }
 
-          // Lấy số quyết định và file PDF cho thành tích
+          // Lấy số quyết định cho thành tích
           // Ưu tiên lấy từ item, nếu không có thì có thể lấy từ decisions
-          let soQuyetDinhThanhTich = item.so_quyet_dinh || null;
-          let filePdfThanhTich = null;
-
-          // Nếu có file PDF trong item, sử dụng nó
-          if (item.file_quyet_dinh) {
-            filePdfThanhTich = item.file_quyet_dinh;
-          } else if (pdfPaths.file_pdf_nckh) {
-            // Nếu có file PDF chung cho NCKH/SKKH
-            filePdfThanhTich = pdfPaths.file_pdf_nckh;
-          }
+          const soQuyetDinhThanhTich = item.so_quyet_dinh || null;
 
           // Create vào bảng ThanhTichKhoaHoc
           // Khi approve đề xuất, tất cả thành tích PHẢI có status = APPROVED (đã được duyệt)
+          // file_quyet_dinh đã được xóa khỏi schema - file path được lấy từ bảng FileQuyetDinh qua so_quyet_dinh
           await prisma.thanhTichKhoaHoc.create({
             data: {
               quan_nhan_id: quanNhan.id,
@@ -3563,7 +3542,6 @@ class ProposalService {
               cap_bac: item.cap_bac || null,
               ghi_chu: item.ghi_chu || null,
               so_quyet_dinh: soQuyetDinhThanhTich,
-              file_quyet_dinh: filePdfThanhTich,
             },
           });
 

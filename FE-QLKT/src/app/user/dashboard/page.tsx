@@ -41,6 +41,7 @@ const { Title, Text, Paragraph } = Typography;
 
 export default function UserDashboard() {
   const { theme } = useTheme();
+  const [displayName, setDisplayName] = useState('Quân nhân');
   const [personnelInfo, setPersonnelInfo] = useState<any>(null);
   const [annualProfile, setAnnualProfile] = useState<any>(null);
   const [serviceProfile, setServiceProfile] = useState<any>(null);
@@ -56,6 +57,11 @@ export default function UserDashboard() {
 
         // Lấy thông tin user từ localStorage
         const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (user) {
+          const name = (user.ho_ten || '').trim();
+          const username = (user.username || '').trim();
+          setDisplayName(name || username || 'Người dùng');
+        }
 
         if (!user?.quan_nhan_id) {
           setError('Không tìm thấy thông tin quân nhân.');
@@ -169,19 +175,50 @@ export default function UserDashboard() {
       >
         <div className="max-w-7xl mx-auto p-6 space-y-6">
           {/* Hero Header with Avatar */}
-          <Card className="shadow-lg border-0 overflow-hidden" styles={{ body: { padding: 0 } }}>
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-8 text-white">
-              <div className="flex items-center gap-6">
+          <Card
+            style={{
+              borderRadius: '12px',
+              boxShadow:
+                theme === 'dark' ? '0 4px 16px rgba(0, 0, 0, 0.4)' : '0 4px 16px rgba(0, 0, 0, 0.1)',
+              overflow: 'hidden',
+              border: 'none',
+            }}
+            bodyStyle={{ padding: 0 }}
+          >
+            <div
+              style={{
+                background:
+                  theme === 'dark'
+                    ? 'linear-gradient(135deg, #1e3a8a 0%, #312e81 100%)'
+                    : 'linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)',
+                padding: '32px',
+                color: '#ffffff',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
                 <Avatar
-                  size={100}
+                  size={80}
                   icon={<UserOutlined />}
-                  className="bg-white text-blue-600 shadow-xl border-4 border-white/30"
+                  style={{
+                    backgroundColor: '#ffffff',
+                    color: '#2563eb',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                    border: '3px solid rgba(255, 255, 255, 0.3)',
+                  }}
                 />
-                <div className="flex-1">
-                  <Title level={2} className="!text-white !mb-2">
-                    Xin chào, {personnelInfo?.ho_ten || 'Quân nhân'}!
+                <div style={{ flex: 1, minWidth: '200px' }}>
+                  <Title
+                    level={2}
+                    style={{
+                      margin: 0,
+                      marginBottom: '12px',
+                      color: '#ffffff',
+                      fontSize: '28px',
+                    }}
+                  >
+                    Xin chào, {personnelInfo?.ho_ten || displayName}!
                   </Title>
-                  <Space size="large" wrap className="text-white/90">
+                  <Space size="large" wrap style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
                     <Space>
                       <TeamOutlined />
                       <span>
@@ -207,93 +244,275 @@ export default function UserDashboard() {
           {error && <Alert message={error} type="error" showIcon className="shadow-sm" />}
 
           {/* Statistics Overview */}
-          <Row gutter={[16, 16]}>
-            <Col xs={24} sm={12} lg={6}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+              gap: '16px',
+              marginBottom: '24px',
+            }}
+          >
               <Card
-                className={`shadow-sm hover:shadow-md transition-shadow border-0 ${
+              hoverable
+              style={{
+                borderRadius: '10px',
+                boxShadow:
+                  theme === 'dark' ? '0 1px 6px rgba(0, 0, 0, 0.35)' : '0 1px 4px rgba(0, 0, 0, 0.06)',
+                transition: 'all 0.3s ease',
+              }}
+              bodyStyle={{ padding: '20px' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div
+                  style={{
+                    width: '56px',
+                    height: '56px',
+                    borderRadius: '12px',
+                    background: theme === 'dark' ? '#1e3a8a' : '#e6f0ff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow:
                   theme === 'dark'
-                    ? 'bg-gradient-to-br from-blue-900/40 to-blue-800/40'
-                    : 'bg-gradient-to-br from-blue-50 to-blue-100'
-                }`}
+                        ? '0 1px 3px rgba(59, 130, 246, 0.3)'
+                        : '0 1px 3px rgba(59, 130, 246, 0.2)',
+                  }}
               >
-                <Statistic
-                  title={
-                    <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>
-                      Tổng CSTDCS
-                    </span>
-                  }
-                  value={annualProfile?.tong_cstdcs || 0}
-                  prefix={<StarOutlined className="text-blue-600" />}
-                  valueStyle={{ color: '#1890ff', fontWeight: 'bold' }}
-                />
+                  <StarOutlined
+                    style={{
+                      fontSize: '26px',
+                      color: theme === 'dark' ? '#60a5fa' : '#2563eb',
+                    }}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <Text
+                    type="secondary"
+                    style={{
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      display: 'block',
+                      marginBottom: '4px',
+                      color: theme === 'dark' ? '#cbd5e1' : '#475569',
+                    }}
+                  >
+                    Tổng CSTDCS
+                  </Text>
+                  <div
+                    style={{
+                      fontSize: '28px',
+                      fontWeight: 'bold',
+                      color: theme === 'dark' ? '#e5e7eb' : '#0f172a',
+                      lineHeight: '1.1',
+                    }}
+                  >
+                    {annualProfile?.tong_cstdcs || 0}
+                  </div>
+                </div>
+              </div>
               </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={6}>
+
               <Card
-                className={`shadow-sm hover:shadow-md transition-shadow border-0 ${
+              hoverable
+              style={{
+                borderRadius: '10px',
+                boxShadow:
+                  theme === 'dark' ? '0 1px 6px rgba(0, 0, 0, 0.35)' : '0 1px 4px rgba(0, 0, 0, 0.06)',
+                transition: 'all 0.3s ease',
+              }}
+              bodyStyle={{ padding: '20px' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div
+                  style={{
+                    width: '56px',
+                    height: '56px',
+                    borderRadius: '12px',
+                    background: theme === 'dark' ? '#0b3d2e' : '#e8f5e9',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow:
                   theme === 'dark'
-                    ? 'bg-gradient-to-br from-green-900/40 to-green-800/40'
-                    : 'bg-gradient-to-br from-green-50 to-green-100'
-                }`}
-              >
-                <Statistic
-                  title={
-                    <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>
+                        ? '0 1px 3px rgba(16, 185, 129, 0.3)'
+                        : '0 1px 3px rgba(16, 185, 129, 0.2)',
+                  }}
+                >
+                  <RocketOutlined
+                    style={{
+                      fontSize: '26px',
+                      color: theme === 'dark' ? '#34d399' : '#059669',
+                    }}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <Text
+                    type="secondary"
+                    style={{
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      display: 'block',
+                      marginBottom: '4px',
+                      color: theme === 'dark' ? '#cbd5e1' : '#475569',
+                    }}
+                  >
                       Tổng NCKH
-                    </span>
-                  }
-                  value={
-                    Array.isArray(annualProfile?.tong_nckh)
+                  </Text>
+                  <div
+                    style={{
+                      fontSize: '28px',
+                      fontWeight: 'bold',
+                      color: theme === 'dark' ? '#e5e7eb' : '#0f172a',
+                      lineHeight: '1.1',
+                    }}
+                  >
+                    {Array.isArray(annualProfile?.tong_nckh)
                       ? annualProfile.tong_nckh.length
-                      : annualProfile?.tong_nckh || 0
-                  }
-                  prefix={<RocketOutlined className="text-green-600" />}
-                  valueStyle={{ color: '#52c41a', fontWeight: 'bold' }}
-                />
+                      : annualProfile?.tong_nckh || 0}
+                  </div>
+                </div>
+              </div>
               </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={6}>
+
               <Card
-                className={`shadow-sm hover:shadow-md transition-shadow border-0 ${
+              hoverable
+              style={{
+                borderRadius: '10px',
+                boxShadow:
+                  theme === 'dark' ? '0 1px 6px rgba(0, 0, 0, 0.35)' : '0 1px 4px rgba(0, 0, 0, 0.06)',
+                transition: 'all 0.3s ease',
+              }}
+              bodyStyle={{ padding: '20px' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div
+                  style={{
+                    width: '56px',
+                    height: '56px',
+                    borderRadius: '12px',
+                    background: theme === 'dark' ? '#78350f' : '#fef9c3',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow:
                   theme === 'dark'
-                    ? 'bg-gradient-to-br from-orange-900/40 to-orange-800/40'
-                    : 'bg-gradient-to-br from-orange-50 to-orange-100'
-                }`}
-              >
-                <Statistic
-                  title={
-                    <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>
+                        ? '0 1px 3px rgba(234, 179, 8, 0.3)'
+                        : '0 1px 3px rgba(234, 179, 8, 0.2)',
+                  }}
+                >
+                  <TrophyOutlined
+                    style={{
+                      fontSize: '26px',
+                      color: theme === 'dark' ? '#fbbf24' : '#d97706',
+                    }}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <Text
+                    type="secondary"
+                    style={{
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      display: 'block',
+                      marginBottom: '4px',
+                      color: theme === 'dark' ? '#cbd5e1' : '#475569',
+                    }}
+                  >
                       CSTDCS liên tục
+                  </Text>
+                  <div
+                    style={{
+                      fontSize: '28px',
+                      fontWeight: 'bold',
+                      color: theme === 'dark' ? '#e5e7eb' : '#0f172a',
+                      lineHeight: '1.1',
+                    }}
+                  >
+                    {annualProfile?.cstdcs_lien_tuc || 0}
+                    <span
+                      style={{
+                        fontSize: '16px',
+                        fontWeight: 'normal',
+                        color: theme === 'dark' ? '#9ca3af' : '#6b7280',
+                        marginLeft: '4px',
+                      }}
+                    >
+                      năm
                     </span>
-                  }
-                  value={annualProfile?.cstdcs_lien_tuc || 0}
-                  suffix="năm"
-                  prefix={<TrophyOutlined className="text-orange-600" />}
-                  valueStyle={{ color: '#fa8c16', fontWeight: 'bold' }}
-                />
+                  </div>
+                </div>
+              </div>
               </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={6}>
+
               <Card
-                className={`shadow-sm hover:shadow-md transition-shadow border-0 ${
+              hoverable
+              style={{
+                borderRadius: '10px',
+                boxShadow:
+                  theme === 'dark' ? '0 1px 6px rgba(0, 0, 0, 0.35)' : '0 1px 4px rgba(0, 0, 0, 0.06)',
+                transition: 'all 0.3s ease',
+              }}
+              bodyStyle={{ padding: '20px' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div
+                  style={{
+                    width: '56px',
+                    height: '56px',
+                    borderRadius: '12px',
+                    background: theme === 'dark' ? '#3b0764' : '#f3e8ff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow:
                   theme === 'dark'
-                    ? 'bg-gradient-to-br from-purple-900/40 to-purple-800/40'
-                    : 'bg-gradient-to-br from-purple-50 to-purple-100'
-                }`}
-              >
-                <Statistic
-                  title={
-                    <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>
+                        ? '0 1px 3px rgba(139, 92, 246, 0.3)'
+                        : '0 1px 3px rgba(139, 92, 246, 0.2)',
+                  }}
+                >
+                  <ClockCircleOutlined
+                    style={{
+                      fontSize: '26px',
+                      color: theme === 'dark' ? '#a78bfa' : '#7c3aed',
+                    }}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <Text
+                    type="secondary"
+                    style={{
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      display: 'block',
+                      marginBottom: '4px',
+                      color: theme === 'dark' ? '#cbd5e1' : '#475569',
+                    }}
+                  >
                       Tháng cống hiến
-                    </span>
-                  }
-                  value={serviceYears + ' năm ' + serviceMonths + ' tháng'}
-                  prefix={<ClockCircleOutlined className="text-purple-600" />}
-                  valueStyle={{ color: '#722ed1', fontWeight: 'bold' }}
-                />
+                  </Text>
+                  <div
+                    style={{
+                      fontSize: '24px',
+                      fontWeight: 'bold',
+                      color: theme === 'dark' ? '#e5e7eb' : '#0f172a',
+                      lineHeight: '1.2',
+                    }}
+                  >
+                    <div>{serviceYears} năm</div>
+                    <div
+                      style={{
+                        fontSize: '16px',
+                        fontWeight: 'normal',
+                        color: theme === 'dark' ? '#9ca3af' : '#6b7280',
+                      }}
+                    >
+                      {serviceMonths} tháng
+                    </div>
+                  </div>
+                </div>
+              </div>
               </Card>
-            </Col>
-          </Row>
+          </div>
 
           {/* Personal Info Card */}
           {personnelInfo && (

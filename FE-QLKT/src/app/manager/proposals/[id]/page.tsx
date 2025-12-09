@@ -12,7 +12,6 @@ import {
   Alert,
   Space,
   message,
-  Divider,
   Table,
   ConfigProvider,
   theme as antdTheme,
@@ -24,17 +23,16 @@ import {
   ClockCircleOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
-  FileExcelOutlined,
   FilePdfOutlined,
   TrophyOutlined,
   BookOutlined,
-  FileOutlined,
 } from '@ant-design/icons';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
-import axiosInstance from '@/utils/axiosInstance';
+import { downloadDecisionFile } from '@/utils/downloadDecisionFile';
 import { useTheme } from '@/components/theme-provider';
+import axiosInstance from '@/utils/axiosInstance';
 import styles from './proposal-detail.module.css';
 
 const { Title, Text } = Typography;
@@ -152,7 +150,6 @@ export default function ManagerProposalDetailPage() {
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
   const [positionHistoriesMap, setPositionHistoriesMap] = useState<Record<string, any[]>>({});
-  const [personnelDetails, setPersonnelDetails] = useState<Record<string, any>>({});
 
   useEffect(() => {
     if (proposalId) {
@@ -200,8 +197,6 @@ export default function ManagerProposalDetailPage() {
         }
 
         if (personnelData.length > 0) {
-          await fetchPersonnelDetails(personnelData);
-
           // Fetch lịch sử chức vụ cho tất cả quân nhân để hiển thị thời gian (chỉ cho CONG_HIEN)
           if (response.data.loai_de_xuat === 'CONG_HIEN') {
             await fetchPositionHistories(personnelData);
@@ -215,32 +210,6 @@ export default function ManagerProposalDetailPage() {
       console.error('Fetch proposal detail error:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchPersonnelDetails = async (danhHieuItems: any[]) => {
-    try {
-      const detailsMap: Record<string, any> = {};
-
-      // Fetch thông tin personnel cho mỗi quân nhân
-      await Promise.all(
-        danhHieuItems.map(async item => {
-          if (item.personnel_id) {
-            try {
-              const res = await apiClient.getPersonnelById(item.personnel_id);
-              if (res.success && res.data) {
-                detailsMap[item.personnel_id] = res.data;
-              }
-            } catch (error) {
-              // Ignore errors for individual personnel
-            }
-          }
-        })
-      );
-
-      setPersonnelDetails(detailsMap);
-    } catch (error) {
-      console.error('Error fetching personnel details:', error);
     }
   };
 
@@ -306,43 +275,8 @@ export default function ManagerProposalDetailPage() {
     }
   };
 
-  const handleOpenDecisionFile = async (soQuyetDinh: string, filePath?: string | null) => {
-    try {
-      let filename: string | null = null;
-
-      // Nếu đã có file_path trong record, dùng luôn
-      if (filePath) {
-        filename = filePath.split('/').pop() || null;
-      } else {
-        // Nếu chưa có file_path, tìm từ DB dựa trên số quyết định
-        const response = await apiClient.getDecisionBySoQuyetDinh(soQuyetDinh);
-        if (response.success && response.data?.file_path) {
-          filename = response.data.file_path.split('/').pop() || null;
-        }
-      }
-
-      if (filename) {
-        // Tải file về bằng axios với responseType: 'blob'
-        const response = await axiosInstance.get(`/api/proposals/uploads/${filename}`, {
-          responseType: 'blob',
-        });
-        const blob = response.data;
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename || `${soQuyetDinh}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        message.success('Tải file thành công');
-      } else {
-        message.warning('Không tìm thấy file quyết định');
-      }
-    } catch (error: any) {
-      message.error('Lỗi khi tải file quyết định');
-      console.error('Download decision file error:', error);
-    }
+  const handleOpenDecisionFile = async (soQuyetDinh: string) => {
+    await downloadDecisionFile(soQuyetDinh);
   };
 
   const handleDownloadExcel = async () => {
@@ -582,6 +516,11 @@ export default function ManagerProposalDetailPage() {
                 {format(new Date(proposal.ngay_duyet), 'dd/MM/yyyy HH:mm')}
               </Descriptions.Item>
             )}
+            {proposal.ghi_chu && (
+              <Descriptions.Item label="Ghi chú" span={2}>
+                <Text>{proposal.ghi_chu}</Text>
+              </Descriptions.Item>
+            )}
           </Descriptions>
         </Card>
 
@@ -778,8 +717,8 @@ export default function ManagerProposalDetailPage() {
                   width: 150,
                   align: 'center',
                   render: text => (
-                    <Tag color={text === 'NCKH' ? 'blue' : 'green'}>
-                      {text === 'NCKH' ? 'Đề tài khoa học' : 'Sáng kiến khoa học'}
+                    <Tag color={text === 'DTKH' ? 'blue' : 'green'}>
+                      {text === 'DTKH' ? 'ĐTKH' : 'SKKH'}
                     </Tag>
                   ),
                 },
@@ -809,7 +748,7 @@ export default function ManagerProposalDetailPage() {
                               onClick={e => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                handleOpenDecisionFile(text, record.file_quyet_dinh);
+                                handleOpenDecisionFile(text);
                               }}
                               style={{
                                 color: '#1890ff',
@@ -986,7 +925,7 @@ export default function ManagerProposalDetailPage() {
                               onClick={e => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                handleOpenDecisionFile(text, record.file_quyet_dinh);
+                                handleOpenDecisionFile(text);
                               }}
                               style={{
                                 color: '#1890ff',
@@ -1005,7 +944,7 @@ export default function ManagerProposalDetailPage() {
                         width: 200,
                         align: 'center' as const,
                         render: (_: any, record: DanhHieuItem) => {
-                          if (!record.file_quyet_dinh) {
+                          if (!record.so_quyet_dinh) {
                             return <Text type="secondary">-</Text>;
                           }
 
@@ -1014,7 +953,7 @@ export default function ManagerProposalDetailPage() {
                               type="link"
                               icon={<FilePdfOutlined />}
                               onClick={() =>
-                                handleOpenDecisionFile(record.so_quyet_dinh, record.file_quyet_dinh)
+                                handleOpenDecisionFile(record.so_quyet_dinh!)
                               }
                             >
                               Xem PDF
@@ -1185,10 +1124,6 @@ export default function ManagerProposalDetailPage() {
                         render: (text: string, record: DanhHieuItem) => {
                           const soQuyetDinh =
                             text || record.so_quyet_dinh_bkbqp || record.so_quyet_dinh_cstdtq;
-                          const fileQuyetDinh =
-                            record.file_quyet_dinh ||
-                            record.file_quyet_dinh_bkbqp ||
-                            record.file_quyet_dinh_cstdtq;
 
                           if (
                             !soQuyetDinh ||
@@ -1202,10 +1137,10 @@ export default function ManagerProposalDetailPage() {
                               onClick={e => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                handleOpenDecisionFile(soQuyetDinh, fileQuyetDinh);
+                                handleOpenDecisionFile(soQuyetDinh);
                               }}
                               style={{
-                                color: '#1890ff',
+                                color: '#52c41a',
                                 cursor: 'pointer',
                                 textDecoration: 'underline',
                               }}
@@ -1367,10 +1302,6 @@ export default function ManagerProposalDetailPage() {
                         render: (text: string, record: DanhHieuItem) => {
                           const soQuyetDinh =
                             text || record.so_quyet_dinh_bkbqp || record.so_quyet_dinh_cstdtq;
-                          const fileQuyetDinh =
-                            record.file_quyet_dinh ||
-                            record.file_quyet_dinh_bkbqp ||
-                            record.file_quyet_dinh_cstdtq;
 
                           if (
                             !soQuyetDinh ||
@@ -1384,10 +1315,10 @@ export default function ManagerProposalDetailPage() {
                               onClick={e => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                handleOpenDecisionFile(soQuyetDinh, fileQuyetDinh);
+                                handleOpenDecisionFile(soQuyetDinh);
                               }}
                               style={{
-                                color: '#1890ff',
+                                color: '#52c41a',
                                 cursor: 'pointer',
                                 textDecoration: 'underline',
                               }}

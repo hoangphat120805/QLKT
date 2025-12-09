@@ -20,7 +20,7 @@ import {
   SyncOutlined,
   HomeOutlined,
   UserOutlined,
-  UserSwitchOutlined,
+  ApartmentOutlined,
   SafetyCertificateOutlined,
   EyeOutlined,
 } from '@ant-design/icons';
@@ -164,9 +164,11 @@ export default function ManagerPersonnelPage() {
 
   const filteredPersonnel = personnel
     .filter(p => {
+      const matchesSearch = !searchTerm || 
+        (p.ho_ten && p.ho_ten.toLowerCase().includes(searchTerm.toLowerCase()));
       const matchesPosition = !selectedPosition || p.chuc_vu_id === parseInt(selectedPosition);
       const matchesCapBac = !selectedCapBac || p.cap_bac === selectedCapBac;
-      return matchesPosition && matchesCapBac;
+      return matchesSearch && matchesPosition && matchesCapBac;
     })
     .sort((a, b) => {
       // Những người không có đơn vị trực thuộc (chỉ huy) lên đầu
@@ -181,8 +183,15 @@ export default function ManagerPersonnelPage() {
     });
 
   const totalPersonnel = pagination.total;
-  const activePersonnel = personnel.filter(p => p.trang_thai === 'ACTIVE').length;
+  const totalSubUnits = units.filter((u: any) => u.don_vi_truc_thuoc_id || u.co_quan_don_vi_id !== managerUnitId).length;
   const uniquePositions = new Set(personnel.map(p => p.chuc_vu?.ten_chuc_vu)).size;
+  const statTextColor = theme === 'dark' ? '#e5e7eb' : '#0f172a';
+  const statSubTextColor = theme === 'dark' ? '#cbd5e1' : '#475569';
+  const iconBgBlue = theme === 'dark' ? '#1e3a8a' : '#e6f0ff';
+  const iconBgGreen = theme === 'dark' ? '#0b3d2e' : '#e8f5e9';
+  const iconBgPurple = theme === 'dark' ? '#3b0764' : '#f3e8ff';
+  const iconShadow = theme === 'dark' ? '0 1px 3px rgba(0, 0, 0, 0.45)' : '0 1px 3px rgba(0, 0, 0, 0.05)';
+  const cardShadow = theme === 'dark' ? '0 1px 6px rgba(0, 0, 0, 0.35)' : '0 1px 4px rgba(0, 0, 0, 0.06)';
 
   // Filter positions để hiển thị tất cả chức vụ thuộc cơ quan đơn vị của manager
   const filteredPositions = positions.filter(pos => {
@@ -265,44 +274,156 @@ export default function ManagerPersonnelPage() {
             marginBottom: '24px',
           }}
         >
-          <Card>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px' }}>
-              <div style={{ padding: '8px', backgroundColor: '#e0f2fe', borderRadius: '8px' }}>
-                <UserOutlined style={{ fontSize: '20px', color: '#0284c7' }} />
+          <Card
+            hoverable
+            style={{
+              borderRadius: '10px',
+              boxShadow: cardShadow,
+              transition: 'all 0.3s ease',
+            }}
+            bodyStyle={{ padding: '20px' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div
+                style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '12px',
+                  background: iconBgBlue,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: iconShadow,
+                }}
+              >
+                <UserOutlined
+                  style={{
+                    fontSize: '26px',
+                    color: theme === 'dark' ? '#93c5fd' : '#1d4ed8',
+                  }}
+                />
               </div>
-              <div>
-                <Text type="secondary" style={{ fontSize: '14px' }}>
+              <div style={{ flex: 1 }}>
+                <Text
+                  type="secondary"
+                  style={{
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    display: 'block',
+                    marginBottom: '4px',
+                    color: statSubTextColor,
+                  }}
+                >
                   Tổng quân nhân
                 </Text>
-                <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{totalPersonnel}</div>
+                <div
+                  style={{
+                    fontSize: '32px',
+                    fontWeight: 'bold',
+                    color: statTextColor,
+                    lineHeight: '1.1',
+                  }}
+                >
+                  {totalPersonnel}
+                </div>
               </div>
             </div>
           </Card>
 
-          <Card>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px' }}>
-              <div style={{ padding: '8px', backgroundColor: '#dcfce7', borderRadius: '8px' }}>
-                <UserSwitchOutlined style={{ fontSize: '20px', color: '#16a34a' }} />
+          <Card
+            hoverable
+            style={{
+              borderRadius: '10px',
+              boxShadow: cardShadow,
+              transition: 'all 0.3s ease',
+            }}
+            bodyStyle={{ padding: '20px' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div
+                style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '12px',
+                  background: iconBgGreen,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: iconShadow,
+                }}
+              >
+                <ApartmentOutlined
+                  style={{
+                    fontSize: '26px',
+                    color: theme === 'dark' ? '#6ee7b7' : '#0f9d58',
+                  }}
+                />
               </div>
-              <div>
-                <Text type="secondary" style={{ fontSize: '14px' }}>
-                  Đang hoạt động
+              <div style={{ flex: 1 }}>
+                <Text
+                  type="secondary"
+                  style={{
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    display: 'block',
+                    marginBottom: '4px',
+                    color: statSubTextColor,
+                  }}
+                >
+                  Số đơn vị trực thuộc
                 </Text>
-                <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{activePersonnel}</div>
+                <div style={{ fontSize: '28px', fontWeight: 'bold', color: statTextColor }}>
+                  {totalSubUnits}
+                </div>
               </div>
             </div>
           </Card>
 
-          <Card>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px' }}>
-              <div style={{ padding: '8px', backgroundColor: '#f3e8ff', borderRadius: '8px' }}>
-                <SafetyCertificateOutlined style={{ fontSize: '20px', color: '#9333ea' }} />
+          <Card
+            hoverable
+            style={{
+              borderRadius: '10px',
+              boxShadow: cardShadow,
+              transition: 'all 0.3s ease',
+            }}
+            bodyStyle={{ padding: '20px' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div
+                style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '12px',
+                  background: iconBgPurple,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: iconShadow,
+                }}
+              >
+                <SafetyCertificateOutlined
+                  style={{
+                    fontSize: '26px',
+                    color: theme === 'dark' ? '#c4b5fd' : '#7c3aed',
+                  }}
+                />
               </div>
-              <div>
-                <Text type="secondary" style={{ fontSize: '14px' }}>
-                  Số chức vụ khác nhau
+              <div style={{ flex: 1 }}>
+                <Text
+                  type="secondary"
+                  style={{
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    display: 'block',
+                    marginBottom: '4px',
+                    color: statSubTextColor,
+                  }}
+                >
+                  Số chức vụ
                 </Text>
-                <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{uniquePositions}</div>
+                <div style={{ fontSize: '28px', fontWeight: 'bold', color: statTextColor }}>
+                  {uniquePositions}
+                </div>
               </div>
             </div>
           </Card>
@@ -315,7 +436,6 @@ export default function ManagerPersonnelPage() {
               placeholder="Tìm kiếm theo tên..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              onPressEnter={handleSearch}
               size="large"
               style={{ flex: 1, minWidth: '200px' }}
             />
@@ -349,9 +469,6 @@ export default function ManagerPersonnelPage() {
                 </Option>
               ))}
             </Select>
-            <Button type="primary" size="large" onClick={handleSearch} disabled={loading}>
-              Tìm kiếm
-            </Button>
           </div>
         </Card>
 

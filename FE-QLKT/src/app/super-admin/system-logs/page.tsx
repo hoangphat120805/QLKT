@@ -125,9 +125,6 @@ export default function SystemLogsPage() {
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-          <div style={{ padding: '8px', backgroundColor: '#e0f2fe', borderRadius: '8px' }}>
-            <FundOutlined style={{ fontSize: '24px', color: '#0284c7' }} />
-          </div>
           <div>
             <Title level={1} style={{ margin: 0 }}>
               Nhật ký Hệ thống

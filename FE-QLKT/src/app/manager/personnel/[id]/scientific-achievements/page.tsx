@@ -30,7 +30,7 @@ import {
   FilePdfOutlined,
 } from '@ant-design/icons';
 import { apiClient } from '@/lib/api-client';
-import axiosInstance from '@/utils/axiosInstance';
+import { downloadDecisionFile } from '@/utils/downloadDecisionFile';
 import { useTheme } from '@/components/theme-provider';
 
 const { Title, Paragraph } = Typography;
@@ -161,43 +161,8 @@ export default function ScientificAchievementsPage() {
     }
   };
 
-  const handleOpenDecisionFile = async (soQuyetDinh: string, filePath?: string | null) => {
-    try {
-      let filename: string | null = null;
-
-      // Nếu đã có file_path trong record, dùng luôn
-      if (filePath) {
-        filename = filePath.split('/').pop() || null;
-      } else {
-        // Nếu chưa có file_path, tìm từ DB dựa trên số quyết định
-        const response = await apiClient.getDecisionBySoQuyetDinh(soQuyetDinh);
-        if (response.success && response.data?.file_path) {
-          filename = response.data.file_path.split('/').pop() || null;
-        }
-      }
-
-      if (filename) {
-        // Tải file về bằng axios với responseType: 'blob'
-        const response = await axiosInstance.get(`/api/proposals/uploads/${filename}`, {
-          responseType: 'blob',
-        });
-        const blob = response.data;
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename || `${soQuyetDinh}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        message.success('Tải file thành công');
-      } else {
-        message.warning('Không tìm thấy file quyết định');
-      }
-    } catch (error: any) {
-      console.error('Error downloading decision file:', error);
-      message.error('Lỗi khi tải file quyết định');
-    }
+  const handleOpenDecisionFile = async (soQuyetDinh: string) => {
+    await downloadDecisionFile(soQuyetDinh);
   };
 
   const columns: ColumnsType<ScientificAchievement> = [
@@ -216,8 +181,8 @@ export default function ScientificAchievementsPage() {
       align: 'center',
       render: (text: string) => {
         const map: Record<string, string> = {
-          NCKH: 'Đề tài khoa học',
-          SKKH: 'Sáng kiến khoa học',
+          DTKH: 'ĐTKH',
+          SKKH: 'SKKH',
         };
         return map[text] || text || '-';
       },
@@ -252,16 +217,14 @@ export default function ScientificAchievementsPage() {
       render: (text: string, record: ScientificAchievement) => {
         if (!text) return '-';
 
-        if (record.file_quyet_dinh) {
-          return (
-            <a
-              onClick={() => handleOpenDecisionFile(text, record.file_quyet_dinh)}
-              style={{ color: '#52c41a', cursor: 'pointer', textDecoration: 'underline' }}
-            >
-              {text}
-            </a>
-          );
-        }
+        return (
+          <a
+            onClick={() => handleOpenDecisionFile(text)}
+            style={{ color: '#52c41a', cursor: 'pointer', textDecoration: 'underline' }}
+          >
+            {text}
+          </a>
+        );
 
         return <span style={{ color: '#999' }}>{text}</span>;
       },
@@ -369,7 +332,7 @@ export default function ScientificAchievementsPage() {
               rules={[{ required: true, message: 'Vui lòng chọn loại' }]}
             >
               <Select placeholder="Chọn loại" size="large">
-                <Select.Option value="NCKH">Đề tài khoa học (NCKH)</Select.Option>
+                <Select.Option value="DTKH">Đề tài khoa học (ĐTKH)</Select.Option>
                 <Select.Option value="SKKH">Sáng kiến khoa học (SKKH)</Select.Option>
               </Select>
             </Form.Item>

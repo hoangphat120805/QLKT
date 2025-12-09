@@ -50,9 +50,9 @@ router.get('/', checkRole(['ADMIN', 'MANAGER']), adhocAwardController.getAdhocAw
 /**
  * @route   GET /api/adhoc-awards/personnel/:personnelId
  * @desc    Get all ad-hoc awards for a specific personnel
- * @access  Admin (all), Manager (own unit only)
+ * @access  Admin (all), Manager (own unit only), User (own only)
  */
-router.get('/personnel/:personnelId', checkRole(['ADMIN', 'MANAGER']), adhocAwardController.getAdhocAwardsByPersonnel);
+router.get('/personnel/:personnelId', checkRole(['ADMIN', 'MANAGER', 'USER']), adhocAwardController.getAdhocAwardsByPersonnel);
 
 /**
  * @route   GET /api/adhoc-awards/unit/:unitId
@@ -76,7 +76,14 @@ router.use(checkRole(['ADMIN']));
  * @desc    Create ad-hoc award
  * @access  Admin only
  */
-router.post('/', upload.array('files', 10), adhocAwardController.createAdhocAward);
+router.post(
+  '/',
+  upload.fields([
+    { name: 'decisionFiles', maxCount: 10 },
+    { name: 'attachedFiles', maxCount: 10 },
+  ]),
+  adhocAwardController.createAdhocAward
+);
 
 /**
  * @route   PUT /api/adhoc-awards/:id

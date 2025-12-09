@@ -57,6 +57,7 @@ const { Title, Text } = Typography;
 
 export default function SuperAdminDashboard() {
   const { theme } = useTheme();
+  const [displayName, setDisplayName] = useState('Super Admin');
   const [stats, setStats] = useState({
     totalAccounts: 0,
     totalPersonnel: 0,
@@ -76,6 +77,21 @@ export default function SuperAdminDashboard() {
     const fetchData = async () => {
       try {
         setLoading(true);
+
+        // Lấy tên hiển thị từ localStorage (ưu tiên họ tên, rồi username, rồi vai trò)
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (user) {
+          const name = (user.ho_ten || '').trim();
+          const username = (user.username || '').trim();
+          const role = (user.role || '').toUpperCase();
+          const roleDisplayMap: Record<string, string> = {
+            SUPER_ADMIN: 'Super Admin',
+            ADMIN: 'Quản trị viên',
+            MANAGER: 'Trưởng phòng',
+            USER: 'Người dùng',
+          };
+          setDisplayName(name || username || roleDisplayMap[role] || 'Super Admin');
+        }
         const [accountsRes, personnelRes, logsRes, statisticsRes] = await Promise.all([
           apiClient.getAccounts({ page: 1, limit: 1 }),
           apiClient.getPersonnel({ page: 1, limit: 1 }),
@@ -510,10 +526,10 @@ export default function SuperAdminDashboard() {
           </div>
           <div>
             <Title level={1} style={{ margin: 0 }}>
-              Bảng điều khiển
+              Xin chào, {displayName}
             </Title>
             <Text type="secondary" style={{ display: 'block', marginTop: '4px' }}>
-              Chào mừng đến với hệ thống quản lý - Super Admin
+              Bảng điều khiển hệ thống
             </Text>
           </div>
         </div>

@@ -44,6 +44,7 @@ class AdhocAwardController {
         position, // For CA_NHAN
         note,
         decisionNumber,
+        decisionFilePath, // File path từ số quyết định đã chọn
       } = req.body;
 
       // Validate type
@@ -76,8 +77,7 @@ class AdhocAwardController {
         });
       }
 
-      // Handle uploaded files - separate decision files and attached files
-      const decisionFiles = req.files?.decisionFiles || [];
+      // Handle uploaded files - chỉ xử lý attached files (file quyết định không lưu trong award)
       const attachedFiles = req.files?.attachedFiles || [];
 
       const result = await adhocAwardService.createAdhocAward({
@@ -92,7 +92,6 @@ class AdhocAwardController {
         position,
         note,
         decisionNumber,
-        decisionFiles,
         attachedFiles,
       });
 
@@ -208,19 +207,10 @@ class AdhocAwardController {
     try {
       const { id } = req.params;
       const adminId = req.user.id;
-      const {
-        awardForm,
-        year,
-        rank,
-        position,
-        note,
-        decisionNumber,
-        removeDecisionFileIndexes,
-        removeAttachedFileIndexes,
-      } = req.body;
+      const { awardForm, year, rank, position, note, decisionNumber, removeAttachedFileIndexes } =
+        req.body;
 
-      // Handle uploaded files - separate decision files and attached files
-      const decisionFiles = req.files?.decisionFiles || [];
+      // Handle uploaded files - chỉ xử lý attached files (file quyết định không lưu trong award)
       const attachedFiles = req.files?.attachedFiles || [];
 
       const result = await adhocAwardService.updateAdhocAward({
@@ -232,11 +222,7 @@ class AdhocAwardController {
         position,
         note,
         decisionNumber,
-        decisionFiles,
         attachedFiles,
-        removeDecisionFileIndexes: removeDecisionFileIndexes
-          ? JSON.parse(removeDecisionFileIndexes)
-          : [],
         removeAttachedFileIndexes: removeAttachedFileIndexes
           ? JSON.parse(removeAttachedFileIndexes)
           : [],

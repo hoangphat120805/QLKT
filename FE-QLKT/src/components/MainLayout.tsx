@@ -52,6 +52,7 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
   const [notifications, setNotifications] = useState<any[]>([]);
   const [notificationLoading, setNotificationLoading] = useState(false);
   const [actualRole, setActualRole] = useState<'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'USER'>(role);
+  const [personnelId, setPersonnelId] = useState<string | null>(null);
   const router = useRouter();
   const { theme, toggle } = useTheme();
 
@@ -81,8 +82,12 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
       try {
         const userData = JSON.parse(user);
         setUserName(userData.username || userData.name || userData.email || 'User');
+        if (userData.quan_nhan_id) {
+          setPersonnelId(userData.quan_nhan_id);
+        }
       } catch (e) {
         setUserName('User');
+        setPersonnelId(null);
       }
     }
 
@@ -297,7 +302,17 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
         {
           key: 'profile',
           icon: <FileTextOutlined />,
-          label: <Link href="/manager/profile">Hồ sơ của tôi</Link>,
+          label: (
+            <Link
+              href={
+                personnelId
+                  ? `/manager/personnel/${personnelId}`
+                  : '/manager/dashboard'
+              }
+            >
+              Hồ sơ của tôi
+            </Link>
+          ),
         },
         {
           key: 'profile-edit',
@@ -327,15 +342,6 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
   };
 
   const userMenuItems = [
-    {
-      key: 'profile',
-      label: 'Hồ sơ',
-      icon: <UserOutlined />,
-      onClick: () => {
-        const roleSlug = actualRole === 'SUPER_ADMIN' ? 'super-admin' : actualRole.toLowerCase();
-        router.push(`/${roleSlug}/profile`);
-      },
-    },
     {
       key: 'change-password',
       label: 'Đổi mật khẩu',

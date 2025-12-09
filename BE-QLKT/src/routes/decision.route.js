@@ -83,6 +83,28 @@ router.get('/years', verifyToken, requireAdmin, decisionController.getAvailableY
 router.get('/award-types', verifyToken, requireAdmin, decisionController.getAwardTypes);
 
 /**
+ * @route   GET /api/decisions/file-path/:soQuyetDinh
+ * @desc    Lấy file path từ số quyết định (encode URI cho số quyết định có ký tự đặc biệt)
+ * @access  Private - All authenticated users
+ */
+router.get('/file-path/:soQuyetDinh', verifyToken, decisionController.getFilePath);
+
+/**
+ * @route   GET /api/decisions/download/:soQuyetDinh
+ * @desc    Tải file quyết định theo số quyết định (backend tự query DB để lấy file path)
+ * @access  Private - All authenticated users
+ */
+router.get('/download/:soQuyetDinh', verifyToken, decisionController.downloadDecisionFile);
+
+/**
+ * @route   POST /api/decisions/file-paths
+ * @desc    Lấy file paths từ nhiều số quyết định
+ * @access  Private - All authenticated users
+ * @body    { soQuyetDinhs: ['SQD001', 'SQD002', ...] }
+ */
+router.post('/file-paths', verifyToken, decisionController.getFilePaths);
+
+/**
  * @route   GET /api/decisions/by-number/:soQuyetDinh
  * @desc    Lấy quyết định theo số quyết định
  * @access  Private - ADMIN and above

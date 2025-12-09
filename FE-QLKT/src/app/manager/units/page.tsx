@@ -118,42 +118,41 @@ export default function ManagerUnitsPage() {
     return () => clearTimeout(id);
   }, [unitSearch]);
 
-  const handleOpenDecisionFile = async (soQuyetDinh: string, filePath?: string | null) => {
+  const handleOpenDecisionFile = async (soQuyetDinh: string) => {
     try {
-      let filename: string | null = null;
+      message.loading({ content: 'Đang tải file...', key: 'download' });
 
-      // Nếu đã có file_path trong record, dùng luôn
-      if (filePath) {
-        filename = filePath.split('/').pop() || null;
-      } else {
-        // Nếu chưa có file_path, tìm từ DB dựa trên số quyết định
-        const response = await apiClient.getDecisionBySoQuyetDinh(soQuyetDinh);
-        if (response.success && response.data?.file_path) {
-          filename = response.data.file_path.split('/').pop() || null;
-        }
+      // Luôn query từ DB để lấy file path mới nhất
+      const response = await apiClient.getDecisionFilePath(soQuyetDinh);
+
+      if (!response.success || !response.data?.file_path) {
+        message.warning({ content: 'Không tìm thấy file quyết định', key: 'download' });
+        return;
       }
 
-      if (filename) {
-        // Tải file về bằng axios với responseType: 'blob'
-        const response = await axiosInstance.get(`/api/proposals/uploads/${filename}`, {
-          responseType: 'blob',
-        });
-        const blob = response.data;
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename || `${soQuyetDinh}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        message.success('Tải file thành công');
-      } else {
-        message.warning('Không tìm thấy file quyết định');
-      }
+      const filePath = response.data.file_path;
+      const filename = filePath.split('/').pop() || `${soQuyetDinh}.pdf`;
+
+      // Tải file từ path - axiosInstance đã có baseURL nên chỉ cần path tương đối
+      const downloadResponse = await axiosInstance.get(`/${filePath}`, {
+        responseType: 'blob',
+      });
+
+      const blob = downloadResponse.data;
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      message.success({ content: 'Tải file thành công', key: 'download' });
     } catch (error: any) {
       console.error('Error downloading decision file:', error);
-      message.error('Lỗi khi tải file quyết định');
+      const errorMessage = error?.response?.data?.message || error?.message || 'Lỗi khi tải file quyết định';
+      message.error({ content: errorMessage, key: 'download' });
     }
   };
 

@@ -32,6 +32,7 @@ const { Title } = Typography;
 export default function AdminDashboard() {
   const { theme } = useTheme();
   const [loading, setLoading] = useState(true);
+  const [displayName, setDisplayName] = useState('Admin');
   const [stats, setStats] = useState({
     totalPersonnel: 0,
     totalUnits: 0,
@@ -49,6 +50,22 @@ export default function AdminDashboard() {
     const fetchStats = async () => {
       try {
         setLoading(true);
+
+        // Lấy tên hiển thị từ localStorage (ưu tiên họ tên, rồi username, rồi vai trò)
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (user) {
+          const name = (user.ho_ten || '').trim();
+          const username = (user.username || '').trim();
+          const role = (user.role || '').toUpperCase();
+          const roleDisplayMap: Record<string, string> = {
+            SUPER_ADMIN: 'Super Admin',
+            ADMIN: 'Quản trị viên',
+            MANAGER: 'Trưởng phòng',
+            USER: 'Người dùng',
+          };
+          setDisplayName(name || username || roleDisplayMap[role] || 'Admin');
+        }
+
         const statisticsRes = await apiClient.getAdminDashboardStatistics();
 
         if (statisticsRes.success && statisticsRes.data) {
@@ -144,7 +161,7 @@ export default function AdminDashboard() {
             level={2}
             className="!mb-3 !text-4xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-purple-400"
           >
-            Dashboard Admin
+            Xin chào, {displayName}
           </Title>
           <p className={`text-lg ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
             Quản lý toàn bộ dữ liệu quân nhân và danh mục của hệ thống
@@ -196,7 +213,7 @@ export default function AdminDashboard() {
           <Col xs={24} lg={8}>
             <PieChart
               data={chartData.scientificAchievementsByType.map((item: any) => ({
-                label: item.type === 'NCKH' ? 'Đề tài khoa học' : 'Sáng kiến khoa học',
+                label: item.type === 'DTKH' ? 'ĐTKH' : 'SKKH',
                 value: item.count,
               }))}
               title="Thành tích khoa học theo loại"

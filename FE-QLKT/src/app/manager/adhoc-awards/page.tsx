@@ -34,7 +34,7 @@ import {
 } from '@ant-design/icons';
 import type { TableColumnsType } from 'antd';
 import { apiClient } from '@/lib/api-client';
-import axiosInstance from '@/utils/axiosInstance';
+import { downloadDecisionFile } from '@/utils/downloadDecisionFile';
 
 const { Title, Text } = Typography;
 
@@ -54,7 +54,7 @@ interface AdhocAward {
   chuc_vu?: string;
   ghi_chu?: string;
   so_quyet_dinh?: string;
-  files_quyet_dinh?: FileInfo[];
+  files_dinh_kem?: FileInfo[];
   createdAt: string;
   QuanNhan?: {
     id: string;
@@ -132,39 +132,8 @@ export default function ManagerAdhocAwardsPage() {
   // =============================================================================
   // FILE HANDLING
   // =============================================================================
-  const handleOpenDecisionFile = async (soQuyetDinh: string, filePath?: string | null) => {
-    try {
-      let filename: string | null = null;
-
-      if (filePath) {
-        filename = filePath.split('/').pop() || null;
-      } else {
-        const response = await apiClient.getDecisionBySoQuyetDinh(soQuyetDinh);
-        if (response.success && response.data?.file_path) {
-          filename = response.data.file_path.split('/').pop() || null;
-        }
-      }
-
-      if (filename) {
-        const response = await axiosInstance.get(`/api/proposals/uploads/${filename}`, {
-          responseType: 'blob',
-        });
-        const blob = response.data;
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename || `${soQuyetDinh}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        message.success('Tải file thành công');
-      } else {
-        message.warning('Không tìm thấy file quyết định');
-      }
-    } catch {
-      message.error('Lỗi khi tải file quyết định');
-    }
+  const handleOpenDecisionFile = async (soQuyetDinh: string) => {
+    await downloadDecisionFile(soQuyetDinh);
   };
 
   const handleDownloadFile = async (file: FileInfo) => {
@@ -612,11 +581,12 @@ export default function ManagerAdhocAwardsPage() {
               </Descriptions>
             </Card>
 
-            {detailAward.files_quyet_dinh && detailAward.files_quyet_dinh.length > 0 && (
-              <Card size="small" title={`File đính kèm (${detailAward.files_quyet_dinh.length} file)`}>
+            {/* File đính kèm */}
+            {detailAward.files_dinh_kem && detailAward.files_dinh_kem.length > 0 && (
+              <Card size="small" title={`File đính kèm (${detailAward.files_dinh_kem.length})`}>
                 <List
                   size="small"
-                  dataSource={detailAward.files_quyet_dinh}
+                  dataSource={detailAward.files_dinh_kem}
                   renderItem={file => (
                     <List.Item
                       actions={[
