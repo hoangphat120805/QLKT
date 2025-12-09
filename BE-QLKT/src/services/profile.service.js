@@ -233,7 +233,7 @@ class ProfileService {
     let currentYear = year - 1;
     for (const reward of uniqueRewards) {
       if (reward.nam !== currentYear) break;
-      if ((reward.loai === 'NCKH' || reward.loai === 'SKKH') && reward.status === 'APPROVED') {
+      if (reward.status === 'APPROVED') {
         count++;
         currentYear--;
       } else {
@@ -655,13 +655,13 @@ class ProfileService {
           nam: dh.nam,
           danh_hieu: dh.danh_hieu,
           so_quyet_dinh: dh.so_quyet_dinh || null,
-          file_quyet_dinh: dh.file_quyet_dinh || null,
+          // file_quyet_dinh: dh.file_quyet_dinh || null,
           nhan_bkbqp: dh.nhan_bkbqp || false,
           nhan_cstdtq: dh.nhan_cstdtq || false,
           so_quyet_dinh_bkbqp: dh.so_quyet_dinh_bkbqp || null,
-          file_quyet_dinh_bkbqp: dh.file_quyet_dinh_bkbqp || null,
+          // file_quyet_dinh_bkbqp: dh.file_quyet_dinh_bkbqp || null,
           so_quyet_dinh_cstdtq: dh.so_quyet_dinh_cstdtq || null,
-          file_quyet_dinh_cstdtq: dh.file_quyet_dinh_cstdtq || null,
+          // file_quyet_dinh_cstdtq: dh.file_quyet_dinh_cstdtq || null,
         }))
         .sort((a, b) => a.nam - b.nam); // Sắp xếp theo năm tăng dần
       const tong_cstdcs = tong_cstdcs_json.length;
@@ -673,7 +673,7 @@ class ProfileService {
           mo_ta: tt.mo_ta,
           status: tt.status,
           so_quyet_dinh: tt.so_quyet_dinh || null,
-          file_quyet_dinh: tt.file_quyet_dinh || null,
+          // file_quyet_dinh: tt.file_quyet_dinh || null,
         }))
         .sort((a, b) => a.nam - b.nam); // Sắp xếp theo năm tăng dần
       const tong_nckh = tong_nckh_json.length;
