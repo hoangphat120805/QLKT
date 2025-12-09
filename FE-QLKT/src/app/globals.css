@@ -2025,6 +2025,7 @@ button[class*='bg-primary']:hover:not(:disabled) {
 /* Ant Design Tabs Component */
 .ant-tabs-tab {
   @apply transition-all duration-200;
+  padding: 16px 10px !important;
 }
 
 /* Bỏ focus ring cho tabs */
@@ -2054,7 +2055,6 @@ button[class*='bg-primary']:hover:not(:disabled) {
 /* Tab active styling - highlight toàn bộ chiều cao */
 .ant-tabs-tab-active {
   background-color: rgba(37, 99, 235, 0.08) !important;
-  border-radius: 8px 8px 0 0 !important;
 }
 
 .dark .ant-tabs-tab-active {
@@ -2237,13 +2237,19 @@ button[class*='bg-primary']:hover:not(:disabled) {
   border-color: #374151 !important;
 }
 
-.dark .notification-dropdown .ant-dropdown-menu-item[data-menu-id*='notification-header'] .bg-white {
+.dark
+  .notification-dropdown
+  .ant-dropdown-menu-item[data-menu-id*='notification-header']
+  .bg-white {
   background-color: #1f2937 !important;
   background: #1f2937 !important;
   --tw-bg-opacity: 1 !important;
 }
 
-.dark .notification-dropdown .ant-dropdown-menu-item[data-menu-id*='notification-header'] .border-gray-200 {
+.dark
+  .notification-dropdown
+  .ant-dropdown-menu-item[data-menu-id*='notification-header']
+  .border-gray-200 {
   border-color: #374151 !important;
   --tw-border-opacity: 1 !important;
 }
@@ -2285,37 +2291,55 @@ button[class*='bg-primary']:hover:not(:disabled) {
 }
 
 .dark .notification-dropdown .ant-dropdown-menu-item div.bg-blue-50,
-.dark .notification-dropdown .ant-dropdown-menu-item div[class*='bg-blue-50']:not([class*='dark:']) {
+.dark
+  .notification-dropdown
+  .ant-dropdown-menu-item
+  div[class*='bg-blue-50']:not([class*='dark:']) {
   background-color: rgba(55, 65, 81, 0.8) !important;
   --tw-bg-opacity: 1 !important;
 }
 
 .dark .notification-dropdown .ant-dropdown-menu-item div.bg-gray-50,
-.dark .notification-dropdown .ant-dropdown-menu-item div[class*='bg-gray-50']:not([class*='dark:']) {
+.dark
+  .notification-dropdown
+  .ant-dropdown-menu-item
+  div[class*='bg-gray-50']:not([class*='dark:']) {
   background-color: rgba(55, 65, 81, 0.6) !important;
   --tw-bg-opacity: 1 !important;
 }
 
 .dark .notification-dropdown .ant-dropdown-menu-item div.bg-blue-50:hover,
-.dark .notification-dropdown .ant-dropdown-menu-item div[class*='bg-blue-50']:hover:not([class*='dark:']),
+.dark
+  .notification-dropdown
+  .ant-dropdown-menu-item
+  div[class*='bg-blue-50']:hover:not([class*='dark:']),
 .dark .notification-dropdown .ant-dropdown-menu-item div[class*='hover:bg-blue-100']:hover {
   background-color: rgba(75, 85, 99, 1) !important;
   --tw-bg-opacity: 1 !important;
 }
 
 .dark .notification-dropdown .ant-dropdown-menu-item div.bg-gray-50:hover,
-.dark .notification-dropdown .ant-dropdown-menu-item div[class*='bg-gray-50']:hover:not([class*='dark:']),
+.dark
+  .notification-dropdown
+  .ant-dropdown-menu-item
+  div[class*='bg-gray-50']:hover:not([class*='dark:']),
 .dark .notification-dropdown .ant-dropdown-menu-item div[class*='hover:bg-gray-100']:hover {
   background-color: rgba(75, 85, 99, 1) !important;
   --tw-bg-opacity: 1 !important;
 }
 
 /* Override border colors in dark mode */
-.dark .notification-dropdown .ant-dropdown-menu-item div[class*='border-gray-200']:not([class*='dark:']) {
+.dark
+  .notification-dropdown
+  .ant-dropdown-menu-item
+  div[class*='border-gray-200']:not([class*='dark:']) {
   border-color: rgba(75, 85, 99, 1) !important;
 }
 
-.dark .notification-dropdown .ant-dropdown-menu-item div[class*='border-blue-500']:not([class*='dark:border-blue']) {
+.dark
+  .notification-dropdown
+  .ant-dropdown-menu-item
+  div[class*='border-blue-500']:not([class*='dark:border-blue']) {
   border-color: rgba(96, 165, 250, 1) !important;
 }
 
@@ -2342,14 +2366,20 @@ button[class*='bg-primary']:hover:not(:disabled) {
 }
 
 .dark .notification-dropdown .ant-dropdown-menu-item [class*='text-gray-600']:not([class*='dark:']),
-.dark .notification-dropdown .ant-dropdown-menu-item [class*='text-gray-300']:not([class*='dark:']) {
+.dark
+  .notification-dropdown
+  .ant-dropdown-menu-item
+  [class*='text-gray-300']:not([class*='dark:']) {
   color: rgba(209, 213, 219, 1) !important;
   --tw-text-opacity: 1 !important;
 }
 
 /* Override empty state colors in dark mode */
 .dark .notification-dropdown .ant-dropdown-menu-item [class*='text-gray-400']:not([class*='dark:']),
-.dark .notification-dropdown .ant-dropdown-menu-item [class*='text-gray-500']:not([class*='dark:']) {
+.dark
+  .notification-dropdown
+  .ant-dropdown-menu-item
+  [class*='text-gray-500']:not([class*='dark:']) {
   color: rgba(156, 163, 175, 1) !important;
   --tw-text-opacity: 1 !important;
 }
@@ -2488,7 +2518,9 @@ button[class*='bg-primary']:hover:not(:disabled) {
   color: #374151 !important;
 }
 
-:where(.css-dev-only-do-not-override-rsx901).ant-layout-sider .ant-layout-sider-trigger:hover .anticon,
+:where(.css-dev-only-do-not-override-rsx901).ant-layout-sider
+  .ant-layout-sider-trigger:hover
+  .anticon,
 .ant-layout-sider .ant-layout-sider-trigger:hover .anticon,
 .ant-layout-sider-trigger:hover .anticon {
   color: #111827 !important;
@@ -2510,13 +2542,19 @@ button[class*='bg-primary']:hover:not(:disabled) {
   color: #ffffff !important;
 }
 
-.dark :where(.css-dev-only-do-not-override-rsx901).ant-layout-sider .ant-layout-sider-trigger .anticon,
+.dark
+  :where(.css-dev-only-do-not-override-rsx901).ant-layout-sider
+  .ant-layout-sider-trigger
+  .anticon,
 .dark .ant-layout-sider .ant-layout-sider-trigger .anticon,
 .dark .ant-layout-sider-trigger .anticon {
   color: #d1d5db !important;
 }
 
-.dark :where(.css-dev-only-do-not-override-rsx901).ant-layout-sider .ant-layout-sider-trigger:hover .anticon,
+.dark
+  :where(.css-dev-only-do-not-override-rsx901).ant-layout-sider
+  .ant-layout-sider-trigger:hover
+  .anticon,
 .dark .ant-layout-sider .ant-layout-sider-trigger:hover .anticon,
 .dark .ant-layout-sider-trigger:hover .anticon {
   color: #ffffff !important;
