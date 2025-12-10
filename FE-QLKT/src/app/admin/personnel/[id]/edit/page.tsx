@@ -30,6 +30,7 @@ export default function PersonnelEditPage() {
   const router = useRouter();
   const params = useParams();
   const personnelId = params?.id as string;
+  const [personnel, setPersonnel] = useState<any>(null);
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
@@ -71,6 +72,7 @@ export default function PersonnelEditPage() {
 
         if (personnelRes.success) {
           const personnel = personnelRes.data;
+          setPersonnel(personnel);
 
           // Lấy role của personnel từ account liên kết
           const role = personnel.TaiKhoan?.role || personnel.Account?.role || '';
