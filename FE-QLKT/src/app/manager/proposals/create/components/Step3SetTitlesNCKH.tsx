@@ -308,7 +308,7 @@ export default function Step3SetTitlesNCKH({
           <TextArea
             value={data.mo_ta}
             onChange={e => updateTitle(record.id, 'mo_ta', e.target.value)}
-            placeholder="Nhập mô tả chi tiết về đề tài hoặc thành tích..."
+            placeholder="Nhập mô tả..."
             rows={1}
             maxLength={500}
             showCount

@@ -277,6 +277,19 @@ class ProposalController {
         console.error('Failed to send notifications:', notifError);
       }
 
+      // Gửi thông báo cho user nhận khen thưởng (nếu có)
+      try {
+        if (result.affectedPersonnelIds && result.affectedPersonnelIds.length > 0) {
+          await notificationHelper.notifyUsersOnAwardApproved(
+            result.affectedPersonnelIds,
+            result.proposal,
+            req.user.username
+          );
+        }
+      } catch (notifError) {
+        console.error('Failed to send notifications to award recipients:', notifError);
+      }
+
       return res.status(200).json({
         success: true,
         message: result.message,

@@ -33,6 +33,7 @@ import {
   CheckCircleOutlined,
   ArrowLeftOutlined,
   EditOutlined,
+  FileOutlined,
 } from '@ant-design/icons';
 import Link from 'next/link';
 import type { UploadFile } from 'antd/es/upload/interface';
@@ -604,7 +605,7 @@ export default function CreateProposalPage() {
         throw new Error(result.message || 'Gửi đề xuất thất bại');
       }
 
-      antMessage.success('Gửi đề xuất thành công! Chờ Admin phê duyệt.');
+      antMessage.success('Gửi đề xuất thành công! Chờ Quản trị viên phê duyệt.');
 
       // Reset form
       setCurrentStep(0);
@@ -1157,7 +1158,7 @@ export default function CreateProposalPage() {
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <UploadOutlined style={{ color: '#1890ff', fontSize: '16px' }} />
+                        <FileOutlined style={{ color: '#1890ff', fontSize: '16px' }} />
                         <Text style={{ fontSize: '14px' }}>{file.name || 'Không có tên file'}</Text>
                         {file.size && (
                           <Text type="secondary" style={{ fontSize: '12px' }}>
@@ -1227,10 +1228,10 @@ export default function CreateProposalPage() {
                       return (
                         <span
                           style={{
-                            fontSize: '13px',
+                            fontSize: '14px',
                             marginLeft: '12px',
-                            color: '#8c8c8c',
-                            fontWeight: 'normal',
+                            color: '#1890ff',
+                            fontWeight: 600,
                           }}
                         >
                           (

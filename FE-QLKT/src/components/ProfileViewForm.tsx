@@ -175,7 +175,7 @@ export default function ProfileViewForm({
                         }`}
                       >
                         <td
-                          className={`px-4 py-3 text-sm font-semibold w-48 ${
+                          className={`px-4 py-3 text-sm font-semibold w-56 whitespace-nowrap ${
                             currentTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
                           }`}
                         >
@@ -224,7 +224,7 @@ export default function ProfileViewForm({
                         }`}
                       >
                         <td
-                          className={`px-4 py-3 text-sm font-semibold w-48 ${
+                          className={`px-4 py-3 text-sm font-semibold w-56 whitespace-nowrap ${
                             currentTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
                           }`}
                         >
@@ -282,7 +282,7 @@ export default function ProfileViewForm({
                         }`}
                       >
                         <td
-                          className={`px-4 py-3 text-sm font-semibold w-48 ${
+                          className={`px-4 py-3 text-sm font-semibold w-56 whitespace-nowrap ${
                             currentTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
                           }`}
                         >
