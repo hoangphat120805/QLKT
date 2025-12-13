@@ -1325,22 +1325,29 @@ export default function ProposalDetailPage() {
       </Card>
 
       {/* Ghi chú */}
-      {proposal.ghi_chu && (
-        <Card title="Ghi chú" style={{ marginBottom: '24px' }}>
-          <div
-            style={{
-              padding: '12px',
-              background: theme === 'dark' ? '#1f2937' : '#fafafa',
-              borderRadius: 4,
-              border: `1px solid ${theme === 'dark' ? '#374151' : '#e5e7eb'}`,
-            }}
-          >
+      <Card title="Ghi chú" style={{ marginBottom: '24px' }}>
+        <div
+          style={{
+            padding: '12px',
+            background: theme === 'dark' ? '#1f2937' : '#fafafa',
+            borderRadius: 4,
+            border: `1px solid ${theme === 'dark' ? '#374151' : '#e5e7eb'}`,
+          }}
+        >
+          {proposal.ghi_chu ? (
             <Text style={{ color: theme === 'dark' ? '#f3f4f6' : '#111827' }}>
               {proposal.ghi_chu}
             </Text>
-          </div>
-        </Card>
-      )}
+          ) : (
+            <Text
+              type="secondary"
+              style={{ fontStyle: 'italic', opacity: 0.6, color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+            >
+              Không có ghi chú
+            </Text>
+          )}
+        </div>
+      </Card>
 
       {/* File đính kèm */}
       <Card title="File đính kèm" style={{ marginBottom: '24px' }}>

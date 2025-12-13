@@ -69,6 +69,7 @@ export default function ManagerProposalsPage() {
   const [activeTab, setActiveTab] = useState('all');
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     fetchProposals();
@@ -152,7 +153,7 @@ export default function ManagerProposalsPage() {
       KNC_VSNXD_QDNDVN: { color: 'lime', text: 'KNC VSNXD QĐNDVN' },
       CONG_HIEN: { color: 'geekblue', text: 'Cống hiến' },
       DOT_XUAT: { color: 'orange', text: 'Đột xuất' },
-      NCKH: { color: 'magenta', text: 'ĐTKH/SKKH' },
+      NCKH: { color: 'magenta', text: 'Nghiên cứu khoa học' },
     };
 
     const config = typeConfig[type as keyof typeof typeConfig];
@@ -188,7 +189,15 @@ export default function ManagerProposalsPage() {
       key: 'createdAt',
       width: 140,
       align: 'center' as const,
-      render: (date: string) => format(new Date(date), 'dd/MM/yyyy HH:mm'),
+      render: (date: string) => {
+        const d = new Date(date);
+        const hours = String(d.getHours()).padStart(2, '0');
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        return `${hours}:${minutes} ${day}/${month}/${year}`;
+      },
     },
     {
       title: 'Loại đề xuất',
@@ -256,20 +265,27 @@ export default function ManagerProposalsPage() {
       align: 'center' as const,
       render: (status: string) => getStatusTag(status),
     },
-    {
-      title: 'Ngày duyệt',
-      key: 'ngay_duyet',
-      width: 180,
-      align: 'center' as const,
-      render: (_: any, record: Proposal) => {
-        // Chỉ hiển thị ngày duyệt khi đã duyệt
-        if (record.status !== 'APPROVED' || !record.ngay_duyet) {
-          return <Text type="secondary">-</Text>;
-        }
+      {
+        title: 'Thời gian cập nhật',
+        key: 'ngay_duyet',
+        width: 180,
+        align: 'center' as const,
+        render: (_: any, record: Proposal) => {
+          // Hiển thị thời gian cập nhật khi đã duyệt hoặc từ chối
+          if ((record.status !== 'APPROVED' && record.status !== 'REJECTED') || !record.ngay_duyet) {
+            return <Text type="secondary">-</Text>;
+          }
 
-        return format(new Date(record.ngay_duyet), 'dd/MM/yyyy HH:mm');
+          // Format: giờ đứng trước ngày (HH:mm dd/MM/yyyy)
+          const date = new Date(record.ngay_duyet);
+          const hours = String(date.getHours()).padStart(2, '0');
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          return `${hours}:${minutes} ${day}/${month}/${year}`;
+        },
       },
-    },
     {
       title: 'Hành động',
       key: 'action',
@@ -389,9 +405,8 @@ export default function ManagerProposalsPage() {
             <Text type="danger" strong>
               từ chối
             </Text>
-            , bạn có thể tải file về để xem lý do và chỉnh sửa lại
+            , bạn có thể xem lý do từ chối tại mục chi tiết đề xuất
           </Text>
-          <Text>• Sau khi sửa xong, tạo đề xuất mới với file đã chỉnh sửa</Text>
         </Space>
       </Card>
 
@@ -405,10 +420,13 @@ export default function ManagerProposalsPage() {
           rowKey="id"
           loading={loading}
           pagination={{
-            pageSize: 10,
+            pageSize: pageSize,
             showTotal: total => `Tổng ${total} đề xuất`,
             showSizeChanger: true,
-            pageSizeOptions: ['10', '20', '50'],
+            pageSizeOptions: ['10', '20', '50', '100'],
+            onShowSizeChange: (current, size) => {
+              setPageSize(size);
+            },
           }}
           locale={{
             emptyText: (

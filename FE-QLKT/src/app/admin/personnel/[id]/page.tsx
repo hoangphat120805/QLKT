@@ -31,7 +31,7 @@ import {
   SafetyOutlined,
 } from '@ant-design/icons';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { useTheme } from '@/components/theme-provider';
 import { apiClient } from '@/lib/api-client';
 import { formatDate } from '@/lib/utils';
@@ -42,7 +42,10 @@ const { Title, Text } = Typography;
 export default function PersonnelDetailPage() {
   const { theme: currentTheme } = useTheme();
   const params = useParams();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const personnelId = params?.id as string;
+  const activeTab = searchParams?.get('tab') || '1';
   const [loading, setLoading] = useState(true);
   const [personnel, setPersonnel] = useState<any>(null);
   const [serviceProfile, setServiceProfile] = useState<any>(null);
@@ -220,7 +223,6 @@ export default function PersonnelDetailPage() {
           <Card title="Thông tin cá nhân" className="shadow-sm overflow-hidden">
             <InfoGrid
               items={[
-                { label: 'ID', value: personnel.id },
                 { label: 'Họ và tên', value: personnel.ho_ten || '-' },
                 {
                   label: 'Giới tính',
@@ -903,7 +905,10 @@ export default function PersonnelDetailPage() {
         {/* Main Content Tabs */}
         <Card className="shadow-sm">
           <Tabs
-            defaultActiveKey="basic"
+            activeKey={activeTab}
+            onChange={(key) => {
+              router.push(`/admin/personnel/${personnelId}?tab=${key}`);
+            }}
             className={`${styles.personnelTabs} ${isDarkMode ? styles.dark : styles.light}`}
             items={tabItems}
             tabBarGutter={32}

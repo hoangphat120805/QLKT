@@ -191,7 +191,7 @@ export function LogsTable({ logs, loading }: LogsTableProps) {
               className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors border-gray-200 dark:border-gray-700"
             >
               <TableCell className="text-sm text-gray-900 dark:text-gray-100 font-medium whitespace-nowrap">
-                {format(new Date(log.created_at), 'dd/MM/yyyy HH:mm:ss', { locale: vi })}
+                {format(new Date(log.created_at), 'HH:mm:ss dd/MM/yyyy', { locale: vi })}
               </TableCell>
               <TableCell className="text-sm font-medium text-gray-900 dark:text-gray-100">
                 {log.actor_name || log.actor_id}
@@ -205,7 +205,7 @@ export function LogsTable({ logs, loading }: LogsTableProps) {
                   log.action}
               </TableCell>
               <TableCell className="text-sm text-gray-600 dark:text-gray-400 max-w-md">
-                <div className="truncate" title={log.details || log.description || ''}>
+                <div className="whitespace-normal break-words" title={log.details || log.description || ''}>
                   {log.details || log.description || '-'}
                 </div>
               </TableCell>

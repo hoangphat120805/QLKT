@@ -386,7 +386,7 @@ export default function PositionHistoryPage() {
         >
           <div>
             <Space style={{ marginBottom: 8 }}>
-              <Link href={`/manager/personnel/${personnelId}`}>
+              <Link href={`/manager/personnel/${personnelId}?tab=3`}>
                 <Button icon={<LeftOutlined />}>Quay lại</Button>
               </Link>
             </Space>

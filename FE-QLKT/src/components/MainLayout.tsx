@@ -263,6 +263,11 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
           icon: <TrophyOutlined />,
           label: <Link href="/admin/adhoc-awards">Khen thưởng Đột xuất</Link>,
         },
+        {
+          key: 'system-logs',
+          icon: <FileTextOutlined />,
+          label: <Link href="/admin/system-logs">Nhật ký hệ thống</Link>,
+        },
       ];
     }
 
@@ -402,7 +407,7 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
               theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
             }`}
           >
-            {actualRole === 'SUPER_ADMIN' && 'Super Admin'}
+            {actualRole === 'SUPER_ADMIN' && 'Super Adminstrator'}
             {actualRole === 'ADMIN' && 'Quản trị viên'}
             {actualRole === 'MANAGER' && 'Quản lý'}
             {actualRole === 'USER' && 'Người dùng'}

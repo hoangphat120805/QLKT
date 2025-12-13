@@ -170,52 +170,84 @@ export default function AnnualRewardsPage() {
       title: 'Năm',
       dataIndex: 'nam',
       key: 'nam',
-      width: 100,
+      width: 80,
+      align: 'center',
+      render: (text: number) => (
+        <div style={{ textAlign: 'center' }}>{text || '-'}</div>
+      ),
     },
     {
       title: 'Danh hiệu',
       dataIndex: 'danh_hieu',
       key: 'danh_hieu',
-      width: 200,
-      render: (text: string) => text || '-',
+      width: 150,
+      align: 'center',
+      ellipsis: true,
+      render: (text: string) => (
+        <div style={{ textAlign: 'center' }} title={text}>{text || '-'}</div>
+      ),
     },
     {
       title: 'Cấp bậc',
       dataIndex: 'cap_bac',
       key: 'cap_bac',
-      width: 120,
-      render: (text: string) => text || '-',
+      width: 100,
+      align: 'center',
+      ellipsis: true,
+      render: (text: string) => (
+        <div style={{ textAlign: 'center' }} title={text}>{text || '-'}</div>
+      ),
     },
     {
       title: 'Chức vụ',
       dataIndex: 'chuc_vu',
       key: 'chuc_vu',
-      width: 180,
-      render: (text: string) => text || '-',
+      width: 140,
+      align: 'center',
+      ellipsis: true,
+      render: (text: string) => (
+        <div style={{ textAlign: 'center' }} title={text}>{text || '-'}</div>
+      ),
     },
     {
       title: 'Ghi chú',
       dataIndex: 'ghi_chu',
       key: 'ghi_chu',
-      width: 200,
+      width: 150,
       ellipsis: true,
-      render: (text: string) => text || '-',
+      align: 'center',
+      render: (text: string) => (
+        <div style={{ textAlign: 'center' }} title={text}>
+          {text ? (
+            text
+          ) : (
+            <span style={{ fontStyle: 'italic', opacity: 0.6 }}>Không có ghi chú</span>
+          )}
+        </div>
+      ),
     },
     {
       title: 'Số quyết định',
       dataIndex: 'so_quyet_dinh',
       key: 'so_quyet_dinh',
-      width: 200,
+      width: 180,
+      align: 'center',
+      ellipsis: true,
       render: (text: string, record: RewardRecord) => {
-        if (!text) return '-';
+        if (!text)
+          return (
+            <div style={{ textAlign: 'center' }}>-</div>
+          );
 
         return (
-          <a
-            onClick={() => handleOpenDecisionFile(text)}
-            style={{ color: '#52c41a', cursor: 'pointer', textDecoration: 'underline' }}
-          >
-            {text}
-          </a>
+          <div style={{ textAlign: 'center' }}>
+            <a
+              onClick={() => handleOpenDecisionFile(text)}
+              style={{ color: '#52c41a', cursor: 'pointer', textDecoration: 'underline' }}
+            >
+              {text}
+            </a>
+          </div>
         );
       },
     },
@@ -252,7 +284,7 @@ export default function AnnualRewardsPage() {
       >
         <div>
           <Space style={{ marginBottom: 8 }}>
-            <Link href={`/admin/personnel/${personnelId}`}>
+            <Link href={`/admin/personnel/${personnelId}?tab=3`}>
               <Button icon={<LeftOutlined />}>Quay lại</Button>
             </Link>
           </Space>
@@ -285,6 +317,7 @@ export default function AnnualRewardsPage() {
             dataSource={rewards}
             rowKey="id"
             pagination={false}
+            scroll={{ x: 800 }}
             locale={{
               emptyText: 'Chưa có dữ liệu khen thưởng',
             }}

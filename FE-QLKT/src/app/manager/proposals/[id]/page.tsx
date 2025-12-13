@@ -311,6 +311,8 @@ export default function ManagerProposalDetailPage() {
       CONG_HIEN: 'Cống hiến',
       DOT_XUAT: 'Đột xuất',
       NCKH: 'ĐTKH/SKKH',
+      HC_QKQT: 'Huân chương Quân kỳ Quyết thắng',
+      KNC_VSNXD_QDNDVN: 'Kỷ niệm chương Vì sự nghiệp xây dựng QĐNDVN',
     };
     return typeConfig[type] || type;
   };
@@ -442,14 +444,6 @@ export default function ManagerProposalDetailPage() {
             description={
               <div>
                 <Text>Dữ liệu đã được nhập vào hệ thống và cập nhật hồ sơ quân nhân.</Text>
-                {proposal.ghi_chu && (
-                  <>
-                    <br />
-                    <br />
-                    <Text strong>Ghi chú từ Admin: </Text>
-                    <Text>{proposal.ghi_chu}</Text>
-                  </>
-                )}
               </div>
             }
             type="success"
@@ -512,15 +506,27 @@ export default function ManagerProposalDetailPage() {
               </Descriptions.Item>
             )}
             {proposal.ngay_duyet && (
-              <Descriptions.Item label="Ngày duyệt">
-                {format(new Date(proposal.ngay_duyet), 'dd/MM/yyyy HH:mm')}
+              <Descriptions.Item label="Thời gian cập nhật">
+                {(() => {
+                  const date = new Date(proposal.ngay_duyet);
+                  const hours = String(date.getHours()).padStart(2, '0');
+                  const minutes = String(date.getMinutes()).padStart(2, '0');
+                  const day = String(date.getDate()).padStart(2, '0');
+                  const month = String(date.getMonth() + 1).padStart(2, '0');
+                  const year = date.getFullYear();
+                  return `${hours}:${minutes} ${day}/${month}/${year}`;
+                })()}
               </Descriptions.Item>
             )}
-            {proposal.ghi_chu && (
-              <Descriptions.Item label="Ghi chú" span={2}>
+            <Descriptions.Item label="Ghi chú" span={2}>
+              {proposal.ghi_chu ? (
                 <Text>{proposal.ghi_chu}</Text>
-              </Descriptions.Item>
-            )}
+              ) : (
+                <Text type="secondary" style={{ fontStyle: 'italic', opacity: 0.6 }}>
+                  Không có ghi chú
+                </Text>
+              )}
+            </Descriptions.Item>
           </Descriptions>
         </Card>
 
@@ -783,6 +789,7 @@ export default function ManagerProposalDetailPage() {
               dataSource={proposal.data_cong_hien || []}
               rowKey={(_, index) => `ch_${index}`}
               pagination={false}
+              scroll={{ x: 'max-content' }}
               columns={[
                 {
                   title: 'STT',
@@ -863,10 +870,27 @@ export default function ManagerProposalDetailPage() {
                   title: 'Danh hiệu đề xuất',
                   dataIndex: 'danh_hieu',
                   key: 'danh_hieu',
-                  width: 180,
+                  width: 280,
                   align: 'center',
-                  render: (text: string) =>
-                    text ? <Text>{text}</Text> : <Text type="secondary">-</Text>,
+                  render: (text: string) => {
+                    const danhHieuMap: Record<string, string> = {
+                      HCCSVV_HANG_BA: 'Huân chương Chiến sĩ Vẻ vang - Hạng Ba',
+                      HCCSVV_HANG_NHI: 'Huân chương Chiến sĩ Vẻ vang - Hạng Nhì',
+                      HCCSVV_HANG_NHAT: 'Huân chương Chiến sĩ Vẻ vang - Hạng Nhất',
+                      HCBVTQ_HANG_BA: 'Huân chương Bảo vệ Tổ quốc - Hạng Ba',
+                      HCBVTQ_HANG_NHI: 'Huân chương Bảo vệ Tổ quốc - Hạng Nhì',
+                      HCBVTQ_HANG_NHAT: 'Huân chương Bảo vệ Tổ quốc - Hạng Nhất',
+                      HC_QKQT: 'Huân chương Quân kỳ Quyết thắng',
+                      KNC_VSNXD_QDNDVN: 'Kỷ niệm chương Vì sự nghiệp xây dựng QĐNDVN',
+                    };
+                    return text ? (
+                      <Text style={{ whiteSpace: 'nowrap' }}>
+                        {danhHieuMap[text] || text}
+                      </Text>
+                    ) : (
+                      <Text type="secondary">-</Text>
+                    );
+                  },
                 },
                 {
                   title: 'Tổng thời gian (0.7)',
@@ -876,9 +900,9 @@ export default function ManagerProposalDetailPage() {
                   render: (_: any, record: any) => {
                     const thoiGian = record.thoi_gian_nhom_0_7;
                     if (thoiGian && typeof thoiGian === 'object' && thoiGian.display) {
-                      return <Text>{thoiGian.display}</Text>;
+                      return <Text style={{ whiteSpace: 'nowrap' }}>{thoiGian.display}</Text>;
                     }
-                    return calculateTotalTimeByGroup(record.personnel_id || '', '0.7');
+                    return <Text style={{ whiteSpace: 'nowrap' }}>{calculateTotalTimeByGroup(record.personnel_id || '', '0.7')}</Text>;
                   },
                 },
                 {
@@ -889,9 +913,9 @@ export default function ManagerProposalDetailPage() {
                   render: (_: any, record: any) => {
                     const thoiGian = record.thoi_gian_nhom_0_8;
                     if (thoiGian && typeof thoiGian === 'object' && thoiGian.display) {
-                      return <Text>{thoiGian.display}</Text>;
+                      return <Text style={{ whiteSpace: 'nowrap' }}>{thoiGian.display}</Text>;
                     }
-                    return calculateTotalTimeByGroup(record.personnel_id || '', '0.8');
+                    return <Text style={{ whiteSpace: 'nowrap' }}>{calculateTotalTimeByGroup(record.personnel_id || '', '0.8')}</Text>;
                   },
                 },
                 {
@@ -902,9 +926,9 @@ export default function ManagerProposalDetailPage() {
                   render: (_: any, record: any) => {
                     const thoiGian = record.thoi_gian_nhom_0_9_1_0;
                     if (thoiGian && typeof thoiGian === 'object' && thoiGian.display) {
-                      return <Text>{thoiGian.display}</Text>;
+                      return <Text style={{ whiteSpace: 'nowrap' }}>{thoiGian.display}</Text>;
                     }
-                    return calculateTotalTimeByGroup(record.personnel_id || '', '0.9-1.0');
+                    return <Text style={{ whiteSpace: 'nowrap' }}>{calculateTotalTimeByGroup(record.personnel_id || '', '0.9-1.0')}</Text>;
                   },
                 },
                 ...(proposal.status === 'APPROVED'
@@ -938,29 +962,6 @@ export default function ManagerProposalDetailPage() {
                           );
                         },
                       },
-                      {
-                        title: 'File quyết định',
-                        key: 'file_quyet_dinh',
-                        width: 200,
-                        align: 'center' as const,
-                        render: (_: any, record: DanhHieuItem) => {
-                          if (!record.so_quyet_dinh) {
-                            return <Text type="secondary">-</Text>;
-                          }
-
-                          return (
-                            <Button
-                              type="link"
-                              icon={<FilePdfOutlined />}
-                              onClick={() =>
-                                handleOpenDecisionFile(record.so_quyet_dinh!)
-                              }
-                            >
-                              Xem PDF
-                            </Button>
-                          );
-                        },
-                      },
                     ]
                   : []),
               ]}
@@ -981,6 +982,7 @@ export default function ManagerProposalDetailPage() {
               dataSource={proposal.data_danh_hieu || []}
               rowKey={(_, index) => `dh_${index}`}
               pagination={false}
+              scroll={{ x: 'max-content' }}
               columns={[
                 {
                   title: 'STT',
@@ -1002,7 +1004,7 @@ export default function ManagerProposalDetailPage() {
                         <div
                           style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
                         >
-                          <Text strong>{text || '-'}</Text>
+                          <Text strong style={{ whiteSpace: 'nowrap' }}>{text || '-'}</Text>
                         </div>
                       );
                     } else {
@@ -1018,9 +1020,9 @@ export default function ManagerProposalDetailPage() {
                         <div
                           style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
                         >
-                          <Text strong>{text || '-'}</Text>
+                          <Text strong style={{ whiteSpace: 'nowrap' }}>{text || '-'}</Text>
                           {unitInfo && (
-                            <Text type="secondary" style={{ fontSize: '12px', marginTop: '4px' }}>
+                            <Text type="secondary" style={{ fontSize: '12px', marginTop: '4px', whiteSpace: 'nowrap' }}>
                               {unitInfo}
                             </Text>
                           )}
@@ -1039,7 +1041,7 @@ export default function ManagerProposalDetailPage() {
                   render: (_: any, record: any) => {
                     if (proposal.loai_de_xuat === 'DON_VI_HANG_NAM') {
                       // For units, show unit code
-                      return <Text strong>{record.ma_don_vi || '-'}</Text>;
+                      return <Text strong style={{ whiteSpace: 'nowrap' }}>{record.ma_don_vi || '-'}</Text>;
                     } else {
                       // For personnel, show rank and position
                       const capBac = record.cap_bac;
@@ -1054,12 +1056,12 @@ export default function ManagerProposalDetailPage() {
                           style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
                         >
                           {capBac && (
-                            <Text strong style={{ marginBottom: chucVu ? '4px' : '0' }}>
+                            <Text strong style={{ marginBottom: chucVu ? '4px' : '0', whiteSpace: 'nowrap' }}>
                               {capBac}
                             </Text>
                           )}
                           {chucVu && (
-                            <Text type="secondary" style={{ fontSize: '12px' }}>
+                            <Text type="secondary" style={{ fontSize: '12px', whiteSpace: 'nowrap' }}>
                               {chucVu}
                             </Text>
                           )}
@@ -1079,10 +1081,14 @@ export default function ManagerProposalDetailPage() {
                   title: 'Danh hiệu đề xuất',
                   dataIndex: 'danh_hieu',
                   key: 'danh_hieu',
-                  width: 180,
+                  width: 280,
                   align: 'center',
                   render: (text: string) =>
-                    text ? <Text>{text}</Text> : <Text type="secondary">-</Text>,
+                    text ? (
+                      <Text style={{ whiteSpace: 'nowrap' }}>{text}</Text>
+                    ) : (
+                      <Text type="secondary">-</Text>
+                    ),
                 },
                 // Chỉ hiển thị các cột thời gian cho đề xuất cống hiến
                 ...(proposal.loai_de_xuat === 'CONG_HIEN'
@@ -1170,6 +1176,7 @@ export default function ManagerProposalDetailPage() {
               dataSource={proposal.data_nien_han || []}
               rowKey={(_, index) => `nh_${index}`}
               pagination={false}
+              scroll={{ x: 'max-content' }}
               columns={[
                 {
                   title: 'STT',
@@ -1257,7 +1264,10 @@ export default function ManagerProposalDetailPage() {
                       HCCSVV_HANG_BA: 'Huân chương Chiến sĩ Vẻ vang - Hạng Ba',
                       HCCSVV_HANG_NHI: 'Huân chương Chiến sĩ Vẻ vang - Hạng Nhì',
                       HCCSVV_HANG_NHAT: 'Huân chương Chiến sĩ Vẻ vang - Hạng Nhất',
-                      HC_QKQT: 'Huy chương Quân kỳ quyết thắng',
+                      HCBVTQ_HANG_BA: 'Huân chương Bảo vệ Tổ quốc - Hạng Ba',
+                      HCBVTQ_HANG_NHI: 'Huân chương Bảo vệ Tổ quốc - Hạng Nhì',
+                      HCBVTQ_HANG_NHAT: 'Huân chương Bảo vệ Tổ quốc - Hạng Nhất',
+                      HC_QKQT: 'Huân chương Quân kỳ Quyết thắng',
                       KNC_VSNXD_QDNDVN: 'Kỷ niệm chương Vì sự nghiệp xây dựng QĐNDVN',
                     };
                     return text ? (
@@ -1278,13 +1288,13 @@ export default function ManagerProposalDetailPage() {
                     if (typeof thoiGian === 'string') {
                       try {
                         const parsed = JSON.parse(thoiGian);
-                        return <Text>{parsed.display || '-'}</Text>;
+                        return <Text style={{ whiteSpace: 'nowrap' }}>{parsed.display || '-'}</Text>;
                       } catch {
-                        return <Text>{thoiGian}</Text>;
+                        return <Text style={{ whiteSpace: 'nowrap' }}>{thoiGian}</Text>;
                       }
                     }
                     return (
-                      <Text>
+                      <Text style={{ whiteSpace: 'nowrap' }}>
                         {thoiGian.display ||
                           `${thoiGian.years || 0} năm ${thoiGian.months || 0} tháng`}
                       </Text>
@@ -1351,16 +1361,16 @@ export default function ManagerProposalDetailPage() {
           <Card className="shadow-sm bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200">
             <Space direction="vertical" size="middle" style={{ width: '100%' }}>
               <Title level={4} className="!mb-0">
-                Hướng dẫn sửa đề xuất
+                Hướng dẫn tạo đề xuất mới
               </Title>
               <Text>
-                1. Nhấn nút "Tải file Excel" ở trên để tải file về
+                1. Nhấn nút "Tạo đề xuất mới" để tạo đề xuất mới
                 <br />
-                2. Mở file và chỉnh sửa theo lý do từ chối
+                2. Điền thông tin đề xuất mới
                 <br />
-                3. Lưu file sau khi đã sửa
+                3. Xem lại thông tin đề xuất mới
                 <br />
-                4. Tạo đề xuất mới với file đã chỉnh sửa
+                4. Nhấn nút "Gửi đề xuất" để gửi đề xuất mới
               </Text>
               <Link href="/manager/proposals/create">
                 <Button type="primary" size="large">

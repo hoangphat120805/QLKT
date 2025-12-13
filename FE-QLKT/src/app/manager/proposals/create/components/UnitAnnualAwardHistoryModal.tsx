@@ -154,9 +154,9 @@ export default function UnitAnnualAwardHistoryModal({
         }
 
         return decisions.length > 0 ? (
-          <div style={{ textAlign: 'left' }}>
+          <div style={{ textAlign: 'center' }}>
             {decisions.map((d, i) => (
-              <div key={i}>
+              <div key={i} style={{ textAlign: 'center' }}>
                 {d.soQuyetDinh ? (
                   <a
                     onClick={() => handleOpenDecisionFile(d.soQuyetDinh)}
@@ -171,7 +171,7 @@ export default function UnitAnnualAwardHistoryModal({
             ))}
           </div>
         ) : (
-          '-'
+          <div style={{ textAlign: 'center' }}>-</div>
         );
       },
     },
@@ -195,35 +195,43 @@ export default function UnitAnnualAwardHistoryModal({
         {annualAwards && annualAwards.tong_dvqt_json && annualAwards.tong_dvqt_json.length > 0 ? (
           <div>
             <Descriptions bordered column={1} size="small" style={{ marginBottom: 16 }}>
-              <Descriptions.Item label="Tổng số danh hiệu ĐVQT">
+              <Descriptions.Item label="Tổng số danh hiệu Đơn vị Quyết thắng">
                 <Tag color="green" style={{ fontSize: '14px', padding: '4px 12px' }}>
                   {annualAwards?.tong_dvqt || 0} năm
                 </Tag>
               </Descriptions.Item>
-              <Descriptions.Item label="Số năm liên tục ĐVQT">
+              <Descriptions.Item label="Số năm liên tục Đơn vị Quyết thắng">
                 <Tag color="blue" style={{ fontSize: '14px', padding: '4px 12px' }}>
                   {annualAwards?.dvqt_lien_tuc || 0} năm
                 </Tag>
               </Descriptions.Item>
-              <Descriptions.Item label="Đủ điều kiện BKBQP">
-                <Tag color="blue" style={{ fontSize: '14px', padding: '4px 12px' }}>
-                  {(annualAwards?.du_dieu_kien_bk_tong_cuc) ? 'Có' : 'Không'}
+              <Descriptions.Item label="Đủ điều kiện BK của Bộ trưởng Bộ Quốc phòng">
+                <Tag
+                  color={annualAwards?.du_dieu_kien_bk_tong_cuc ? 'green' : 'default'}
+                  style={{ fontSize: '14px', padding: '4px 12px' }}
+                >
+                  {annualAwards?.du_dieu_kien_bk_tong_cuc ? 'Có' : 'Không'}
                 </Tag>
               </Descriptions.Item>
-              <Descriptions.Item label="Đủ điều kiện BKTTCP">
-                <Tag color="blue" style={{ fontSize: '14px', padding: '4px 12px' }}>
-                  {(annualAwards?.du_dieu_kien_bk_thu_tuong) ? 'Có' : 'Không'}
+              <Descriptions.Item label="Đủ điều kiện BK của Thủ tướng Chính phủ">
+                <Tag
+                  color={annualAwards?.du_dieu_kien_bk_thu_tuong ? 'green' : 'default'}
+                  style={{ fontSize: '14px', padding: '4px 12px' }}
+                >
+                  {annualAwards?.du_dieu_kien_bk_thu_tuong ? 'Có' : 'Không'}
                 </Tag>
               </Descriptions.Item>
             </Descriptions>
-            <Table
-              columns={columns}
-              dataSource={annualAwards?.tong_dvqt_json}
-              rowKey={(record, index) => `${record.nam}-${index}`}
-              pagination={false}
-              size="small"
-              scroll={{ x: 900 }}
-            />
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <Table
+                columns={columns}
+                dataSource={annualAwards?.tong_dvqt_json}
+                rowKey={(record, index) => `${record.nam}-${index}`}
+                pagination={false}
+                size="small"
+                scroll={{ x: 900 }}
+              />
+            </div>
           </div>
         ) : (
           <Text type="secondary">Chưa có dữ liệu lịch sử khen thưởng đơn vị</Text>

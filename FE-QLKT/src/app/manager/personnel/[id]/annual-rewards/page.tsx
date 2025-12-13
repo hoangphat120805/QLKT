@@ -157,39 +157,58 @@ export default function AnnualRewardsPage() {
       title: 'Năm',
       dataIndex: 'nam',
       key: 'nam',
-      width: 100,
+      width: 80,
       align: 'center',
     },
     {
       title: 'Danh hiệu',
       dataIndex: 'danh_hieu',
       key: 'danh_hieu',
-      width: 200,
+      width: 150,
       align: 'center',
-      render: (text: string) => text || '-',
+      ellipsis: true,
+      render: (text: string) => (
+        <div style={{ textAlign: 'center' }} title={text}>{text || '-'}</div>
+      ),
     },
     {
       title: 'Cấp bậc',
       dataIndex: 'cap_bac',
       key: 'cap_bac',
-      width: 120,
+      width: 100,
       align: 'center',
-      render: (text: string) => text || '-',
+      ellipsis: true,
+      render: (text: string) => (
+        <div style={{ textAlign: 'center' }} title={text}>{text || '-'}</div>
+      ),
     },
     {
       title: 'Chức vụ',
       dataIndex: 'chuc_vu',
       key: 'chuc_vu',
-      width: 180,
-      render: (text: string) => text || '-',
+      width: 140,
+      align: 'center',
+      ellipsis: true,
+      render: (text: string) => (
+        <div style={{ textAlign: 'center' }} title={text}>{text || '-'}</div>
+      ),
     },
     {
       title: 'Ghi chú',
       dataIndex: 'ghi_chu',
       key: 'ghi_chu',
-      width: 200,
+      width: 150,
       ellipsis: true,
-      render: (text: string) => text || '-',
+      align: 'center',
+      render: (text: string) => (
+        <div style={{ textAlign: 'center' }} title={text}>
+          {text ? (
+            text
+          ) : (
+            <span style={{ fontStyle: 'italic', opacity: 0.6 }}>Không có ghi chú</span>
+          )}
+        </div>
+      ),
     },
     {
       title: 'Nhận BKBQP',
@@ -211,14 +230,14 @@ export default function AnnualRewardsPage() {
       title: 'Số quyết định',
       dataIndex: 'so_quyet_dinh',
       key: 'so_quyet_dinh',
-      width: 300,
+      width: 200,
       align: 'center',
       render: (text: string, record: RewardRecord) => {
         const items = [];
 
         if (record.so_quyet_dinh) {
           items.push(
-            <div key="general">
+            <div key="general" style={{ textAlign: 'center' }}>
               {record.so_quyet_dinh.trim() !== '' ? (
                 <a
                   onClick={e => {
@@ -243,7 +262,7 @@ export default function AnnualRewardsPage() {
         }
         if (record.so_quyet_dinh_bkbqp) {
           items.push(
-            <div key="bkbqp">
+            <div key="bkbqp" style={{ textAlign: 'center' }}>
               BKBQP:{' '}
               {record.so_quyet_dinh_bkbqp.trim() !== '' ? (
                 <a
@@ -270,7 +289,7 @@ export default function AnnualRewardsPage() {
 
         if (record.so_quyet_dinh_cstdtq) {
           items.push(
-            <div key="cstdtq">
+            <div key="cstdtq" style={{ textAlign: 'center' }}>
               CSTDTQ:{' '}
               {record.so_quyet_dinh_cstdtq.trim() !== '' ? (
                 <a
@@ -295,7 +314,11 @@ export default function AnnualRewardsPage() {
           );
         }
 
-        return items.length > 0 ? <div>{items}</div> : '-';
+        return items.length > 0 ? (
+          <div style={{ textAlign: 'center' }}>{items}</div>
+        ) : (
+          <div style={{ textAlign: 'center' }}>-</div>
+        );
       },
     },
   ];
@@ -336,7 +359,7 @@ export default function AnnualRewardsPage() {
         >
           <div>
             <Space style={{ marginBottom: 8 }}>
-              <Link href={`/manager/personnel/${personnelId}`}>
+              <Link href={`/manager/personnel/${personnelId}?tab=3`}>
                 <Button icon={<LeftOutlined />}>Quay lại</Button>
               </Link>
             </Space>
@@ -371,6 +394,7 @@ export default function AnnualRewardsPage() {
               dataSource={rewards}
               rowKey="id"
               pagination={false}
+              scroll={{ x: 950 }}
               locale={{
                 emptyText: 'Chưa có dữ liệu khen thưởng',
               }}
