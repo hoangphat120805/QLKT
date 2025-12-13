@@ -50,8 +50,10 @@ interface CSTDCSItem {
   danh_hieu: string;
   nhan_bkbqp?: boolean;
   nhan_cstdtq?: boolean;
+  nhan_bkttcp?: boolean;
   so_quyet_dinh_bkbqp?: string | null;
   so_quyet_dinh_cstdtq?: string | null;
+  so_quyet_dinh_bkttcp?: string | null;
   [key: string]: any;
 }
 
@@ -198,6 +200,7 @@ export default function Step3SetTitlesCaNhanHangNam({
       { label: 'Chiến sĩ tiên tiến (CSTT)', value: 'CSTT' },
       { label: 'Bằng khen của Bộ trưởng Bộ Quốc phòng (BKBQP)', value: 'BKBQP' },
       { label: 'Chiến sĩ thi đua toàn quân (CSTDTQ)', value: 'CSTDTQ' },
+      { label: 'Bằng khen Thủ tướng Chính phủ (BKTTCP)', value: 'BKTTCP' },
     ];
     if (annualProfiles[id]) {
       if (annualProfiles[id].du_dieu_kien_bkbqp === false) {
@@ -205,6 +208,9 @@ export default function Step3SetTitlesCaNhanHangNam({
       }
       if (annualProfiles[id].du_dieu_kien_cstdtq === false) {
         allOptions = allOptions.filter(opt => opt.value !== 'CSTDTQ');
+      }
+      if (annualProfiles[id].du_dieu_kien_bkttcp === false) {
+        allOptions = allOptions.filter(opt => opt.value !== 'BKTTCP');
       }
     }
 
@@ -612,6 +618,15 @@ export default function Step3SetTitlesCaNhanHangNam({
                             title: 'Nhận CSTDTQ',
                             dataIndex: 'nhan_cstdtq',
                             key: 'nhan_cstdtq',
+                            width: 120,
+                            align: 'center',
+                            render: value =>
+                              value ? <Tag color="green">Có</Tag> : <Tag>Không</Tag>,
+                          },
+                          {
+                            title: 'Nhận BKTTCP',
+                            dataIndex: 'nhan_bkttcp',
+                            key: 'nhan_bkttcp',
                             width: 120,
                             align: 'center',
                             render: value =>

@@ -643,7 +643,7 @@ export default function ManagerPersonnelDetailPage() {
                 </Text>
                 <Divider className="my-3" />
                 <Row gutter={[16, 16]}>
-                  <Col xs={24} md={12}>
+                  <Col xs={24} md={8}>
                     <Card size="small">
                       <Statistic
                         title="Bằng khen BQP"
@@ -657,7 +657,7 @@ export default function ManagerPersonnelDetailPage() {
                       />
                     </Card>
                   </Col>
-                  <Col xs={24} md={12}>
+                  <Col xs={24} md={8}>
                     <Card size="small">
                       <Statistic
                         title="CSTD Toàn quân"
@@ -666,6 +666,20 @@ export default function ManagerPersonnelDetailPage() {
                         valueRender={() => (
                           <Tag color={annualProfile.du_dieu_kien_cstdtq ? 'green' : 'default'}>
                             {annualProfile.du_dieu_kien_cstdtq ? 'Đủ điều kiện' : 'Chưa đủ'}
+                          </Tag>
+                        )}
+                      />
+                    </Card>
+                  </Col>
+                  <Col xs={24} md={8}>
+                    <Card size="small">
+                      <Statistic
+                        title="BK thủ tướng chính phủ"
+                        value={0}
+                        valueStyle={{ fontSize: '14px' }}
+                        valueRender={() => (
+                          <Tag color={annualProfile.du_dieu_kien_bkttcp ? 'gold' : 'default'}>
+                            {annualProfile.du_dieu_kien_bkttcp ? 'Đủ điều kiện' : 'Chưa đủ'}
                           </Tag>
                         )}
                       />

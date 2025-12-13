@@ -121,6 +121,8 @@ class AnnualRewardController {
         so_quyet_dinh_bkbqp,
         nhan_cstdtq,
         so_quyet_dinh_cstdtq,
+        nhan_bkttcp,
+        so_quyet_dinh_bkttcp,
       } = req.body;
 
       if (!personnel_id || !nam || !danh_hieu) {
@@ -141,6 +143,8 @@ class AnnualRewardController {
         so_quyet_dinh_bkbqp,
         nhan_cstdtq,
         so_quyet_dinh_cstdtq,
+        nhan_bkttcp,
+        so_quyet_dinh_bkttcp,
       });
 
       // Tự động cập nhật lại hồ sơ sau khi thêm danh hiệu
@@ -178,6 +182,8 @@ class AnnualRewardController {
         so_quyet_dinh_bkbqp,
         nhan_cstdtq,
         so_quyet_dinh_cstdtq,
+        nhan_bkttcp,
+        so_quyet_dinh_bkttcp,
       } = req.body;
 
       const result = await annualRewardService.updateAnnualReward(id, {
@@ -190,6 +196,8 @@ class AnnualRewardController {
         so_quyet_dinh_bkbqp,
         nhan_cstdtq,
         so_quyet_dinh_cstdtq,
+        nhan_bkttcp,
+        so_quyet_dinh_bkttcp,
       });
 
       // Tự động cập nhật lại hồ sơ sau khi cập nhật danh hiệu

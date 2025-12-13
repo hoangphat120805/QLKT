@@ -52,6 +52,8 @@ interface Award {
   so_quyet_dinh_bkbqp?: string | null;
   nhan_cstdtq?: boolean;
   so_quyet_dinh_cstdtq?: string | null;
+  nhan_bkttcp?: boolean;
+  so_quyet_dinh_bkttcp?: string | null;
   mo_ta?: string | null;
   ten_de_tai?: string | null;
 }
@@ -337,15 +339,19 @@ export default function AdminAwardsPage() {
           if (activeTab === 'annual') {
             const nhanBKBQP = (record as any)?.nhan_bkbqp;
             const nhanCSTDTQ = (record as any)?.nhan_cstdtq;
+            const nhanBKTTCP = (record as any)?.nhan_bkttcp;
 
             const hasBKBQPFlag = nhanBKBQP === true || nhanBKBQP === 'true' || nhanBKBQP === 1;
             const hasCSTDTQFlag =
               nhanCSTDTQ === true || nhanCSTDTQ === 'true' || nhanCSTDTQ === 1;
+            const hasBKTTCPFlag =
+              nhanBKTTCP === true || nhanBKTTCP === 'true' || nhanBKTTCP === 1;
 
             const isBKBQP = danhHieuFilter === 'BKBQP' && hasBKBQPFlag;
             const isCSTDTQ = danhHieuFilter === 'CSTDTQ' && hasCSTDTQFlag;
+            const isBKTTCP = danhHieuFilter === 'BKTTCP' && hasBKTTCPFlag;
 
-            if (!isBKBQP && !isCSTDTQ && record.danh_hieu !== danhHieuFilter) {
+            if (!isBKBQP && !isCSTDTQ && !isBKTTCP && record.danh_hieu !== danhHieuFilter) {
               return false;
             }
           } else if (record.danh_hieu !== danhHieuFilter) {

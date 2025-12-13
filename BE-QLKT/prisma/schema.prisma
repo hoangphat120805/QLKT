@@ -193,6 +193,8 @@ model DanhHieuHangNam {
   so_quyet_dinh_bkbqp    String?  @db.VarChar(100)
   nhan_cstdtq            Boolean  @default(false)
   so_quyet_dinh_cstdtq   String?  @db.VarChar(100)
+  nhan_bkttcp            Boolean  @default(false)
+  so_quyet_dinh_bkttcp   String?  @db.VarChar(100)
   createdAt              DateTime @default(now()) @db.Timestamptz(6)
   updatedAt              DateTime @updatedAt @db.Timestamptz(6)
 
@@ -370,19 +372,22 @@ model HoSoCongHien {
 
 // 10. Bảng Hồ sơ Hằng năm (OUTPUT)
 model HoSoHangNam {
-  id                  String   @id @default(cuid()) @db.VarChar(30)
-  quan_nhan_id        String   @unique @db.VarChar(30)
-  tong_cstdcs         Int      @default(0)
-  tong_nckh           Int      @default(0)
-  tong_cstdcs_json    Json?    // Lưu chi tiết danh hiệu dạng JSON
-  tong_nckh_json      Json?    // Lưu chi tiết NCKH dạng JSON
-  cstdcs_lien_tuc     Int      @default(0)
-  nckh_lien_tuc       Int      @default(0)
-  du_dieu_kien_bkbqp  Boolean  @default(false)
-  du_dieu_kien_cstdtq Boolean  @default(false)
-  goi_y               String?  @db.Text
-  createdAt           DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt           DateTime @updatedAt @db.Timestamptz(6)
+  id                   String   @id @default(cuid()) @db.VarChar(30)
+  quan_nhan_id         String   @unique @db.VarChar(30)
+  tong_cstdcs          Int      @default(0)
+  tong_nckh            Int      @default(0)
+  tong_cstdcs_json     Json?    // Lưu chi tiết danh hiệu dạng JSON
+  tong_nckh_json       Json?    // Lưu chi tiết NCKH dạng JSON
+  cstdcs_lien_tuc      Int      @default(0)
+  nckh_lien_tuc        Int      @default(0)
+  bkbqp_lien_tuc       Int      @default(0)
+  cstdtq_lien_tuc      Int      @default(0)
+  du_dieu_kien_bkbqp   Boolean  @default(false)
+  du_dieu_kien_cstdtq  Boolean  @default(false)
+  du_dieu_kien_bkttcp  Boolean  @default(false)
+  goi_y                String?  @db.Text
+  createdAt            DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt            DateTime @updatedAt @db.Timestamptz(6)
 
   // Relations
   QuanNhan QuanNhan @relation(fields: [quan_nhan_id], references: [id], onDelete: Cascade)

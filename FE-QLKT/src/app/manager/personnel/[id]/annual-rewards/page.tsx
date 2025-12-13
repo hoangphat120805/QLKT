@@ -50,6 +50,8 @@ interface RewardRecord {
   file_quyet_dinh_bkbqp?: string;
   nhan_cstdtq: boolean;
   so_quyet_dinh_cstdtq?: string;
+  nhan_bkttcp: boolean;
+  so_quyet_dinh_bkttcp?: string;
   file_quyet_dinh_cstdtq?: string;
 }
 
@@ -203,6 +205,14 @@ export default function AnnualRewardsPage() {
       title: 'Nhận CSTDTQ',
       dataIndex: 'nhan_cstdtq',
       key: 'nhan_cstdtq',
+      width: 120,
+      align: 'center',
+      render: (value: boolean) => (value ? <Tag color="green">Có</Tag> : <Tag>Không</Tag>),
+    },
+    {
+      title: 'Nhận BKTTCP',
+      dataIndex: 'nhan_bkttcp',
+      key: 'nhan_bkttcp',
       width: 120,
       align: 'center',
       render: (value: boolean) => (value ? <Tag color="green">Có</Tag> : <Tag>Không</Tag>),

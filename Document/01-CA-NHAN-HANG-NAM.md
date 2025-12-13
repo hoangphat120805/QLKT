@@ -37,6 +37,16 @@ Khen thưởng Cá nhân Hằng năm là các danh hiệu được xét và trao
   - NCKH chỉ được kiểm tra trong phạm vi cụm 3 năm riêng biệt
   - Mỗi cụm 3 năm là độc lập (ví dụ: 1-2-3, 4-5-6 là các cụm độc lập)
 
+### 5. Bằng khen thi đua cấp phòng (BKTTCP)
+
+- **Mã**: `BKTTCP`
+- **Mô tả**: Danh hiệu cao cấp cho quân nhân có thành tích xuất sắc, vượt trội trong thời gian dài
+- **Điều kiện**:
+  - **7 năm CSTDCS liên tục** (tính từ năm hiện tại trở về trước)
+  - **3 lần nhận BKBQP liên tục** (mỗi lần cách nhau 2 năm)
+  - **2 lần nhận CSTDTQ liên tục** (mỗi lần cách nhau 3 năm)
+  - Tất cả các điều kiện trên phải được đáp ứng đồng thời
+
 ## 📊 Cấu trúc Dữ liệu
 
 ### Database Schema
@@ -108,6 +118,7 @@ Khen thưởng Cá nhân Hằng năm là các danh hiệu được xét và trao
 1. Kiểm tra điều kiện:
    - BKBQP: Kiểm tra 5 năm CSTDCS liên tục
    - CSTDTQ: Kiểm tra 3 năm CSTDCS + NCKH + BKBQP
+   - BKTTCP: Kiểm tra 7 năm CSTDCS liên tục + 3 lần BKBQP liên tục + 2 lần CSTDTQ liên tục
 2. Phê duyệt đề xuất → Trạng thái `APPROVED`
 3. Hệ thống tự động cập nhật:
    - Bảng `DanhHieuHangNam` với `danh_hieu`
@@ -450,6 +461,46 @@ Khen thưởng Cá nhân Hằng năm là các danh hiệu được xét và trao
 
 - Đề xuất được phê duyệt hoặc từ chối
 - Nếu phê duyệt: `nhan_cstdtq = true` được cập nhật
+
+---
+
+### UC-07: Admin phê duyệt đề xuất BKTTCP
+
+**Actor**: Admin
+
+**Mô tả**: Admin kiểm tra điều kiện rất cao và phê duyệt đề xuất BKTTCP (Bằng khen thi đua cấp phòng)
+
+**Preconditions**:
+
+- Admin đã đăng nhập hệ thống
+- Có đề xuất BKTTCP với trạng thái `PENDING`
+
+**Main Flow**:
+
+1. Admin xem danh sách đề xuất `PENDING`
+2. Admin chọn đề xuất BKTTCP
+3. Hệ thống tự động kiểm tra:
+   - 7 năm CSTDCS liên tục
+   - 3 lần nhận BKBQP liên tục (mỗi 2 năm)
+   - 2 lần nhận CSTDTQ liên tục (mỗi 3 năm)
+4. Admin xem báo cáo kiểm tra:
+   - Danh sách 7 năm CSTDCS liên tục
+   - Danh sách các lần nhận BKBQP (với năm nhận)
+   - Danh sách các lần nhận CSTDTQ (với năm nhận)
+   - Cảnh báo nếu thiếu điều kiện
+5. Nếu đủ điều kiện:
+   - Admin phê duyệt đề xuất
+   - Hệ thống cập nhật:
+     - `HoSoHangNam.du_dieu_kien_bkttcp = true`
+     - Ghi nhận thông tin BKTTCP vào hệ thống
+6. Nếu chưa đủ điều kiện:
+   - Admin từ chối đề xuất
+   - Ghi chú lý do từ chối (thiếu năm CSTDCS, BKBQP hoặc CSTDTQ)
+
+**Postconditions**:
+
+- Đề xuất được phê duyệt hoặc từ chối
+- Nếu phê duyệt: `du_dieu_kien_bkttcp = true` được cập nhật
 
 ---
 

@@ -20,8 +20,12 @@ interface AnnualProfile {
   tong_cstdcs_json?: any[]; // Chi tiết danh hiệu dạng JSON
   tong_nckh_json?: any[]; // Chi tiết NCKH dạng JSON
   cstdcs_lien_tuc?: number;
+  nckh_lien_tuc?: number;
+  bkbqp_lien_tuc?: number;
+  cstdtq_lien_tuc?: number;
   du_dieu_kien_bkbqp?: boolean;
   du_dieu_kien_cstdtq?: boolean;
+  du_dieu_kien_bkttcp?: boolean;
   goi_y?: string;
 }
 
@@ -216,6 +220,14 @@ export default function PersonnelRewardHistoryModal({
       align: 'center',
       render: value => (value ? <Tag color="green">Có</Tag> : <Tag>Không</Tag>),
     },
+    {
+      title: 'Nhận BKTTCP',
+      dataIndex: 'nhan_bkttcp',
+      key: 'nhan_bkttcp',
+      width: 120,
+      align: 'center',
+      render: value => (value ? <Tag color="green">Có</Tag> : <Tag>Không</Tag>),
+    }
   ];
 
   const nckhColumns: ColumnsType<any> = [
@@ -332,6 +344,12 @@ export default function PersonnelRewardHistoryModal({
             <Descriptions.Item label="CSTDCS liên tục">
               {annualProfile?.cstdcs_lien_tuc || 0} năm
             </Descriptions.Item>
+            <Descriptions.Item label="BKBQP liên tục">
+              {annualProfile?.bkbqp_lien_tuc || 0} lần
+            </Descriptions.Item>
+            <Descriptions.Item label="CSTDTQ liên tục">
+              {annualProfile?.cstdtq_lien_tuc || 0} lần
+            </Descriptions.Item>
             <Descriptions.Item label="Đủ điều kiện BKBQP">
               {annualProfile?.du_dieu_kien_bkbqp ? <Tag color="green">Có</Tag> : <Tag>Chưa đủ</Tag>}
             </Descriptions.Item>
@@ -341,6 +359,9 @@ export default function PersonnelRewardHistoryModal({
               ) : (
                 <Tag>Chưa đủ</Tag>
               )}
+            </Descriptions.Item>
+            <Descriptions.Item label="Đủ điều kiện BKTTCP">
+              {annualProfile?.du_dieu_kien_bkttcp ? <Tag color="gold">Có</Tag> : <Tag>Chưa đủ</Tag>}
             </Descriptions.Item>
             <Descriptions.Item label="Gợi ý" span={2}>
               <Text type="secondary" style={{ whiteSpace: 'pre-wrap' }}>

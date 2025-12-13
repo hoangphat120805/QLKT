@@ -266,6 +266,28 @@ class ProfileService {
   }
 
   /**
+   * Tính số năm liên tục nhận CSTDTQ (mỗi 3 năm)
+   * @param {Array} danhHieuList - Danh sách danh hiệu đã sắp xếp theo năm giảm dần
+   * @param {number} year - Năm hiện tại để tính toán
+   * @returns {number} Số năm liên tục nhận CSTDTQ
+   */
+  calculateContinuousCSTDTQ(danhHieuList, year) {
+    let count = 0;
+    const sortedRewards = [...danhHieuList].sort((a, b) => b.nam - a.nam);
+    const filteredRewards = sortedRewards.filter(r => r.nhan_cstdtq === true && r.nam <= year - 1);
+    console.log('Filtered CSTDTQ Rewards:', filteredRewards);
+    let currentYear = year - 1;
+
+    for (const reward of filteredRewards) {
+      if (reward.nam !== currentYear) break;
+      count++;
+      currentYear -= 3;
+    }
+    console.log('Continuous CSTDTQ count:', count);
+    return count;
+  }
+
+  /**
    * Kiểm tra NCKH trong khoảng năm
    * @param {Array} nckhList - Danh sách NCKH đã approved
    * @param {Array} years - Mảng các năm cần kiểm tra [2023, 2024, 2025]
@@ -378,7 +400,16 @@ class ProfileService {
       return { isSpecialCase: false, goiY: '', resetChain: false };
     }
 
-    // Trường hợp 8: Admin đã cập nhật nhận CSTDTQ
+    // Trường hợp 1: Admin đã cập nhật nhận BKTTCP (cao nhất)
+    if (latestReward.nhan_bkttcp === true) {
+      return {
+        isSpecialCase: true,
+        goiY: `Đã nhận Bằng khen thi đua cấp phòng (Năm ${latestReward.nam}). Bắt đầu chuỗi thành tích mới.`,
+        resetChain: true,
+      };
+    }
+
+    // Trường hợp 2: Admin đã cập nhật nhận CSTDTQ
     if (latestReward.nhan_cstdtq === true) {
       return {
         isSpecialCase: true,
@@ -387,7 +418,7 @@ class ProfileService {
       };
     }
 
-    // Trường hợp 9: Admin đã cập nhật nhận BKBQP (nhưng chưa đủ CSTDTQ)
+    // Trường hợp 3: Admin đã cập nhật nhận BKBQP (nhưng chưa đủ CSTDTQ)
     if (latestReward.nhan_bkbqp === true && !latestReward.nhan_cstdtq) {
       return {
         isSpecialCase: true,
@@ -396,7 +427,7 @@ class ProfileService {
       };
     }
 
-    // Trường hợp 10: Năm nay không đạt CSTDCS
+    // Trường hợp 4: Năm nay không đạt CSTDCS
     if (latestReward.danh_hieu !== 'CSTDCS' && latestReward.danh_hieu !== null) {
       return {
         isSpecialCase: true,
@@ -648,6 +679,7 @@ class ProfileService {
       // ==============================================
       let du_dieu_kien_bkbqp = false;
       let du_dieu_kien_cstdtq = false;
+      let du_dieu_kien_bkttcp = false;
       // Chỉ lưu CSTDCS và CSTT trong JSON, BKBQP và CSTDTQ là trường đánh dấu boolean
       const tong_cstdcs_json = danhHieuList
         // .filter(dh => dh.danh_hieu === 'CSTDCS' || dh.danh_hieu === 'CSTT')
@@ -658,10 +690,13 @@ class ProfileService {
           // file_quyet_dinh: dh.file_quyet_dinh || null,
           nhan_bkbqp: dh.nhan_bkbqp || false,
           nhan_cstdtq: dh.nhan_cstdtq || false,
+          nhan_bkttcp: dh.nhan_bkttcp || false,
           so_quyet_dinh_bkbqp: dh.so_quyet_dinh_bkbqp || null,
           // file_quyet_dinh_bkbqp: dh.file_quyet_dinh_bkbqp || null,
           so_quyet_dinh_cstdtq: dh.so_quyet_dinh_cstdtq || null,
           // file_quyet_dinh_cstdtq: dh.file_quyet_dinh_cstdtq || null,
+          so_quyet_dinh_bkttcp: dh.so_quyet_dinh_bkttcp || null,
+          // file_quyet_dinh_bkttcp: dh.file_quyet_dinh_bkttcp || null,
         }))
         .sort((a, b) => a.nam - b.nam); // Sắp xếp theo năm tăng dần
       const tong_cstdcs = tong_cstdcs_json.length;
@@ -694,18 +729,45 @@ class ProfileService {
       const nckh_lien_tuc = this.calculateContinuousNCKH(thanhTichList, year);
 
       const bkbqp_lien_tuc = this.calculateContinuousBKBQP(danhHieuList, year);
+
+      const cstdtq_lien_tuc = this.calculateContinuousCSTDTQ(danhHieuList, year);
+
       du_dieu_kien_bkbqp =
         cstdcs_lien_tuc % 2 === 0 && cstdcs_lien_tuc >= 1 && nckh_lien_tuc >= cstdcs_lien_tuc;
       du_dieu_kien_cstdtq =
-        cstdcs_lien_tuc === 3 && bkbqp_lien_tuc >= 1 && nckh_lien_tuc >= cstdcs_lien_tuc;
+        cstdcs_lien_tuc % 3 === 0 &&
+        bkbqp_lien_tuc >= 1 &&
+        cstdcs_lien_tuc >= 3 &&
+        nckh_lien_tuc >= cstdcs_lien_tuc;
+      if (cstdcs_lien_tuc % 6 === 0) {
+        const bkbqp_lt = this.calculateContinuousBKBQP(danhHieuList, year-1);
+        du_dieu_kien_cstdtq =
+          cstdcs_lien_tuc % 3 === 0 &&
+          bkbqp_lt >= 1 &&
+          cstdcs_lien_tuc >= 3 &&
+          nckh_lien_tuc >= cstdcs_lien_tuc;
+      }
+
+      // BKTTCP: 7 CSTDCS liên tục + 3 BKBQP liên tục + 2 CSTDTQ liên tục
+      du_dieu_kien_bkttcp =
+        cstdcs_lien_tuc % 7 === 0 &&
+        bkbqp_lien_tuc % 3 === 0 &&
+        cstdtq_lien_tuc % 2 === 0 &&
+        nckh_lien_tuc >= cstdcs_lien_tuc &&
+        cstdcs_lien_tuc >= 7 &&
+        bkbqp_lien_tuc >= 3 &&
+        cstdtq_lien_tuc >= 2;
 
       // ==============================================
-      // BƯỚC 4: Logic Tạo Gợi ý (Suggestion) - CHỈ GỢI Ý BKBQP VÀ CSTDTQ
+      // BƯỚC 4: Logic Tạo Gợi ý (Suggestion) - CHỈ GỢI Ý BKBQP, CSTDTQ VÀ BKTTCP
       // ==============================================
       let goi_y = '';
 
-      if (du_dieu_kien_cstdtq === true) {
-        // Đã đủ điều kiện CSTDTQ
+      if (du_dieu_kien_bkttcp === true) {
+        // Đã đủ điều kiện BKTTCP
+        goi_y = 'Đã đủ điều kiện đề nghị xét Bằng khen thi đua cấp phòng (BKTTCP).';
+      } else if (du_dieu_kien_cstdtq === true) {
+        // Đã đủ điều kiện CSTDTQ nhưng chưa đủ BKTTCP
         goi_y = 'Đã đủ điều kiện đề nghị xét Chiến sĩ thi đua Toàn quân.';
       } else if (du_dieu_kien_bkbqp === true) {
         // Đã đủ điều kiện BKBQP nhưng chưa đủ CSTDTQ
@@ -726,8 +788,11 @@ class ProfileService {
             tong_cstdcs: tong_cstdcs_json,
             tong_nckh: tong_nckh_json,
             cstdcs_lien_tuc: cstdcs_lien_tuc,
+            bkbqp_lien_tuc: bkbqp_lien_tuc,
+            cstdtq_lien_tuc: cstdtq_lien_tuc,
             du_dieu_kien_bkbqp: du_dieu_kien_bkbqp,
             du_dieu_kien_cstdtq: du_dieu_kien_cstdtq,
+            du_dieu_kien_bkttcp: du_dieu_kien_bkttcp,
             goi_y: goi_y,
           },
           null,
@@ -744,8 +809,11 @@ class ProfileService {
           tong_nckh_json: tong_nckh_json, // Chi tiết dạng JSON
           cstdcs_lien_tuc: cstdcs_lien_tuc,
           nckh_lien_tuc: nckh_lien_tuc,
+          bkbqp_lien_tuc: bkbqp_lien_tuc,
+          cstdtq_lien_tuc: cstdtq_lien_tuc,
           du_dieu_kien_bkbqp: du_dieu_kien_bkbqp,
           du_dieu_kien_cstdtq: du_dieu_kien_cstdtq,
+          du_dieu_kien_bkttcp: du_dieu_kien_bkttcp,
           goi_y: goi_y,
         },
         create: {
@@ -756,8 +824,11 @@ class ProfileService {
           tong_nckh_json: tong_nckh_json, // Chi tiết dạng JSON
           cstdcs_lien_tuc: cstdcs_lien_tuc,
           nckh_lien_tuc: nckh_lien_tuc,
+          bkbqp_lien_tuc: bkbqp_lien_tuc,
+          cstdtq_lien_tuc: cstdtq_lien_tuc,
           du_dieu_kien_bkbqp: du_dieu_kien_bkbqp,
           du_dieu_kien_cstdtq: du_dieu_kien_cstdtq,
+          du_dieu_kien_bkttcp: du_dieu_kien_bkttcp,
           goi_y: goi_y,
         },
       });
@@ -773,6 +844,8 @@ class ProfileService {
             tong_nckh: hoSoHangNam.tong_nckh,
             cstdcs_lien_tuc: hoSoHangNam.cstdcs_lien_tuc,
             nckh_lien_tuc: hoSoHangNam.nckh_lien_tuc,
+            bkbqp_lien_tuc: hoSoHangNam.bkbqp_lien_tuc,
+            cstdtq_lien_tuc: hoSoHangNam.cstdtq_lien_tuc,
           },
           null,
           2

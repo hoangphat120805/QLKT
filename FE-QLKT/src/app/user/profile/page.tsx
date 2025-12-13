@@ -239,9 +239,9 @@ export default function UserProfilePage() {
       align: 'center' as const,
       render: (text: string, record: any) => {
         if (!text) return '-';
-        
+
         const decisions: ReactNode[] = [];
-        
+
         // Bằng khen BQP
         if (record.so_quyet_dinh_bkbqp && record.so_quyet_dinh_bkbqp.trim() !== '') {
           decisions.push(
@@ -264,7 +264,7 @@ export default function UserProfilePage() {
             </div>
           );
         }
-        
+
         // CSTĐ Toàn quân
         if (record.so_quyet_dinh_cstdtq && record.so_quyet_dinh_cstdtq.trim() !== '') {
           decisions.push(
@@ -287,7 +287,7 @@ export default function UserProfilePage() {
             </div>
           );
         }
-        
+
         return (
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontWeight: 500 }}>{text}</div>
@@ -497,7 +497,7 @@ export default function UserProfilePage() {
       align: 'center' as const,
       render: (text: string, record: any) => {
         if (!text || text.trim() === '') return '-';
-        
+
         // Luôn cho phép bấm để truy vấn DB và tải file
         return (
           <a
@@ -884,7 +884,7 @@ export default function UserProfilePage() {
                 </Text>
                 <Divider className="my-3" />
                 <Row gutter={[16, 16]}>
-                  <Col xs={24} md={12}>
+                  <Col xs={24} md={8}>
                     <Card size="small">
                       <Statistic
                         title="Bằng khen BQP"
@@ -898,7 +898,7 @@ export default function UserProfilePage() {
                       />
                     </Card>
                   </Col>
-                  <Col xs={24} md={12}>
+                  <Col xs={24} md={8}>
                     <Card size="small">
                       <Statistic
                         title="CSTD Toàn quân"
@@ -907,6 +907,20 @@ export default function UserProfilePage() {
                         valueRender={() => (
                           <Tag color={annualProfile.du_dieu_kien_cstdtq ? 'green' : 'default'}>
                             {annualProfile.du_dieu_kien_cstdtq ? 'Đủ điều kiện' : 'Chưa đủ'}
+                          </Tag>
+                        )}
+                      />
+                    </Card>
+                  </Col>
+                  <Col xs={24} md={8}>
+                    <Card size="small">
+                      <Statistic
+                        title="BK thủ tướng chính phủ"
+                        value={0}
+                        valueStyle={{ fontSize: '14px' }}
+                        valueRender={() => (
+                          <Tag color={annualProfile.du_dieu_kien_bkttcp ? 'gold' : 'default'}>
+                            {annualProfile.du_dieu_kien_bkttcp ? 'Đủ điều kiện' : 'Chưa đủ'}
                           </Tag>
                         )}
                       />
@@ -960,12 +974,20 @@ export default function UserProfilePage() {
                     }}
                   >
                     <Statistic
-                      title={<span style={{ color: isDarkMode ? '#93c5fd' : '#1e40af' }}>Tổng số năm</span>}
-                      value={Object.keys(annualRewards.reduce((acc: Record<number, any[]>, r: any) => {
-                        if (!acc[r.nam]) acc[r.nam] = [];
-                        acc[r.nam].push(r);
-                        return acc;
-                      }, {})).length}
+                      title={
+                        <span style={{ color: isDarkMode ? '#93c5fd' : '#1e40af' }}>
+                          Tổng số năm
+                        </span>
+                      }
+                      value={
+                        Object.keys(
+                          annualRewards.reduce((acc: Record<number, any[]>, r: any) => {
+                            if (!acc[r.nam]) acc[r.nam] = [];
+                            acc[r.nam].push(r);
+                            return acc;
+                          }, {})
+                        ).length
+                      }
                       valueStyle={{ color: isDarkMode ? '#60a5fa' : '#2563eb', fontWeight: 700 }}
                     />
                   </Card>
@@ -982,7 +1004,11 @@ export default function UserProfilePage() {
                     }}
                   >
                     <Statistic
-                      title={<span style={{ color: isDarkMode ? '#6ee7b7' : '#047857' }}>CSTĐ Cơ sở</span>}
+                      title={
+                        <span style={{ color: isDarkMode ? '#6ee7b7' : '#047857' }}>
+                          CSTĐ Cơ sở
+                        </span>
+                      }
                       value={annualRewards.filter((r: any) => r.danh_hieu === 'CSTDCS').length}
                       valueStyle={{ color: isDarkMode ? '#34d399' : '#059669', fontWeight: 700 }}
                     />
@@ -1000,7 +1026,11 @@ export default function UserProfilePage() {
                     }}
                   >
                     <Statistic
-                      title={<span style={{ color: isDarkMode ? '#fcd34d' : '#b45309' }}>Bằng khen của Bộ trưởng BQP</span>}
+                      title={
+                        <span style={{ color: isDarkMode ? '#fcd34d' : '#b45309' }}>
+                          Bằng khen của Bộ trưởng BQP
+                        </span>
+                      }
                       value={annualRewards.filter((r: any) => r.nhan_bkbqp).length}
                       valueStyle={{ color: isDarkMode ? '#fbbf24' : '#d97706', fontWeight: 700 }}
                     />
@@ -1018,7 +1048,11 @@ export default function UserProfilePage() {
                     }}
                   >
                     <Statistic
-                      title={<span style={{ color: isDarkMode ? '#fb923c' : '#c2410c' }}>CSTĐ Toàn quân</span>}
+                      title={
+                        <span style={{ color: isDarkMode ? '#fb923c' : '#c2410c' }}>
+                          CSTĐ Toàn quân
+                        </span>
+                      }
                       value={annualRewards.filter((r: any) => r.nhan_cstdtq).length}
                       valueStyle={{ color: isDarkMode ? '#fb923c' : '#ea580c', fontWeight: 700 }}
                     />
@@ -1084,23 +1118,31 @@ export default function UserProfilePage() {
                                   text: 'Chiến sĩ thi đua cơ sở',
                                   icon: <StarOutlined />,
                                   color: isDarkMode ? '#34d399' : '#059669',
-                                  bgColor: isDarkMode ? 'rgba(52, 211, 153, 0.1)' : 'rgba(5, 150, 105, 0.1)',
+                                  bgColor: isDarkMode
+                                    ? 'rgba(52, 211, 153, 0.1)'
+                                    : 'rgba(5, 150, 105, 0.1)',
                                   borderColor: isDarkMode ? '#10b981' : '#059669',
                                 },
                                 CSTT: {
                                   text: 'Chiến sĩ tiên tiến',
                                   icon: <FireOutlined />,
                                   color: isDarkMode ? '#60a5fa' : '#2563eb',
-                                  bgColor: isDarkMode ? 'rgba(96, 165, 250, 0.1)' : 'rgba(37, 99, 235, 0.1)',
+                                  bgColor: isDarkMode
+                                    ? 'rgba(96, 165, 250, 0.1)'
+                                    : 'rgba(37, 99, 235, 0.1)',
                                   borderColor: isDarkMode ? '#3b82f6' : '#2563eb',
                                 },
                               };
 
-                              const config = danhHieuConfig[reward.danh_hieu as keyof typeof danhHieuConfig] || {
+                              const config = danhHieuConfig[
+                                reward.danh_hieu as keyof typeof danhHieuConfig
+                              ] || {
                                 text: reward.danh_hieu,
                                 icon: <TrophyOutlined />,
                                 color: isDarkMode ? '#9ca3af' : '#6b7280',
-                                bgColor: isDarkMode ? 'rgba(156, 163, 175, 0.1)' : 'rgba(107, 114, 128, 0.1)',
+                                bgColor: isDarkMode
+                                  ? 'rgba(156, 163, 175, 0.1)'
+                                  : 'rgba(107, 114, 128, 0.1)',
                                 borderColor: isDarkMode ? '#6b7280' : '#9ca3af',
                               };
 
@@ -1130,7 +1172,13 @@ export default function UserProfilePage() {
                                       {config.text}
                                     </div>
                                     {reward.so_quyet_dinh && reward.so_quyet_dinh.trim() !== '' && (
-                                      <div className="flex items-center gap-1.5 mt-1" style={{ color: isDarkMode ? '#9ca3af' : '#6b7280', fontSize: '13px' }}>
+                                      <div
+                                        className="flex items-center gap-1.5 mt-1"
+                                        style={{
+                                          color: isDarkMode ? '#9ca3af' : '#6b7280',
+                                          fontSize: '13px',
+                                        }}
+                                      >
                                         <FileTextOutlined style={{ fontSize: '12px' }} />
                                         <span>Số QĐ: </span>
                                         <a
@@ -1152,13 +1200,19 @@ export default function UserProfilePage() {
                             }
 
                             // Bằng khen BQP
-                            if (reward.nhan_bkbqp && reward.so_quyet_dinh_bkbqp && reward.so_quyet_dinh_bkbqp.trim() !== '') {
+                            if (
+                              reward.nhan_bkbqp &&
+                              reward.so_quyet_dinh_bkbqp &&
+                              reward.so_quyet_dinh_bkbqp.trim() !== ''
+                            ) {
                               items.push(
                                 <div
                                   key={`${reward.id}-bkbqp`}
                                   className="flex items-start gap-3 p-3 rounded-lg transition-all hover:scale-[1.01]"
                                   style={{
-                                    background: isDarkMode ? 'rgba(251, 191, 36, 0.1)' : 'rgba(217, 119, 6, 0.1)',
+                                    background: isDarkMode
+                                      ? 'rgba(251, 191, 36, 0.1)'
+                                      : 'rgba(217, 119, 6, 0.1)',
                                     border: `1px solid ${isDarkMode ? '#f59e0b' : '#d97706'}`,
                                   }}
                                 >
@@ -1178,7 +1232,13 @@ export default function UserProfilePage() {
                                     >
                                       Bằng khen của Bộ trưởng Bộ Quốc phòng
                                     </div>
-                                    <div className="flex items-center gap-1.5 mt-1" style={{ color: isDarkMode ? '#9ca3af' : '#6b7280', fontSize: '13px' }}>
+                                    <div
+                                      className="flex items-center gap-1.5 mt-1"
+                                      style={{
+                                        color: isDarkMode ? '#9ca3af' : '#6b7280',
+                                        fontSize: '13px',
+                                      }}
+                                    >
                                       <FileTextOutlined style={{ fontSize: '12px' }} />
                                       <span>Số QĐ: </span>
                                       <a
@@ -1199,13 +1259,19 @@ export default function UserProfilePage() {
                             }
 
                             // CSTĐ Toàn quân
-                            if (reward.nhan_cstdtq && reward.so_quyet_dinh_cstdtq && reward.so_quyet_dinh_cstdtq.trim() !== '') {
+                            if (
+                              reward.nhan_cstdtq &&
+                              reward.so_quyet_dinh_cstdtq &&
+                              reward.so_quyet_dinh_cstdtq.trim() !== ''
+                            ) {
                               items.push(
                                 <div
                                   key={`${reward.id}-cstdtq`}
                                   className="flex items-start gap-3 p-3 rounded-lg transition-all hover:scale-[1.01]"
                                   style={{
-                                    background: isDarkMode ? 'rgba(251, 146, 60, 0.1)' : 'rgba(234, 88, 12, 0.1)',
+                                    background: isDarkMode
+                                      ? 'rgba(251, 146, 60, 0.1)'
+                                      : 'rgba(234, 88, 12, 0.1)',
                                     border: `1px solid ${isDarkMode ? '#fb923c' : '#ea580c'}`,
                                   }}
                                 >
@@ -1225,7 +1291,13 @@ export default function UserProfilePage() {
                                     >
                                       Chiến sĩ thi đua Toàn quân
                                     </div>
-                                    <div className="flex items-center gap-1.5 mt-1" style={{ color: isDarkMode ? '#9ca3af' : '#6b7280', fontSize: '13px' }}>
+                                    <div
+                                      className="flex items-center gap-1.5 mt-1"
+                                      style={{
+                                        color: isDarkMode ? '#9ca3af' : '#6b7280',
+                                        fontSize: '13px',
+                                      }}
+                                    >
                                       <FileTextOutlined style={{ fontSize: '12px' }} />
                                       <span>Số QĐ: </span>
                                       <a

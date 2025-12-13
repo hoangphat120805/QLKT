@@ -52,6 +52,8 @@ class AnnualRewardService {
         so_quyet_dinh_bkbqp,
         nhan_cstdtq,
         so_quyet_dinh_cstdtq,
+        nhan_bkttcp,
+        so_quyet_dinh_bkttcp,
       } = data;
 
       // Kiểm tra quân nhân có tồn tại không
@@ -98,6 +100,8 @@ class AnnualRewardService {
           so_quyet_dinh_bkbqp: so_quyet_dinh_bkbqp || null,
           nhan_cstdtq: nhan_cstdtq || false,
           so_quyet_dinh_cstdtq: so_quyet_dinh_cstdtq || null,
+          nhan_bkttcp: nhan_bkttcp || false,
+          so_quyet_dinh_bkttcp: so_quyet_dinh_bkttcp || null,
         },
       });
 
@@ -133,6 +137,8 @@ class AnnualRewardService {
         so_quyet_dinh_bkbqp,
         nhan_cstdtq,
         so_quyet_dinh_cstdtq,
+        nhan_bkttcp,
+        so_quyet_dinh_bkttcp,
       } = data;
 
       // Kiểm tra bản ghi có tồn tại không
@@ -171,6 +177,9 @@ class AnnualRewardService {
           nhan_cstdtq: nhan_cstdtq !== undefined ? nhan_cstdtq : reward.nhan_cstdtq,
           so_quyet_dinh_cstdtq:
             so_quyet_dinh_cstdtq !== undefined ? so_quyet_dinh_cstdtq : reward.so_quyet_dinh_cstdtq,
+          nhan_bkttcp: nhan_bkttcp !== undefined ? nhan_bkttcp : reward.nhan_bkttcp,
+          so_quyet_dinh_bkttcp:
+            so_quyet_dinh_bkttcp !== undefined ? so_quyet_dinh_bkttcp : reward.so_quyet_dinh_bkttcp,
         },
       });
 
@@ -467,6 +476,7 @@ class AnnualRewardService {
               ghi_chu: ghi_chu || null,
               nhan_bkbqp: false,
               nhan_cstdtq: false,
+              nhan_bkttcp: false,
             },
           });
           created.push(createdReward.id);
@@ -598,6 +608,8 @@ class AnnualRewardService {
               so_quyet_dinh_bkbqp: null,
               nhan_cstdtq: false,
               so_quyet_dinh_cstdtq: null,
+              nhan_bkttcp: false,
+              so_quyet_dinh_bkttcp: null,
             },
           });
 

@@ -58,6 +58,8 @@ interface DanhHieuItem {
   so_quyet_dinh_bkbqp?: string | null;
   nhan_cstdtq?: boolean;
   so_quyet_dinh_cstdtq?: string | null;
+  nhan_bkttcp?: boolean;
+  so_quyet_dinh_bkttcp?: string | null;
   file_quyet_dinh?: string | null;
   file_quyet_dinh_bkbqp?: string | null;
   file_quyet_dinh_cstdtq?: string | null;
@@ -585,6 +587,10 @@ export default function ProposalDetailPage() {
             loaiKhenThuong.includes('CSTDTQ') ||
             soQuyetDinh.toLowerCase().includes('cstdtq') ||
             soQuyetDinh.toLowerCase().includes('chiến sĩ thi đua toàn quân');
+          const isBKTTCP =
+            loaiKhenThuong.includes('BKTTCP') ||
+            soQuyetDinh.toLowerCase().includes('bkttcp') ||
+            soQuyetDinh.toLowerCase().includes('bằng khen toàn quân phổ thông');
 
           // Nếu là quyết định BKBQP hoặc CSTDTQ, lưu vào trường tương ứng
           if (isBKBQP) {
@@ -602,6 +608,15 @@ export default function ProposalDetailPage() {
               nhan_cstdtq: true,
               so_quyet_dinh_cstdtq: decision.so_quyet_dinh,
               file_quyet_dinh_cstdtq: decision.file_path || null,
+              so_quyet_dinh: item.so_quyet_dinh || null,
+              file_quyet_dinh: item.file_quyet_dinh || null,
+            };
+          } else if (isBKTTCP) {
+            return {
+              ...item,
+              nhan_bkttcp: true,
+              so_quyet_dinh_bkttcp: decision.so_quyet_dinh,
+              file_quyet_dinh_bkttcp: decision.file_path || null,
               so_quyet_dinh: item.so_quyet_dinh || null,
               file_quyet_dinh: item.file_quyet_dinh || null,
             };

@@ -349,6 +349,18 @@ export default function AwardDetailModal({
                     </Descriptions.Item>
                   </>
                 )}
+                {award.nhan_bkttcp && (
+                  <>
+                    <Descriptions.Item label="BKTTCP" span={2}>
+                      <Tag color="cyan">Đã nhận</Tag>
+                      {award.so_quyet_dinh_bkttcp && (
+                        <Text type="secondary" style={{ marginLeft: 8 }}>
+                          QĐ: {award.so_quyet_dinh_bkttcp}
+                        </Text>
+                      )}
+                    </Descriptions.Item>
+                  </>
+                )}
               </Descriptions>
             </Card>
             {renderAllFiles()}

@@ -49,6 +49,8 @@ interface Award {
   so_quyet_dinh_bkbqp?: string | null;
   nhan_cstdtq?: boolean;
   so_quyet_dinh_cstdtq?: string | null;
+  nhan_bkttcp?: boolean;
+  so_quyet_dinh_bkttcp?: string | null;
   mo_ta?: string;
   ten_de_tai?: string;
 }
@@ -378,8 +380,11 @@ export default function AdminAwardsPage() {
             const isCSTDTQ =
               danhHieuFilter === 'CSTDTQ' &&
               (record.nhan_cstdtq === true);
+            const isBKTTCP =
+              danhHieuFilter === 'BKTTCP' &&
+              (record.nhan_bkttcp === true);
 
-            if (!isBKBQP && !isCSTDTQ && record.danh_hieu !== danhHieuFilter) {
+            if (!isBKBQP && !isCSTDTQ && !isBKTTCP && record.danh_hieu !== danhHieuFilter) {
               return false;
             }
           } else if (record.danh_hieu !== danhHieuFilter) {

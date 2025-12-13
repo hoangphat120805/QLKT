@@ -52,6 +52,8 @@ interface DanhHieuItem {
   file_quyet_dinh_bkbqp?: string | null;
   nhan_cstdtq?: boolean;
   so_quyet_dinh_cstdtq?: string | null;
+  nhan_bkttcp?: boolean;
+  so_quyet_dinh_bkttcp?: string | null;
   file_quyet_dinh_cstdtq?: string | null;
   co_quan_don_vi?: {
     id: string;
