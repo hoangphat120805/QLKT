@@ -166,13 +166,10 @@ class UnitAnnualAwardService {
         nam: true,
         danh_hieu: true,
         so_quyet_dinh: true,
-        file_quyet_dinh: true,
         nhan_bkbqp: true,
         nhan_bkttcp: true,
         so_quyet_dinh_bkbqp: true,
-        file_quyet_dinh_bkbqp: true,
         so_quyet_dinh_bkttcp: true,
-        file_quyet_dinh_bkttcp: true,
       },
     });
 
@@ -187,13 +184,10 @@ class UnitAnnualAwardService {
         nam: r.nam,
         danh_hieu: r.danh_hieu,
         so_quyet_dinh: r.so_quyet_dinh || null,
-        file_quyet_dinh: r.file_quyet_dinh || null,
         nhan_bkbqp: r.nhan_bkbqp || false,
         nhan_bkttcp: r.nhan_bkttcp || false,
         so_quyet_dinh_bkbqp: r.so_quyet_dinh_bkbqp || null,
-        file_quyet_dinh_bkbqp: r.file_quyet_dinh_bkbqp || null,
         so_quyet_dinh_bkttcp: r.so_quyet_dinh_bkttcp || null,
-        file_quyet_dinh_bkttcp: r.file_quyet_dinh_bkttcp || null,
       })),
     };
   }
@@ -240,7 +234,6 @@ class UnitAnnualAwardService {
       update: {
         danh_hieu: danh_hieu || null,
         so_quyet_dinh: so_quyet_dinh || null,
-        file_quyet_dinh: file_quyet_dinh || null,
         ghi_chu: ghi_chu || null,
         status: 'APPROVED',
       },
@@ -250,7 +243,6 @@ class UnitAnnualAwardService {
         nam: year,
         danh_hieu: danh_hieu || null,
         so_quyet_dinh: so_quyet_dinh || null,
-        file_quyet_dinh: file_quyet_dinh || null,
         ghi_chu: ghi_chu || null,
         nguoi_tao_id: nguoi_tao_id,
         status: 'APPROVED',
