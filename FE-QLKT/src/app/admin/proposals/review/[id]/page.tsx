@@ -513,21 +513,21 @@ export default function ProposalDetailPage() {
               loaiDeXuat === 'HC_QKQT' ||
               loaiDeXuat === 'KNC_VSNXD_QDNDVN'
             ) {
-              successMessage += `Đã thêm ${importedNienHan}/${totalNienHan} niên hạn thành công.`;
+              successMessage += `Đã thêm ${importedNienHan}/${totalNienHan} khen thưởng niên hạn thành công.`;
             } else if (loaiDeXuat === 'CONG_HIEN') {
-              successMessage += `Đã thêm ${importedDanhHieu}/${totalDanhHieu} cống hiến thành công.`;
+              successMessage += `Đã thêm ${importedDanhHieu}/${totalDanhHieu} khen thưởng cống hiến thành công.`;
             } else if (loaiDeXuat === 'NCKH') {
-              successMessage += `Đã thêm ${importedThanhTich}/${totalThanhTich} thành tích khoa học thành công.`;
+              successMessage += `Đã thêm ${importedThanhTich}/${totalThanhTich} thành tích nghiên cứu khoa học thành công.`;
             } else if (loaiDeXuat === 'DON_VI_HANG_NAM') {
-              successMessage += `Đã thêm ${importedDanhHieu}/${totalDanhHieu} danh hiệu đơn vị thành công.`;
+              successMessage += `Đã thêm ${importedDanhHieu}/${totalDanhHieu} khen thưởng đơn vị thành công.`;
             } else {
               // CA_NHAN_HANG_NAM hoặc các loại khác
               if (importedDanhHieu > 0 && importedThanhTich > 0) {
-                successMessage += `Đã thêm ${importedDanhHieu}/${totalDanhHieu} danh hiệu và ${importedThanhTich}/${totalThanhTich} thành tích thành công.`;
+                successMessage += `Đã thêm ${importedDanhHieu}/${totalDanhHieu} danh hiệu và ${importedThanhTich}/${totalThanhTich} thành tích nghiên cứu khoa học thành công.`;
               } else if (importedDanhHieu > 0) {
                 successMessage += `Đã thêm ${importedDanhHieu}/${totalDanhHieu} danh hiệu thành công.`;
               } else if (importedThanhTich > 0) {
-                successMessage += `Đã thêm ${importedThanhTich}/${totalThanhTich} thành tích thành công.`;
+                successMessage += `Đã thêm ${importedThanhTich}/${totalThanhTich} thành tích nghiên cứu khoa học thành công.`;
               }
             }
 
