@@ -302,10 +302,7 @@ class NotificationHelper {
           where: {
             role: 'MANAGER',
             QuanNhan: {
-              OR: [
-                { co_quan_don_vi_id: donViId },
-                { don_vi_truc_thuoc_id: donViId },
-              ],
+              OR: [{ co_quan_don_vi_id: donViId }, { don_vi_truc_thuoc_id: donViId }],
             },
           },
           select: {
@@ -320,7 +317,9 @@ class NotificationHelper {
             recipient_role: manager.role,
             type: NOTIFICATION_TYPES.AWARD_DELETED,
             title: 'Khen thưởng đã bị xóa',
-            message: `${adminUsername} đã xóa ${awardTypeName}${danhHieu ? ` (${danhHieu})` : ''}${nam ? ` năm ${nam}` : ''} của quân nhân ${personnel.ho_ten}`,
+            message: `${adminUsername} đã xóa ${awardTypeName}${danhHieu ? ` (${danhHieu})` : ''}${
+              nam ? ` năm ${nam}` : ''
+            } của quân nhân ${personnel.ho_ten}`,
             resource: RESOURCE_TYPES.AWARDS,
             tai_nguyen_id: personnel.id,
             link: `/manager/personnel/${personnel.id}`,
@@ -345,7 +344,9 @@ class NotificationHelper {
           recipient_role: personnelAccount.role,
           type: NOTIFICATION_TYPES.AWARD_DELETED,
           title: 'Khen thưởng của bạn đã bị xóa',
-          message: `${awardTypeName}${danhHieu ? ` (${danhHieu})` : ''}${nam ? ` năm ${nam}` : ''} của bạn đã bị ${adminUsername} xóa khỏi hệ thống`,
+          message: `${awardTypeName}${danhHieu ? ` (${danhHieu})` : ''}${
+            nam ? ` năm ${nam}` : ''
+          } của bạn đã bị ${adminUsername} xóa khỏi hệ thống`,
           resource: RESOURCE_TYPES.AWARDS,
           tai_nguyen_id: personnel.id,
           link: `/user/profile`,
@@ -363,6 +364,65 @@ class NotificationHelper {
     } catch (error) {
       console.error('Error sending award deleted notifications:', error);
       // Không throw error để không ảnh hưởng đến việc xóa khen thưởng
+      return 0;
+    }
+  }
+
+  /**
+   * Gửi thông báo cho user nhận khen thưởng khi đề xuất được duyệt
+   * -> Quân nhân nhận khen thưởng (nếu có tài khoản) nhận thông báo
+   * @param {Array} personnelIds - Danh sách ID quân nhân nhận khen thưởng
+   * @param {Object} proposal - Thông tin đề xuất
+   * @param {string} approverUsername - Username của admin duyệt
+   */
+  async notifyUsersOnAwardApproved(personnelIds, proposal, approverUsername) {
+    try {
+      if (!personnelIds || personnelIds.length === 0) {
+        return 0;
+      }
+
+      const proposalTypeName = formatProposalType(proposal.loai_de_xuat);
+      const notifications = [];
+
+      // Lấy thông tin tài khoản của các quân nhân
+      const accounts = await prisma.taiKhoan.findMany({
+        where: {
+          quan_nhan_id: {
+            in: personnelIds,
+          },
+        },
+        select: {
+          id: true,
+          role: true,
+          quan_nhan_id: true,
+        },
+      });
+
+      // Tạo thông báo cho từng user
+      for (const account of accounts) {
+        notifications.push({
+          nguoi_nhan_id: account.id,
+          recipient_role: account.role,
+          type: NOTIFICATION_TYPES.AWARD_ADDED,
+          title: 'Bạn đã nhận khen thưởng',
+          message: `${proposalTypeName} của bạn đã được ${approverUsername} phê duyệt và thêm vào hệ thống`,
+          resource: RESOURCE_TYPES.PROPOSALS,
+          tai_nguyen_id: proposal.id,
+          link: `/user/dashboard`,
+        });
+      }
+
+      // Tạo thông báo
+      if (notifications.length > 0) {
+        await prisma.thongBao.createMany({
+          data: notifications,
+        });
+      }
+
+      return notifications.length;
+    } catch (error) {
+      console.error('Error sending award approval notifications to users:', error);
+      // Không throw error để không ảnh hưởng đến quá trình approve
       return 0;
     }
   }

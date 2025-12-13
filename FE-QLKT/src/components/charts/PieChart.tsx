@@ -47,6 +47,24 @@ export function PieChart({
   const options = {
     responsive: true,
     maintainAspectRatio: false,
+    animation: {
+      animateRotate: true,
+      animateScale: true,
+      duration: 1500,
+      easing: 'easeOutQuart' as const,
+    },
+    transitions: {
+      show: {
+        animation: {
+          duration: 500,
+        },
+      },
+      hide: {
+        animation: {
+          duration: 500,
+        },
+      },
+    },
     plugins: {
       legend: {
         position: 'bottom' as const,
@@ -56,6 +74,9 @@ export function PieChart({
           font: {
             size: 12,
           },
+        },
+        animation: {
+          animate: true,
         },
       },
       title: {
@@ -68,6 +89,12 @@ export function PieChart({
         },
         padding: {
           bottom: 10,
+        },
+      },
+      tooltip: {
+        enabled: true,
+        animation: {
+          animate: true,
         },
       },
     },

@@ -30,12 +30,18 @@ import {
   RocketOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
+  HeartOutlined,
+  ReloadOutlined,
+  BulbOutlined,
+  ExperimentOutlined,
 } from '@ant-design/icons';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { apiClient } from '@/lib/api-client';
 import { formatDate, formatDateTime } from '@/lib/utils';
 import { useTheme } from '@/components/theme-provider';
+import '@/lib/chart-config';
+import { PieChart } from '@/components/charts';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -46,6 +52,7 @@ export default function UserDashboard() {
   const [annualProfile, setAnnualProfile] = useState<any>(null);
   const [serviceProfile, setServiceProfile] = useState<any>(null);
   const [contributionProfile, setContributionProfile] = useState<any>(null);
+  const [annualRewards, setAnnualRewards] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -92,6 +99,12 @@ export default function UserDashboard() {
         if (contributionRes.success) {
           setContributionProfile(contributionRes.data);
         }
+
+        // Lấy danh sách danh hiệu đã nhận
+        const rewardsRes = await apiClient.getAnnualRewardsByPersonnel(user.quan_nhan_id);
+        if (rewardsRes.success) {
+          setAnnualRewards(rewardsRes.data || []);
+        }
       } catch (err: any) {
         console.error('Error fetching profiles:', err);
         setError(err.message || 'Không thể tải hồ sơ. Vui lòng thử lại.');
@@ -113,17 +126,18 @@ export default function UserDashboard() {
     return diffYears;
   };
 
-  // callculate service month when the years are calculated
+  // Calculate total service months
   const calculateServiceMonths = () => {
     if (!personnelInfo?.ngay_nhap_ngu) return 0;
     const startDate = new Date(personnelInfo.ngay_nhap_ngu);
-    const today = new Date();
-    let months;
-    months = (today.getFullYear() - startDate.getFullYear()) * 12;
-    months -= startDate.getMonth();
-    months += today.getMonth();
-    months = months % 12;
-    return months;
+    const endDate = personnelInfo?.ngay_xuat_ngu ? new Date(personnelInfo.ngay_xuat_ngu) : new Date();
+    
+    let months = (endDate.getFullYear() - startDate.getFullYear()) * 12;
+    months += endDate.getMonth() - startDate.getMonth();
+    if (endDate.getDate() < startDate.getDate()) {
+      months--;
+    }
+    return Math.max(0, months);
   };
 
   const serviceYears = calculateServiceYears();
@@ -278,7 +292,7 @@ export default function UserDashboard() {
                         : '0 1px 3px rgba(59, 130, 246, 0.2)',
                   }}
               >
-                  <StarOutlined
+                  <TrophyOutlined
                     style={{
                       fontSize: '26px',
                       color: theme === 'dark' ? '#60a5fa' : '#2563eb',
@@ -338,7 +352,7 @@ export default function UserDashboard() {
                         : '0 1px 3px rgba(16, 185, 129, 0.2)',
                   }}
                 >
-                  <RocketOutlined
+                  <ExperimentOutlined
                     style={{
                       fontSize: '26px',
                       color: theme === 'dark' ? '#34d399' : '#059669',
@@ -428,12 +442,12 @@ export default function UserDashboard() {
                       lineHeight: '1.1',
                     }}
                   >
-                    {annualProfile?.cstdcs_lien_tuc || 0}
+                    {annualProfile?.cstdcs_lien_tuc || 0}{' '}
                     <span
                       style={{
-                        fontSize: '16px',
-                        fontWeight: 'normal',
-                        color: theme === 'dark' ? '#9ca3af' : '#6b7280',
+                        fontSize: '24px',
+                        fontWeight: 'bold',
+                        color: theme === 'dark' ? '#e5e7eb' : '#0f172a',
                         marginLeft: '4px',
                       }}
                     >
@@ -488,7 +502,7 @@ export default function UserDashboard() {
                       color: theme === 'dark' ? '#cbd5e1' : '#475569',
                     }}
                   >
-                      Tháng cống hiến
+                    Tháng cống hiến
                   </Text>
                   <div
                     style={{
@@ -498,16 +512,7 @@ export default function UserDashboard() {
                       lineHeight: '1.2',
                     }}
                   >
-                    <div>{serviceYears} năm</div>
-                    <div
-                      style={{
-                        fontSize: '16px',
-                        fontWeight: 'normal',
-                        color: theme === 'dark' ? '#9ca3af' : '#6b7280',
-                      }}
-                    >
-                      {serviceMonths} tháng
-                    </div>
+                    {serviceMonths} tháng
                   </div>
                 </div>
               </div>
@@ -527,32 +532,37 @@ export default function UserDashboard() {
             >
               <Descriptions bordered column={{ xs: 1, sm: 2, md: 3 }} size="middle">
                 <Descriptions.Item label="Họ tên" labelStyle={{ fontWeight: 500 }}>
-                  <Text strong>{personnelInfo.ho_ten}</Text>
+                  <Text strong>{personnelInfo.ho_ten || 'Chưa có dữ liệu'}</Text>
                 </Descriptions.Item>
                 <Descriptions.Item label="CCCD" labelStyle={{ fontWeight: 500 }}>
-                  {personnelInfo.cccd}
+                  {personnelInfo.cccd || 'Chưa có dữ liệu'}
                 </Descriptions.Item>
                 <Descriptions.Item label="Ngày sinh" labelStyle={{ fontWeight: 500 }}>
-                  {personnelInfo.ngay_sinh ? formatDate(personnelInfo.ngay_sinh) : 'N/A'}
+                  {personnelInfo.ngay_sinh ? formatDate(personnelInfo.ngay_sinh) : 'Chưa có dữ liệu'}
+                </Descriptions.Item>
+                <Descriptions.Item label="Giới tính" labelStyle={{ fontWeight: 500 }}>
+                  {personnelInfo.gioi_tinh === 'NAM'
+                    ? 'Nam'
+                    : personnelInfo.gioi_tinh === 'NU'
+                    ? 'Nữ'
+                    : 'Chưa có dữ liệu'}
                 </Descriptions.Item>
                 <Descriptions.Item label="Đơn vị" labelStyle={{ fontWeight: 500 }}>
-                  <Badge
-                    color="blue"
-                    text={
-                      personnelInfo.DonViTrucThuoc?.ten_don_vi ||
-                      personnelInfo.CoQuanDonVi?.ten_don_vi ||
-                      'N/A'
-                    }
-                  />
+                  {personnelInfo.DonViTrucThuoc?.ten_don_vi ||
+                    personnelInfo.CoQuanDonVi?.ten_don_vi ||
+                    'Chưa có dữ liệu'}
                 </Descriptions.Item>
                 <Descriptions.Item label="Cấp bậc" labelStyle={{ fontWeight: 500 }}>
-                  <Badge color="purple" text={personnelInfo.cap_bac || 'N/A'} />
+                  {personnelInfo.cap_bac || 'Chưa có dữ liệu'}
                 </Descriptions.Item>
                 <Descriptions.Item label="Chức vụ" labelStyle={{ fontWeight: 500 }}>
-                  <Badge color="green" text={personnelInfo.ChucVu?.ten_chuc_vu || 'N/A'} />
+                  {personnelInfo.ChucVu?.ten_chuc_vu || 'Chưa có dữ liệu'}
                 </Descriptions.Item>
                 <Descriptions.Item label="Ngày nhập ngũ" labelStyle={{ fontWeight: 500 }}>
-                  {personnelInfo.ngay_nhap_ngu ? formatDate(personnelInfo.ngay_nhap_ngu) : 'N/A'}
+                  {personnelInfo.ngay_nhap_ngu ? formatDate(personnelInfo.ngay_nhap_ngu) : 'Chưa có dữ liệu'}
+                </Descriptions.Item>
+                <Descriptions.Item label="Ngày xuất ngũ" labelStyle={{ fontWeight: 500 }}>
+                  {personnelInfo.ngay_xuat_ngu ? formatDate(personnelInfo.ngay_xuat_ngu) : 'Chưa có dữ liệu'}
                 </Descriptions.Item>
               </Descriptions>
             </Card>
@@ -565,7 +575,7 @@ export default function UserDashboard() {
               <Card
                 title={
                   <Space>
-                    <TrophyOutlined className="text-orange-600" />
+                    <TrophyOutlined className="text-blue-600" />
                     <span className="font-semibold">Hồ sơ Khen thưởng Hằng năm</span>
                   </Space>
                 }
@@ -579,7 +589,7 @@ export default function UserDashboard() {
                         description={annualProfile.goi_y}
                         type="info"
                         showIcon
-                        icon={<RocketOutlined />}
+                        icon={<BulbOutlined />}
                         className={
                           theme === 'dark'
                             ? 'border-blue-700 bg-blue-900/30'
@@ -590,59 +600,90 @@ export default function UserDashboard() {
 
                     <Divider orientation="left" className="!my-4">
                       <Text strong className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>
-                        Tiến độ đạt được
+                        Tổng các danh hiệu đã nhận
                       </Text>
                     </Divider>
 
-                    {/* Progress for BKBQP */}
-                    <div>
-                      <div className="flex justify-between items-center mb-2">
-                        <Text strong>Bằng khen BQP</Text>
-                        <Badge
-                          status={annualProfile.du_dieu_kien_bkbqp ? 'success' : 'default'}
-                          text={annualProfile.du_dieu_kien_bkbqp ? 'Đủ điều kiện' : 'Chưa đủ'}
-                        />
-                      </div>
-                      <Progress
-                        percent={
-                          annualProfile.du_dieu_kien_bkbqp
-                            ? 100
-                            : Math.min((annualProfile.cstdcs_lien_tuc / 2) * 100, 100)
-                        }
-                        status={annualProfile.du_dieu_kien_bkbqp ? 'success' : 'active'}
-                        strokeColor={annualProfile.du_dieu_kien_bkbqp ? '#52c41a' : '#1890ff'}
-                        format={percent => `${annualProfile.cstdcs_lien_tuc || 0}/2 năm`}
-                      />
-                      <Text type="secondary" className="text-xs">
-                        Yêu cầu: 2 năm CSTDCS liên tục + 1 NCKH trong 2 năm đó (NCKH hiện có:{' '}
-                        {annualProfile.tong_nckh || 0})
-                      </Text>
-                    </div>
+                    {/* Biểu đồ tổng các danh hiệu đã nhận */}
+                    {(() => {
+                      // Tính toán số lượng từng loại danh hiệu
+                      const danhHieuCounts: Record<string, number> = {
+                        CSTDCS: 0,
+                        CSTT: 0,
+                        BKBQP: 0,
+                        CSTDTQ: 0,
+                      };
 
-                    {/* Progress for CSTDTQ */}
-                    <div>
-                      <div className="flex justify-between items-center mb-2">
-                        <Text strong>CSTĐ Toàn quân</Text>
-                        <Badge
-                          status={annualProfile.du_dieu_kien_cstdtq ? 'success' : 'default'}
-                          text={annualProfile.du_dieu_kien_cstdtq ? 'Đủ điều kiện' : 'Chưa đủ'}
-                        />
-                      </div>
-                      <Progress
-                        percent={
-                          annualProfile.du_dieu_kien_cstdtq
-                            ? 100
-                            : Math.min((annualProfile.cstdcs_lien_tuc / 3) * 100, 100)
+                      annualRewards.forEach((reward: any) => {
+                        const danhHieu = reward.danh_hieu;
+                        if (danhHieu && danhHieuCounts.hasOwnProperty(danhHieu)) {
+                          danhHieuCounts[danhHieu]++;
                         }
-                        status={annualProfile.du_dieu_kien_cstdtq ? 'success' : 'active'}
-                        strokeColor={annualProfile.du_dieu_kien_cstdtq ? '#52c41a' : '#faad14'}
-                        format={percent => `${annualProfile.cstdcs_lien_tuc || 0}/3 năm`}
-                      />
-                      <Text type="secondary" className="text-xs">
-                        Yêu cầu: 3 năm CSTDCS liên tục + 1 NCKH năm thứ 3 + 1 NCKH năm 1 hoặc 2
-                        (NCKH hiện có: {annualProfile.tong_nckh || 0})
-                      </Text>
-                    </div>
+                      });
+
+                      // Tính tổng NCKH
+                      const tongNCKH = Array.isArray(annualProfile?.tong_nckh)
+                        ? annualProfile.tong_nckh.length
+                        : annualProfile?.tong_nckh || 0;
+
+                      const chartData = [
+                        {
+                          label: 'Chiến sĩ thi đua cơ sở (CSTDCS)',
+                          value: danhHieuCounts.CSTDCS,
+                        },
+                        {
+                          label: 'Chiến sĩ tiên tiến (CSTT)',
+                          value: danhHieuCounts.CSTT,
+                        },
+                        {
+                          label: 'Bằng khen BQP (BKBQP)',
+                          value: danhHieuCounts.BKBQP,
+                        },
+                        {
+                          label: 'Chiến sĩ thi đua toàn quân (CSTDTQ)',
+                          value: danhHieuCounts.CSTDTQ,
+                        },
+                        {
+                          label: 'Thành tích khoa học (NCKH)',
+                          value: tongNCKH,
+                        },
+                      ].filter(item => item.value > 0);
+
+                      const total = chartData.reduce((sum, item) => sum + item.value, 0);
+
+                      if (total === 0) {
+                        return (
+                          <Alert
+                            message="Chưa có danh hiệu nào"
+                            description="Bạn chưa nhận được danh hiệu nào. Hãy tiếp tục phấn đấu!"
+                            type="info"
+                            showIcon
+                          />
+                        );
+                      }
+
+                      return (
+                        <div>
+                          <PieChart
+                            data={chartData}
+                            title="Tổng các danh hiệu đã nhận"
+                            height={280}
+                            colors={[
+                              'rgba(59, 130, 246, 0.8)',
+                              'rgba(34, 197, 94, 0.8)',
+                              'rgba(249, 115, 22, 0.8)',
+                              'rgba(147, 51, 234, 0.8)',
+                              'rgba(236, 72, 153, 0.8)',
+                            ]}
+                          />
+                          <div className="mt-4 text-center">
+                            <Text type="secondary" className="text-sm">
+                              Tổng số danh hiệu/thành tích đã nhận: <Text strong>{total}</Text>
+                            </Text>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </Space>
                 ) : (
                   <Alert message="Chưa có dữ liệu hồ sơ hằng năm" type="warning" showIcon />
@@ -687,7 +728,7 @@ export default function UserDashboard() {
                     {/* HCCSVV - Hạng Ba */}
                     <div>
                       <div className="flex justify-between items-center mb-2">
-                        <Text strong>Hạng Ba (10 năm)</Text>
+                        <Text strong>Hạng Ba (120 tháng)</Text>
                         <Badge
                           status={
                             serviceProfile.hccsvv_hang_ba_status === 'DA_NHAN'
@@ -706,15 +747,15 @@ export default function UserDashboard() {
                         />
                       </div>
                       <Progress
-                        {...getProgressData(serviceProfile.hccsvv_hang_ba_status, serviceYears, 10)}
-                        format={() => `${serviceYears}/10 năm`}
+                        {...getProgressData(serviceProfile.hccsvv_hang_ba_status, serviceMonths, 120)}
+                        format={() => `${serviceMonths}/120 tháng`}
                       />
                     </div>
 
                     {/* HCCSVV - Hạng Nhì */}
                     <div>
                       <div className="flex justify-between items-center mb-2">
-                        <Text strong>Hạng Nhì (15 năm)</Text>
+                        <Text strong>Hạng Nhì (180 tháng)</Text>
                         <Badge
                           status={
                             serviceProfile.hccsvv_hang_nhi_status === 'DA_NHAN'
@@ -735,17 +776,17 @@ export default function UserDashboard() {
                       <Progress
                         {...getProgressData(
                           serviceProfile.hccsvv_hang_nhi_status,
-                          serviceYears,
-                          15
+                          serviceMonths,
+                          180
                         )}
-                        format={() => `${serviceYears}/15 năm`}
+                        format={() => `${serviceMonths}/180 tháng`}
                       />
                     </div>
 
                     {/* HCCSVV - Hạng Nhất */}
                     <div>
                       <div className="flex justify-between items-center mb-2">
-                        <Text strong>Hạng Nhất (20 năm)</Text>
+                        <Text strong>Hạng Nhất (240 tháng)</Text>
                         <Badge
                           status={
                             serviceProfile.hccsvv_hang_nhat_status === 'DA_NHAN'
@@ -766,12 +807,48 @@ export default function UserDashboard() {
                       <Progress
                         {...getProgressData(
                           serviceProfile.hccsvv_hang_nhat_status,
-                          serviceYears,
-                          20
+                          serviceMonths,
+                          240
                         )}
-                        format={() => `${serviceYears}/20 năm`}
+                        format={() => `${serviceMonths}/240 tháng`}
                       />
                     </div>
+                  </Space>
+                ) : (
+                  <Alert message="Chưa có dữ liệu hồ sơ niên hạn" type="warning" showIcon />
+                )}
+              </Card>
+            </Col>
+          </Row>
+
+          {/* Contribution Profile Card */}
+          <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
+            <Col xs={24} lg={24}>
+              <Card
+                title={
+                  <Space>
+                    <TrophyOutlined className="text-orange-600" />
+                    <span className="font-semibold">Hồ sơ Khen thưởng Cống hiến</span>
+                  </Space>
+                }
+                className="shadow-md border-0 h-full"
+              >
+                {contributionProfile ? (
+                  <Space direction="vertical" className="w-full" size="large">
+                    {contributionProfile.goi_y && (
+                      <Alert
+                        message={<span className="font-semibold">Đề xuất khen thưởng</span>}
+                        description={contributionProfile.goi_y}
+                        type="info"
+                        showIcon
+                        icon={<BulbOutlined />}
+                        className={
+                          theme === 'dark'
+                            ? 'border-blue-700 bg-blue-900/30'
+                            : 'border-blue-200 bg-blue-50'
+                        }
+                      />
+                    )}
 
                     <Divider orientation="left" className="!my-4">
                       <Text strong className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>
@@ -779,109 +856,136 @@ export default function UserDashboard() {
                       </Text>
                     </Divider>
 
-                    {/* HCBVTQ - Hạng Ba */}
-                    <div>
-                      <div className="flex justify-between items-center mb-2">
-                        <Text strong>Hạng Ba (180 tháng)</Text>
-                        <Badge
-                          status={
-                            contributionProfile.hcbvtq_hang_ba_status === 'DA_NHAN'
-                              ? 'success'
-                              : contributionProfile.hcbvtq_hang_ba_status === 'DU_DIEU_KIEN'
-                              ? 'processing'
-                              : 'default'
-                          }
-                          text={
-                            contributionProfile.hcbvtq_hang_ba_status === 'DA_NHAN'
-                              ? 'Đã nhận'
-                              : contributionProfile.hcbvtq_hang_ba_status === 'DU_DIEU_KIEN'
-                              ? 'Đủ điều kiện'
-                              : 'Chưa đủ'
-                          }
-                        />
-                      </div>
-                      <Progress
-                        {...getProgressData(
-                          contributionProfile.hcbvtq_hang_ba_status,
-                          contributionProfile.months_07 + contributionProfile.months_08 || 0,
-                          180
-                        )}
-                        format={() =>
-                          `${
-                            contributionProfile.months_07 + contributionProfile.months_08 || 0
-                          }/180 tháng`
-                        }
-                      />
-                    </div>
+                    {(() => {
+                      // Tính target tháng theo giới tính: Nam 120 tháng, Nữ 80 tháng (2/3)
+                      const isFemale = personnelInfo?.gioi_tinh === 'NU';
+                      const targetMonths = isFemale ? 80 : 120;
 
-                    {/* HCBVTQ - Hạng Nhì */}
-                    <div>
-                      <div className="flex justify-between items-center mb-2">
-                        <Text strong>Hạng Nhì (240 tháng)</Text>
-                        <Badge
-                          status={
-                            contributionProfile.hcbvtq_hang_nhi_status === 'DA_NHAN'
-                              ? 'success'
-                              : contributionProfile.hcbvtq_hang_nhi_status === 'DU_DIEU_KIEN'
-                              ? 'processing'
-                              : 'default'
-                          }
-                          text={
-                            contributionProfile.hcbvtq_hang_nhi_status === 'DA_NHAN'
-                              ? 'Đã nhận'
-                              : contributionProfile.hcbvtq_hang_nhi_status === 'DU_DIEU_KIEN'
-                              ? 'Đủ điều kiện'
-                              : 'Chưa đủ'
-                          }
-                        />
-                      </div>
-                      <Progress
-                        {...getProgressData(
-                          contributionProfile.hcbvtq_hang_nhi_status,
-                          contributionProfile.months_08 + contributionProfile.months_0910 || 0,
-                          240
-                        )}
-                        format={() =>
-                          `${
-                            contributionProfile.months_08 + contributionProfile.months_0910 || 0
-                          }/240 tháng`
-                        }
-                      />
-                    </div>
+                      // Tính tổng tháng theo từng hạng
+                      const hangBaMonths =
+                        (contributionProfile.months_07 || 0) +
+                        (contributionProfile.months_08 || 0) +
+                        (contributionProfile.months_0910 || 0);
+                      const hangNhiMonths =
+                        (contributionProfile.months_08 || 0) +
+                        (contributionProfile.months_0910 || 0);
+                      const hangNhatMonths = contributionProfile.months_0910 || 0;
 
-                    {/* HCBVTQ - Hạng Nhất */}
-                    <div>
-                      <div className="flex justify-between items-center mb-2">
-                        <Text strong>Hạng Nhất (300 tháng)</Text>
-                        <Badge
-                          status={
-                            contributionProfile.hcbvtq_hang_nhat_status === 'DA_NHAN'
-                              ? 'success'
-                              : contributionProfile.hcbvtq_hang_nhat_status === 'DU_DIEU_KIEN'
-                              ? 'processing'
-                              : 'default'
-                          }
-                          text={
-                            contributionProfile.hcbvtq_hang_nhat_status === 'DA_NHAN'
-                              ? 'Đã nhận'
-                              : contributionProfile.hcbvtq_hang_nhat_status === 'DU_DIEU_KIEN'
-                              ? 'Đủ điều kiện'
-                              : 'Chưa đủ'
-                          }
-                        />
-                      </div>
-                      <Progress
-                        {...getProgressData(
-                          contributionProfile.hcbvtq_hang_nhat_status,
-                          contributionProfile.months_0910 || 0,
-                          300
-                        )}
-                        format={() => `${contributionProfile.months_0910 || 0}/300 tháng`}
-                      />
-                    </div>
+                      return (
+                        <>
+                          {/* HCBVTQ - Hạng Ba */}
+                          <div>
+                            <div className="flex justify-between items-center mb-2">
+                              <Text strong>
+                                Hạng Ba ({targetMonths} tháng)
+                              </Text>
+                              <Badge
+                                status={
+                                  contributionProfile.hcbvtq_hang_ba_status === 'DA_NHAN'
+                                    ? 'success'
+                                    : contributionProfile.hcbvtq_hang_ba_status === 'DU_DIEU_KIEN'
+                                    ? 'processing'
+                                    : 'default'
+                                }
+                                text={
+                                  contributionProfile.hcbvtq_hang_ba_status === 'DA_NHAN'
+                                    ? 'Đã nhận'
+                                    : contributionProfile.hcbvtq_hang_ba_status === 'DU_DIEU_KIEN'
+                                    ? 'Đủ điều kiện'
+                                    : 'Chưa đủ'
+                                }
+                              />
+                            </div>
+                            <Progress
+                              {...getProgressData(
+                                contributionProfile.hcbvtq_hang_ba_status,
+                                hangBaMonths,
+                                targetMonths
+                              )}
+                              format={() => `${hangBaMonths}/${targetMonths} tháng`}
+                            />
+                            <Text type="secondary" className="text-xs">
+                              Tổng tháng cống hiến từ nhóm có hệ số chức vụ từ 0.7 đến 1.0
+                            </Text>
+                          </div>
+
+                          {/* HCBVTQ - Hạng Nhì */}
+                          <div>
+                            <div className="flex justify-between items-center mb-2">
+                              <Text strong>
+                                Hạng Nhì ({targetMonths} tháng)
+                              </Text>
+                              <Badge
+                                status={
+                                  contributionProfile.hcbvtq_hang_nhi_status === 'DA_NHAN'
+                                    ? 'success'
+                                    : contributionProfile.hcbvtq_hang_nhi_status === 'DU_DIEU_KIEN'
+                                    ? 'processing'
+                                    : 'default'
+                                }
+                                text={
+                                  contributionProfile.hcbvtq_hang_nhi_status === 'DA_NHAN'
+                                    ? 'Đã nhận'
+                                    : contributionProfile.hcbvtq_hang_nhi_status === 'DU_DIEU_KIEN'
+                                    ? 'Đủ điều kiện'
+                                    : 'Chưa đủ'
+                                }
+                              />
+                            </div>
+                            <Progress
+                              {...getProgressData(
+                                contributionProfile.hcbvtq_hang_nhi_status,
+                                hangNhiMonths,
+                                targetMonths
+                              )}
+                              format={() => `${hangNhiMonths}/${targetMonths} tháng`}
+                            />
+                            <Text type="secondary" className="text-xs">
+                              Tổng tháng cống hiến từ nhóm có hệ số chức vụ từ 0.8 đến 1.0
+                            </Text>
+                          </div>
+
+                          {/* HCBVTQ - Hạng Nhất */}
+                          <div>
+                            <div className="flex justify-between items-center mb-2">
+                              <Text strong>
+                                Hạng Nhất ({targetMonths} tháng)
+                              </Text>
+                              <Badge
+                                status={
+                                  contributionProfile.hcbvtq_hang_nhat_status === 'DA_NHAN'
+                                    ? 'success'
+                                    : contributionProfile.hcbvtq_hang_nhat_status === 'DU_DIEU_KIEN'
+                                    ? 'processing'
+                                    : 'default'
+                                }
+                                text={
+                                  contributionProfile.hcbvtq_hang_nhat_status === 'DA_NHAN'
+                                    ? 'Đã nhận'
+                                    : contributionProfile.hcbvtq_hang_nhat_status === 'DU_DIEU_KIEN'
+                                    ? 'Đủ điều kiện'
+                                    : 'Chưa đủ'
+                                }
+                              />
+                            </div>
+                            <Progress
+                              {...getProgressData(
+                                contributionProfile.hcbvtq_hang_nhat_status,
+                                hangNhatMonths,
+                                targetMonths
+                              )}
+                              format={() => `${hangNhatMonths}/${targetMonths} tháng`}
+                            />
+                            <Text type="secondary" className="text-xs">
+                              Tổng tháng cống hiến từ nhóm có hệ số chức vụ từ 0.9 đến 1.0
+                            </Text>
+                          </div>
+                        </>
+                      );
+                    })()}
                   </Space>
                 ) : (
-                  <Alert message="Chưa có dữ liệu hồ sơ niên hạn" type="warning" showIcon />
+                  <Alert message="Chưa có dữ liệu hồ sơ cống hiến" type="warning" showIcon />
                 )}
               </Card>
             </Col>
@@ -948,7 +1052,7 @@ export default function UserDashboard() {
                   }`}
                   onClick={() => window.location.reload()}
                 >
-                  <CheckCircleOutlined className="text-4xl text-green-600 mb-3" />
+                  <ReloadOutlined className="text-4xl text-green-600 mb-3" />
                   <Title level={5} className="!mb-1">
                     Làm mới dữ liệu
                   </Title>

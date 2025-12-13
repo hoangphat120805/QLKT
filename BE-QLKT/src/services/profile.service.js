@@ -476,7 +476,7 @@ class ProfileService {
         ngay: eligibilityDate,
         goiY: `Đã quá hạn xét HCCSVV Hạng ${hangName}. Ngày đủ điều kiện: ${eligibilityDate.toLocaleDateString(
           'vi-VN'
-        )}. Chờ Admin cập nhật.`,
+        )}. Chờ Quản trị viên cập nhật.`,
       };
     }
 

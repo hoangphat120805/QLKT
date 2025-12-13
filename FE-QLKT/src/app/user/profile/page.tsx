@@ -948,7 +948,7 @@ export default function UserProfilePage() {
             <div className="space-y-5">
               {/* Summary Stats */}
               <Row gutter={[16, 16]} className="mb-6">
-                <Col xs={24} sm={8}>
+                <Col xs={24} sm={12} md={6}>
                   <Card
                     size="small"
                     className="text-center"
@@ -970,7 +970,7 @@ export default function UserProfilePage() {
                     />
                   </Card>
                 </Col>
-                <Col xs={24} sm={8}>
+                <Col xs={24} sm={12} md={6}>
                   <Card
                     size="small"
                     className="text-center"
@@ -988,7 +988,7 @@ export default function UserProfilePage() {
                     />
                   </Card>
                 </Col>
-                <Col xs={24} sm={8}>
+                <Col xs={24} sm={12} md={6}>
                   <Card
                     size="small"
                     className="text-center"
@@ -1000,9 +1000,27 @@ export default function UserProfilePage() {
                     }}
                   >
                     <Statistic
-                      title={<span style={{ color: isDarkMode ? '#fcd34d' : '#b45309' }}>Bằng khen BQP</span>}
+                      title={<span style={{ color: isDarkMode ? '#fcd34d' : '#b45309' }}>Bằng khen của Bộ trưởng BQP</span>}
                       value={annualRewards.filter((r: any) => r.nhan_bkbqp).length}
                       valueStyle={{ color: isDarkMode ? '#fbbf24' : '#d97706', fontWeight: 700 }}
+                    />
+                  </Card>
+                </Col>
+                <Col xs={24} sm={12} md={6}>
+                  <Card
+                    size="small"
+                    className="text-center"
+                    style={{
+                      background: isDarkMode
+                        ? 'linear-gradient(135deg, #7c2d12 0%, #1e293b 100%)'
+                        : 'linear-gradient(135deg, #fed7aa 0%, #fff7ed 100%)',
+                      border: 'none',
+                    }}
+                  >
+                    <Statistic
+                      title={<span style={{ color: isDarkMode ? '#fb923c' : '#c2410c' }}>CSTĐ Toàn quân</span>}
+                      value={annualRewards.filter((r: any) => r.nhan_cstdtq).length}
+                      valueStyle={{ color: isDarkMode ? '#fb923c' : '#ea580c', fontWeight: 700 }}
                     />
                   </Card>
                 </Col>
@@ -1158,7 +1176,7 @@ export default function UserProfilePage() {
                                       className="font-semibold text-base"
                                       style={{ color: isDarkMode ? '#fbbf24' : '#b45309' }}
                                     >
-                                      Bằng khen của Bộ trưởng BQP
+                                      Bằng khen của Bộ trưởng Bộ Quốc phòng
                                     </div>
                                     <div className="flex items-center gap-1.5 mt-1" style={{ color: isDarkMode ? '#9ca3af' : '#6b7280', fontSize: '13px' }}>
                                       <FileTextOutlined style={{ fontSize: '12px' }} />
@@ -1187,14 +1205,14 @@ export default function UserProfilePage() {
                                   key={`${reward.id}-cstdtq`}
                                   className="flex items-start gap-3 p-3 rounded-lg transition-all hover:scale-[1.01]"
                                   style={{
-                                    background: isDarkMode ? 'rgba(168, 85, 247, 0.1)' : 'rgba(147, 51, 234, 0.1)',
-                                    border: `1px solid ${isDarkMode ? '#a855f7' : '#9333ea'}`,
+                                    background: isDarkMode ? 'rgba(251, 146, 60, 0.1)' : 'rgba(234, 88, 12, 0.1)',
+                                    border: `1px solid ${isDarkMode ? '#fb923c' : '#ea580c'}`,
                                   }}
                                 >
                                   <div
                                     className="flex items-center justify-center w-10 h-10 rounded-full flex-shrink-0"
                                     style={{
-                                      backgroundColor: isDarkMode ? '#a855f7' : '#9333ea',
+                                      backgroundColor: isDarkMode ? '#fb923c' : '#ea580c',
                                       color: '#fff',
                                     }}
                                   >
@@ -1203,7 +1221,7 @@ export default function UserProfilePage() {
                                   <div className="flex-1 min-w-0">
                                     <div
                                       className="font-semibold text-base"
-                                      style={{ color: isDarkMode ? '#c084fc' : '#7c3aed' }}
+                                      style={{ color: isDarkMode ? '#fb923c' : '#c2410c' }}
                                     >
                                       Chiến sĩ thi đua Toàn quân
                                     </div>

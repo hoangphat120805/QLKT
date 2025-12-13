@@ -3905,6 +3905,7 @@ class ProposalService {
       return {
         message: 'Phê duyệt và import dữ liệu thành công',
         proposal: proposal, // Trả về proposal để gửi thông báo
+        affectedPersonnelIds: Array.from(affectedPersonnelIds), // Trả về danh sách quân nhân nhận khen thưởng
         result: {
           don_vi: (proposal.DonViTrucThuoc || proposal.CoQuanDonVi)?.ten_don_vi || '-',
           nguoi_de_xuat: proposal.NguoiDeXuat.QuanNhan?.ho_ten || proposal.NguoiDeXuat.username,
