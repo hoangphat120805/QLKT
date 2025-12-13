@@ -711,7 +711,7 @@ class UnitAnnualAwardService {
       const bkbqpLienTuc = await this.calculateBKBQPContinuous(donViId, targetYear);
 
       const du_dieu_kien_bk_tong_cuc = dvqtLienTuc % 2 === 0 && dvqtLienTuc >= 1;
-      const du_dieu_kien_bk_thu_tuong = dvqtLienTuc >= 7 && bkbqpLienTuc >= 3;
+      const du_dieu_kien_bk_thu_tuong = dvqtLienTuc % 7 === 0 && bkbqpLienTuc % 3 === 0 && dvqtLienTuc >= 1 && bkbqpLienTuc >= 1;
 
       // Kiểm tra xem có bằng khen chưa
       const currentYearAward = danhHieuList.find(dh => dh.nam === targetYear);
