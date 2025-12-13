@@ -492,6 +492,13 @@
     box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1) !important;
   }
 
+  /* Ensure border-radius for outlined inputs */
+  .ant-input-outlined,
+  .ant-input-lg.ant-input-outlined,
+  .ant-input-sm.ant-input-outlined {
+    border-radius: 8px !important;
+  }
+
   .ant-select-selector {
     background-color: #ffffff !important;
     border-color: #d1d5db !important;
@@ -500,6 +507,9 @@
 
   .ant-select-selection-item {
     color: #111827 !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
   }
 
   .ant-select-selection-placeholder {
@@ -572,10 +582,15 @@
   .dark .ant-select-selector > *,
   .dark .ant-select-selector .ant-select-selection-search,
   .dark .ant-select-selector .ant-select-selection-item,
-  .dark .ant-select-selector .ant-select-selection-placeholder,
   .dark .ant-select-selector .ant-select-selection-item-holder {
     background-color: #1f2937 !important;
     color: #f9fafb !important;
+    border-radius: 8px !important;
+  }
+
+  .dark .ant-select-selector .ant-select-selection-placeholder {
+    background-color: #1f2937 !important;
+    color: #e5e7eb !important;
     border-radius: 8px !important;
   }
 
@@ -584,7 +599,7 @@
   }
 
   .dark .ant-select-selection-placeholder {
-    color: #9ca3af !important;
+    color: #e5e7eb !important;
     opacity: 1 !important;
   }
 
@@ -600,7 +615,7 @@
     .ant-select-selector
     .ant-select-selection-placeholder {
     opacity: 1 !important;
-    color: #9ca3af !important;
+    color: #e5e7eb !important;
   }
 
   .dark .ant-select-arrow {
@@ -644,11 +659,15 @@
   /* Fix for all nested elements inside selector */
   .dark .ant-select-selector .ant-select-selection-search-input,
   .dark .ant-select-selector .ant-select-selection-item,
-  .dark .ant-select-selector .ant-select-selection-placeholder,
   .dark .ant-select-selector .ant-select-selection-item-holder,
   .dark .ant-select-selector .ant-select-selection-item-content {
     background-color: transparent !important;
     color: #f9fafb !important;
+  }
+
+  .dark .ant-select-selector .ant-select-selection-placeholder {
+    background-color: transparent !important;
+    color: #e5e7eb !important;
   }
 
   /* Fix for selection clear icon */

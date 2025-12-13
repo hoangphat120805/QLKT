@@ -16,11 +16,11 @@ import {
   Select,
 } from 'antd';
 import { useTheme } from '@/components/theme-provider';
-import { HomeOutlined } from '@ant-design/icons';
+import { HomeOutlined, FilterOutlined } from '@ant-design/icons';
 import type { TableColumnsType } from 'antd';
 import { apiClient } from '@/lib/api-client';
 import axiosInstance from '@/utils/axiosInstance';
-import { renderAnnualAwards, COLUMN_STYLES } from '@/utils/awardsHelpers';
+import { renderAnnualAwards, COLUMN_STYLES, DANH_HIEU_MAP } from '@/utils/awardsHelpers';
 
 const { Title, Text } = Typography;
 
@@ -50,6 +50,8 @@ export default function ManagerUnitsPage() {
     danh_hieu: '',
   });
   const [debouncedFilters, setDebouncedFilters] = useState(filters);
+  const [awardsPageSize, setAwardsPageSize] = useState(10);
+  const [unitsPageSize, setUnitsPageSize] = useState(10);
 
   useEffect(() => {
     fetchUnits();
@@ -182,6 +184,28 @@ export default function ManagerUnitsPage() {
     },
   ];
 
+  // Lấy danh sách các năm có trong dữ liệu
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    allAwards.forEach(award => {
+      if (award.nam) {
+        years.add(award.nam);
+      }
+    });
+    return Array.from(years).sort((a, b) => b - a); // Sắp xếp giảm dần
+  }, [allAwards]);
+
+  // Danh sách danh hiệu cho đơn vị
+  const danhHieuOptions = useMemo(() => {
+    return [
+      { value: '', label: 'Tất cả danh hiệu' },
+      { value: 'ĐVQT', label: DANH_HIEU_MAP['ĐVQT'] || 'Đơn vị Quyết thắng' },
+      { value: 'ĐVTT', label: DANH_HIEU_MAP['ĐVTT'] || 'Đơn vị Tiên tiến' },
+      { value: 'BKBQP', label: DANH_HIEU_MAP['BKBQP'] || 'Bằng khen của Bộ trưởng Bộ Quốc phòng' },
+      { value: 'BKTTCP', label: DANH_HIEU_MAP['BKTTCP'] || 'Bằng khen Thủ tướng Chính phủ' },
+    ];
+  }, []);
+
   const filteredAwards = useMemo(() => {
     const yearFilter = debouncedFilters.nam.trim();
     const nameFilter = debouncedFilters.ten_don_vi.trim().toLowerCase();
@@ -278,19 +302,26 @@ export default function ManagerUnitsPage() {
               value={unitSearch}
               onChange={e => setUnitSearch(e.target.value)}
               allowClear
+              size="large"
               style={{ width: 260 }}
             />
-            <Button onClick={() => setUnitSearch('')}>Xóa lọc</Button>
+            <Button size="large" onClick={() => setUnitSearch('')} icon={null}>
+              Xoá bộ lọc
+            </Button>
           </Space>
           <Table
             columns={columns}
             dataSource={filteredUnits}
             rowKey="id"
             pagination={{
-              pageSize: 10,
+              pageSize: unitsPageSize,
               showSizeChanger: true,
               showQuickJumper: true,
               showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} đơn vị`,
+              pageSizeOptions: ['10', '20', '50', '100'],
+              onShowSizeChange: (current, size) => {
+                setUnitsPageSize(size);
+              },
             }}
             scroll={{ x: 800 }}
           />
@@ -324,39 +355,83 @@ export default function ManagerUnitsPage() {
 
         <Card className="mt-6">
           <Title level={3}>Tất cả khen thưởng của các đơn vị</Title>
-          <Space style={{ marginBottom: 16 }} wrap>
-            <Input
-              placeholder="Tìm tên đơn vị"
-              value={filters.ten_don_vi}
-              onChange={e => setFilters(prev => ({ ...prev, ten_don_vi: e.target.value }))}
-              allowClear
-              style={{ width: 240 }}
-            />
-            <Input
-              placeholder="Năm (VD: 2024)"
-              value={filters.nam}
-              onChange={e => setFilters(prev => ({ ...prev, nam: e.target.value }))}
-              allowClear
-              style={{ width: 160 }}
-            />
-            <Select
-              placeholder="Danh hiệu"
-              value={filters.danh_hieu || undefined}
-              onChange={value => setFilters(prev => ({ ...prev, danh_hieu: value || '' }))}
-              allowClear
-              style={{ width: 280 }}
-              popupMatchSelectWidth={false}
-              options={[
-                { label: 'Đơn vị quyết thắng (ĐVQT)', value: 'ĐVQT' },
-                { label: 'Đơn vị tiên tiến (ĐVTT)', value: 'ĐVTT' },
-                { label: 'Bằng khen của Bộ trưởng BQP', value: 'BKBQP' },
-                { label: 'Bằng khen của TTCP', value: 'BKTTCP' },
-              ]}
-            />
-            <Button onClick={() => setFilters({ nam: '', ten_don_vi: '', danh_hieu: '' })}>
-              Xóa bộ lọc
-            </Button>
-          </Space>
+          <Card
+            title={
+              <Space>
+                <FilterOutlined />
+                <span>Bộ lọc</span>
+              </Space>
+            }
+            style={{ marginBottom: '24px' }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '16px',
+                alignItems: 'flex-end',
+              }}
+            >
+              <div style={{ flex: '0 0 180px', display: 'flex', flexDirection: 'column' }}>
+                <Text strong style={{ display: 'block', marginBottom: '8px' }}>
+                  Năm
+                </Text>
+                <Select
+                  placeholder="Tất cả các năm"
+                  value={filters.nam === '' ? '' : filters.nam || undefined}
+                  onChange={value => setFilters(prev => ({ ...prev, nam: value || '' }))}
+                  allowClear
+                  size="large"
+                  style={{ width: '100%' }}
+                  options={[
+                    { value: '', label: 'Tất cả các năm' },
+                    ...availableYears.map(year => ({
+                      value: String(year),
+                      label: String(year),
+                    })),
+                  ]}
+                />
+              </div>
+              <div style={{ flex: '1 1 200px', minWidth: '200px', display: 'flex', flexDirection: 'column' }}>
+                <Text strong style={{ display: 'block', marginBottom: '8px' }}>
+                  Tìm kiếm theo tên đơn vị
+                </Text>
+                <Input
+                  placeholder="Nhập tên đơn vị để tìm kiếm"
+                  value={filters.ten_don_vi}
+                  onChange={e => setFilters(prev => ({ ...prev, ten_don_vi: e.target.value }))}
+                  allowClear
+                  size="large"
+                />
+              </div>
+              <div style={{ flex: '1 1 250px', minWidth: '250px', display: 'flex', flexDirection: 'column' }}>
+                <Text strong style={{ display: 'block', marginBottom: '8px' }}>
+                  Danh hiệu
+                </Text>
+                <Select
+                  placeholder="Tất cả danh hiệu"
+                  value={filters.danh_hieu === '' ? '' : filters.danh_hieu || undefined}
+                  onChange={value => setFilters(prev => ({ ...prev, danh_hieu: value || '' }))}
+                  allowClear
+                  showSearch
+                  optionFilterProp="label"
+                  size="large"
+                  style={{ width: '100%' }}
+                  options={danhHieuOptions}
+                />
+              </div>
+              <div style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ height: '22px', marginBottom: '8px' }}></div>
+                <Button 
+                  size="large"
+                  onClick={() => setFilters({ nam: '', ten_don_vi: '', danh_hieu: '' })}
+                  icon={null}
+                >
+                  Xóa bộ lọc
+                </Button>
+              </div>
+            </div>
+          </Card>
           {awardsLoading ? (
             <Spin size="large" />
           ) : (
@@ -423,17 +498,25 @@ export default function ManagerUnitsPage() {
                         </Text>
                       );
                     }
-                    return <Text type="secondary">-</Text>;
+                    return (
+                      <Text type="secondary" style={{ fontStyle: 'italic', opacity: 0.6 }}>
+                        Không có ghi chú
+                      </Text>
+                    );
                   },
                 },
               ]}
               dataSource={filteredAwards}
               rowKey="id"
               pagination={{
-                pageSize: 10,
+                pageSize: awardsPageSize,
                 showSizeChanger: true,
                 showQuickJumper: true,
                 showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} khen thưởng`,
+                pageSizeOptions: ['10', '20', '50', '100'],
+                onShowSizeChange: (current, size) => {
+                  setAwardsPageSize(size);
+                },
               }}
               scroll={{ x: 800 }}
             />

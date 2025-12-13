@@ -91,7 +91,7 @@ export default function ServiceRewardsPage() {
           mappedRewards.push({
             id: 'hccsvv_ba',
             type: 'HCCSVV',
-            name: 'Huân chương Chiến sỹ Vẻ vang hạng Ba',
+            name: 'Huân chương Chiến sỹ Vẻ vang',
             rank: 'Hạng Ba',
             ngay_cap: serviceRes.data.hccsvv_hang_ba_ngay,
             status: serviceRes.data.hccsvv_hang_ba_status,
@@ -101,7 +101,7 @@ export default function ServiceRewardsPage() {
           mappedRewards.push({
             id: 'hccsvv_nhi',
             type: 'HCCSVV',
-            name: 'Huân chương Chiến sỹ Vẻ vang hạng Nhì',
+            name: 'Huân chương Chiến sỹ Vẻ vang',
             rank: 'Hạng Nhì',
             ngay_cap: serviceRes.data.hccsvv_hang_nhi_ngay,
             status: serviceRes.data.hccsvv_hang_nhi_status,
@@ -111,7 +111,7 @@ export default function ServiceRewardsPage() {
           mappedRewards.push({
             id: 'hccsvv_nhat',
             type: 'HCCSVV',
-            name: 'Huân chương Chiến sỹ Vẻ vang hạng Nhất',
+            name: 'Huân chương Chiến sỹ Vẻ vang',
             rank: 'Hạng Nhất',
             ngay_cap: serviceRes.data.hccsvv_hang_nhat_ngay,
             status: serviceRes.data.hccsvv_hang_nhat_status,
@@ -123,7 +123,7 @@ export default function ServiceRewardsPage() {
           mappedRewards.push({
             id: 'hcbvtq_ba',
             type: 'HCBVTQ',
-            name: 'Huân chương Bảo vệ Tổ quốc hạng Ba',
+            name: 'Huân chương Bảo vệ Tổ quốc',
             rank: 'Hạng Ba',
             ngay_cap: serviceRes.data.hcbvtq_hang_ba_ngay,
             status: serviceRes.data.hcbvtq_hang_ba_status,
@@ -133,7 +133,7 @@ export default function ServiceRewardsPage() {
           mappedRewards.push({
             id: 'hcbvtq_nhi',
             type: 'HCBVTQ',
-            name: 'Huân chương Bảo vệ Tổ quốc hạng Nhì',
+            name: 'Huân chương Bảo vệ Tổ quốc',
             rank: 'Hạng Nhì',
             ngay_cap: serviceRes.data.hcbvtq_hang_nhi_ngay,
             status: serviceRes.data.hcbvtq_hang_nhi_status,
@@ -143,7 +143,7 @@ export default function ServiceRewardsPage() {
           mappedRewards.push({
             id: 'hcbvtq_nhat',
             type: 'HCBVTQ',
-            name: 'Huân chương Bảo vệ Tổ quốc hạng Nhất',
+            name: 'Huân chương Bảo vệ Tổ quốc',
             rank: 'Hạng Nhất',
             ngay_cap: serviceRes.data.hcbvtq_hang_nhat_ngay,
             status: serviceRes.data.hcbvtq_hang_nhat_status,
@@ -279,7 +279,7 @@ export default function ServiceRewardsPage() {
         <div>
           <div style={{ fontWeight: 500 }}>{name}</div>
           {record.rank && (
-            <div style={{ fontSize: '12px', color: '#8c8c8c' }}>Hạng: {record.rank}</div>
+            <div style={{ fontSize: '12px', color: '#8c8c8c' }}>{record.rank}</div>
           )}
         </div>
       ),
@@ -330,7 +330,7 @@ export default function ServiceRewardsPage() {
         >
           <div>
             <Space style={{ marginBottom: 8 }}>
-              <Link href={`/manager/personnel/${personnelId}`}>
+              <Link href={`/manager/personnel/${personnelId}?tab=3`}>
                 <Button icon={<LeftOutlined />}>Quay lại</Button>
               </Link>
             </Space>

@@ -349,11 +349,25 @@ export default function AdminAwardsPage() {
 
   const danhHieuOptions = useMemo(() => {
     const options = DANH_HIEU_OPTIONS[activeTab] || [];
-    return options.map(value => ({
-      value,
-      label: DANH_HIEU_MAP[value] || value,
-    }));
+    return [
+      { value: '', label: 'Tất cả danh hiệu' },
+      ...options.map(value => ({
+        value,
+        label: DANH_HIEU_MAP[value] || value,
+      })),
+    ];
   }, [activeTab]);
+
+  // Lấy danh sách các năm có trong dữ liệu
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    awards.forEach(award => {
+      if (award.nam) {
+        years.add(award.nam);
+      }
+    });
+    return Array.from(years).sort((a, b) => b - a); // Sắp xếp giảm dần
+  }, [awards]);
 
   const filteredAwards = useMemo(() => {
     const yearFilter = debouncedFilters.nam.trim();
@@ -600,27 +614,33 @@ export default function AdminAwardsPage() {
           );
         }
 
-        // Commemoration medals
+        // Commemoration medals (KNC_VSNXD_QDNDVN) - Nếu có bản ghi thì mặc định là KNC
         if (activeTab === 'commemoration') {
-          const hasData = record.so_quyet_dinh || record.ghi_chu;
+          const danhHieu = DANH_HIEU_MAP['KNC_VSNXD_QDNDVN'] || 'Kỷ niệm chương Vì sự nghiệp xây dựng QĐNDVN';
           return (
             <div style={COLUMN_STYLES.container}>
-              {renderDecision(record.so_quyet_dinh, handleDownloadDecision)}
+              <Text strong>{danhHieu}</Text>
               {record.ghi_chu && (
                 <Text type="secondary" style={COLUMN_STYLES.noteText}>
                   {record.ghi_chu}
                 </Text>
               )}
-              {!hasData && <Text>-</Text>}
+              {renderDecision(record.so_quyet_dinh, handleDownloadDecision)}
             </div>
           );
         }
 
-        // Military flag
+        // Military flag - Nếu có bản ghi thì mặc định là HC_QKQT
         if (activeTab === 'militaryFlag') {
+          const danhHieu = DANH_HIEU_MAP['HC_QKQT'] || 'Huân chương Quân kỳ Quyết thắng';
           return (
             <div style={COLUMN_STYLES.container}>
-              <Text>{record.ghi_chu || '-'}</Text>
+              <Text strong>{danhHieu}</Text>
+              {record.ghi_chu && (
+                <Text type="secondary" style={COLUMN_STYLES.noteText}>
+                  {record.ghi_chu}
+                </Text>
+              )}
               {renderDecision(record.so_quyet_dinh, handleDownloadDecision)}
             </div>
           );
@@ -835,24 +855,33 @@ export default function AdminAwardsPage() {
         >
           <div
             style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              display: 'flex',
+              flexWrap: 'wrap',
               gap: '16px',
+              alignItems: 'flex-end',
             }}
           >
-            <div>
+            <div style={{ flex: '0 0 180px', display: 'flex', flexDirection: 'column' }}>
               <Text strong style={{ display: 'block', marginBottom: '8px' }}>
                 Năm
               </Text>
-              <Input
-                type="number"
-                placeholder="Ví dụ: 2024"
-                value={filters.nam}
-                onChange={e => handleFilterChange('nam', e.target.value)}
+              <Select
+                placeholder="Tất cả các năm"
+                value={filters.nam === '' ? '' : filters.nam || undefined}
+                onChange={value => handleFilterChange('nam', value || '')}
+                allowClear
                 size="large"
+                style={{ width: '100%' }}
+                options={[
+                  { value: '', label: 'Tất cả các năm' },
+                  ...availableYears.map(year => ({
+                    value: String(year),
+                    label: String(year),
+                  })),
+                ]}
               />
             </div>
-            <div>
+            <div style={{ flex: '1 1 200px', minWidth: '200px', display: 'flex', flexDirection: 'column' }}>
               <Text strong style={{ display: 'block', marginBottom: '8px' }}>
                 Tìm kiếm theo họ tên
               </Text>
@@ -860,13 +889,14 @@ export default function AdminAwardsPage() {
                 placeholder="Nhập tên để tìm kiếm"
                 value={filters.ho_ten}
                 onChange={e => handleFilterChange('ho_ten', e.target.value)}
+                allowClear
                 size="large"
               />
             </div>
             {(activeTab === 'annual' ||
               activeTab === 'hccsvv' ||
               activeTab === 'contribution') && (
-              <div>
+              <div style={{ flex: '1 1 250px', minWidth: '250px', display: 'flex', flexDirection: 'column' }}>
                 <Text strong style={{ display: 'block', marginBottom: '8px' }}>
                   Danh hiệu
                 </Text>
@@ -874,14 +904,13 @@ export default function AdminAwardsPage() {
                   allowClear
                   showSearch
                   optionFilterProp="label"
-                  optionLabelProp="value" // hiển thị mã ngắn để tránh bị "..."
-                  style={{ minWidth: 260 }}
+                  style={{ width: '100%' }}
                   placeholder={
                     activeTab === 'annual'
                       ? 'Chọn danh hiệu cá nhân'
                       : 'Chọn danh hiệu'
                   }
-                  value={filters.danh_hieu || undefined}
+                  value={filters.danh_hieu === '' ? '' : filters.danh_hieu || undefined}
                   onChange={value => handleFilterChange('danh_hieu', value || '')}
                   options={danhHieuOptions}
                   size="large"
@@ -889,7 +918,7 @@ export default function AdminAwardsPage() {
               </div>
             )}
             {activeTab === 'scientific' && (
-              <div>
+              <div style={{ flex: '1 1 200px', minWidth: '200px', display: 'flex', flexDirection: 'column' }}>
                 <Text strong style={{ display: 'block', marginBottom: '8px' }}>
                   Đề tài
                 </Text>
@@ -897,10 +926,21 @@ export default function AdminAwardsPage() {
                   placeholder="Nhập đề tài / mô tả"
                   value={filters.de_tai}
                   onChange={e => handleFilterChange('de_tai', e.target.value)}
+                  allowClear
                   size="large"
                 />
               </div>
             )}
+            <div style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ height: '22px', marginBottom: '8px' }}></div>
+              <Button 
+                size="large"
+                onClick={() => setFilters({ nam: '', ho_ten: '', danh_hieu: '', de_tai: '' })}
+                icon={null}
+              >
+                Xóa bộ lọc
+              </Button>
+            </div>
           </div>
         </Card>
 

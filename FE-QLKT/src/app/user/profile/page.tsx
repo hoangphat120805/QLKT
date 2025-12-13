@@ -887,7 +887,7 @@ export default function UserProfilePage() {
                   <Col xs={24} md={8}>
                     <Card size="small">
                       <Statistic
-                        title="Bằng khen BQP"
+                        title="Bằng khen của Bộ trưởng Bộ Quốc phòng"
                         value={0}
                         valueStyle={{ fontSize: '14px' }}
                         valueRender={() => (
@@ -901,7 +901,7 @@ export default function UserProfilePage() {
                   <Col xs={24} md={8}>
                     <Card size="small">
                       <Statistic
-                        title="CSTD Toàn quân"
+                        title="Chiến sĩ thi đua Toàn quân"
                         value={0}
                         valueStyle={{ fontSize: '14px' }}
                         valueRender={() => (

@@ -754,6 +754,7 @@ export default function AdhocAwardsPage() {
       title: 'Chi tiết đối tượng',
       key: 'target',
       ellipsis: true,
+      align: 'center',
       render: (_, record) => {
         if (record.doi_tuong === 'CA_NHAN' && record.QuanNhan) {
           // Hiển thị cấp bậc/chức vụ từ DB (record.cap_bac, record.chuc_vu) nếu có, không hiện đơn vị
@@ -761,7 +762,7 @@ export default function AdhocAwardsPage() {
           const chucVu = record.chuc_vu || record.QuanNhan.ChucVu?.ten_chuc_vu;
           const subInfo = [capBac, chucVu].filter(Boolean).join(' - ');
           return (
-            <div>
+            <div style={{ textAlign: 'center' }}>
               <strong>{record.QuanNhan.ho_ten}</strong>
               {subInfo && (
                 <div>
@@ -775,7 +776,7 @@ export default function AdhocAwardsPage() {
         } else if (record.doi_tuong === 'TAP_THE') {
           const unitName = record.CoQuanDonVi?.ten_don_vi || record.DonViTrucThuoc?.ten_don_vi;
           return (
-            <div>
+            <div style={{ textAlign: 'center' }}>
               <strong>{unitName || '-'}</strong>
               {record.DonViTrucThuoc?.CoQuanDonVi && (
                 <div>
@@ -787,7 +788,11 @@ export default function AdhocAwardsPage() {
             </div>
           );
         }
-        return <Text type="secondary">-</Text>;
+        return (
+          <div style={{ textAlign: 'center' }}>
+            <Text type="secondary">-</Text>
+          </div>
+        );
       },
     },
     {
@@ -795,8 +800,9 @@ export default function AdhocAwardsPage() {
       dataIndex: 'hinh_thuc_khen_thuong',
       key: 'hinh_thuc_khen_thuong',
       ellipsis: true,
+      align: 'center',
       render: (text: string, record: AdhocAward) => (
-        <div>
+        <div style={{ textAlign: 'center' }}>
           <span>{text}</span>
           {record.so_quyet_dinh && (
             <div>
@@ -820,19 +826,25 @@ export default function AdhocAwardsPage() {
       key: 'ghi_chu',
       width: 120,
       ellipsis: true,
-      render: (text: string) =>
-        text ? (
-          <Tooltip title={text}>
-            <span>{text}</span>
-          </Tooltip>
-        ) : (
-          <Text type="secondary">-</Text>
-        ),
+      align: 'center',
+      render: (text: string) => (
+        <div style={{ textAlign: 'center' }}>
+          {text ? (
+            <Tooltip title={text}>
+              <span>{text}</span>
+            </Tooltip>
+          ) : (
+            <Text type="secondary" style={{ fontStyle: 'italic', opacity: 0.6 }}>
+              Không có ghi chú
+            </Text>
+          )}
+        </div>
+      ),
     },
     {
       title: 'Thao tác',
       key: 'action',
-      width: 100,
+      width: 150,
       align: 'center',
       render: (_, record) => (
         <div style={{ textAlign: 'center' }}>
@@ -1562,11 +1574,13 @@ export default function AdhocAwardsPage() {
               </label>
               <Select
                 style={{ width: '100%' }}
-                placeholder="Tất cả năm"
-                value={tableFilters.year}
-                onChange={value => setTableFilters(prev => ({ ...prev, year: value }))}
+                placeholder="Tất cả các năm"
+                value={tableFilters.year !== null ? tableFilters.year : ''}
+                onChange={value => setTableFilters(prev => ({ ...prev, year: value === '' ? null : value }))}
                 allowClear
+                size="large"
               >
+                <Select.Option value="">Tất cả các năm</Select.Option>
                 {availableYears.map(year => (
                   <Select.Option key={year} value={year}>
                     {year}
@@ -1576,13 +1590,14 @@ export default function AdhocAwardsPage() {
             </Col>
             <Col xs={24} sm={12} md={6}>
               <label style={{ display: 'block', marginBottom: 4, fontSize: 12, color: '#666' }}>
-                <FilterOutlined /> Loại
+                <FilterOutlined /> Đối tượng
               </label>
               <Select
                 style={{ width: '100%' }}
                 placeholder="Tất cả loại"
                 value={tableFilters.type}
                 onChange={value => setTableFilters(prev => ({ ...prev, type: value }))}
+                size="large"
               >
                 <Select.Option value="ALL">Tất cả</Select.Option>
                 <Select.Option value="CA_NHAN">Cá nhân</Select.Option>
@@ -1593,11 +1608,12 @@ export default function AdhocAwardsPage() {
               <label style={{ display: 'block', marginBottom: 4, fontSize: 12, color: '#666' }}>
                 <SearchOutlined /> Tìm kiếm
               </label>
-              <Search
+              <Input
                 placeholder="Tên, số quyết định, hình thức, ghi chú..."
                 value={tableFilters.searchText}
                 onChange={e => setTableFilters(prev => ({ ...prev, searchText: e.target.value }))}
                 allowClear
+                size="large"
                 style={{ width: '100%' }}
               />
             </Col>
@@ -1605,8 +1621,8 @@ export default function AdhocAwardsPage() {
               <label style={{ display: 'block', marginBottom: 4, fontSize: 12, color: 'transparent' }}>
                 .
               </label>
-              <Button icon={<ClearOutlined />} onClick={handleResetFilters} style={{ width: '100%' }}>
-                Xóa lọc
+              <Button icon={null} onClick={handleResetFilters} size="large" style={{ width: '100%' }}>
+                Xoá bộ lọc
               </Button>
             </Col>
           </Row>

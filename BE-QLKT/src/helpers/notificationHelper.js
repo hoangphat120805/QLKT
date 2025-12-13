@@ -381,7 +381,6 @@ class NotificationHelper {
         return 0;
       }
 
-      const proposalTypeName = formatProposalType(proposal.loai_de_xuat);
       const notifications = [];
 
       // Lấy thông tin tài khoản của các quân nhân
@@ -398,14 +397,103 @@ class NotificationHelper {
         },
       });
 
+      // Lấy dữ liệu khen thưởng từ proposal
+      const danhHieuData = proposal.data_danh_hieu || [];
+      const thanhTichData = proposal.data_thanh_tich || [];
+      const nienHanData = proposal.data_nien_han || [];
+      const congHienData = proposal.data_cong_hien || [];
+
+      // Map danh hiệu sang tên tiếng Việt
+      const danhHieuMap = {
+        CSTDCS: 'Chiến sĩ thi đua Cơ sở',
+        CSTT: 'Chiến sĩ tiên tiến',
+        BKBQP: 'Bằng khen của Bộ trưởng Bộ Quốc phòng',
+        CSTDTQ: 'Chiến sĩ thi đua Toàn quân',
+        HCCSVV_HANG_BA: 'Huân chương Chiến sĩ Vẻ vang Hạng Ba',
+        HCCSVV_HANG_NHI: 'Huân chương Chiến sĩ Vẻ vang Hạng Nhì',
+        HCCSVV_HANG_NHAT: 'Huân chương Chiến sĩ Vẻ vang Hạng Nhất',
+        HCBVTQ_HANG_BA: 'Huân chương Bảo vệ Tổ quốc Hạng Ba',
+        HCBVTQ_HANG_NHI: 'Huân chương Bảo vệ Tổ quốc Hạng Nhì',
+        HCBVTQ_HANG_NHAT: 'Huân chương Bảo vệ Tổ quốc Hạng Nhất',
+        HC_QKQT: 'Huân chương Quân kỳ Quyết thắng',
+        KNC_VSNXD_QDNDVN: 'Kỷ niệm chương VSNXD QĐNDVN',
+        DTKH: 'Đề tài khoa học',
+        SKKH: 'Sáng kiến khoa học',
+      };
+
       // Tạo thông báo cho từng user
       for (const account of accounts) {
+        // Tìm các khen thưởng của quân nhân này
+        const userAwards = [];
+
+        // Danh hiệu hằng năm
+        const userDanhHieu = danhHieuData.filter(
+          item => item.personnel_id === account.quan_nhan_id
+        );
+        userDanhHieu.forEach(item => {
+          if (item.danh_hieu && danhHieuMap[item.danh_hieu]) {
+            userAwards.push(
+              `${danhHieuMap[item.danh_hieu]}${item.nam ? ` (năm ${item.nam})` : ''}`
+            );
+          }
+          if (item.nhan_bkbqp) {
+            userAwards.push(
+              `Bằng khen của Bộ trưởng Bộ Quốc phòng${item.nam ? ` (năm ${item.nam})` : ''}`
+            );
+          }
+          if (item.nhan_cstdtq) {
+            userAwards.push(`Chiến sĩ thi đua Toàn quân${item.nam ? ` (năm ${item.nam})` : ''}`);
+          }
+        });
+
+        // Niên hạn
+        const userNienHan = nienHanData.filter(item => item.personnel_id === account.quan_nhan_id);
+        userNienHan.forEach(item => {
+          if (item.danh_hieu && danhHieuMap[item.danh_hieu]) {
+            userAwards.push(
+              `${danhHieuMap[item.danh_hieu]}${item.nam ? ` (năm ${item.nam})` : ''}`
+            );
+          }
+        });
+
+        // Cống hiến
+        const userCongHien = congHienData.filter(
+          item => item.personnel_id === account.quan_nhan_id
+        );
+        userCongHien.forEach(item => {
+          if (item.danh_hieu && danhHieuMap[item.danh_hieu]) {
+            userAwards.push(
+              `${danhHieuMap[item.danh_hieu]}${item.nam ? ` (năm ${item.nam})` : ''}`
+            );
+          }
+        });
+
+        // Thành tích khoa học
+        const userThanhTich = thanhTichData.filter(
+          item => item.personnel_id === account.quan_nhan_id
+        );
+        userThanhTich.forEach(item => {
+          if (item.loai && danhHieuMap[item.loai]) {
+            userAwards.push(`${danhHieuMap[item.loai]}${item.nam ? ` (năm ${item.nam})` : ''}`);
+          }
+        });
+
+        // Tạo message
+        let message = '';
+        if (userAwards.length > 0) {
+          message = `Khen thưởng của bạn đã được ${approverUsername} thêm vào hệ thống: ${userAwards.join(
+            ', '
+          )}.`;
+        } else {
+          message = `Khen thưởng của bạn đã được ${approverUsername} thêm vào hệ thống.`;
+        }
+
         notifications.push({
           nguoi_nhan_id: account.id,
           recipient_role: account.role,
           type: NOTIFICATION_TYPES.AWARD_ADDED,
           title: 'Bạn đã nhận khen thưởng',
-          message: `${proposalTypeName} của bạn đã được ${approverUsername} phê duyệt và thêm vào hệ thống`,
+          message: message,
           resource: RESOURCE_TYPES.PROPOSALS,
           tai_nguyen_id: proposal.id,
           link: `/user/dashboard`,

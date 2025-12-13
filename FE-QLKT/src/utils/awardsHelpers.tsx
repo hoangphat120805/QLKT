@@ -18,6 +18,8 @@ export const DANH_HIEU_MAP: Record<string, string> = {
   HCBVTQ_HANG_BA: 'Huân chương Bảo vệ Tổ quốc Hạng Ba',
   HCBVTQ_HANG_NHI: 'Huân chương Bảo vệ Tổ quốc Hạng Nhì',
   HCBVTQ_HANG_NHAT: 'Huân chương Bảo vệ Tổ quốc Hạng Nhất',
+  HC_QKQT: 'Huân chương Quân kỳ Quyết thắng',
+  KNC_VSNXD_QDNDVN: 'Kỷ niệm chương Vì sự nghiệp xây dựng QĐNDVN',
 };
 
 export const COLUMN_STYLES: {
