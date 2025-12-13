@@ -740,7 +740,7 @@ class ProfileService {
         cstdcs_lien_tuc >= 3 &&
         nckh_lien_tuc >= cstdcs_lien_tuc;
       if (cstdcs_lien_tuc % 6 === 0) {
-        const bkbqp_lt = this.calculateContinuousBKBQP(danhHieuList, year-1);
+        const bkbqp_lt = this.calculateContinuousBKBQP(danhHieuList, year - 1);
         du_dieu_kien_cstdtq =
           cstdcs_lien_tuc % 3 === 0 &&
           bkbqp_lt >= 1 &&
@@ -787,9 +787,9 @@ class ProfileService {
           {
             tong_cstdcs: tong_cstdcs_json,
             tong_nckh: tong_nckh_json,
-            cstdcs_lien_tuc: cstdcs_lien_tuc,
-            bkbqp_lien_tuc: bkbqp_lien_tuc,
-            cstdtq_lien_tuc: cstdtq_lien_tuc,
+            cstdcs_lien_tuc: cstdcs_lien_tuc % 7,
+            bkbqp_lien_tuc: bkbqp_lien_tuc % 3,
+            cstdtq_lien_tuc: cstdtq_lien_tuc % 2,
             du_dieu_kien_bkbqp: du_dieu_kien_bkbqp,
             du_dieu_kien_cstdtq: du_dieu_kien_cstdtq,
             du_dieu_kien_bkttcp: du_dieu_kien_bkttcp,

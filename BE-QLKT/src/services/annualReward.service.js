@@ -244,7 +244,12 @@ class AnnualRewardService {
 
       // Gửi thông báo cho Manager và quân nhân
       try {
-        await notificationHelper.notifyOnAwardDeleted(reward, personnel, 'CA_NHAN_HANG_NAM', adminUsername);
+        await notificationHelper.notifyOnAwardDeleted(
+          reward,
+          personnel,
+          'CA_NHAN_HANG_NAM',
+          adminUsername
+        );
         console.log(`✅ Sent notification for deleted annual reward`);
       } catch (notifyError) {
         console.error(`⚠️ Failed to send notification:`, notifyError.message);
