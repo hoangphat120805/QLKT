@@ -19,6 +19,7 @@ import {
   Select,
   ConfigProvider,
   theme as antdTheme,
+  Popconfirm,
 } from 'antd';
 import {
   HomeOutlined,
@@ -31,6 +32,7 @@ import {
   WarningOutlined,
   FileTextOutlined,
   DownloadOutlined,
+  DeleteOutlined,
 } from '@ant-design/icons';
 import { EditableCell } from '@/components/EditableCell';
 import DecisionModal from '@/components/DecisionModal';
@@ -160,6 +162,7 @@ export default function ProposalDetailPage() {
   const [personnelDetails, setPersonnelDetails] = useState<Record<string, any>>({});
   const [approving, setApproving] = useState(false);
   const [rejecting, setRejecting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [messageAlert, setMessageAlert] = useState<{
     type: 'success' | 'error';
     text: string;
@@ -382,6 +385,28 @@ export default function ProposalDetailPage() {
       setMessageAlert({ type: 'error', text: error.message || 'Lỗi khi từ chối đề xuất' });
     } finally {
       setRejecting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      setDeleting(true);
+      setMessageAlert(null);
+
+      const response = await apiClient.deleteProposal(String(id));
+
+      if (response.success) {
+        message.success('Đã xóa đề xuất thành công');
+        setTimeout(() => {
+          router.push('/admin/proposals/review');
+        }, 1000);
+      } else {
+        setMessageAlert({ type: 'error', text: response.message || 'Lỗi khi xóa đề xuất' });
+      }
+    } catch (error: any) {
+      setMessageAlert({ type: 'error', text: error.message || 'Lỗi khi xóa đề xuất' });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -1686,27 +1711,48 @@ export default function ProposalDetailPage() {
         </Card>
       ) : null}
 
-      {proposal.status === 'PENDING' && (
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginTop: 24 }}>
+        <Popconfirm
+          title="Xóa đề xuất"
+          description="Bạn có chắc chắn muốn xóa đề xuất này? Hành động này không thể hoàn tác."
+          onConfirm={handleDelete}
+          okText="Xóa"
+          cancelText="Hủy"
+          okButtonProps={{ danger: true }}
+        >
           <Button
             danger
-            icon={<CloseCircleOutlined />}
-            onClick={() => setRejectModalVisible(true)}
+            icon={<DeleteOutlined />}
+            loading={deleting}
             size="large"
+            className="delete-proposal-button"
+            style={{ backgroundColor: '#ff4d4f', borderColor: '#ff4d4f', color: '#fff' }}
           >
-            Từ chối
+            Xóa đề xuất
           </Button>
-          <Button
-            type="primary"
-            icon={approving ? <LoadingOutlined /> : <CheckCircleOutlined />}
-            onClick={handleApprove}
-            loading={approving}
-            size="large"
-          >
-            {approving ? 'Đang phê duyệt...' : 'Phê Duyệt'}
-          </Button>
-        </div>
-      )}
+        </Popconfirm>
+        {proposal.status === 'PENDING' && (
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <Button
+              danger
+              icon={<CloseCircleOutlined />}
+              onClick={() => setRejectModalVisible(true)}
+              size="large"
+            >
+              Từ chối
+            </Button>
+            <Button
+              type="primary"
+              icon={approving ? <LoadingOutlined /> : <CheckCircleOutlined />}
+              onClick={handleApprove}
+              loading={approving}
+              size="large"
+            >
+              {approving ? 'Đang phê duyệt...' : 'Phê Duyệt'}
+            </Button>
+          </div>
+        )}
+      </div>
 
       {/* Reject Modal */}
       <Modal

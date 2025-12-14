@@ -17,6 +17,7 @@ import {
   Popconfirm,
   message,
   Spin,
+  Tag,
 } from 'antd';
 import type { ColumnsType } from 'antd';
 import {
@@ -41,6 +42,14 @@ interface RewardRecord {
   ghi_chu?: string;
   so_quyet_dinh?: string;
   file_quyet_dinh?: string;
+  nhan_bkbqp: boolean;
+  so_quyet_dinh_bkbqp?: string;
+  file_quyet_dinh_bkbqp?: string;
+  nhan_cstdtq: boolean;
+  so_quyet_dinh_cstdtq?: string;
+  nhan_bkttcp: boolean;
+  so_quyet_dinh_bkttcp?: string;
+  file_quyet_dinh_cstdtq?: string;
 }
 
 export default function AnnualRewardsPage() {
@@ -227,6 +236,30 @@ export default function AnnualRewardsPage() {
       ),
     },
     {
+      title: 'Nhận BKBQP',
+      dataIndex: 'nhan_bkbqp',
+      key: 'nhan_bkbqp',
+      width: 100,
+      align: 'center',
+      render: (value: boolean) => (value ? <Tag color="green">Có</Tag> : <Tag>Không</Tag>),
+    },
+    {
+      title: 'Nhận CSTDTQ',
+      dataIndex: 'nhan_cstdtq',
+      key: 'nhan_cstdtq',
+      width: 100,
+      align: 'center',
+      render: (value: boolean) => (value ? <Tag color="green">Có</Tag> : <Tag>Không</Tag>),
+    },
+    {
+      title: 'Nhận BKTTCP',
+      dataIndex: 'nhan_bkttcp',
+      key: 'nhan_bkttcp',
+      width: 100,
+      align: 'center',
+      render: (value: boolean) => (value ? <Tag color="green">Có</Tag> : <Tag>Không</Tag>),
+    },
+    {
       title: 'Số quyết định',
       dataIndex: 'so_quyet_dinh',
       key: 'so_quyet_dinh',
@@ -234,20 +267,118 @@ export default function AnnualRewardsPage() {
       align: 'center',
       ellipsis: true,
       render: (text: string, record: RewardRecord) => {
-        if (!text)
-          return (
-            <div style={{ textAlign: 'center' }}>-</div>
-          );
+        const items = [];
 
-        return (
-          <div style={{ textAlign: 'center' }}>
-          <a
-            onClick={() => handleOpenDecisionFile(text)}
-            style={{ color: '#52c41a', cursor: 'pointer', textDecoration: 'underline' }}
-          >
-            {text}
-          </a>
-          </div>
+        if (record.so_quyet_dinh) {
+          items.push(
+            <div key="general" style={{ textAlign: 'center' }}>
+              {record.so_quyet_dinh.trim() !== '' ? (
+                <a
+                  onClick={e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleOpenDecisionFile(record.so_quyet_dinh!);
+                  }}
+                  style={{
+                    color: '#52c41a',
+                    fontWeight: 500,
+                    textDecoration: 'underline',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {record.so_quyet_dinh}
+                </a>
+              ) : (
+                <span style={{ color: '#999', fontWeight: 400 }}>Chưa có</span>
+              )}
+            </div>
+          );
+        }
+        if (record.nhan_bkbqp || record.so_quyet_dinh_bkbqp) {
+          items.push(
+            <div key="bkbqp" style={{ textAlign: 'center' }}>
+              BKBQP:{' '}
+              {record.so_quyet_dinh_bkbqp && record.so_quyet_dinh_bkbqp.trim() !== '' ? (
+                <a
+                  onClick={e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleOpenDecisionFile(record.so_quyet_dinh_bkbqp!);
+                  }}
+                  style={{
+                    color: '#52c41a',
+                    fontWeight: 500,
+                    textDecoration: 'underline',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {record.so_quyet_dinh_bkbqp}
+                </a>
+              ) : (
+                <span style={{ color: '#999', fontWeight: 400 }}>Chưa có</span>
+              )}
+            </div>
+          );
+        }
+
+        if (record.nhan_cstdtq || record.so_quyet_dinh_cstdtq) {
+          items.push(
+            <div key="cstdtq" style={{ textAlign: 'center' }}>
+              CSTDTQ:{' '}
+              {record.so_quyet_dinh_cstdtq && record.so_quyet_dinh_cstdtq.trim() !== '' ? (
+                <a
+                  onClick={e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleOpenDecisionFile(record.so_quyet_dinh_cstdtq!);
+                  }}
+                  style={{
+                    color: '#52c41a',
+                    fontWeight: 500,
+                    textDecoration: 'underline',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {record.so_quyet_dinh_cstdtq}
+                </a>
+              ) : (
+                <span style={{ color: '#999', fontWeight: 400 }}>Chưa có</span>
+              )}
+            </div>
+          );
+        }
+
+        if (record.nhan_bkttcp || record.so_quyet_dinh_bkttcp) {
+          items.push(
+            <div key="bkttcp" style={{ textAlign: 'center' }}>
+              BKTTCP:{' '}
+              {record.so_quyet_dinh_bkttcp && record.so_quyet_dinh_bkttcp.trim() !== '' ? (
+                <a
+                  onClick={e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleOpenDecisionFile(record.so_quyet_dinh_bkttcp!);
+                  }}
+                  style={{
+                    color: '#52c41a',
+                    fontWeight: 500,
+                    textDecoration: 'underline',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {record.so_quyet_dinh_bkttcp}
+                </a>
+              ) : (
+                <span style={{ color: '#999', fontWeight: 400 }}>Chưa có</span>
+              )}
+            </div>
+          );
+        }
+
+        return items.length > 0 ? (
+          <div style={{ textAlign: 'center' }}>{items}</div>
+        ) : (
+          <div style={{ textAlign: 'center' }}>-</div>
         );
       },
     },
@@ -317,7 +448,7 @@ export default function AnnualRewardsPage() {
             dataSource={rewards}
             rowKey="id"
             pagination={false}
-            scroll={{ x: 800 }}
+            scroll={{ x: 950 }}
             locale={{
               emptyText: 'Chưa có dữ liệu khen thưởng',
             }}

@@ -16,6 +16,7 @@ import {
   Select,
   Row,
   Col,
+  Popconfirm,
 } from 'antd';
 import {
   HomeOutlined,
@@ -26,6 +27,7 @@ import {
   LoadingOutlined,
   UnorderedListOutlined,
   FilterOutlined,
+  DeleteOutlined,
 } from '@ant-design/icons';
 import { format } from 'date-fns';
 import { apiClient } from '@/lib/api-client';
@@ -58,6 +60,7 @@ export default function ProposalReviewPage() {
   const [yearFilter, setYearFilter] = useState<number | ''>('');
   const [typeFilter, setTypeFilter] = useState<string>('');
   const [pageSize, setPageSize] = useState(10);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchProposals();
@@ -128,6 +131,26 @@ export default function ProposalReviewPage() {
   const handleResetFilters = () => {
     setYearFilter('');
     setTypeFilter('');
+  };
+
+  const handleDeleteProposal = async (proposalId: number) => {
+    try {
+      setDeletingId(proposalId);
+      const response = await apiClient.deleteProposal(proposalId.toString());
+
+      if (response.success) {
+        message.success(response.message || 'Đã xóa đề xuất thành công');
+        // Refresh danh sách
+        await fetchProposals();
+      } else {
+        message.error(response.message || 'Lỗi khi xóa đề xuất');
+      }
+    } catch (error: any) {
+      message.error(error.message || 'Lỗi khi xóa đề xuất');
+      console.error('Delete error:', error);
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -246,15 +269,34 @@ export default function ProposalReviewPage() {
       title: 'Hành động',
       key: 'action',
       align: 'center' as const,
+      width: 200,
       render: (_: any, record: Proposal) => (
         <div style={{ textAlign: 'center' }}>
-          <Button
-            type="default"
-            icon={<EyeOutlined />}
-            onClick={() => router.push(`/admin/proposals/review/${record.id}`)}
-          >
-            {record.status === 'PENDING' ? 'Xem và Duyệt' : 'Xem Chi Tiết'}
-          </Button>
+          <Space>
+            <Button
+              type="default"
+              icon={<EyeOutlined />}
+              onClick={() => router.push(`/admin/proposals/review/${record.id}`)}
+            >
+              {record.status === 'PENDING' ? 'Xem và Duyệt' : 'Xem Chi Tiết'}
+            </Button>
+            <Popconfirm
+              title="Xóa đề xuất"
+              description="Bạn có chắc chắn muốn xóa đề xuất này? Hành động này không thể hoàn tác."
+              onConfirm={() => handleDeleteProposal(record.id)}
+              okText="Xóa"
+              cancelText="Hủy"
+              okButtonProps={{ danger: true }}
+            >
+              <Button
+                danger
+                icon={<DeleteOutlined />}
+                loading={deletingId === record.id}
+              >
+                Xóa
+              </Button>
+            </Popconfirm>
+          </Space>
         </div>
       ),
     },

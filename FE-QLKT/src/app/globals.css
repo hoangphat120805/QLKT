@@ -2508,6 +2508,73 @@ button[class*='bg-primary']:hover:not(:disabled) {
   background: #9ca3af;
 }
 
+/* Delete proposal button style - always red */
+.delete-proposal-button {
+  background-color: #ff4d4f !important;
+  border-color: #ff4d4f !important;
+  color: #fff !important;
+}
+
+.delete-proposal-button .anticon,
+.delete-proposal-button span {
+  color: #fff !important;
+}
+
+.delete-proposal-button:hover {
+  background-color: #ff7875 !important;
+  border-color: #ff7875 !important;
+  color: #fff !important;
+}
+
+.delete-proposal-button:hover .anticon,
+.delete-proposal-button:hover span {
+  color: #fff !important;
+}
+
+.delete-proposal-button:focus {
+  background-color: #ff4d4f !important;
+  border-color: #ff4d4f !important;
+  color: #fff !important;
+}
+
+.delete-proposal-button:focus .anticon,
+.delete-proposal-button:focus span {
+  color: #fff !important;
+}
+
+.delete-proposal-button:active {
+  background-color: #cf1322 !important;
+  border-color: #cf1322 !important;
+  color: #fff !important;
+}
+
+.delete-proposal-button:active .anticon,
+.delete-proposal-button:active span {
+  color: #fff !important;
+}
+
+/* Summary stats - 5 columns equal width */
+@media (min-width: 768px) {
+  .summary-stat-col {
+    flex: 1 1 20% !important;
+    max-width: 20% !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .summary-stat-col {
+    flex: 1 1 50% !important;
+    max-width: 50% !important;
+  }
+}
+
+@media (max-width: 575px) {
+  .summary-stat-col {
+    flex: 1 1 100% !important;
+    max-width: 100% !important;
+  }
+}
+
 /* Notification pulse animation */
 @keyframes pulse {
   0%,

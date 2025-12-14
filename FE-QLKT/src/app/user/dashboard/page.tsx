@@ -502,7 +502,7 @@ export default function UserDashboard() {
                       color: theme === 'dark' ? '#cbd5e1' : '#475569',
                     }}
                   >
-                    Tháng cống hiến
+                      Tháng cống hiến
                   </Text>
                   <div
                     style={{
@@ -510,9 +510,9 @@ export default function UserDashboard() {
                       fontWeight: 'bold',
                       color: theme === 'dark' ? '#e5e7eb' : '#0f172a',
                       lineHeight: '1.2',
-                    }}
-                  >
-                    {serviceMonths} tháng
+                      }}
+                    >
+                      {serviceMonths} tháng
                   </div>
                 </div>
               </div>
@@ -549,7 +549,7 @@ export default function UserDashboard() {
                 </Descriptions.Item>
                 <Descriptions.Item label="Đơn vị" labelStyle={{ fontWeight: 500 }}>
                   {personnelInfo.DonViTrucThuoc?.ten_don_vi ||
-                    personnelInfo.CoQuanDonVi?.ten_don_vi ||
+                      personnelInfo.CoQuanDonVi?.ten_don_vi ||
                     'Chưa có dữ liệu'}
                 </Descriptions.Item>
                 <Descriptions.Item label="Cấp bậc" labelStyle={{ fontWeight: 500 }}>
@@ -663,7 +663,7 @@ export default function UserDashboard() {
                       }
 
                       return (
-                        <div>
+                    <div>
                           <PieChart
                             data={chartData}
                             title="Tổng các danh hiệu đã nhận"
@@ -679,8 +679,8 @@ export default function UserDashboard() {
                           <div className="mt-4 text-center">
                             <Text type="secondary" className="text-sm">
                               Tổng số danh hiệu/thành tích đã nhận: <Text strong>{total}</Text>
-                            </Text>
-                          </div>
+                      </Text>
+                    </div>
                         </div>
                       );
                     })()}
@@ -873,113 +873,113 @@ export default function UserDashboard() {
 
                       return (
                         <>
-                          {/* HCBVTQ - Hạng Ba */}
-                          <div>
-                            <div className="flex justify-between items-center mb-2">
+                    {/* HCBVTQ - Hạng Ba */}
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
                               <Text strong>
                                 Hạng Ba ({targetMonths} tháng)
                               </Text>
-                              <Badge
-                                status={
-                                  contributionProfile.hcbvtq_hang_ba_status === 'DA_NHAN'
-                                    ? 'success'
-                                    : contributionProfile.hcbvtq_hang_ba_status === 'DU_DIEU_KIEN'
-                                    ? 'processing'
-                                    : 'default'
-                                }
-                                text={
-                                  contributionProfile.hcbvtq_hang_ba_status === 'DA_NHAN'
-                                    ? 'Đã nhận'
-                                    : contributionProfile.hcbvtq_hang_ba_status === 'DU_DIEU_KIEN'
-                                    ? 'Đủ điều kiện'
-                                    : 'Chưa đủ'
-                                }
-                              />
-                            </div>
-                            <Progress
-                              {...getProgressData(
-                                contributionProfile.hcbvtq_hang_ba_status,
+                        <Badge
+                          status={
+                            contributionProfile.hcbvtq_hang_ba_status === 'DA_NHAN'
+                              ? 'success'
+                              : contributionProfile.hcbvtq_hang_ba_status === 'DU_DIEU_KIEN'
+                              ? 'processing'
+                              : 'default'
+                          }
+                          text={
+                            contributionProfile.hcbvtq_hang_ba_status === 'DA_NHAN'
+                              ? 'Đã nhận'
+                              : contributionProfile.hcbvtq_hang_ba_status === 'DU_DIEU_KIEN'
+                              ? 'Đủ điều kiện'
+                              : 'Chưa đủ'
+                          }
+                        />
+                      </div>
+                      <Progress
+                        {...getProgressData(
+                          contributionProfile.hcbvtq_hang_ba_status,
                                 hangBaMonths,
                                 targetMonths
-                              )}
+                        )}
                               format={() => `${hangBaMonths}/${targetMonths} tháng`}
-                            />
+                      />
                             <Text type="secondary" className="text-xs">
                               Tổng tháng cống hiến từ nhóm có hệ số chức vụ từ 0.7 đến 1.0
                             </Text>
-                          </div>
+                    </div>
 
-                          {/* HCBVTQ - Hạng Nhì */}
-                          <div>
-                            <div className="flex justify-between items-center mb-2">
+                    {/* HCBVTQ - Hạng Nhì */}
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
                               <Text strong>
                                 Hạng Nhì ({targetMonths} tháng)
                               </Text>
-                              <Badge
-                                status={
-                                  contributionProfile.hcbvtq_hang_nhi_status === 'DA_NHAN'
-                                    ? 'success'
-                                    : contributionProfile.hcbvtq_hang_nhi_status === 'DU_DIEU_KIEN'
-                                    ? 'processing'
-                                    : 'default'
-                                }
-                                text={
-                                  contributionProfile.hcbvtq_hang_nhi_status === 'DA_NHAN'
-                                    ? 'Đã nhận'
-                                    : contributionProfile.hcbvtq_hang_nhi_status === 'DU_DIEU_KIEN'
-                                    ? 'Đủ điều kiện'
-                                    : 'Chưa đủ'
-                                }
-                              />
-                            </div>
-                            <Progress
-                              {...getProgressData(
-                                contributionProfile.hcbvtq_hang_nhi_status,
+                        <Badge
+                          status={
+                            contributionProfile.hcbvtq_hang_nhi_status === 'DA_NHAN'
+                              ? 'success'
+                              : contributionProfile.hcbvtq_hang_nhi_status === 'DU_DIEU_KIEN'
+                              ? 'processing'
+                              : 'default'
+                          }
+                          text={
+                            contributionProfile.hcbvtq_hang_nhi_status === 'DA_NHAN'
+                              ? 'Đã nhận'
+                              : contributionProfile.hcbvtq_hang_nhi_status === 'DU_DIEU_KIEN'
+                              ? 'Đủ điều kiện'
+                              : 'Chưa đủ'
+                          }
+                        />
+                      </div>
+                      <Progress
+                        {...getProgressData(
+                          contributionProfile.hcbvtq_hang_nhi_status,
                                 hangNhiMonths,
                                 targetMonths
-                              )}
+                        )}
                               format={() => `${hangNhiMonths}/${targetMonths} tháng`}
-                            />
+                      />
                             <Text type="secondary" className="text-xs">
                               Tổng tháng cống hiến từ nhóm có hệ số chức vụ từ 0.8 đến 1.0
                             </Text>
-                          </div>
+                    </div>
 
-                          {/* HCBVTQ - Hạng Nhất */}
-                          <div>
-                            <div className="flex justify-between items-center mb-2">
+                    {/* HCBVTQ - Hạng Nhất */}
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
                               <Text strong>
                                 Hạng Nhất ({targetMonths} tháng)
                               </Text>
-                              <Badge
-                                status={
-                                  contributionProfile.hcbvtq_hang_nhat_status === 'DA_NHAN'
-                                    ? 'success'
-                                    : contributionProfile.hcbvtq_hang_nhat_status === 'DU_DIEU_KIEN'
-                                    ? 'processing'
-                                    : 'default'
-                                }
-                                text={
-                                  contributionProfile.hcbvtq_hang_nhat_status === 'DA_NHAN'
-                                    ? 'Đã nhận'
-                                    : contributionProfile.hcbvtq_hang_nhat_status === 'DU_DIEU_KIEN'
-                                    ? 'Đủ điều kiện'
-                                    : 'Chưa đủ'
-                                }
-                              />
-                            </div>
-                            <Progress
-                              {...getProgressData(
-                                contributionProfile.hcbvtq_hang_nhat_status,
+                        <Badge
+                          status={
+                            contributionProfile.hcbvtq_hang_nhat_status === 'DA_NHAN'
+                              ? 'success'
+                              : contributionProfile.hcbvtq_hang_nhat_status === 'DU_DIEU_KIEN'
+                              ? 'processing'
+                              : 'default'
+                          }
+                          text={
+                            contributionProfile.hcbvtq_hang_nhat_status === 'DA_NHAN'
+                              ? 'Đã nhận'
+                              : contributionProfile.hcbvtq_hang_nhat_status === 'DU_DIEU_KIEN'
+                              ? 'Đủ điều kiện'
+                              : 'Chưa đủ'
+                          }
+                        />
+                      </div>
+                      <Progress
+                        {...getProgressData(
+                          contributionProfile.hcbvtq_hang_nhat_status,
                                 hangNhatMonths,
                                 targetMonths
-                              )}
+                        )}
                               format={() => `${hangNhatMonths}/${targetMonths} tháng`}
-                            />
+                      />
                             <Text type="secondary" className="text-xs">
                               Tổng tháng cống hiến từ nhóm có hệ số chức vụ từ 0.9 đến 1.0
                             </Text>
-                          </div>
+                    </div>
                         </>
                       );
                     })()}

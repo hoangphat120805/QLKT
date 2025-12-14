@@ -270,11 +270,11 @@ export default function AnnualRewardsPage() {
             </div>
           );
         }
-        if (record.so_quyet_dinh_bkbqp) {
+        if (record.nhan_bkbqp || record.so_quyet_dinh_bkbqp) {
           items.push(
             <div key="bkbqp" style={{ textAlign: 'center' }}>
               BKBQP:{' '}
-              {record.so_quyet_dinh_bkbqp.trim() !== '' ? (
+              {record.so_quyet_dinh_bkbqp && record.so_quyet_dinh_bkbqp.trim() !== '' ? (
                 <a
                   onClick={e => {
                     e.preventDefault();
@@ -297,11 +297,11 @@ export default function AnnualRewardsPage() {
           );
         }
 
-        if (record.so_quyet_dinh_cstdtq) {
+        if (record.nhan_cstdtq || record.so_quyet_dinh_cstdtq) {
           items.push(
             <div key="cstdtq" style={{ textAlign: 'center' }}>
               CSTDTQ:{' '}
-              {record.so_quyet_dinh_cstdtq.trim() !== '' ? (
+              {record.so_quyet_dinh_cstdtq && record.so_quyet_dinh_cstdtq.trim() !== '' ? (
                 <a
                   onClick={e => {
                     e.preventDefault();
@@ -316,6 +316,33 @@ export default function AnnualRewardsPage() {
                   }}
                 >
                   {record.so_quyet_dinh_cstdtq}
+                </a>
+              ) : (
+                <span style={{ color: '#999', fontWeight: 400 }}>Chưa có</span>
+              )}
+            </div>
+          );
+        }
+
+        if (record.nhan_bkttcp || record.so_quyet_dinh_bkttcp) {
+          items.push(
+            <div key="bkttcp" style={{ textAlign: 'center' }}>
+              BKTTCP:{' '}
+              {record.so_quyet_dinh_bkttcp && record.so_quyet_dinh_bkttcp.trim() !== '' ? (
+                <a
+                  onClick={e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleOpenDecisionFile(record.so_quyet_dinh_bkttcp!);
+                  }}
+                  style={{
+                    color: '#52c41a',
+                    fontWeight: 500,
+                    textDecoration: 'underline',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {record.so_quyet_dinh_bkttcp}
                 </a>
               ) : (
                 <span style={{ color: '#999', fontWeight: 400 }}>Chưa có</span>

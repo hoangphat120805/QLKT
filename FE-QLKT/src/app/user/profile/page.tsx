@@ -288,6 +288,29 @@ export default function UserProfilePage() {
           );
         }
 
+        // Bằng khen Thủ tướng Chính phủ
+        if (record.so_quyet_dinh_bkttcp && record.so_quyet_dinh_bkttcp.trim() !== '') {
+          decisions.push(
+            <div key="bkttcp" style={{ marginTop: '8px', fontSize: '13px', textAlign: 'center' }}>
+              <Text type="secondary">BKTTCP:</Text>{' '}
+              <a
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleOpenDecisionFile(record.so_quyet_dinh_bkttcp);
+                }}
+                style={{
+                  color: '#52c41a',
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                }}
+              >
+                {record.so_quyet_dinh_bkttcp}
+              </a>
+            </div>
+          );
+        }
+
         return (
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontWeight: 500 }}>{text}</div>
@@ -961,8 +984,8 @@ export default function UserProfilePage() {
           ) : (
             <div className="space-y-5">
               {/* Summary Stats */}
-              <Row gutter={[16, 16]} className="mb-6">
-                <Col xs={24} sm={12} md={6}>
+              <Row gutter={[16, 16]} className="mb-6" style={{ display: 'flex', flexWrap: 'wrap' }}>
+                <Col xs={24} sm={12} style={{ flex: '1 1 20%', minWidth: 0 }} className="summary-stat-col">
                   <Card
                     size="small"
                     className="text-center"
@@ -992,7 +1015,7 @@ export default function UserProfilePage() {
                     />
                   </Card>
                 </Col>
-                <Col xs={24} sm={12} md={6}>
+                <Col xs={24} sm={12} style={{ flex: '1 1 20%', minWidth: 0 }} className="summary-stat-col">
                   <Card
                     size="small"
                     className="text-center"
@@ -1014,7 +1037,7 @@ export default function UserProfilePage() {
                     />
                   </Card>
                 </Col>
-                <Col xs={24} sm={12} md={6}>
+                <Col xs={24} sm={12} style={{ flex: '1 1 20%', minWidth: 0 }} className="summary-stat-col">
                   <Card
                     size="small"
                     className="text-center"
@@ -1036,7 +1059,7 @@ export default function UserProfilePage() {
                     />
                   </Card>
                 </Col>
-                <Col xs={24} sm={12} md={6}>
+                <Col xs={24} sm={12} style={{ flex: '1 1 20%', minWidth: 0 }} className="summary-stat-col">
                   <Card
                     size="small"
                     className="text-center"
@@ -1055,6 +1078,28 @@ export default function UserProfilePage() {
                       }
                       value={annualRewards.filter((r: any) => r.nhan_cstdtq).length}
                       valueStyle={{ color: isDarkMode ? '#fb923c' : '#ea580c', fontWeight: 700 }}
+                    />
+                  </Card>
+                </Col>
+                <Col xs={24} sm={12} style={{ flex: '1 1 20%', minWidth: 0 }} className="summary-stat-col">
+                  <Card
+                    size="small"
+                    className="text-center"
+                    style={{
+                      background: isDarkMode
+                        ? 'linear-gradient(135deg, #78350f 0%, #1e293b 100%)'
+                        : 'linear-gradient(135deg, #fef3c7 0%, #fffbeb 100%)',
+                      border: 'none',
+                    }}
+                  >
+                    <Statistic
+                      title={
+                        <span style={{ color: isDarkMode ? '#fcd34d' : '#b45309' }}>
+                          BK của Thủ tướng Chính phủ
+                        </span>
+                      }
+                      value={annualRewards.filter((r: any) => r.nhan_bkttcp).length}
+                      valueStyle={{ color: isDarkMode ? '#fbbf24' : '#d97706', fontWeight: 700 }}
                     />
                   </Card>
                 </Col>
@@ -1310,6 +1355,65 @@ export default function UserProfilePage() {
                                         style={{ color: '#52c41a', cursor: 'pointer' }}
                                       >
                                         {reward.so_quyet_dinh_cstdtq}
+                                      </a>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            // Bằng khen Thủ tướng Chính phủ
+                            if (
+                              reward.nhan_bkttcp &&
+                              reward.so_quyet_dinh_bkttcp &&
+                              reward.so_quyet_dinh_bkttcp.trim() !== ''
+                            ) {
+                              items.push(
+                                <div
+                                  key={`${reward.id}-bkttcp`}
+                                  className="flex items-start gap-3 p-3 rounded-lg transition-all hover:scale-[1.01]"
+                                  style={{
+                                    background: isDarkMode
+                                      ? 'rgba(251, 191, 36, 0.1)'
+                                      : 'rgba(217, 119, 6, 0.1)',
+                                    border: `1px solid ${isDarkMode ? '#f59e0b' : '#d97706'}`,
+                                  }}
+                                >
+                                  <div
+                                    className="flex items-center justify-center w-10 h-10 rounded-full flex-shrink-0"
+                                    style={{
+                                      backgroundColor: isDarkMode ? '#f59e0b' : '#d97706',
+                                      color: '#fff',
+                                    }}
+                                  >
+                                    <CrownOutlined />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div
+                                      className="font-semibold text-base"
+                                      style={{ color: isDarkMode ? '#fbbf24' : '#b45309' }}
+                                    >
+                                      Bằng khen của Thủ tướng Chính phủ
+                                    </div>
+                                    <div
+                                      className="flex items-center gap-1.5 mt-1"
+                                      style={{
+                                        color: isDarkMode ? '#9ca3af' : '#6b7280',
+                                        fontSize: '13px',
+                                      }}
+                                    >
+                                      <FileTextOutlined style={{ fontSize: '12px' }} />
+                                      <span>Số QĐ: </span>
+                                      <a
+                                        onClick={e => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          handleOpenDecisionFile(reward.so_quyet_dinh_bkttcp);
+                                        }}
+                                        className="hover:underline"
+                                        style={{ color: '#52c41a', cursor: 'pointer' }}
+                                      >
+                                        {reward.so_quyet_dinh_bkttcp}
                                       </a>
                                     </div>
                                   </div>
