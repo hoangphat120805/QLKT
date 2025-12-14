@@ -628,23 +628,23 @@ export default function UserDashboard() {
 
                       const chartData = [
                         {
-                          label: 'Chiến sĩ thi đua cơ sở (CSTDCS)',
+                          label: 'Chiến sĩ thi đua cơ sở',
                           value: danhHieuCounts.CSTDCS,
                         },
                         {
-                          label: 'Chiến sĩ tiên tiến (CSTT)',
+                          label: 'Chiến sĩ tiên tiến',
                           value: danhHieuCounts.CSTT,
                         },
                         {
-                          label: 'Bằng khen BQP (BKBQP)',
+                          label: 'Bằng khen của Bộ trưởng Bộ Quốc phòng',
                           value: danhHieuCounts.BKBQP,
                         },
                         {
-                          label: 'Chiến sĩ thi đua toàn quân (CSTDTQ)',
+                          label: 'Chiến sĩ thi đua toàn quân',
                           value: danhHieuCounts.CSTDTQ,
                         },
                         {
-                          label: 'Thành tích khoa học (NCKH)',
+                          label: 'Thành tích khoa học',
                           value: tongNCKH,
                         },
                       ].filter(item => item.value > 0);

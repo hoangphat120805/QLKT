@@ -353,16 +353,16 @@ export default function ManagerAdhocAwardsPage() {
       render: (text: string) => (
         <div style={{ textAlign: 'center' }}>
           {text ? (
-            <Tooltip title={text}>
-              <Text style={{ fontSize: '13px' }}>{text}</Text>
-            </Tooltip>
-          ) : (
+          <Tooltip title={text}>
+            <Text style={{ fontSize: '13px' }}>{text}</Text>
+          </Tooltip>
+        ) : (
             <Text type="secondary" style={{ fontStyle: 'italic', opacity: 0.6 }}>
               Không có ghi chú
             </Text>
           )}
         </div>
-      ),
+        ),
     },
     {
       title: 'Thao tác',

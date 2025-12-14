@@ -163,10 +163,10 @@ export default function Step3SetTitlesDonViHangNam({
   const getDanhHieuOptions = (id: string) => {
     const selectedType = getSelectedDanhHieuType();
     let allOptions = [
-      { label: 'Đơn vị Quyết thắng (ĐVQT)', value: 'ĐVQT' },
-      { label: 'Đơn vị Tiên tiến (ĐVTT)', value: 'ĐVTT' },
-      { label: 'Bằng khen của Bộ trưởng Bộ Quốc phòng (BKBQP)', value: 'BKBQP' },
-      { label: 'Bằng khen Thủ tướng Chính phủ (BKTTCP)', value: 'BKTTCP' },
+      { label: 'Đơn vị Quyết thắng', value: 'ĐVQT' },
+      { label: 'Đơn vị Tiên tiến', value: 'ĐVTT' },
+      { label: 'Bằng khen của Bộ trưởng Bộ Quốc phòng', value: 'BKBQP' },
+      { label: 'Bằng khen Thủ tướng Chính phủ', value: 'BKTTCP' },
     ];
 
     // Use prefetched annual profile for this unit to determine eligibility

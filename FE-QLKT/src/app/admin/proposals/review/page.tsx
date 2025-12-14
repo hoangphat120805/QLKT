@@ -1,8 +1,22 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, Tabs, Table, Button, Badge, Typography, Breadcrumb, Space, Spin, Empty } from 'antd';
+import {
+  Card,
+  Tabs,
+  Table,
+  Button,
+  Badge,
+  Typography,
+  Breadcrumb,
+  Space,
+  Spin,
+  Empty,
+  Select,
+  Row,
+  Col,
+} from 'antd';
 import {
   HomeOutlined,
   EyeOutlined,
@@ -11,6 +25,7 @@ import {
   WarningOutlined,
   LoadingOutlined,
   UnorderedListOutlined,
+  FilterOutlined,
 } from '@ant-design/icons';
 import { format } from 'date-fns';
 import { apiClient } from '@/lib/api-client';
@@ -32,6 +47,7 @@ interface Proposal {
   ghi_chu: string | null;
   createdAt: string;
   loai_de_xuat?: string;
+  nam?: number;
 }
 
 export default function ProposalReviewPage() {
@@ -39,6 +55,9 @@ export default function ProposalReviewPage() {
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
+  const [yearFilter, setYearFilter] = useState<number | ''>('');
+  const [typeFilter, setTypeFilter] = useState<string>('');
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     fetchProposals();
@@ -62,12 +81,54 @@ export default function ProposalReviewPage() {
     }
   };
 
-  const filteredProposals = proposals.filter(p => {
-    if (activeTab === 'pending') return p.status === 'PENDING';
-    if (activeTab === 'approved') return p.status === 'APPROVED';
-    if (activeTab === 'rejected') return p.status === 'REJECTED';
-    return true;
-  });
+  // Lấy danh sách các năm có trong dữ liệu
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    proposals.forEach(proposal => {
+      if (proposal.nam) {
+        years.add(proposal.nam);
+      }
+    });
+    return Array.from(years).sort((a, b) => b - a); // Sắp xếp giảm dần
+  }, [proposals]);
+
+  // Lấy danh sách các loại đề xuất có trong dữ liệu
+  const availableTypes = useMemo(() => {
+    const types = new Set<string>();
+    proposals.forEach(proposal => {
+      if (proposal.loai_de_xuat) {
+        types.add(proposal.loai_de_xuat);
+      }
+    });
+    return Array.from(types);
+  }, [proposals]);
+
+  // Tối ưu filteredProposals với useMemo
+  const filteredProposals = useMemo(() => {
+    return proposals.filter(p => {
+      // Filter theo tab
+      const statusMatch =
+        activeTab === 'all' ||
+        (activeTab === 'pending' && p.status === 'PENDING') ||
+        (activeTab === 'approved' && p.status === 'APPROVED') ||
+        (activeTab === 'rejected' && p.status === 'REJECTED');
+
+      if (!statusMatch) return false;
+
+      // Filter theo năm
+      if (yearFilter !== '' && p.nam !== yearFilter) return false;
+
+      // Filter theo loại đề xuất
+      if (typeFilter !== '' && p.loai_de_xuat !== typeFilter) return false;
+
+      return true;
+    });
+  }, [proposals, activeTab, yearFilter, typeFilter]);
+
+  const handleResetFilters = () => {
+    setYearFilter('');
+    setTypeFilter('');
+  };
 
   const getStatusBadge = (status: string) => {
     if (status === 'PENDING') {
@@ -87,7 +148,7 @@ export default function ProposalReviewPage() {
       HC_QKQT: 'Huy chương Quân kỳ Quyết thắng',
       KNC_VSNXD_QDNDVN: 'Kỷ niệm chương VSNXD QĐNDVN',
       CONG_HIEN: 'Cống hiến',
-      NCKH: 'ĐTKH/SKKH',
+      NCKH: 'Nghiên cứu khoa học',
       DOT_XUAT: 'Đột xuất',
     };
     return loaiDeXuat ? typeMap[loaiDeXuat] || loaiDeXuat : '-';
@@ -99,34 +160,48 @@ export default function ProposalReviewPage() {
       key: 'stt',
       width: 60,
       align: 'center' as const,
-      render: (_: any, __: any, index: number) => index + 1,
+      render: (_: any, __: any, index: number) => (
+        <div style={{ textAlign: 'center' }}>{index + 1}</div>
+      ),
     },
     {
       title: 'Đơn vị',
       dataIndex: 'don_vi',
       key: 'don_vi',
+      align: 'center' as const,
+      render: (text: string) => <div style={{ textAlign: 'center' }}>{text}</div>,
     },
     {
       title: 'Người đề xuất',
       dataIndex: 'nguoi_de_xuat',
       key: 'nguoi_de_xuat',
+      align: 'center' as const,
+      render: (text: string) => <div style={{ textAlign: 'center' }}>{text}</div>,
     },
     {
       title: 'Loại đề xuất',
       dataIndex: 'loai_de_xuat',
       key: 'loai_de_xuat',
-      render: (loaiDeXuat: string) => getProposalTypeName(loaiDeXuat),
+      align: 'center' as const,
+      render: (loaiDeXuat: string) => (
+        <div style={{ textAlign: 'center' }}>{getProposalTypeName(loaiDeXuat)}</div>
+      ),
     },
     {
       title: 'Ngày gửi',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      render: (date: string) => format(new Date(date), 'dd/MM/yyyy HH:mm'),
+      align: 'center' as const,
+      render: (date: string) => (
+        <div style={{ textAlign: 'center' }}>{format(new Date(date), 'dd/MM/yyyy HH:mm')}</div>
+      ),
     },
     {
       title: 'Năm',
       dataIndex: 'nam',
       key: 'nam',
+      align: 'center' as const,
+      render: (text: string | number) => <div style={{ textAlign: 'center' }}>{text}</div>,
     },
     {
       title: 'Số lượng',
@@ -151,69 +226,89 @@ export default function ProposalReviewPage() {
             count = record.so_danh_hieu ?? 0;
             break;
         }
-        return <span style={{ fontSize: '14px', fontWeight: 500 }}>{count}</span>;
+        return (
+          <div style={{ textAlign: 'center' }}>
+            <span style={{ fontSize: '14px', fontWeight: 500 }}>{count}</span>
+          </div>
+        );
       },
     },
     {
       title: 'Trạng thái',
       dataIndex: 'status',
       key: 'status',
-      render: (status: string) => getStatusBadge(status),
+      align: 'center' as const,
+      render: (status: string) => (
+        <div style={{ textAlign: 'center' }}>{getStatusBadge(status)}</div>
+      ),
     },
     {
       title: 'Hành động',
       key: 'action',
-      align: 'right' as const,
+      align: 'center' as const,
       render: (_: any, record: Proposal) => (
-        <Button
-          type="default"
-          icon={<EyeOutlined />}
-          onClick={() => router.push(`/admin/proposals/review/${record.id}`)}
-        >
-          {record.status === 'PENDING' ? 'Xem và Duyệt' : 'Xem Chi Tiết'}
-        </Button>
+        <div style={{ textAlign: 'center' }}>
+          <Button
+            type="default"
+            icon={<EyeOutlined />}
+            onClick={() => router.push(`/admin/proposals/review/${record.id}`)}
+          >
+            {record.status === 'PENDING' ? 'Xem và Duyệt' : 'Xem Chi Tiết'}
+          </Button>
+        </div>
       ),
     },
   ];
 
-  const tabItems = [
-    {
-      key: 'all',
-      label: (
-        <span>
-          <UnorderedListOutlined style={{ marginRight: 8 }} />
-          Tất cả ({proposals.length})
-        </span>
-      ),
-    },
-    {
-      key: 'pending',
-      label: (
-        <span>
-          <ClockCircleOutlined style={{ marginRight: 8 }} />
-          Chờ duyệt ({proposals.filter(p => p.status === 'PENDING').length})
-        </span>
-      ),
-    },
-    {
-      key: 'approved',
-      label: (
-        <span>
-          <CheckCircleOutlined style={{ marginRight: 8 }} />
-          Đã duyệt ({proposals.filter(p => p.status === 'APPROVED').length})
-        </span>
-      ),
-    },
-    {
-      key: 'rejected',
-      label: (
-        <span>
-          <WarningOutlined style={{ marginRight: 8 }} />
-          Đã từ chối ({proposals.filter(p => p.status === 'REJECTED').length})
-        </span>
-      ),
-    },
-  ];
+  // Tối ưu tabItems với useMemo để tránh tính toán lại số lượng mỗi lần render
+  const tabItems = useMemo(() => {
+    const statusCounts = proposals.reduce(
+      (acc, p) => {
+        acc[p.status] = (acc[p.status] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+
+    return [
+      {
+        key: 'all',
+        label: (
+          <span>
+            <UnorderedListOutlined style={{ marginRight: 8 }} />
+            Tất cả ({proposals.length})
+          </span>
+        ),
+      },
+      {
+        key: 'pending',
+        label: (
+          <span>
+            <ClockCircleOutlined style={{ marginRight: 8 }} />
+            Chờ duyệt ({statusCounts.PENDING || 0})
+          </span>
+        ),
+      },
+      {
+        key: 'approved',
+        label: (
+          <span>
+            <CheckCircleOutlined style={{ marginRight: 8 }} />
+            Đã duyệt ({statusCounts.APPROVED || 0})
+          </span>
+        ),
+      },
+      {
+        key: 'rejected',
+        label: (
+          <span>
+            <WarningOutlined style={{ marginRight: 8 }} />
+            Đã từ chối ({statusCounts.REJECTED || 0})
+          </span>
+        ),
+      },
+    ];
+  }, [proposals]);
 
   return (
     <div style={{ padding: '24px' }}>
@@ -257,6 +352,95 @@ export default function ProposalReviewPage() {
                 </Paragraph>
               }
             >
+              {/* Filter Section */}
+              <Card
+                size="small"
+                style={{ marginBottom: 16 }}
+                bodyStyle={{ padding: '16px' }}
+              >
+                <Row gutter={[16, 16]} align="bottom">
+                  <Col xs={24} sm={12} md={6}>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <label
+                        style={{
+                          display: 'block',
+                          marginBottom: 4,
+                          fontSize: 12,
+                          color: '#666',
+                        }}
+                      >
+                        <FilterOutlined /> Năm
+                      </label>
+                      <Select
+                        style={{ width: '100%' }}
+                        placeholder="Tất cả các năm"
+                        value={yearFilter || ''}
+                        onChange={value => setYearFilter(value ? Number(value) : '')}
+                        allowClear={yearFilter !== ''}
+                        size="large"
+                      >
+                        <Select.Option value="">Tất cả các năm</Select.Option>
+                        {availableYears.map(year => (
+                          <Select.Option key={year} value={year}>
+                            {year}
+                          </Select.Option>
+                        ))}
+                      </Select>
+                    </div>
+                  </Col>
+                  <Col xs={24} sm={12} md={6}>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <label
+                        style={{
+                          display: 'block',
+                          marginBottom: 4,
+                          fontSize: 12,
+                          color: '#666',
+                        }}
+                      >
+                        <FilterOutlined /> Loại đề xuất
+                      </label>
+                      <Select
+                        style={{ width: '100%' }}
+                        placeholder="Tất cả loại"
+                        value={typeFilter || ''}
+                        onChange={value => setTypeFilter(value || '')}
+                        allowClear={typeFilter !== ''}
+                        size="large"
+                      >
+                        <Select.Option value="">Tất cả các loại đề xuất</Select.Option>
+                        {availableTypes.map(type => (
+                          <Select.Option key={type} value={type}>
+                            {getProposalTypeName(type)}
+                          </Select.Option>
+                        ))}
+                      </Select>
+                    </div>
+                  </Col>
+                  <Col xs={24} sm={24} md={4}>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ height: '22px', marginBottom: '8px' }}></div>
+                      <Button
+                        onClick={handleResetFilters}
+                        size="large"
+                        style={{ width: '100%' }}
+                        icon={null}
+                      >
+                        Xóa bộ lọc
+                      </Button>
+                    </div>
+                  </Col>
+                </Row>
+                {(yearFilter !== '' || typeFilter !== '') && (
+                  <div style={{ marginTop: 12 }}>
+                    <Typography.Text type="secondary">
+                      Đang hiển thị <strong>{filteredProposals.length}</strong> / {proposals.length}{' '}
+                      đề xuất
+                    </Typography.Text>
+                  </div>
+                )}
+              </Card>
+
               {loading ? (
                 <div style={{ textAlign: 'center', padding: '48px 0' }}>
                   <Spin indicator={<LoadingOutlined style={{ fontSize: 32 }} spin />} />
@@ -285,7 +469,15 @@ export default function ProposalReviewPage() {
                   columns={columns}
                   dataSource={filteredProposals}
                   rowKey="id"
-                  pagination={{ pageSize: 10 }}
+                  pagination={{
+                    pageSize: pageSize,
+                    showTotal: total => `Tổng ${total} đề xuất`,
+                    showSizeChanger: true,
+                    pageSizeOptions: ['10', '20', '50', '100'],
+                    onShowSizeChange: (current, size) => {
+                      setPageSize(size);
+                    },
+                  }}
                 />
               )}
             </Card>

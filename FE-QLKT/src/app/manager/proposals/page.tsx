@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Card,
@@ -16,6 +16,9 @@ import {
   Tooltip,
   Empty,
   Popconfirm,
+  Select,
+  Row,
+  Col,
 } from 'antd';
 import {
   HomeOutlined,
@@ -26,6 +29,7 @@ import {
   DownloadOutlined,
   PlusOutlined,
   DeleteOutlined,
+  FilterOutlined,
 } from '@ant-design/icons';
 import { format } from 'date-fns';
 import Link from 'next/link';
@@ -70,6 +74,8 @@ export default function ManagerProposalsPage() {
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [pageSize, setPageSize] = useState(10);
+  const [yearFilter, setYearFilter] = useState<number | ''>('');
+  const [typeFilter, setTypeFilter] = useState<string>('');
 
   useEffect(() => {
     fetchProposals();
@@ -137,12 +143,54 @@ export default function ManagerProposalsPage() {
     }
   };
 
-  const filteredProposals = proposals.filter(p => {
-    if (activeTab === 'pending') return p.status === 'PENDING';
-    if (activeTab === 'approved') return p.status === 'APPROVED';
-    if (activeTab === 'rejected') return p.status === 'REJECTED';
-    return true;
-  });
+  // Lấy danh sách các năm có trong dữ liệu
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    proposals.forEach(proposal => {
+      if (proposal.nam) {
+        years.add(proposal.nam);
+      }
+    });
+    return Array.from(years).sort((a, b) => b - a); // Sắp xếp giảm dần
+  }, [proposals]);
+
+  // Lấy danh sách các loại đề xuất có trong dữ liệu
+  const availableTypes = useMemo(() => {
+    const types = new Set<string>();
+    proposals.forEach(proposal => {
+      if (proposal.loai_de_xuat) {
+        types.add(proposal.loai_de_xuat);
+      }
+    });
+    return Array.from(types);
+  }, [proposals]);
+
+  // Tối ưu filteredProposals với useMemo
+  const filteredProposals = useMemo(() => {
+    return proposals.filter(p => {
+      // Filter theo tab
+      const statusMatch =
+        activeTab === 'all' ||
+        (activeTab === 'pending' && p.status === 'PENDING') ||
+        (activeTab === 'approved' && p.status === 'APPROVED') ||
+        (activeTab === 'rejected' && p.status === 'REJECTED');
+
+      if (!statusMatch) return false;
+
+      // Filter theo năm
+      if (yearFilter !== '' && p.nam !== yearFilter) return false;
+
+      // Filter theo loại đề xuất
+      if (typeFilter !== '' && p.loai_de_xuat !== typeFilter) return false;
+
+      return true;
+    });
+  }, [proposals, activeTab, yearFilter, typeFilter]);
+
+  const handleResetFilters = () => {
+    setYearFilter('');
+    setTypeFilter('');
+  };
 
   const getProposalTypeTag = (type: string) => {
     const typeConfig = {
@@ -158,6 +206,20 @@ export default function ManagerProposalsPage() {
 
     const config = typeConfig[type as keyof typeof typeConfig];
     return config ? <Tag color={config.color}>{config.text}</Tag> : <Tag>{type}</Tag>;
+  };
+
+  const getProposalTypeName = (type: string) => {
+    const typeConfig = {
+      CA_NHAN_HANG_NAM: 'Cá nhân hằng năm',
+      DON_VI_HANG_NAM: 'Đơn vị hằng năm',
+      NIEN_HAN: 'Niên hạn',
+      HC_QKQT: 'HC Quân kỳ quyết thắng',
+      KNC_VSNXD_QDNDVN: 'KNC VSNXD QĐNDVN',
+      CONG_HIEN: 'Cống hiến',
+      DOT_XUAT: 'Đột xuất',
+      NCKH: 'Nghiên cứu khoa học',
+    };
+    return typeConfig[type as keyof typeof typeConfig] || type;
   };
 
   const getStatusTag = (status: string) => {
@@ -336,40 +398,51 @@ export default function ManagerProposalsPage() {
     },
   ];
 
-  const tabItems = [
-    {
-      key: 'all',
-      label: (
-        <span>
-          <HomeOutlined /> Tất cả ({proposals.length})
-        </span>
-      ),
-    },
-    {
-      key: 'pending',
-      label: (
-        <span>
-          <ClockCircleOutlined /> Chờ duyệt ({proposals.filter(p => p.status === 'PENDING').length})
-        </span>
-      ),
-    },
-    {
-      key: 'approved',
-      label: (
-        <span>
-          <CheckCircleOutlined /> Đã duyệt ({proposals.filter(p => p.status === 'APPROVED').length})
-        </span>
-      ),
-    },
-    {
-      key: 'rejected',
-      label: (
-        <span>
-          <CloseCircleOutlined /> Từ chối ({proposals.filter(p => p.status === 'REJECTED').length})
-        </span>
-      ),
-    },
-  ];
+  // Tối ưu tabItems với useMemo để tránh tính toán lại số lượng mỗi lần render
+  const tabItems = useMemo(() => {
+    const statusCounts = proposals.reduce(
+      (acc, p) => {
+        acc[p.status] = (acc[p.status] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+
+    return [
+      {
+        key: 'all',
+        label: (
+          <span>
+            <HomeOutlined /> Tất cả ({proposals.length})
+          </span>
+        ),
+      },
+      {
+        key: 'pending',
+        label: (
+          <span>
+            <ClockCircleOutlined /> Chờ duyệt ({statusCounts.PENDING || 0})
+          </span>
+        ),
+      },
+      {
+        key: 'approved',
+        label: (
+          <span>
+            <CheckCircleOutlined /> Đã duyệt ({statusCounts.APPROVED || 0})
+          </span>
+        ),
+      },
+      {
+        key: 'rejected',
+        label: (
+          <span>
+            <CloseCircleOutlined /> Từ chối ({statusCounts.REJECTED || 0})
+          </span>
+        ),
+      },
+    ];
+  }, [proposals]);
 
   return (
     <div className="space-y-6 p-6">
@@ -413,6 +486,95 @@ export default function ManagerProposalsPage() {
       {/* Table */}
       <Card className="shadow-sm">
         <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabItems} />
+
+        {/* Filter Section */}
+        <Card
+          size="small"
+          style={{ marginBottom: 16 }}
+          bodyStyle={{ padding: '16px' }}
+        >
+          <Row gutter={[16, 16]} align="bottom">
+            <Col xs={24} sm={12} md={6}>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    marginBottom: 4,
+                    fontSize: 12,
+                    color: '#666',
+                  }}
+                >
+                  <FilterOutlined /> Năm
+                </label>
+                <Select
+                  style={{ width: '100%' }}
+                  placeholder="Tất cả các năm"
+                  value={yearFilter || ''}
+                  onChange={value => setYearFilter(value ? Number(value) : '')}
+                  allowClear={yearFilter !== ''}
+                  size="large"
+                >
+                  <Select.Option value="">Tất cả các năm</Select.Option>
+                  {availableYears.map(year => (
+                    <Select.Option key={year} value={year}>
+                      {year}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </div>
+            </Col>
+            <Col xs={24} sm={12} md={6}>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    marginBottom: 4,
+                    fontSize: 12,
+                    color: '#666',
+                  }}
+                >
+                  <FilterOutlined /> Loại đề xuất
+                </label>
+                <Select
+                  style={{ width: '100%' }}
+                  placeholder="Tất cả loại"
+                  value={typeFilter || ''}
+                  onChange={value => setTypeFilter(value || '')}
+                  allowClear={typeFilter !== ''}
+                  size="large"
+                >
+                  <Select.Option value="">Tất cả các loại đề xuất</Select.Option>
+                  {availableTypes.map(type => (
+                    <Select.Option key={type} value={type}>
+                      {getProposalTypeName(type)}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </div>
+            </Col>
+            <Col xs={24} sm={24} md={4}>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <div style={{ height: '22px', marginBottom: '8px' }}></div>
+                <Button
+                  onClick={handleResetFilters}
+                  size="large"
+                  style={{ width: '100%' }}
+                  icon={null}
+                >
+                  Xóa bộ lọc
+                </Button>
+              </div>
+            </Col>
+          </Row>
+          {(yearFilter !== '' || typeFilter !== '') && (
+            <div style={{ marginTop: 12 }}>
+              <Typography.Text type="secondary">
+                Đang hiển thị <strong>{filteredProposals.length}</strong> / {proposals.length}{' '}
+                đề xuất
+              </Typography.Text>
+            </div>
+          )}
+        </Card>
 
         <Table
           columns={columns}

@@ -241,12 +241,12 @@ export default function AnnualRewardsPage() {
 
         return (
           <div style={{ textAlign: 'center' }}>
-            <a
-              onClick={() => handleOpenDecisionFile(text)}
-              style={{ color: '#52c41a', cursor: 'pointer', textDecoration: 'underline' }}
-            >
-              {text}
-            </a>
+          <a
+            onClick={() => handleOpenDecisionFile(text)}
+            style={{ color: '#52c41a', cursor: 'pointer', textDecoration: 'underline' }}
+          >
+            {text}
+          </a>
           </div>
         );
       },
@@ -348,8 +348,8 @@ export default function AnnualRewardsPage() {
             rules={[{ required: true, message: 'Vui lòng chọn danh hiệu' }]}
           >
             <Select placeholder="Chọn danh hiệu" size="large">
-              <Select.Option value="CSTDCS">Chiến sĩ thi đua cơ sở (CSTDCS)</Select.Option>
-              <Select.Option value="CSTT">Chiến sĩ tốt (CSTT)</Select.Option>
+              <Select.Option value="CSTDCS">Chiến sĩ thi đua cơ sở</Select.Option>
+              <Select.Option value="CSTT">Chiến sĩ tiên tiến</Select.Option>
             </Select>
           </Form.Item>
 

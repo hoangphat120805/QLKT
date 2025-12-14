@@ -247,6 +247,7 @@ export default function PersonnelRewardHistoryModal({
       render: text => {
         const map: Record<string, string> = {
           NCKH: 'Đề tài khoa học',
+          DTKH: 'Đề tài khoa học',
           SKKH: 'Sáng kiến khoa học',
         };
         return map[text] || text;
@@ -320,6 +321,13 @@ export default function PersonnelRewardHistoryModal({
       width={1200}
       loading={loading}
       centered
+      style={{ top: 20 }}
+      bodyStyle={{
+        maxHeight: 'calc(100vh - 200px)',
+        overflowY: 'auto',
+        padding: '24px',
+      }}
+      className="personnel-reward-history-modal"
     >
       {loading ? (
         <div style={{ textAlign: 'center', padding: '40px 0' }}>

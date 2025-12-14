@@ -1085,12 +1085,36 @@ export default function ManagerProposalDetailPage() {
                   key: 'danh_hieu',
                   width: 280,
                   align: 'center',
-                  render: (text: string) =>
-                    text ? (
-                      <Text style={{ whiteSpace: 'nowrap' }}>{text}</Text>
+                  render: (text: string) => {
+                    const danhHieuMap: Record<string, string> = {
+                      // Cá nhân Hằng năm
+                      CSTDCS: 'Chiến sĩ thi đua cơ sở',
+                      CSTT: 'Chiến sĩ tiên tiến',
+                      BKBQP: 'Bằng khen của Bộ trưởng Bộ Quốc phòng',
+                      CSTDTQ: 'Chiến sĩ thi đua toàn quân',
+                      // Đơn vị Hằng năm
+                      ĐVQT: 'Đơn vị Quyết thắng',
+                      ĐVTT: 'Đơn vị Tiên tiến',
+                      BKTTCP: 'Bằng khen Thủ tướng Chính phủ',
+                      // Niên hạn
+                      HCCSVV_HANG_BA: 'Huân chương Chiến sĩ Vẻ vang - Hạng Ba',
+                      HCCSVV_HANG_NHI: 'Huân chương Chiến sĩ Vẻ vang - Hạng Nhì',
+                      HCCSVV_HANG_NHAT: 'Huân chương Chiến sĩ Vẻ vang - Hạng Nhất',
+                      // Cống hiến
+                      HCBVTQ_HANG_BA: 'Huân chương Bảo vệ Tổ quốc - Hạng Ba',
+                      HCBVTQ_HANG_NHI: 'Huân chương Bảo vệ Tổ quốc - Hạng Nhì',
+                      HCBVTQ_HANG_NHAT: 'Huân chương Bảo vệ Tổ quốc - Hạng Nhất',
+                      HC_QKQT: 'Huân chương Quân kỳ Quyết thắng',
+                      KNC_VSNXD_QDNDVN: 'Kỷ niệm chương Vì sự nghiệp xây dựng QĐNDVN',
+                    };
+                    return text ? (
+                      <Text style={{ whiteSpace: 'nowrap' }}>
+                        {danhHieuMap[text] || text}
+                      </Text>
                     ) : (
                       <Text type="secondary">-</Text>
-                    ),
+                    );
+                  },
                 },
                 // Chỉ hiển thị các cột thời gian cho đề xuất cống hiến
                 ...(proposal.loai_de_xuat === 'CONG_HIEN'

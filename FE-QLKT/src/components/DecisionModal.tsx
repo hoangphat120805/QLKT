@@ -147,9 +147,7 @@ export default function DecisionModal({
           ghi_chu: decision.ghi_chu,
         });
 
-        message.info(
-          'Đã tải thông tin quyết định. Bạn có thể sửa và "Lưu thay đổi" hoặc dùng luôn bằng "Thêm quyết định".'
-        );
+        message.info('Đã chọn quyết định. Hãy kiểm tra thông tin quyết định khen thưởng.');
       }
     } catch (error: any) {
       message.error('Lỗi khi tải thông tin quyết định');
@@ -158,10 +156,22 @@ export default function DecisionModal({
     }
   };
 
-  // Watch form changes to detect editing
+  // Handle clear search to reset selected decision
+  const handleClear = () => {
+    setSelectedDecision(null);
+    form.resetFields();
+    if (loaiKhenThuong) {
+      form.setFieldsValue({ loai_khen_thuong: loaiKhenThuong });
+    }
+    setFileList([]);
+    setAutocompleteOptions([]);
+  };
+
+  // Watch form changes to detect editing - disabled when decision is selected
   const handleFormChange = () => {
+    // Không cho phép chỉnh sửa khi đã chọn quyết định
     if (selectedDecision) {
-      setIsEditing(true);
+      setIsEditing(false);
     }
   };
 
@@ -279,7 +289,7 @@ export default function DecisionModal({
         <Button key="cancel" onClick={onClose}>
           Hủy
         </Button>,
-        // Show "Use existing" button only when not in edit mode and has selectedDecision from autocomplete
+        // Chỉ hiển thị nút "Thêm quyết định" khi đã chọn quyết định từ autocomplete
         selectedDecision && !initialDecision && (
           <Button
             key="use"
@@ -291,21 +301,29 @@ export default function DecisionModal({
             Thêm quyết định
           </Button>
         ),
-        // Show save button when editing or creating new
-        (isEditing || !selectedDecision || initialDecision) && (
+        // Chỉ cho phép tạo mới khi chưa chọn quyết định nào và không phải edit mode
+        !selectedDecision && !initialDecision && (
           <Button
-            key="save"
+            key="create"
             type="primary"
             onClick={() => handleSubmit(true)}
             loading={loading}
             icon={<SaveOutlined />}
             style={{ background: '#52c41a', borderColor: '#52c41a' }}
           >
-            {initialDecision
-              ? 'Lưu thay đổi'
-              : selectedDecision
-              ? 'Lưu thay đổi'
-              : 'Thêm mới và Lưu'}
+            Thêm mới và Lưu
+          </Button>
+        ),
+        // Edit mode: chỉ cho phép sửa trong page quản lý quyết định
+        initialDecision && (
+          <Button
+            key="edit-info"
+            type="default"
+            onClick={() => {
+              message.info('Vui lòng vào trang "Quản lý Quyết định" để chỉnh sửa thông tin quyết định.');
+            }}
+          >
+            Sửa ở trang Quản lý Quyết định
           </Button>
         ),
       ]}
@@ -316,8 +334,12 @@ export default function DecisionModal({
           label="Số quyết định"
           rules={[{ required: true, message: 'Vui lòng nhập số quyết định' }]}
           extra={
-            <div style={{ marginTop: '8px', fontSize: '12px', color: '#8c8c8c' }}>
-              Nhập để tìm kiếm quyết định đã có hoặc tạo mới
+            <div style={{ marginTop: '12px', paddingTop: '4px', fontSize: '12px', color: '#8c8c8c' }}>
+              {selectedDecision
+                ? 'Đã chọn quyết định. Click nút X để chọn lại quyết định khác. Để sửa thông tin, vui lòng vào trang "Quản lý Quyết định".'
+                : initialDecision
+                ? 'Để sửa thông tin, vui lòng vào trang "image.pngQuản lý Quyết định".'
+                : 'Nhập để tìm kiếm quyết định đã có hoặc tạo mới'}
             </div>
           }
         >
@@ -325,9 +347,11 @@ export default function DecisionModal({
             options={autocompleteOptions}
             onSearch={handleSearch}
             onSelect={handleSelect}
+            onClear={handleClear}
             placeholder="Nhập số quyết định (VD: 123/QĐ-BQP)"
             notFoundContent={searching ? <Spin size="small" /> : null}
             style={{ width: '100%' }}
+            allowClear
             disabled={!!initialDecision}
           >
             <Input
@@ -344,7 +368,12 @@ export default function DecisionModal({
             label="Năm"
             rules={[{ required: true, message: 'Vui lòng nhập năm' }]}
           >
-            <Input type="number" placeholder="2024" size="large" />
+            <Input
+              type="number"
+              placeholder="2024"
+              size="large"
+              disabled={!!selectedDecision || !!initialDecision}
+            />
           </Form.Item>
 
           <Form.Item
@@ -357,6 +386,7 @@ export default function DecisionModal({
               style={{ width: '100%' }}
               placeholder="Chọn ngày ký"
               size="large"
+              disabled={!!selectedDecision || !!initialDecision}
             />
           </Form.Item>
         </div>
@@ -366,7 +396,11 @@ export default function DecisionModal({
           label="Người ký quyết định"
           rules={[{ required: true, message: 'Vui lòng nhập người ký' }]}
         >
-          <Input placeholder="VD: Trung tướng Nguyễn Văn A - Chính ủy" size="large" />
+          <Input
+            placeholder="VD: Trung tướng Nguyễn Văn A - Chính ủy"
+            size="large"
+            disabled={!!selectedDecision || !!initialDecision}
+          />
         </Form.Item>
 
         <Form.Item name="loai_khen_thuong" label="Loại khen thưởng">
@@ -376,11 +410,16 @@ export default function DecisionModal({
             popupMatchSelectWidth={false}
             styles={{ popup: { root: { minWidth: 'max-content' } } }}
             size="large"
+            disabled={!!selectedDecision || !!initialDecision}
           />
         </Form.Item>
 
         <Form.Item name="ghi_chu" label="Ghi chú">
-          <Input.TextArea rows={2} placeholder="Ghi chú bổ sung (không bắt buộc)" />
+          <Input.TextArea
+            rows={2}
+            placeholder="Ghi chú bổ sung (không bắt buộc)"
+            disabled={!!selectedDecision || !!initialDecision}
+          />
         </Form.Item>
 
         <Form.Item label="File quyết định">
@@ -391,20 +430,27 @@ export default function DecisionModal({
             accept=".pdf"
             maxCount={1}
             style={{ width: '100%' }}
+            disabled={!!selectedDecision || !!initialDecision}
           >
             <p className="ant-upload-drag-icon">
-              <UploadOutlined style={{ fontSize: 48, color: '#1890ff' }} />
+              <UploadOutlined
+                style={{
+                  fontSize: 48,
+                  color: selectedDecision || initialDecision ? '#d9d9d9' : '#1890ff',
+                }}
+              />
             </p>
             <p className="ant-upload-text">
-              {selectedDecision?.file_path
-                ? 'Kéo thả file để thay đổi hoặc click để chọn file'
+              {selectedDecision?.file_path || initialDecision?.file_path
+                ? 'File quyết định đã có sẵn. Để thay đổi, vui lòng vào trang "Quản lý Quyết định".'
                 : 'Kéo thả file vào đây hoặc click để chọn file'}
             </p>
             <p className="ant-upload-hint">Chỉ chấp nhận file PDF</p>
           </Upload.Dragger>
-          {selectedDecision?.file_path && !fileList.length && (
+          {(selectedDecision?.file_path || initialDecision?.file_path) && !fileList.length && (
             <div style={{ marginTop: 8, color: '#52c41a', textAlign: 'center' }}>
-              ✓ Đã có file: {selectedDecision.file_path.split('/').pop()}
+              ✓ Đã có file:{' '}
+              {(selectedDecision?.file_path || initialDecision?.file_path)?.split('/').pop()}
             </div>
           )}
         </Form.Item>

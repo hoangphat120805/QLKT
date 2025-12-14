@@ -806,13 +806,16 @@ export default function ProposalDetailPage() {
       dataIndex: 'nam',
       key: 'nam',
       width: 80,
+      align: 'center' as const,
       render: (_: any, record: DanhHieuItem, index: number) => (
-        <EditableCell
-          value={record.nam}
-          type="number"
-          onSave={val => updateDanhHieu(index, 'nam', parseInt(val))}
-          editable={proposal.status === 'PENDING'}
-        />
+        <div style={{ textAlign: 'center' }}>
+          <EditableCell
+            value={record.nam}
+            type="number"
+            onSave={val => updateDanhHieu(index, 'nam', parseInt(val))}
+            editable={proposal.status === 'PENDING'}
+          />
+        </div>
       ),
     },
     {
@@ -820,18 +823,19 @@ export default function ProposalDetailPage() {
       dataIndex: 'danh_hieu',
       key: 'danh_hieu',
       width: 250,
+      align: 'center' as const,
       render: (_: any, record: DanhHieuItem, index: number) => {
         // Map mã danh hiệu sang tên đầy đủ cho tất cả loại đề xuất
         const danhHieuMap: Record<string, string> = {
           // Cá nhân Hằng năm
-          CSTDCS: 'Chiến sĩ thi đua cơ sở (CSTDCS)',
-          CSTT: 'Chiến sĩ tiên tiến (CSTT)',
-          BKBQP: 'Bằng khen của Bộ trưởng Bộ Quốc phòng (BKBQP)',
-          CSTDTQ: 'Chiến sĩ thi đua toàn quân (CSTDTQ)',
+          CSTDCS: 'Chiến sĩ thi đua cơ sở',
+          CSTT: 'Chiến sĩ tiên tiến',
+          BKBQP: 'Bằng khen của Bộ trưởng Bộ Quốc phòng',
+          CSTDTQ: 'Chiến sĩ thi đua toàn quân',
           // Đơn vị Hằng năm
-          ĐVQT: 'Đơn vị Quyết thắng (ĐVQT)',
-          ĐVTT: 'Đơn vị Tiên tiến (ĐVTT)',
-          BKTTCP: 'Bằng khen Thủ tướng Chính phủ (BKTTCP)',
+          ĐVQT: 'Đơn vị Quyết thắng',
+          ĐVTT: 'Đơn vị Tiên tiến',
+          BKTTCP: 'Bằng khen Thủ tướng Chính phủ',
           // Niên hạn
           HCCSVV_HANG_BA: 'Huân chương Chiến sỹ Vẻ vang Hạng Ba',
           HCCSVV_HANG_NHI: 'Huân chương Chiến sỹ Vẻ vang Hạng Nhì',
@@ -847,18 +851,18 @@ export default function ProposalDetailPage() {
         switch (proposal.loai_de_xuat) {
           case 'CA_NHAN_HANG_NAM':
             options = [
-              { label: 'Chiến sĩ thi đua cơ sở (CSTDCS)', value: 'CSTDCS' },
-              { label: 'Chiến sĩ tiên tiến (CSTT)', value: 'CSTT' },
-              { label: 'Bằng khen của Bộ trưởng Bộ Quốc phòng (BKBQP)', value: 'BKBQP' },
-              { label: 'Chiến sĩ thi đua toàn quân (CSTDTQ)', value: 'CSTDTQ' },
+              { label: 'Chiến sĩ thi đua cơ sở', value: 'CSTDCS' },
+              { label: 'Chiến sĩ tiên tiến', value: 'CSTT' },
+              { label: 'Bằng khen của Bộ trưởng Bộ Quốc phòng', value: 'BKBQP' },
+              { label: 'Chiến sĩ thi đua toàn quân', value: 'CSTDTQ' },
             ];
             break;
           case 'DON_VI_HANG_NAM':
             options = [
-              { label: 'Đơn vị Quyết thắng (ĐVQT)', value: 'ĐVQT' },
-              { label: 'Đơn vị Tiên tiến (ĐVTT)', value: 'ĐVTT' },
-              { label: 'Bằng khen của Bộ trưởng Bộ Quốc phòng (BKBQP)', value: 'BKBQP' },
-              { label: 'Bằng khen Thủ tướng Chính phủ (BKTTCP)', value: 'BKTTCP' },
+              { label: 'Đơn vị Quyết thắng', value: 'ĐVQT' },
+              { label: 'Đơn vị Tiên tiến', value: 'ĐVTT' },
+              { label: 'Bằng khen của Bộ trưởng Bộ Quốc phòng', value: 'BKBQP' },
+              { label: 'Bằng khen Thủ tướng Chính phủ', value: 'BKTTCP' },
             ];
             break;
           case 'NIEN_HAN':
@@ -881,7 +885,11 @@ export default function ProposalDetailPage() {
 
         // Luôn hiển thị tên đầy đủ, không cho phép chỉnh sửa danh hiệu
         const fullName = danhHieuMap[record.danh_hieu || ''] || record.danh_hieu || '-';
-        return <Text>{fullName}</Text>;
+        return (
+          <div style={{ textAlign: 'center' }}>
+            <Text>{fullName}</Text>
+          </div>
+        );
       },
     },
     ...(proposal?.loai_de_xuat === 'CONG_HIEN'
@@ -917,30 +925,46 @@ export default function ProposalDetailPage() {
       dataIndex: 'so_quyet_dinh',
       key: 'so_quyet_dinh',
       width: 180,
+      align: 'center' as const,
       render: (_: any, record: DanhHieuItem, index: number) => {
         // Kiểm tra cả so_quyet_dinh và các trường cũ để tương thích với dữ liệu cũ
         const soQuyetDinh =
           record.so_quyet_dinh || record.so_quyet_dinh_bkbqp || record.so_quyet_dinh_cstdtq;
 
         if (!soQuyetDinh || (typeof soQuyetDinh === 'string' && soQuyetDinh.trim() === '')) {
-          return <span style={{ color: '#999', fontWeight: 400 }}>Chưa có</span>;
+          return (
+            <div style={{ textAlign: 'center' }}>
+              <span
+                style={{
+                  color: '#999',
+                  fontWeight: 400,
+                  fontStyle: 'italic',
+                  opacity: 0.6,
+                }}
+              >
+                Chưa có số quyết định
+              </span>
+            </div>
+          );
         }
         return (
-          <a
-            onClick={e => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleOpenDecisionFile(soQuyetDinh);
-            }}
-            style={{
-              color: '#52c41a',
-              fontWeight: 500,
-              textDecoration: 'underline',
-              cursor: 'pointer',
-            }}
-          >
-            {soQuyetDinh}
-          </a>
+          <div style={{ textAlign: 'center' }}>
+            <a
+              onClick={e => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleOpenDecisionFile(soQuyetDinh);
+              }}
+              style={{
+                color: '#52c41a',
+                fontWeight: 500,
+                textDecoration: 'underline',
+                cursor: 'pointer',
+              }}
+            >
+              {soQuyetDinh}
+            </a>
+          </div>
         );
       },
     },
@@ -959,14 +983,17 @@ export default function ProposalDetailPage() {
       title: 'Loại đơn vị',
       key: 'loai_don_vi',
       width: 150,
+      align: 'center' as const,
       render: (_: any, record: DanhHieuItem) => {
         const type =
           record.don_vi_type ||
           (record.co_quan_don_vi_cha ? 'DON_VI_TRUC_THUOC' : 'CO_QUAN_DON_VI');
         return (
-          <Tag color={type === 'CO_QUAN_DON_VI' ? 'blue' : 'green'}>
-            {type === 'CO_QUAN_DON_VI' ? 'Cơ quan đơn vị' : 'Đơn vị trực thuộc'}
-          </Tag>
+          <div style={{ textAlign: 'center' }}>
+            <Tag color={type === 'CO_QUAN_DON_VI' ? 'blue' : 'green'}>
+              {type === 'CO_QUAN_DON_VI' ? 'Cơ quan đơn vị' : 'Đơn vị trực thuộc'}
+            </Tag>
+          </div>
         );
       },
     },
@@ -975,27 +1002,40 @@ export default function ProposalDetailPage() {
       dataIndex: 'ma_don_vi',
       key: 'ma_don_vi',
       width: 150,
-      render: (text: string) => <Text code>{text || '-'}</Text>,
+      align: 'center' as const,
+      render: (text: string) => (
+        <div style={{ textAlign: 'center' }}>
+          <Text code>{text || '-'}</Text>
+        </div>
+      ),
     },
     {
       title: 'Tên đơn vị',
       dataIndex: 'ten_don_vi',
       key: 'ten_don_vi',
       width: 250,
-      render: (text: string) => <Text strong>{text || '-'}</Text>,
+      align: 'center' as const,
+      render: (text: string) => (
+        <div style={{ textAlign: 'center' }}>
+          <Text strong>{text || '-'}</Text>
+        </div>
+      ),
     },
     {
       title: 'Năm',
       dataIndex: 'nam',
       key: 'nam',
       width: 80,
+      align: 'center' as const,
       render: (_: any, record: DanhHieuItem, index: number) => (
-        <EditableCell
-          value={record.nam}
-          type="number"
-          onSave={val => updateDanhHieu(index, 'nam', parseInt(val))}
-          editable={proposal.status === 'PENDING'}
-        />
+        <div style={{ textAlign: 'center' }}>
+          <EditableCell
+            value={record.nam}
+            type="number"
+            onSave={val => updateDanhHieu(index, 'nam', parseInt(val))}
+            editable={proposal.status === 'PENDING'}
+          />
+        </div>
       ),
     },
     {
@@ -1003,19 +1043,24 @@ export default function ProposalDetailPage() {
       dataIndex: 'danh_hieu',
       key: 'danh_hieu',
       width: 200,
+      align: 'center' as const,
       render: (_: any, record: DanhHieuItem, index: number) => {
         // Map mã danh hiệu sang tên đầy đủ để hiển thị
         const danhHieuMap: Record<string, string> = {
-          ĐVQT: 'Đơn vị Quyết thắng (ĐVQT)',
-          ĐVTT: 'Đơn vị Tiên tiến (ĐVTT)',
-          BKBQP: 'Bằng khen của Bộ trưởng Bộ Quốc phòng (BKBQP)',
-          BKTTCP: 'Bằng khen Thủ tướng Chính phủ (BKTTCP)',
+          ĐVQT: 'Đơn vị Quyết thắng',
+          ĐVTT: 'Đơn vị Tiên tiến',
+          BKBQP: 'Bằng khen của Bộ trưởng Bộ Quốc phòng',
+          BKTTCP: 'Bằng khen Thủ tướng Chính phủ',
         };
 
         const fullName = danhHieuMap[record.danh_hieu || ''] || record.danh_hieu || '-';
 
         // Luôn hiển thị tên đầy đủ, không cho phép chỉnh sửa danh hiệu
-        return <Text>{fullName || '-'}</Text>;
+        return (
+          <div style={{ textAlign: 'center' }}>
+            <Text>{fullName || '-'}</Text>
+          </div>
+        );
       },
     },
     {
@@ -1023,31 +1068,47 @@ export default function ProposalDetailPage() {
       dataIndex: 'so_quyet_dinh',
       key: 'so_quyet_dinh',
       width: 180,
+      align: 'center' as const,
       render: (_: any, record: DanhHieuItem, index: number) => {
         // Kiểm tra cả so_quyet_dinh và các trường cũ để tương thích với dữ liệu cũ
         const soQuyetDinh =
           record.so_quyet_dinh || record.so_quyet_dinh_bkbqp || record.so_quyet_dinh_cstdtq;
 
         if (!soQuyetDinh || (typeof soQuyetDinh === 'string' && soQuyetDinh.trim() === '')) {
-          return <span style={{ color: '#999', fontWeight: 400 }}>Chưa có</span>;
+          return (
+            <div style={{ textAlign: 'center' }}>
+              <span
+                style={{
+                  color: '#999',
+                  fontWeight: 400,
+                  fontStyle: 'italic',
+                  opacity: 0.6,
+                }}
+              >
+                Chưa có số quyết định
+              </span>
+            </div>
+          );
         }
 
           return (
-            <a
-              onClick={e => {
-                e.preventDefault();
-                e.stopPropagation();
+            <div style={{ textAlign: 'center' }}>
+              <a
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
               handleOpenDecisionFile(soQuyetDinh);
-              }}
-              style={{
-                color: '#52c41a',
-                fontWeight: 500,
-                textDecoration: 'underline',
-                cursor: 'pointer',
-              }}
-            >
-              {soQuyetDinh}
-            </a>
+                }}
+                style={{
+                  color: '#52c41a',
+                  fontWeight: 500,
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                }}
+              >
+                {soQuyetDinh}
+              </a>
+            </div>
           );
       },
     },
@@ -1059,7 +1120,9 @@ export default function ProposalDetailPage() {
       key: 'stt',
       width: 60,
       align: 'center' as const,
-      render: (_: any, __: any, index: number) => index + 1,
+      render: (_: any, __: any, index: number) => (
+        <div style={{ textAlign: 'center' }}>{index + 1}</div>
+      ),
     },
     {
       title: 'Họ tên',
@@ -1100,7 +1163,13 @@ export default function ProposalDetailPage() {
 
         // Nếu không có cả cấp bậc và chức vụ, để trống
         if (!capBac && !chucVu) {
-          return <span>-</span>;
+          return (
+            <div style={{ textAlign: 'center' }}>
+              <span style={{ fontStyle: 'italic', opacity: 0.6, color: '#999' }}>
+                Chưa có dữ liệu
+              </span>
+            </div>
+          );
         }
 
         return (
@@ -1120,13 +1189,16 @@ export default function ProposalDetailPage() {
       dataIndex: 'nam',
       key: 'nam',
       width: 80,
+      align: 'center' as const,
       render: (_: any, record: ThanhTichItem, index: number) => (
-        <EditableCell
-          value={record.nam}
-          type="number"
-          onSave={val => updateThanhTich(index, 'nam', parseInt(val))}
-          editable={proposal.status === 'PENDING'}
-        />
+        <div style={{ textAlign: 'center' }}>
+          <EditableCell
+            value={record.nam}
+            type="number"
+            onSave={val => updateThanhTich(index, 'nam', parseInt(val))}
+            editable={false}
+          />
+        </div>
       ),
     },
     {
@@ -1134,30 +1206,36 @@ export default function ProposalDetailPage() {
       dataIndex: 'loai',
       key: 'loai',
       width: 100,
+      align: 'center' as const,
       render: (_: any, record: ThanhTichItem, index: number) => (
-        <EditableCell
-          value={record.loai}
-          type="select"
-          options={[
-            { label: 'ĐTKH', value: 'DTKH' },
-            { label: 'SKKH', value: 'SKKH' },
-          ]}
-          onSave={val => updateThanhTich(index, 'loai', val)}
-          editable={proposal.status === 'PENDING'}
-        />
+        <div style={{ textAlign: 'center' }}>
+          <EditableCell
+            value={record.loai}
+            type="select"
+            options={[
+              { label: 'ĐTKH', value: 'DTKH' },
+              { label: 'SKKH', value: 'SKKH' },
+            ]}
+            onSave={val => updateThanhTich(index, 'loai', val)}
+            editable={false}
+          />
+        </div>
       ),
     },
     {
       title: 'Mô tả',
       dataIndex: 'mo_ta',
       key: 'mo_ta',
+      align: 'center' as const,
       render: (_: any, record: ThanhTichItem, index: number) => (
-        <EditableCell
-          value={record.mo_ta}
-          type="text"
-          onSave={val => updateThanhTich(index, 'mo_ta', val)}
-          editable={proposal.status === 'PENDING'}
-        />
+        <div style={{ textAlign: 'center' }}>
+          <EditableCell
+            value={record.mo_ta}
+            type="text"
+            onSave={val => updateThanhTich(index, 'mo_ta', val)}
+            editable={false}
+          />
+        </div>
       ),
     },
     {
@@ -1165,28 +1243,37 @@ export default function ProposalDetailPage() {
       dataIndex: 'so_quyet_dinh',
       key: 'so_quyet_dinh',
       width: 180,
+      align: 'center' as const,
       render: (_: any, record: ThanhTichItem, index: number) => {
         const soQuyetDinh = record.so_quyet_dinh;
         if (!soQuyetDinh || (typeof soQuyetDinh === 'string' && soQuyetDinh.trim() === '')) {
-          return <span style={{ color: '#999', fontWeight: 400 }}>Chưa có</span>;
+          return (
+            <div style={{ textAlign: 'center' }}>
+              <span style={{ color: '#999', fontWeight: 400, fontStyle: 'italic', opacity: 0.6 }}>
+                Chưa có số quyết định
+              </span>
+            </div>
+          );
         }
 
           return (
-            <a
-              onClick={e => {
-                e.preventDefault();
-                e.stopPropagation();
-              handleOpenDecisionFile(soQuyetDinh);
-              }}
-              style={{
-                color: '#52c41a',
-                fontWeight: 500,
-                textDecoration: 'underline',
-                cursor: 'pointer',
-              }}
-            >
-              {soQuyetDinh}
-            </a>
+            <div style={{ textAlign: 'center' }}>
+              <a
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                handleOpenDecisionFile(soQuyetDinh);
+                }}
+                style={{
+                  color: '#52c41a',
+                  fontWeight: 500,
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                }}
+              >
+                {soQuyetDinh}
+              </a>
+            </div>
           );
       },
     },
@@ -1275,7 +1362,7 @@ export default function ProposalDetailPage() {
                   : proposal.loai_de_xuat === 'CONG_HIEN'
                   ? 'Cống hiến'
                   : proposal.loai_de_xuat === 'NCKH'
-                  ? 'ĐTKH/SKKH'
+                  ? 'Nghiên cứu khoa học'
                   : proposal.loai_de_xuat}
               </Tag>
             </div>

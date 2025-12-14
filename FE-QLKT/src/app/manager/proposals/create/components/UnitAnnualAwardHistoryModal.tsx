@@ -223,14 +223,14 @@ export default function UnitAnnualAwardHistoryModal({
               </Descriptions.Item>
             </Descriptions>
             <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <Table
-                columns={columns}
-                dataSource={annualAwards?.tong_dvqt_json}
-                rowKey={(record, index) => `${record.nam}-${index}`}
-                pagination={false}
-                size="small"
-                scroll={{ x: 900 }}
-              />
+            <Table
+              columns={columns}
+              dataSource={annualAwards?.tong_dvqt_json}
+              rowKey={(record, index) => `${record.nam}-${index}`}
+              pagination={false}
+              size="small"
+              scroll={{ x: 900 }}
+            />
             </div>
           </div>
         ) : (

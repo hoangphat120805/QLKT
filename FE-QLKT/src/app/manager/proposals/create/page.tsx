@@ -1072,15 +1072,15 @@ export default function CreateProposalPage() {
               // Map mã danh hiệu sang tên đầy đủ
               const danhHieuMap: Record<string, string> = {
                 // Cá nhân Hằng năm
-                CSTDCS: 'Chiến sĩ thi đua cơ sở (CSTDCS)',
-                CSTT: 'Chiến sĩ tiên tiến (CSTT)',
-                BKBQP: 'Bằng khen của Bộ trưởng Bộ Quốc phòng (BKBQP)',
-                CSTDTQ: 'Chiến sĩ thi đua toàn quân (CSTDTQ)',
+                CSTDCS: 'Chiến sĩ thi đua cơ sở',
+                CSTT: 'Chiến sĩ tiên tiến',
+                BKBQP: 'Bằng khen của Bộ trưởng Bộ Quốc phòng',
+                CSTDTQ: 'Chiến sĩ thi đua toàn quân',
                 // Đơn vị Hằng năm - BKBQP cũng dùng chung tên này
                 // Đơn vị Hằng năm
-                ĐVQT: 'Đơn vị Quyết thắng (ĐVQT)',
-                ĐVTT: 'Đơn vị Tiên tiến (ĐVTT)',
-                BKTTCP: 'Bằng khen Thủ tướng Chính phủ (BKTTCP)',
+                ĐVQT: 'Đơn vị Quyết thắng',
+                ĐVTT: 'Đơn vị Tiên tiến',
+                BKTTCP: 'Bằng khen Thủ tướng Chính phủ',
                 // Niên hạn
                 HCCSVV_HANG_BA: 'Huân chương Chiến sỹ Vẻ vang Hạng Ba',
                 HCCSVV_HANG_NHI: 'Huân chương Chiến sỹ Vẻ vang Hạng Nhì',

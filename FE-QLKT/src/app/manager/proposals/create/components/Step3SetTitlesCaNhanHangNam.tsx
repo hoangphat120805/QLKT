@@ -196,11 +196,11 @@ export default function Step3SetTitlesCaNhanHangNam({
   const getDanhHieuOptions = (id: string) => {
     const selectedType = getSelectedDanhHieuType();
     let allOptions = [
-      { label: 'Chiến sĩ thi đua cơ sở (CSTDCS)', value: 'CSTDCS' },
-      { label: 'Chiến sĩ tiên tiến (CSTT)', value: 'CSTT' },
-      { label: 'Bằng khen của Bộ trưởng Bộ Quốc phòng (BKBQP)', value: 'BKBQP' },
-      { label: 'Chiến sĩ thi đua toàn quân (CSTDTQ)', value: 'CSTDTQ' },
-      { label: 'Bằng khen Thủ tướng Chính phủ (BKTTCP)', value: 'BKTTCP' },
+      { label: 'Chiến sĩ thi đua cơ sở', value: 'CSTDCS' },
+      { label: 'Chiến sĩ tiên tiến', value: 'CSTT' },
+      { label: 'Bằng khen của Bộ trưởng Bộ Quốc phòng', value: 'BKBQP' },
+      { label: 'Chiến sĩ thi đua toàn quân', value: 'CSTDTQ' },
+      { label: 'Bằng khen Thủ tướng Chính phủ', value: 'BKTTCP' },
     ];
     if (annualProfiles[id]) {
       if (annualProfiles[id].du_dieu_kien_bkbqp === false) {
