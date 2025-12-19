@@ -183,8 +183,8 @@ export default function ManagerProposalsPage() {
       // Filter theo loại đề xuất
       if (typeFilter !== '' && p.loai_de_xuat !== typeFilter) return false;
 
-      return true;
-    });
+    return true;
+  });
   }, [proposals, activeTab, yearFilter, typeFilter]);
 
   const handleResetFilters = () => {
@@ -327,16 +327,16 @@ export default function ManagerProposalsPage() {
       align: 'center' as const,
       render: (status: string) => getStatusTag(status),
     },
-      {
+    {
         title: 'Thời gian cập nhật',
-        key: 'ngay_duyet',
-        width: 180,
-        align: 'center' as const,
-        render: (_: any, record: Proposal) => {
+      key: 'ngay_duyet',
+      width: 180,
+      align: 'center' as const,
+      render: (_: any, record: Proposal) => {
           // Hiển thị thời gian cập nhật khi đã duyệt hoặc từ chối
           if ((record.status !== 'APPROVED' && record.status !== 'REJECTED') || !record.ngay_duyet) {
-            return <Text type="secondary">-</Text>;
-          }
+          return <Text type="secondary">-</Text>;
+        }
 
           // Format: giờ đứng trước ngày (HH:mm dd/MM/yyyy)
           const date = new Date(record.ngay_duyet);
@@ -346,8 +346,8 @@ export default function ManagerProposalsPage() {
           const month = String(date.getMonth() + 1).padStart(2, '0');
           const year = date.getFullYear();
           return `${hours}:${minutes} ${day}/${month}/${year}`;
-        },
       },
+    },
     {
       title: 'Hành động',
       key: 'action',
@@ -409,39 +409,39 @@ export default function ManagerProposalsPage() {
     );
 
     return [
-      {
-        key: 'all',
-        label: (
-          <span>
-            <HomeOutlined /> Tất cả ({proposals.length})
-          </span>
-        ),
-      },
-      {
-        key: 'pending',
-        label: (
-          <span>
+    {
+      key: 'all',
+      label: (
+        <span>
+          <HomeOutlined /> Tất cả ({proposals.length})
+        </span>
+      ),
+    },
+    {
+      key: 'pending',
+      label: (
+        <span>
             <ClockCircleOutlined /> Chờ duyệt ({statusCounts.PENDING || 0})
-          </span>
-        ),
-      },
-      {
-        key: 'approved',
-        label: (
-          <span>
+        </span>
+      ),
+    },
+    {
+      key: 'approved',
+      label: (
+        <span>
             <CheckCircleOutlined /> Đã duyệt ({statusCounts.APPROVED || 0})
-          </span>
-        ),
-      },
-      {
-        key: 'rejected',
-        label: (
-          <span>
+        </span>
+      ),
+    },
+    {
+      key: 'rejected',
+      label: (
+        <span>
             <CloseCircleOutlined /> Từ chối ({statusCounts.REJECTED || 0})
-          </span>
-        ),
-      },
-    ];
+        </span>
+      ),
+    },
+  ];
   }, [proposals]);
 
   return (

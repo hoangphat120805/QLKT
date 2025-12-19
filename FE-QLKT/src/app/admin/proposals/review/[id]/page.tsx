@@ -834,12 +834,12 @@ export default function ProposalDetailPage() {
       align: 'center' as const,
       render: (_: any, record: DanhHieuItem, index: number) => (
         <div style={{ textAlign: 'center' }}>
-          <EditableCell
-            value={record.nam}
-            type="number"
-            onSave={val => updateDanhHieu(index, 'nam', parseInt(val))}
-            editable={proposal.status === 'PENDING'}
-          />
+        <EditableCell
+          value={record.nam}
+          type="number"
+          onSave={val => updateDanhHieu(index, 'nam', parseInt(val))}
+          editable={proposal.status === 'PENDING'}
+        />
         </div>
       ),
     },
@@ -974,21 +974,21 @@ export default function ProposalDetailPage() {
         }
         return (
           <div style={{ textAlign: 'center' }}>
-            <a
-              onClick={e => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleOpenDecisionFile(soQuyetDinh);
-              }}
-              style={{
-                color: '#52c41a',
-                fontWeight: 500,
-                textDecoration: 'underline',
-                cursor: 'pointer',
-              }}
-            >
-              {soQuyetDinh}
-            </a>
+          <a
+            onClick={e => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleOpenDecisionFile(soQuyetDinh);
+            }}
+            style={{
+              color: '#52c41a',
+              fontWeight: 500,
+              textDecoration: 'underline',
+              cursor: 'pointer',
+            }}
+          >
+            {soQuyetDinh}
+          </a>
           </div>
         );
       },
@@ -1015,9 +1015,9 @@ export default function ProposalDetailPage() {
           (record.co_quan_don_vi_cha ? 'DON_VI_TRUC_THUOC' : 'CO_QUAN_DON_VI');
         return (
           <div style={{ textAlign: 'center' }}>
-            <Tag color={type === 'CO_QUAN_DON_VI' ? 'blue' : 'green'}>
-              {type === 'CO_QUAN_DON_VI' ? 'Cơ quan đơn vị' : 'Đơn vị trực thuộc'}
-            </Tag>
+          <Tag color={type === 'CO_QUAN_DON_VI' ? 'blue' : 'green'}>
+            {type === 'CO_QUAN_DON_VI' ? 'Cơ quan đơn vị' : 'Đơn vị trực thuộc'}
+          </Tag>
           </div>
         );
       },
@@ -1054,12 +1054,12 @@ export default function ProposalDetailPage() {
       align: 'center' as const,
       render: (_: any, record: DanhHieuItem, index: number) => (
         <div style={{ textAlign: 'center' }}>
-          <EditableCell
-            value={record.nam}
-            type="number"
-            onSave={val => updateDanhHieu(index, 'nam', parseInt(val))}
-            editable={proposal.status === 'PENDING'}
-          />
+        <EditableCell
+          value={record.nam}
+          type="number"
+          onSave={val => updateDanhHieu(index, 'nam', parseInt(val))}
+          editable={proposal.status === 'PENDING'}
+        />
         </div>
       ),
     },
@@ -1118,21 +1118,21 @@ export default function ProposalDetailPage() {
 
           return (
             <div style={{ textAlign: 'center' }}>
-              <a
-                onClick={e => {
-                  e.preventDefault();
-                  e.stopPropagation();
+            <a
+              onClick={e => {
+                e.preventDefault();
+                e.stopPropagation();
               handleOpenDecisionFile(soQuyetDinh);
-                }}
-                style={{
-                  color: '#52c41a',
-                  fontWeight: 500,
-                  textDecoration: 'underline',
-                  cursor: 'pointer',
-                }}
-              >
-                {soQuyetDinh}
-              </a>
+              }}
+              style={{
+                color: '#52c41a',
+                fontWeight: 500,
+                textDecoration: 'underline',
+                cursor: 'pointer',
+              }}
+            >
+              {soQuyetDinh}
+            </a>
             </div>
           );
       },
@@ -1217,12 +1217,12 @@ export default function ProposalDetailPage() {
       align: 'center' as const,
       render: (_: any, record: ThanhTichItem, index: number) => (
         <div style={{ textAlign: 'center' }}>
-          <EditableCell
-            value={record.nam}
-            type="number"
-            onSave={val => updateThanhTich(index, 'nam', parseInt(val))}
+        <EditableCell
+          value={record.nam}
+          type="number"
+          onSave={val => updateThanhTich(index, 'nam', parseInt(val))}
             editable={false}
-          />
+        />
         </div>
       ),
     },
@@ -1234,16 +1234,16 @@ export default function ProposalDetailPage() {
       align: 'center' as const,
       render: (_: any, record: ThanhTichItem, index: number) => (
         <div style={{ textAlign: 'center' }}>
-          <EditableCell
-            value={record.loai}
-            type="select"
-            options={[
-              { label: 'ĐTKH', value: 'DTKH' },
-              { label: 'SKKH', value: 'SKKH' },
-            ]}
-            onSave={val => updateThanhTich(index, 'loai', val)}
+        <EditableCell
+          value={record.loai}
+          type="select"
+          options={[
+            { label: 'ĐTKH', value: 'DTKH' },
+            { label: 'SKKH', value: 'SKKH' },
+          ]}
+          onSave={val => updateThanhTich(index, 'loai', val)}
             editable={false}
-          />
+        />
         </div>
       ),
     },
@@ -1254,12 +1254,12 @@ export default function ProposalDetailPage() {
       align: 'center' as const,
       render: (_: any, record: ThanhTichItem, index: number) => (
         <div style={{ textAlign: 'center' }}>
-          <EditableCell
-            value={record.mo_ta}
-            type="text"
-            onSave={val => updateThanhTich(index, 'mo_ta', val)}
+        <EditableCell
+          value={record.mo_ta}
+          type="text"
+          onSave={val => updateThanhTich(index, 'mo_ta', val)}
             editable={false}
-          />
+        />
         </div>
       ),
     },
@@ -1283,21 +1283,21 @@ export default function ProposalDetailPage() {
 
           return (
             <div style={{ textAlign: 'center' }}>
-              <a
-                onClick={e => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                handleOpenDecisionFile(soQuyetDinh);
-                }}
-                style={{
-                  color: '#52c41a',
-                  fontWeight: 500,
-                  textDecoration: 'underline',
-                  cursor: 'pointer',
-                }}
-              >
-                {soQuyetDinh}
-              </a>
+            <a
+              onClick={e => {
+                e.preventDefault();
+                e.stopPropagation();
+              handleOpenDecisionFile(soQuyetDinh);
+              }}
+              style={{
+                color: '#52c41a',
+                fontWeight: 500,
+                textDecoration: 'underline',
+                cursor: 'pointer',
+              }}
+            >
+              {soQuyetDinh}
+            </a>
             </div>
           );
       },
@@ -1452,15 +1452,15 @@ export default function ProposalDetailPage() {
       </Card>
 
       {/* Ghi chú */}
-      <Card title="Ghi chú" style={{ marginBottom: '24px' }}>
-        <div
-          style={{
-            padding: '12px',
-            background: theme === 'dark' ? '#1f2937' : '#fafafa',
-            borderRadius: 4,
-            border: `1px solid ${theme === 'dark' ? '#374151' : '#e5e7eb'}`,
-          }}
-        >
+        <Card title="Ghi chú" style={{ marginBottom: '24px' }}>
+          <div
+            style={{
+              padding: '12px',
+              background: theme === 'dark' ? '#1f2937' : '#fafafa',
+              borderRadius: 4,
+              border: `1px solid ${theme === 'dark' ? '#374151' : '#e5e7eb'}`,
+            }}
+          >
           {proposal.ghi_chu ? (
             <Text style={{ color: theme === 'dark' ? '#f3f4f6' : '#111827' }}>
               {proposal.ghi_chu}
@@ -1473,8 +1473,8 @@ export default function ProposalDetailPage() {
               Không có ghi chú
             </Text>
           )}
-        </div>
-      </Card>
+          </div>
+        </Card>
 
       {/* File đính kèm */}
       <Card title="File đính kèm" style={{ marginBottom: '24px' }}>
@@ -1731,27 +1731,27 @@ export default function ProposalDetailPage() {
             Xóa đề xuất
           </Button>
         </Popconfirm>
-        {proposal.status === 'PENDING' && (
+      {proposal.status === 'PENDING' && (
           <div style={{ display: 'flex', gap: '12px' }}>
-            <Button
-              danger
-              icon={<CloseCircleOutlined />}
-              onClick={() => setRejectModalVisible(true)}
-              size="large"
-            >
-              Từ chối
-            </Button>
-            <Button
-              type="primary"
-              icon={approving ? <LoadingOutlined /> : <CheckCircleOutlined />}
-              onClick={handleApprove}
-              loading={approving}
-              size="large"
-            >
-              {approving ? 'Đang phê duyệt...' : 'Phê Duyệt'}
-            </Button>
-          </div>
-        )}
+          <Button
+            danger
+            icon={<CloseCircleOutlined />}
+            onClick={() => setRejectModalVisible(true)}
+            size="large"
+          >
+            Từ chối
+          </Button>
+          <Button
+            type="primary"
+            icon={approving ? <LoadingOutlined /> : <CheckCircleOutlined />}
+            onClick={handleApprove}
+            loading={approving}
+            size="large"
+          >
+            {approving ? 'Đang phê duyệt...' : 'Phê Duyệt'}
+          </Button>
+        </div>
+      )}
       </div>
 
       {/* Reject Modal */}

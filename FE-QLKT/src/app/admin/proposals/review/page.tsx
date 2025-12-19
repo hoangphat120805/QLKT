@@ -124,8 +124,8 @@ export default function ProposalReviewPage() {
       // Filter theo loại đề xuất
       if (typeFilter !== '' && p.loai_de_xuat !== typeFilter) return false;
 
-      return true;
-    });
+    return true;
+  });
   }, [proposals, activeTab, yearFilter, typeFilter]);
 
   const handleResetFilters = () => {
@@ -273,13 +273,13 @@ export default function ProposalReviewPage() {
       render: (_: any, record: Proposal) => (
         <div style={{ textAlign: 'center' }}>
           <Space>
-            <Button
-              type="default"
-              icon={<EyeOutlined />}
-              onClick={() => router.push(`/admin/proposals/review/${record.id}`)}
-            >
-              {record.status === 'PENDING' ? 'Xem và Duyệt' : 'Xem Chi Tiết'}
-            </Button>
+        <Button
+          type="default"
+          icon={<EyeOutlined />}
+          onClick={() => router.push(`/admin/proposals/review/${record.id}`)}
+        >
+          {record.status === 'PENDING' ? 'Xem và Duyệt' : 'Xem Chi Tiết'}
+        </Button>
             <Popconfirm
               title="Xóa đề xuất"
               description="Bạn có chắc chắn muốn xóa đề xuất này? Hành động này không thể hoàn tác."
@@ -313,43 +313,43 @@ export default function ProposalReviewPage() {
     );
 
     return [
-      {
-        key: 'all',
-        label: (
-          <span>
-            <UnorderedListOutlined style={{ marginRight: 8 }} />
-            Tất cả ({proposals.length})
-          </span>
-        ),
-      },
-      {
-        key: 'pending',
-        label: (
-          <span>
-            <ClockCircleOutlined style={{ marginRight: 8 }} />
+    {
+      key: 'all',
+      label: (
+        <span>
+          <UnorderedListOutlined style={{ marginRight: 8 }} />
+          Tất cả ({proposals.length})
+        </span>
+      ),
+    },
+    {
+      key: 'pending',
+      label: (
+        <span>
+          <ClockCircleOutlined style={{ marginRight: 8 }} />
             Chờ duyệt ({statusCounts.PENDING || 0})
-          </span>
-        ),
-      },
-      {
-        key: 'approved',
-        label: (
-          <span>
-            <CheckCircleOutlined style={{ marginRight: 8 }} />
+        </span>
+      ),
+    },
+    {
+      key: 'approved',
+      label: (
+        <span>
+          <CheckCircleOutlined style={{ marginRight: 8 }} />
             Đã duyệt ({statusCounts.APPROVED || 0})
-          </span>
-        ),
-      },
-      {
-        key: 'rejected',
-        label: (
-          <span>
-            <WarningOutlined style={{ marginRight: 8 }} />
+        </span>
+      ),
+    },
+    {
+      key: 'rejected',
+      label: (
+        <span>
+          <WarningOutlined style={{ marginRight: 8 }} />
             Đã từ chối ({statusCounts.REJECTED || 0})
-          </span>
-        ),
-      },
-    ];
+        </span>
+      ),
+    },
+  ];
   }, [proposals]);
 
   return (

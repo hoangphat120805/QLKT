@@ -389,9 +389,13 @@ export default function AdminDecisionsPage() {
             pageSize: pagination.pageSize,
             total: pagination.total,
             showSizeChanger: true,
-            showTotal: total => `Tổng số ${total} quyết định`,
+            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} quyết định`,
+            pageSizeOptions: ['10', '20', '50', '100'],
             onChange: (page, pageSize) => {
-              setPagination({ ...pagination, current: page, pageSize });
+              setPagination({ ...pagination, current: page, pageSize: pageSize || pagination.pageSize });
+            },
+            onShowSizeChange: (current, size) => {
+              setPagination({ ...pagination, current: 1, pageSize: size });
             },
           }}
           bordered

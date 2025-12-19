@@ -520,14 +520,14 @@ export default function ManagerProposalDetailPage() {
                 })()}
               </Descriptions.Item>
             )}
-            <Descriptions.Item label="Ghi chú" span={2}>
+              <Descriptions.Item label="Ghi chú" span={2}>
               {proposal.ghi_chu ? (
                 <Text>{proposal.ghi_chu}</Text>
               ) : (
                 <Text type="secondary" style={{ fontStyle: 'italic', opacity: 0.6 }}>
                   Không có ghi chú
                 </Text>
-              )}
+            )}
             </Descriptions.Item>
           </Descriptions>
         </Card>

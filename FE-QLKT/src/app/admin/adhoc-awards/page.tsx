@@ -46,6 +46,8 @@ import {
 import type { TableColumnsType, UploadFile } from 'antd';
 import { apiClient } from '@/lib/api-client';
 import { downloadDecisionFile } from '@/utils/downloadDecisionFile';
+import axiosInstance from '@/utils/axiosInstance';
+
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -830,16 +832,16 @@ export default function AdhocAwardsPage() {
       render: (text: string) => (
         <div style={{ textAlign: 'center' }}>
           {text ? (
-            <Tooltip title={text}>
-              <span>{text}</span>
-            </Tooltip>
-          ) : (
+          <Tooltip title={text}>
+            <span>{text}</span>
+          </Tooltip>
+        ) : (
             <Text type="secondary" style={{ fontStyle: 'italic', opacity: 0.6 }}>
               Không có ghi chú
             </Text>
           )}
         </div>
-      ),
+        ),
     },
     {
       title: 'Thao tác',
@@ -1576,7 +1578,7 @@ export default function AdhocAwardsPage() {
                 style={{ width: '100%' }}
                 placeholder="Tất cả các năm"
                 value={tableFilters.year !== null ? tableFilters.year : ''}
-                onChange={value => setTableFilters(prev => ({ ...prev, year: value === '' ? null : value }))}
+                onChange={value => setTableFilters(prev => ({ ...prev, year: value === '' ? null : (typeof value === 'number' ? value : Number(value)) }))}
                 allowClear
                 size="large"
               >
@@ -1642,8 +1644,10 @@ export default function AdhocAwardsPage() {
           loading={loading}
           scroll={{ x: 'max-content' }}
           pagination={{
+            pageSize: 10,
             showSizeChanger: true,
-            showTotal: total => `Tổng ${total} bản ghi`,
+            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} bản ghi`,
+            pageSizeOptions: ['10', '20', '50', '100'],
           }}
           onRow={record => ({
             onClick: () => handleOpenDetailModal(record),

@@ -996,7 +996,8 @@ export default function AdminAwardsPage() {
                 pagination={{
                   pageSize: 20,
                   showSizeChanger: true,
-                  showTotal: total => `Tổng ${total} bản ghi`,
+                  showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} bản ghi`,
+                  pageSizeOptions: ['10', '20', '50', '100'],
                 }}
                 bordered
               />

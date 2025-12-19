@@ -396,11 +396,11 @@ export default function ManagerUnitsPage() {
                 <Text strong style={{ display: 'block', marginBottom: '8px' }}>
                   Tìm kiếm theo tên đơn vị
                 </Text>
-                <Input
+            <Input
                   placeholder="Nhập tên đơn vị để tìm kiếm"
-                  value={filters.ten_don_vi}
-                  onChange={e => setFilters(prev => ({ ...prev, ten_don_vi: e.target.value }))}
-                  allowClear
+              value={filters.ten_don_vi}
+              onChange={e => setFilters(prev => ({ ...prev, ten_don_vi: e.target.value }))}
+              allowClear
                   size="large"
                 />
               </div>
@@ -408,11 +408,11 @@ export default function ManagerUnitsPage() {
                 <Text strong style={{ display: 'block', marginBottom: '8px' }}>
                   Danh hiệu
                 </Text>
-                <Select
+            <Select
                   placeholder="Tất cả danh hiệu"
                   value={filters.danh_hieu === '' ? '' : filters.danh_hieu || undefined}
-                  onChange={value => setFilters(prev => ({ ...prev, danh_hieu: value || '' }))}
-                  allowClear
+              onChange={value => setFilters(prev => ({ ...prev, danh_hieu: value || '' }))}
+              allowClear
                   showSearch
                   optionFilterProp="label"
                   size="large"
@@ -427,8 +427,8 @@ export default function ManagerUnitsPage() {
                   onClick={() => setFilters({ nam: '', ten_don_vi: '', danh_hieu: '' })}
                   icon={null}
                 >
-                  Xóa bộ lọc
-                </Button>
+              Xóa bộ lọc
+            </Button>
               </div>
             </div>
           </Card>

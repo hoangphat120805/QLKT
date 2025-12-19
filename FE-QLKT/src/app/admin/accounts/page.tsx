@@ -246,7 +246,8 @@ export default function AdminAccountsPage() {
             pagination={{
               pageSize: 20,
               showSizeChanger: true,
-              showTotal: total => `Tổng ${total} tài khoản`,
+              showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} tài khoản`,
+              pageSizeOptions: ['10', '20', '50', '100'],
             }}
           />
         </Card>

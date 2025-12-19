@@ -239,9 +239,9 @@ export default function UserProfilePage() {
       align: 'center' as const,
       render: (text: string, record: any) => {
         if (!text) return '-';
-
+        
         const decisions: ReactNode[] = [];
-
+        
         // Bằng khen BQP
         if (record.so_quyet_dinh_bkbqp && record.so_quyet_dinh_bkbqp.trim() !== '') {
           decisions.push(
@@ -264,7 +264,7 @@ export default function UserProfilePage() {
             </div>
           );
         }
-
+        
         // CSTĐ Toàn quân
         if (record.so_quyet_dinh_cstdtq && record.so_quyet_dinh_cstdtq.trim() !== '') {
           decisions.push(
@@ -310,7 +310,7 @@ export default function UserProfilePage() {
             </div>
           );
         }
-
+        
         return (
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontWeight: 500 }}>{text}</div>
@@ -520,7 +520,7 @@ export default function UserProfilePage() {
       align: 'center' as const,
       render: (text: string, record: any) => {
         if (!text || text.trim() === '') return '-';
-
+        
         // Luôn cho phép bấm để truy vấn DB và tải file
         return (
           <a
@@ -1005,9 +1005,9 @@ export default function UserProfilePage() {
                       value={
                         Object.keys(
                           annualRewards.reduce((acc: Record<number, any[]>, r: any) => {
-                            if (!acc[r.nam]) acc[r.nam] = [];
-                            acc[r.nam].push(r);
-                            return acc;
+                        if (!acc[r.nam]) acc[r.nam] = [];
+                        acc[r.nam].push(r);
+                        return acc;
                           }, {})
                         ).length
                       }

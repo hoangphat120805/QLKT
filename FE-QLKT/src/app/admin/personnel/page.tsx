@@ -50,18 +50,26 @@ export default function PersonnelPage() {
   const [selectedCapBac, setSelectedCapBac] = useState<string | 'ALL'>('ALL');
   const [positions, setPositions] = useState<any[]>([]);
   const [tableLoading, setTableLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
   const router = useRouter();
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [pagination.current, pagination.pageSize]);
 
   async function loadData() {
     try {
       setLoading(true);
 
-      // 1. Lấy danh sách quân nhân
-      const personnelRes = await apiClient.getPersonnel();
+      // 1. Lấy danh sách quân nhân với pagination
+      const personnelRes = await apiClient.getPersonnel({
+        page: pagination.current,
+        limit: pagination.pageSize,
+      });
       if (personnelRes.success) {
         const personnelData = (personnelRes.data?.personnel || []).map(p => {
           const coQuanDonViRelation =
@@ -114,6 +122,13 @@ export default function PersonnelPage() {
         });
 
         setPersonnel(personnelData);
+        
+        // Cập nhật pagination total từ API
+        const total = personnelRes.data?.pagination?.total || personnelData.length;
+        setPagination(prev => ({
+          ...prev,
+          total: total,
+        }));
       } else {
         message.error(personnelRes.message || 'Không thể tải danh sách quân nhân');
       }
@@ -624,11 +639,27 @@ export default function PersonnelPage() {
             rowKey="id"
             loading={loading || tableLoading}
             pagination={{
-              total: filteredPersonnel.length,
-              pageSize: 10,
+              current: pagination.current,
+              pageSize: pagination.pageSize,
+              total: pagination.total,
               showSizeChanger: true,
-              showTotal: total => `Tổng ${total} quân nhân`,
+              showTotal: (total, range) =>
+                `${range[0]}-${range[1]} của ${total} quân nhân`,
               pageSizeOptions: ['10', '20', '50', '100'],
+              onChange: (page, pageSize) => {
+                setPagination(prev => ({
+                  ...prev,
+                  current: page,
+                  pageSize: pageSize || prev.pageSize,
+                }));
+              },
+              onShowSizeChange: (current, size) => {
+                setPagination(prev => ({
+                  ...prev,
+                  current: 1,
+                  pageSize: size,
+                }));
+              },
             }}
             scroll={{ x: 1000 }}
             locale={{
