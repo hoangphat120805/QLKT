@@ -49,6 +49,7 @@ export default function UserChangePasswordPage() {
       if (result.success) {
         message.success(result.message || 'Đổi mật khẩu thành công');
         form.resetFields();
+        setNewPassword('');
       } else {
         message.error(result.message || 'Đổi mật khẩu thất bại');
       }
@@ -241,11 +242,24 @@ export default function UserChangePasswordPage() {
               className="shadow-lg"
               style={{
                 borderRadius: '12px',
-                border: '1px solid rgba(0, 0, 0, 0.06)',
+                border: theme === 'dark' ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.06)',
               }}
             >
-              <div className="space-y-4">
-                <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+              <style>{`
+                .security-item {
+                  display: flex;
+                  align-items: flex-start;
+                  gap: 12px;
+                  padding: 12px;
+                  border-radius: 8px;
+                  transition: background-color 0.2s;
+                }
+                .security-item:hover {
+                  background-color: ${theme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)'};
+                }
+              `}</style>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div className="security-item">
                   <CheckCircleOutlined
                     style={{ color: '#52c41a', fontSize: '18px', marginTop: '2px' }}
                   />
@@ -253,12 +267,12 @@ export default function UserChangePasswordPage() {
                     <Text strong style={{ display: 'block', marginBottom: '4px' }}>
                       Sử dụng mật khẩu mạnh
                     </Text>
-                    <Text type="secondary" className="text-sm">
+                    <Text type="secondary" style={{ fontSize: '14px' }}>
                       Kết hợp chữ hoa, chữ thường, số và ký tự đặc biệt để tăng cường bảo mật
                     </Text>
                   </div>
                 </div>
-                <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                <div className="security-item">
                   <CheckCircleOutlined
                     style={{ color: '#52c41a', fontSize: '18px', marginTop: '2px' }}
                   />
@@ -266,12 +280,12 @@ export default function UserChangePasswordPage() {
                     <Text strong style={{ display: 'block', marginBottom: '4px' }}>
                       Đổi mật khẩu định kỳ
                     </Text>
-                    <Text type="secondary" className="text-sm">
+                    <Text type="secondary" style={{ fontSize: '14px' }}>
                       Thay đổi mật khẩu thường xuyên (khuyến nghị 3-6 tháng/lần)
                     </Text>
                   </div>
                 </div>
-                <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                <div className="security-item">
                   <CheckCircleOutlined
                     style={{ color: '#52c41a', fontSize: '18px', marginTop: '2px' }}
                   />
@@ -279,12 +293,12 @@ export default function UserChangePasswordPage() {
                     <Text strong style={{ display: 'block', marginBottom: '4px' }}>
                       Không chia sẻ mật khẩu
                     </Text>
-                    <Text type="secondary" className="text-sm">
+                    <Text type="secondary" style={{ fontSize: '14px' }}>
                       Giữ bí mật mật khẩu và không chia sẻ cho bất kỳ ai, kể cả nhân viên IT
                     </Text>
                   </div>
                 </div>
-                <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                <div className="security-item">
                   <CheckCircleOutlined
                     style={{ color: '#52c41a', fontSize: '18px', marginTop: '2px' }}
                   />
@@ -292,7 +306,7 @@ export default function UserChangePasswordPage() {
                     <Text strong style={{ display: 'block', marginBottom: '4px' }}>
                       Đăng xuất sau khi sử dụng
                     </Text>
-                    <Text type="secondary" className="text-sm">
+                    <Text type="secondary" style={{ fontSize: '14px' }}>
                       Luôn đăng xuất khỏi hệ thống khi sử dụng xong, đặc biệt trên máy tính công cộng
                     </Text>
                   </div>
