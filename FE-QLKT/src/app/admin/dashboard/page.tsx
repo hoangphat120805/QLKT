@@ -128,7 +128,7 @@ export default function AdminDashboard() {
       link: '/admin/positions',
     },
     {
-      title: 'Thành tích chờ duyệt',
+      title: 'Đề xuất chờ duyệt',
       value: stats.pendingApprovals,
       icon: CheckCircleOutlined,
       iconColor: theme === 'dark' ? 'text-orange-400' : 'text-orange-600',
@@ -136,7 +136,7 @@ export default function AdminDashboard() {
         theme === 'dark'
           ? 'bg-gradient-to-br from-orange-900/30 to-orange-800/20'
           : 'bg-gradient-to-br from-orange-50 to-orange-100',
-      link: '#',
+      link: '/admin/proposals/review',
     },
   ];
 
