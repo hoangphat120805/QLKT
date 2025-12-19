@@ -346,13 +346,26 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
     return baseItems;
   };
 
+  const getChangePasswordPath = () => {
+    switch (actualRole) {
+      case 'SUPER_ADMIN':
+        return '/super-admin/change-password';
+      case 'ADMIN':
+        return '/admin/change-password';
+      case 'MANAGER':
+        return '/manager/change-password';
+      default:
+        return '/user/change-password';
+    }
+  };
+
   const userMenuItems = [
     {
       key: 'change-password',
       label: 'Đổi mật khẩu',
       icon: <LockOutlined />,
       onClick: () => {
-        router.push('/user/settings');
+        router.push(getChangePasswordPath());
       },
     },
     {

@@ -192,7 +192,7 @@ class AuthService {
       // Kiểm tra mật khẩu cũ
       const isOldPasswordValid = await bcrypt.compare(oldPassword, account.password_hash);
       if (!isOldPasswordValid) {
-        throw new Error('Mật khẩu cũ không đúng');
+        throw new Error('Mật khẩu hiện tại không chính xác');
       }
 
       // Mã hóa mật khẩu mới

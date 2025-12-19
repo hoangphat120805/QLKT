@@ -26,7 +26,6 @@ import {
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
 import { useTheme } from '@/components/theme-provider';
-import { formatDate } from '@/lib/utils';
 
 const { Title } = Typography;
 
@@ -86,17 +85,29 @@ export default function AccountsListPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (record: any) => {
     try {
-      const response = await apiClient.deleteAccount(id);
-      if (response.success) {
-        message.success('Xóa tài khoản thành công');
-        fetchAccounts(pagination.current, pagination.pageSize, debouncedSearch, roleFilter);
+      // Nếu tài khoản có liên kết quân nhân, xóa quân nhân (cascade delete tất cả)
+      // Nếu không có quân nhân, chỉ xóa tài khoản
+      if (record.quan_nhan_id) {
+        const response = await apiClient.deletePersonnel(record.quan_nhan_id);
+        if (response.success) {
+          message.success('Xóa quân nhân và toàn bộ dữ liệu liên quan thành công');
+          fetchAccounts(pagination.current, pagination.pageSize, debouncedSearch, roleFilter);
+        } else {
+          message.error(response.message || 'Không thể xóa quân nhân');
+        }
       } else {
-        message.error(response.message || 'Không thể xóa tài khoản');
+        const response = await apiClient.deleteAccount(record.id);
+        if (response.success) {
+          message.success('Xóa tài khoản thành công');
+          fetchAccounts(pagination.current, pagination.pageSize, debouncedSearch, roleFilter);
+        } else {
+          message.error(response.message || 'Không thể xóa tài khoản');
+        }
       }
     } catch (error: any) {
-      message.error(error.message || 'Không thể xóa tài khoản');
+      message.error(error.message || 'Không thể xóa');
     }
   };
 
@@ -123,12 +134,13 @@ export default function AccountsListPage() {
 
   const columns = [
     {
-      title: 'ID',
-      dataIndex: 'id',
-      key: 'id',
-      width: 80,
+      title: 'STT',
+      key: 'stt',
+      width: 60,
       fixed: 'left' as const,
       align: 'center' as const,
+      render: (_: any, __: any, index: number) =>
+        (pagination.current - 1) * pagination.pageSize + index + 1,
     },
     {
       title: 'Tên đăng nhập',
@@ -136,22 +148,83 @@ export default function AccountsListPage() {
       key: 'username',
       ellipsis: true,
       width: 150,
+      align: 'center' as const,
     },
     {
       title: 'Vai trò',
       dataIndex: 'role',
       key: 'role',
-      width: 100,
+      width: 120,
       align: 'center' as const,
       render: (role: string) => <Tag color={getRoleColor(role)}>{getRoleText(role)}</Tag>,
     },
     {
-      title: 'Ngày tạo',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
+      title: 'Quân nhân',
+      key: 'quan_nhan',
       width: 150,
       align: 'center' as const,
-      render: (date: string) => formatDate(date),
+      render: (_: any, record: any) => {
+        if (record.quan_nhan_id) {
+          return <Link href={`/super-admin/accounts/${record.id}`}>{record.ho_ten}</Link>;
+        }
+        return <span className="text-gray-400">Chưa liên kết</span>;
+      },
+    },
+    {
+      title: 'Đơn vị',
+      key: 'don_vi',
+      width: 150,
+      align: 'center' as const,
+      ellipsis: true,
+      render: (_: any, record: any) => record.don_vi || <span className="text-gray-400">-</span>,
+    },
+    {
+      title: 'Cấp bậc / Chức vụ',
+      key: 'cap_bac_chuc_vu',
+      width: 180,
+      align: 'center' as const,
+      render: (_: any, record: any) => {
+        const capBac = record.cap_bac;
+        const chucVu = record.chuc_vu;
+        if (!capBac && !chucVu) {
+          return <span className="text-gray-400">-</span>;
+        }
+        return (
+          <div
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
+          >
+            {capBac ? (
+              <span style={{ fontWeight: 600 }}>{capBac}</span>
+            ) : (
+              <span className="text-gray-400">-</span>
+            )}
+            {chucVu ? (
+              <span style={{ fontSize: '12px', color: '#8c8c8c' }}>{chucVu}</span>
+            ) : (
+              <span className="text-gray-400" style={{ fontSize: '12px' }}>
+                -
+              </span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      title: 'Thời gian tạo',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      width: 160,
+      align: 'center' as const,
+      render: (date: string) => {
+        if (!date) return '-';
+        const d = new Date(date);
+        const hours = d.getHours().toString().padStart(2, '0');
+        const minutes = d.getMinutes().toString().padStart(2, '0');
+        const day = d.getDate().toString().padStart(2, '0');
+        const month = (d.getMonth() + 1).toString().padStart(2, '0');
+        const year = d.getFullYear();
+        return `${hours}:${minutes} ${day}/${month}/${year}`;
+      },
     },
     {
       title: 'Thao tác',
@@ -169,8 +242,12 @@ export default function AccountsListPage() {
           </Link>
           <Popconfirm
             title="Xác nhận xóa?"
-            description="Bạn có chắc muốn xóa tài khoản này?"
-            onConfirm={() => handleDelete(record.id)}
+            description={
+              record.quan_nhan_id
+                ? 'Xóa tài khoản và toàn bộ dữ liệu quân nhân liên quan?'
+                : 'Bạn có chắc muốn xóa tài khoản này?'
+            }
+            onConfirm={() => handleDelete(record)}
             okText="Xóa"
             cancelText="Hủy"
             okButtonProps={{ danger: true }}

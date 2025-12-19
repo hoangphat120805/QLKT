@@ -68,6 +68,7 @@ class AccountService {
           quan_nhan_id: account.quan_nhan_id,
           ho_ten: quanNhan?.ho_ten || null,
           don_vi: donVi?.ten_don_vi || null,
+          cap_bac: quanNhan?.cap_bac || null,
           chuc_vu: quanNhan?.ChucVu?.ten_chuc_vu || null,
           createdAt: account.createdAt,
         };

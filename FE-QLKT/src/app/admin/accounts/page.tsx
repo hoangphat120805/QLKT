@@ -59,21 +59,36 @@ export default function AdminAccountsPage() {
   const handleDelete = (account: any) => {
     confirm({
       title: 'Xác nhận xóa',
-      content: `Bạn có chắc muốn xóa tài khoản "${account.username}"?`,
+      content: account.quan_nhan_id
+        ? `Xóa tài khoản "${account.username}" và toàn bộ dữ liệu quân nhân liên quan?`
+        : `Bạn có chắc muốn xóa tài khoản "${account.username}"?`,
       okText: 'Xóa',
       cancelText: 'Hủy',
       okType: 'danger',
+      centered: true,
       onOk: async () => {
         try {
-          const response = await apiClient.deleteAccount(account.id);
-          if (response.success) {
-            message.success('Xóa tài khoản thành công');
-            loadAccounts();
+          // Nếu tài khoản có liên kết quân nhân, xóa quân nhân (cascade delete tất cả)
+          // Nếu không có quân nhân, chỉ xóa tài khoản
+          if (account.quan_nhan_id) {
+            const response = await apiClient.deletePersonnel(account.quan_nhan_id);
+            if (response.success) {
+              message.success('Xóa quân nhân và toàn bộ dữ liệu liên quan thành công');
+              loadAccounts();
+            } else {
+              message.error(response.message || 'Không thể xóa quân nhân');
+            }
           } else {
-            message.error(response.message || 'Không thể xóa tài khoản');
+            const response = await apiClient.deleteAccount(account.id);
+            if (response.success) {
+              message.success('Xóa tài khoản thành công');
+              loadAccounts();
+            } else {
+              message.error(response.message || 'Không thể xóa tài khoản');
+            }
           }
         } catch (error) {
-          message.error('Lỗi khi xóa tài khoản');
+          message.error('Lỗi khi xóa');
         }
       },
     });
@@ -85,6 +100,7 @@ export default function AdminAccountsPage() {
       content: `Reset mật khẩu tài khoản "${account.username}" về "123456"?`,
       okText: 'Reset',
       cancelText: 'Hủy',
+      centered: true,
       onOk: async () => {
         try {
           const response = await apiClient.resetAccountPassword(account.id);
@@ -116,17 +132,20 @@ export default function AdminAccountsPage() {
       title: 'Username',
       dataIndex: 'username',
       key: 'username',
+      align: 'center' as const,
     },
     {
       title: 'Vai trò',
       dataIndex: 'role',
       key: 'role',
+      align: 'center' as const,
       render: (role: string) => getRoleTag(role),
     },
     {
       title: 'Quân nhân',
       key: 'quan_nhan',
-      render: (record: any) => {
+      align: 'center' as const,
+      render: (_: any, record: any) => {
         if (record.quan_nhan_id) {
           return <Link href={`/admin/personnel/${record.quan_nhan_id}`}>{record.ho_ten}</Link>;
         }
@@ -136,14 +155,16 @@ export default function AdminAccountsPage() {
     {
       title: 'Đơn vị',
       key: 'don_vi',
-      render: (record: any) => record.don_vi || <span className="text-gray-400">-</span>,
+      align: 'center' as const,
+      render: (_: any, record: any) =>
+        record.don_vi || <span className="text-gray-400">-</span>,
     },
     {
       title: 'Cấp bậc / Chức vụ',
       key: 'cap_bac_chuc_vu',
       width: 180,
-      align: 'center',
-      render: (record: any) => {
+      align: 'center' as const,
+      render: (_: any, record: any) => {
         const capBac = record.cap_bac;
         const chucVu = record.chuc_vu;
         if (!capBac && !chucVu) {
@@ -172,7 +193,8 @@ export default function AdminAccountsPage() {
     {
       title: 'Thao tác',
       key: 'actions',
-      render: (record: any) => {
+      align: 'center' as const,
+      render: (_: any, record: any) => {
         // Admin không thể xóa/sửa SUPER_ADMIN hoặc ADMIN khác
         const canModify = record.role !== 'SUPER_ADMIN' && record.role !== 'ADMIN';
 

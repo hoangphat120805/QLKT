@@ -14,14 +14,14 @@ import {
   ConfigProvider,
   theme as antdTheme,
 } from 'antd';
-import { HomeOutlined, LockOutlined, SafetyOutlined, DashboardOutlined } from '@ant-design/icons';
+import { LockOutlined, SafetyOutlined, DashboardOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
 import { useTheme } from '@/components/theme-provider';
 
 const { Title, Text } = Typography;
 
-export default function UserSettingsPage() {
+export default function AdminChangePasswordPage() {
   const { theme } = useTheme();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
@@ -30,14 +30,12 @@ export default function UserSettingsPage() {
     try {
       setLoading(true);
 
-      // Kiểm tra mật khẩu mới và xác nhận
-      if (values.new_password !== values.confirm_password) {
+      if (values.newPassword !== values.confirmPassword) {
         message.error('Mật khẩu mới và xác nhận mật khẩu không khớp');
         return;
       }
 
-      // Gọi API đổi mật khẩu
-      const result = await apiClient.changePassword(values.old_password, values.new_password);
+      const result = await apiClient.changePassword(values.oldPassword, values.newPassword);
 
       if (result.success) {
         message.success(result.message || 'Đổi mật khẩu thành công');
@@ -60,17 +58,15 @@ export default function UserSettingsPage() {
       }}
     >
       <div className="space-y-6 p-6">
-        {/* Breadcrumb */}
         <Breadcrumb style={{ marginBottom: '24px' }}>
           <Breadcrumb.Item>
-            <Link href="/user/dashboard">
+            <Link href="/admin/dashboard">
               <DashboardOutlined />
             </Link>
           </Breadcrumb.Item>
-          <Breadcrumb.Item>Cài đặt</Breadcrumb.Item>
+          <Breadcrumb.Item>Đổi mật khẩu</Breadcrumb.Item>
         </Breadcrumb>
 
-        {/* Header */}
         <div style={{ marginBottom: '32px' }}>
           <Title
             level={2}
@@ -82,18 +78,6 @@ export default function UserSettingsPage() {
               gap: '12px',
             }}
           >
-            <div
-              style={{
-                padding: '12px',
-                background: 'linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)',
-                borderRadius: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <SafetyOutlined style={{ fontSize: '28px', color: '#fff' }} />
-            </div>
             Đổi mật khẩu
           </Title>
           <Text type="secondary" style={{ fontSize: '15px', display: 'block', marginTop: '8px' }}>
@@ -101,10 +85,8 @@ export default function UserSettingsPage() {
           </Text>
         </div>
 
-        {/* Main Content */}
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           <div style={{ width: '100%', maxWidth: '700px' }}>
-            {/* Change Password Card */}
             <Card className="shadow-lg" style={{ marginBottom: '24px' }}>
               <Alert
                 message="Lưu ý bảo mật"
@@ -121,7 +103,7 @@ export default function UserSettingsPage() {
                 autoComplete="off"
               >
                 <Form.Item
-                  name="old_password"
+                  name="oldPassword"
                   label="Mật khẩu hiện tại"
                   rules={[{ required: true, message: 'Vui lòng nhập mật khẩu hiện tại' }]}
                 >
@@ -134,7 +116,7 @@ export default function UserSettingsPage() {
                 </Form.Item>
 
                 <Form.Item
-                  name="new_password"
+                  name="newPassword"
                   label="Mật khẩu mới"
                   rules={[
                     { required: true, message: 'Vui lòng nhập mật khẩu mới' },
@@ -150,14 +132,14 @@ export default function UserSettingsPage() {
                 </Form.Item>
 
                 <Form.Item
-                  name="confirm_password"
+                  name="confirmPassword"
                   label="Xác nhận mật khẩu mới"
-                  dependencies={['new_password']}
+                  dependencies={['newPassword']}
                   rules={[
                     { required: true, message: 'Vui lòng xác nhận mật khẩu mới' },
                     ({ getFieldValue }) => ({
                       validator(_, value) {
-                        if (!value || getFieldValue('new_password') === value) {
+                        if (!value || getFieldValue('newPassword') === value) {
                           return Promise.resolve();
                         }
                         return Promise.reject(new Error('Mật khẩu xác nhận không khớp'));
@@ -192,7 +174,6 @@ export default function UserSettingsPage() {
               </Form>
             </Card>
 
-            {/* Security Tips Card */}
             <Card
               title={
                 <Space>

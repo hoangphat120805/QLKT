@@ -629,71 +629,137 @@ class PersonnelService {
   }
 
   /**
-   * Xóa quân nhân
-   * NOTE: Endpoint này không được expose trong route.
-   * Sử dụng DELETE /api/accounts/:id để xóa tài khoản và toàn bộ dữ liệu liên quan.
+   * Xóa quân nhân và tất cả dữ liệu liên quan
+   * Cascade delete: TaiKhoan, LichSuChucVu, ThanhTichKhoaHoc, DanhHieuHangNam,
+   * KhenThuongCongHien, HuanChuongQuanKyQuyetThang, KyNiemChuongVSNXDQDNDVN,
+   * KhenThuongHCCSVV, KhenThuongDotXuat, HoSoNienHan, HoSoCongHien, HoSoHangNam
    */
   async deletePersonnel(id, userRole, userQuanNhanId) {
     try {
       // Kiểm tra quân nhân có tồn tại không
       const personnel = await prisma.quanNhan.findUnique({
         where: { id: String(id) },
+        include: {
+          TaiKhoan: true,
+        },
       });
 
       if (!personnel) {
         throw new Error('Quân nhân không tồn tại');
       }
 
-      // Kiểm tra quyền: MANAGER chỉ xóa được quân nhân trong đơn vị của mình
-      if (userRole === 'MANAGER' && userQuanNhanId) {
-        const manager = await prisma.quanNhan.findUnique({
-          where: { id: userQuanNhanId },
-          select: { co_quan_don_vi_id: true, don_vi_truc_thuoc_id: true },
-        });
+      // Chỉ ADMIN và SUPER_ADMIN mới được xóa quân nhân
+      if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
+        throw new Error('Chỉ Admin mới có quyền xóa quân nhân');
+      }
 
-        if (manager) {
-          // MANAGER thuộc cơ quan đơn vị, chỉ xóa được quân nhân trong cùng cơ quan đơn vị
-          if (manager.co_quan_don_vi_id) {
-            if (personnel.co_quan_don_vi_id !== manager.co_quan_don_vi_id) {
-              throw new Error('Bạn không có quyền xóa quân nhân ngoài đơn vị');
-            }
-          }
-        }
+      // Không cho phép tự xóa chính mình
+      if (userQuanNhanId === id) {
+        throw new Error('Không thể xóa chính mình');
       }
 
       // Lưu lại đơn vị để cập nhật số lượng sau khi xóa
       const unitId = personnel.co_quan_don_vi_id || personnel.don_vi_truc_thuoc_id;
       const isCoQuanDonVi = !!personnel.co_quan_don_vi_id;
 
-      // Xóa quân nhân
-      await prisma.quanNhan.delete({
-        where: { id: String(id) },
-      });
-
-      // Giảm số lượng quân nhân trong đơn vị
-      if (unitId) {
-        if (isCoQuanDonVi) {
-          await prisma.coQuanDonVi.update({
-            where: { id: unitId },
-            data: {
-              so_luong: {
-                decrement: 1,
-              },
-            },
-          });
-        } else {
-          await prisma.donViTrucThuoc.update({
-            where: { id: unitId },
-            data: {
-              so_luong: {
-                decrement: 1,
-              },
-            },
+      // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
+      await prisma.$transaction(async tx => {
+        // 1. Xóa tài khoản (TaiKhoan)
+        if (personnel.TaiKhoan) {
+          await tx.taiKhoan.delete({
+            where: { id: personnel.TaiKhoan.id },
           });
         }
-      }
 
-      return { message: 'Xóa quân nhân thành công' };
+        // 2. Xóa lịch sử chức vụ (LichSuChucVu)
+        await tx.lichSuChucVu.deleteMany({
+          where: { quan_nhan_id: id },
+        });
+
+        // 3. Xóa thành tích khoa học (ThanhTichKhoaHoc)
+        await tx.thanhTichKhoaHoc.deleteMany({
+          where: { quan_nhan_id: id },
+        });
+
+        // 4. Xóa danh hiệu hằng năm (DanhHieuHangNam)
+        await tx.danhHieuHangNam.deleteMany({
+          where: { quan_nhan_id: id },
+        });
+
+        // 5. Xóa khen thưởng cống hiến (KhenThuongCongHien)
+        await tx.khenThuongCongHien.deleteMany({
+          where: { quan_nhan_id: id },
+        });
+
+        // 6. Xóa Huân chương Quân kỳ Quyết thắng (HuanChuongQuanKyQuyetThang)
+        await tx.huanChuongQuanKyQuyetThang.deleteMany({
+          where: { quan_nhan_id: id },
+        });
+
+        // 7. Xóa Kỷ niệm chương VSNXD QĐNDVN (KyNiemChuongVSNXDQDNDVN)
+        await tx.kyNiemChuongVSNXDQDNDVN.deleteMany({
+          where: { quan_nhan_id: id },
+        });
+
+        // 8. Xóa Huân chương Chiến sĩ Vẻ vang (KhenThuongHCCSVV)
+        await tx.khenThuongHCCSVV.deleteMany({
+          where: { quan_nhan_id: id },
+        });
+
+        // 9. Xóa Khen thưởng đột xuất (KhenThuongDotXuat)
+        await tx.khenThuongDotXuat.deleteMany({
+          where: { quan_nhan_id: id },
+        });
+
+        // 10. Xóa Hồ sơ niên hạn (HoSoNienHan)
+        await tx.hoSoNienHan.deleteMany({
+          where: { quan_nhan_id: id },
+        });
+
+        // 11. Xóa Hồ sơ cống hiến (HoSoCongHien)
+        await tx.hoSoCongHien.deleteMany({
+          where: { quan_nhan_id: id },
+        });
+
+        // 12. Xóa Hồ sơ hằng năm (HoSoHangNam)
+        await tx.hoSoHangNam.deleteMany({
+          where: { quan_nhan_id: id },
+        });
+
+        // 13. Xóa quân nhân
+        await tx.quanNhan.delete({
+          where: { id: String(id) },
+        });
+
+        // 14. Giảm số lượng quân nhân trong đơn vị
+        if (unitId) {
+          if (isCoQuanDonVi) {
+            await tx.coQuanDonVi.update({
+              where: { id: unitId },
+              data: {
+                so_luong: {
+                  decrement: 1,
+                },
+              },
+            });
+          } else {
+            await tx.donViTrucThuoc.update({
+              where: { id: unitId },
+              data: {
+                so_luong: {
+                  decrement: 1,
+                },
+              },
+            });
+          }
+        }
+      });
+
+      return {
+        message: 'Xóa quân nhân và toàn bộ dữ liệu liên quan thành công',
+        ho_ten: personnel.ho_ten,
+        cccd: personnel.cccd,
+      };
     } catch (error) {
       throw error;
     }

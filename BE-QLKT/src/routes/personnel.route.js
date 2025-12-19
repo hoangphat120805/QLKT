@@ -113,4 +113,25 @@ router.get(
  */
 router.get('/export-sample', verifyToken, requireAdmin, personnelController.exportPersonnelSample);
 
+/**
+ * @route   DELETE /api/personnel/:id
+ * @desc    Xóa quân nhân và toàn bộ dữ liệu liên quan (cascade delete)
+ *          Bao gồm: TaiKhoan, LichSuChucVu, ThanhTichKhoaHoc, DanhHieuHangNam,
+ *          KhenThuongCongHien, HuanChuongQuanKyQuyetThang, KyNiemChuongVSNXDQDNDVN,
+ *          KhenThuongHCCSVV, KhenThuongDotXuat, HoSoNienHan, HoSoCongHien, HoSoHangNam
+ * @access  Private - ADMIN only
+ */
+router.delete(
+  '/:id',
+  verifyToken,
+  requireAdmin,
+  auditLog({
+    action: 'DELETE',
+    resource: 'personnel',
+    getDescription: getLogDescription('personnel', 'DELETE'),
+    getResourceId: getResourceId.fromParams('id'),
+  }),
+  personnelController.deletePersonnel
+);
+
 module.exports = router;

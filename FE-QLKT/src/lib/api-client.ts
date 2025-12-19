@@ -26,8 +26,8 @@ export const apiClient = {
   async changePassword(oldPassword: string, newPassword: string): Promise<ApiResponse> {
     try {
       const res = await axiosInstance.post('/api/auth/change-password', {
-        old_password: oldPassword,
-        new_password: newPassword,
+        oldPassword,
+        newPassword,
       });
       return { success: true, data: res.data?.data || res.data, message: res.data?.message };
     } catch (e: any) {
@@ -144,6 +144,15 @@ export const apiClient = {
     try {
       const res = await axiosInstance.put(`/api/personnel/${id}`, body);
       return { success: true, data: res.data?.data || res.data };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async deletePersonnel(id: string): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.delete(`/api/personnel/${id}`);
+      return { success: true, data: res.data?.data || res.data, message: res.data?.message };
     } catch (e: any) {
       return { success: false, message: e?.response?.data?.message || e.message };
     }
