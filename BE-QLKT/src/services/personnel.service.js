@@ -254,24 +254,31 @@ class PersonnelService {
       });
 
       // Cập nhật số lượng quân nhân trong đơn vị
-      if (isCoQuanDonVi) {
-        await prisma.coQuanDonVi.update({
-          where: { id: unit_id },
-          data: {
-            so_luong: {
-              increment: 1,
+      try {
+        if (isCoQuanDonVi) {
+          await prisma.coQuanDonVi.update({
+            where: { id: unit_id },
+            data: {
+              so_luong: {
+                increment: 1,
+              },
             },
-          },
-        });
-      } else {
-        await prisma.donViTrucThuoc.update({
-          where: { id: unit_id },
-          data: {
-            so_luong: {
-              increment: 1,
+          });
+          console.log(`Đã tăng số lượng quân nhân của Cơ quan đơn vị ID: ${unit_id}`);
+        } else {
+          await prisma.donViTrucThuoc.update({
+            where: { id: unit_id },
+            data: {
+              so_luong: {
+                increment: 1,
+              },
             },
-          },
-        });
+          });
+          console.log(`Đã tăng số lượng quân nhân của Đơn vị trực thuộc ID: ${unit_id}`);
+        }
+      } catch (error) {
+        console.error(`Lỗi khi cập nhật số lượng quân nhân cho đơn vị ID: ${unit_id}`, error);
+        throw new Error(`Không thể cập nhật số lượng quân nhân của đơn vị: ${error.message}`);
       }
 
       // Trả về kèm thông tin tài khoản
@@ -733,25 +740,34 @@ class PersonnelService {
 
         // 14. Giảm số lượng quân nhân trong đơn vị
         if (unitId) {
-          if (isCoQuanDonVi) {
-            await tx.coQuanDonVi.update({
-              where: { id: unitId },
-              data: {
-                so_luong: {
-                  decrement: 1,
+          try {
+            if (isCoQuanDonVi) {
+              await tx.coQuanDonVi.update({
+                where: { id: unitId },
+                data: {
+                  so_luong: {
+                    decrement: 1,
+                  },
                 },
-              },
-            });
-          } else {
-            await tx.donViTrucThuoc.update({
-              where: { id: unitId },
-              data: {
-                so_luong: {
-                  decrement: 1,
+              });
+              console.log(`Đã giảm số lượng quân nhân của Cơ quan đơn vị ID: ${unitId}`);
+            } else {
+              await tx.donViTrucThuoc.update({
+                where: { id: unitId },
+                data: {
+                  so_luong: {
+                    decrement: 1,
+                  },
                 },
-              },
-            });
+              });
+              console.log(`Đã giảm số lượng quân nhân của Đơn vị trực thuộc ID: ${unitId}`);
+            }
+          } catch (error) {
+            console.error(`Lỗi khi cập nhật số lượng quân nhân cho đơn vị ID: ${unitId}`, error);
+            throw new Error(`Không thể cập nhật số lượng quân nhân của đơn vị: ${error.message}`);
           }
+        } else {
+          console.warn(`Quân nhân ID: ${id} không có đơn vị`);
         }
       });
 

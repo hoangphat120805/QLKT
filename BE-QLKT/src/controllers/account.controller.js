@@ -24,7 +24,16 @@ class AccountController {
         roleFilter = role || 'MANAGER,USER';
       }
 
-      const result = await accountService.getAccounts(page, limit, search, roleFilter);
+      // Nếu là SUPER_ADMIN, exclude SUPER_ADMIN khỏi danh sách
+      const excludeSuperAdmin = userRole === 'SUPER_ADMIN';
+
+      const result = await accountService.getAccounts(
+        page,
+        limit,
+        search,
+        roleFilter,
+        excludeSuperAdmin
+      );
 
       return res.status(200).json({
         success: true,
@@ -166,47 +175,75 @@ class AccountController {
   async updateAccount(req, res) {
     try {
       const { id } = req.params;
-      const { role } = req.body;
+      const { role, password } = req.body;
       const userRole = req.user?.role;
 
-      if (!role) {
+      // Phải có ít nhất role hoặc password để cập nhật
+      if (!role && !password) {
         return res.status(400).json({
           success: false,
-          message: 'Vui lòng cung cấp vai trò mới',
+          message: 'Vui lòng cung cấp vai trò hoặc mật khẩu mới',
         });
       }
 
-      // Validate role based on user's role
-      let validRoles = ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'USER'];
-      if (userRole === 'ADMIN') {
-        // ADMIN chỉ có thể cập nhật MANAGER hoặc USER
-        validRoles = ['MANAGER', 'USER'];
-        if (!validRoles.includes(role)) {
-          return res.status(403).json({
-            success: false,
-            message: 'ADMIN chỉ có thể cập nhật tài khoản thành MANAGER hoặc USER',
-          });
-        }
+      const updateData = {};
 
-        // Kiểm tra xem tài khoản hiện tại có phải là MANAGER hoặc USER không
-        const existingAccount = await accountService.getAccountById(id);
-        if (!['MANAGER', 'USER'].includes(existingAccount.role)) {
-          return res.status(403).json({
-            success: false,
-            message: 'ADMIN chỉ có thể quản lý tài khoản MANAGER và USER',
-          });
+      // Xử lý role nếu có
+      if (role) {
+        // Validate role based on user's role
+        let validRoles = ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'USER'];
+        if (userRole === 'ADMIN') {
+          // ADMIN chỉ có thể cập nhật MANAGER hoặc USER
+          validRoles = ['MANAGER', 'USER'];
+          if (!validRoles.includes(role)) {
+            return res.status(403).json({
+              success: false,
+              message: 'ADMIN chỉ có thể cập nhật tài khoản thành MANAGER hoặc USER',
+            });
+          }
+
+          // Kiểm tra xem tài khoản hiện tại có phải là MANAGER hoặc USER không
+          const existingAccount = await accountService.getAccountById(id);
+          if (!['MANAGER', 'USER'].includes(existingAccount.role)) {
+            return res.status(403).json({
+              success: false,
+              message: 'ADMIN chỉ có thể quản lý tài khoản MANAGER và USER',
+            });
+          }
+        } else {
+          // SUPER_ADMIN có thể cập nhật tất cả
+          if (!validRoles.includes(role)) {
+            return res.status(400).json({
+              success: false,
+              message: 'Vai trò không hợp lệ. Vai trò hợp lệ: ' + validRoles.join(', '),
+            });
+          }
         }
-      } else {
-        // SUPER_ADMIN có thể cập nhật tất cả
-        if (!validRoles.includes(role)) {
-          return res.status(400).json({
-            success: false,
-            message: 'Vai trò không hợp lệ. Vai trò hợp lệ: ' + validRoles.join(', '),
-          });
-        }
+        updateData.role = role;
       }
 
-      const result = await accountService.updateAccount(id, { role });
+      // Xử lý password nếu có
+      if (password) {
+        // Chỉ SUPER_ADMIN mới có thể đặt lại mật khẩu
+        if (userRole !== 'SUPER_ADMIN') {
+          return res.status(403).json({
+            success: false,
+            message: 'Chỉ SUPER_ADMIN mới có thể đặt lại mật khẩu',
+          });
+        }
+
+        // Validate password length
+        if (password.length < 6) {
+          return res.status(400).json({
+            success: false,
+            message: 'Mật khẩu phải có ít nhất 6 ký tự',
+          });
+        }
+
+        updateData.password = password;
+      }
+
+      const result = await accountService.updateAccount(id, updateData);
 
       return res.status(200).json({
         success: true,

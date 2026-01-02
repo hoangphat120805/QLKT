@@ -129,7 +129,7 @@ class PositionService {
         ten_chuc_vu,
         // Nếu là đơn vị trực thuộc thì KHÔNG có chỉ huy, luôn là false
         // Chỉ cơ quan đơn vị mới có chỉ huy
-        is_manager: isCoQuanDonVi ? (is_manager || false) : false,
+        is_manager: isCoQuanDonVi ? is_manager || false : false,
         he_so_chuc_vu: he_so_chuc_vu || 0,
       };
 
@@ -152,6 +152,17 @@ class PositionService {
           },
         },
       });
+
+      const chucVuCount = await prisma.chucVu.count({
+        where: isCoQuanDonVi
+          ? { co_quan_don_vi_id: unitIdString }
+          : { don_vi_truc_thuoc_id: unitIdString },
+      });
+      console.log(
+        `Đã thêm chức vụ "${ten_chuc_vu}" vào ${
+          isCoQuanDonVi ? 'Cơ quan đơn vị' : 'Đơn vị trực thuộc'
+        } ID: ${unitIdString}. Tổng số chức vụ: ${chucVuCount}`
+      );
 
       return newPosition;
     } catch (error) {
@@ -187,7 +198,9 @@ class PositionService {
           // Chỉ cơ quan đơn vị mới có chỉ huy
           is_manager: isDonViTrucThuoc
             ? false
-            : (is_manager !== undefined ? is_manager : position.is_manager),
+            : is_manager !== undefined
+            ? is_manager
+            : position.is_manager,
           he_so_chuc_vu: he_so_chuc_vu !== undefined ? he_so_chuc_vu : position.he_so_chuc_vu,
         },
         include: {

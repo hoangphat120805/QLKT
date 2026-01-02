@@ -5,7 +5,7 @@ class AccountService {
   /**
    * Lấy danh sách tài khoản (có phân trang)
    */
-  async getAccounts(page = 1, limit = 10, search = '', role) {
+  async getAccounts(page = 1, limit = 10, search = '', role, excludeSuperAdmin = false) {
     try {
       const skip = (page - 1) * limit;
 
@@ -18,6 +18,9 @@ class AccountService {
         roleFilter = roles.length > 1 ? { role: { in: roles } } : { role: roles[0] };
       }
 
+      // Exclude SUPER_ADMIN nếu được yêu cầu
+      const excludeFilter = excludeSuperAdmin ? { role: { not: 'SUPER_ADMIN' } } : {};
+
       const whereClause = {
         AND: [
           search
@@ -29,6 +32,7 @@ class AccountService {
               }
             : {},
           roleFilter,
+          excludeFilter,
         ],
       };
 
@@ -316,26 +320,50 @@ class AccountService {
         // ==================== CẬP NHẬT SỐ LƯỢNG QUÂN NHÂN ====================
         // Cập nhật số lượng cho Cơ quan đơn vị (nếu có)
         if (co_quan_don_vi_id) {
-          await prisma.coQuanDonVi.update({
-            where: { id: co_quan_don_vi_id },
-            data: {
-              so_luong: {
-                increment: 1,
+          try {
+            await prisma.coQuanDonVi.update({
+              where: { id: co_quan_don_vi_id },
+              data: {
+                so_luong: {
+                  increment: 1,
+                },
               },
-            },
-          });
+            });
+            console.log(`Đã tăng số lượng quân nhân của Cơ quan đơn vị ID: ${co_quan_don_vi_id}`);
+          } catch (error) {
+            console.error(
+              `Lỗi khi cập nhật số lượng quân nhân cho Cơ quan đơn vị ID: ${co_quan_don_vi_id}`,
+              error
+            );
+            throw new Error(
+              `Không thể cập nhật số lượng quân nhân của cơ quan đơn vị: ${error.message}`
+            );
+          }
         }
 
         // Cập nhật số lượng cho Đơn vị trực thuộc (nếu có)
         if (don_vi_truc_thuoc_id) {
-          await prisma.donViTrucThuoc.update({
-            where: { id: don_vi_truc_thuoc_id },
-            data: {
-              so_luong: {
-                increment: 1,
+          try {
+            await prisma.donViTrucThuoc.update({
+              where: { id: don_vi_truc_thuoc_id },
+              data: {
+                so_luong: {
+                  increment: 1,
+                },
               },
-            },
-          });
+            });
+            console.log(
+              `Đã tăng số lượng quân nhân của Đơn vị trực thuộc ID: ${don_vi_truc_thuoc_id}`
+            );
+          } catch (error) {
+            console.error(
+              `Lỗi khi cập nhật số lượng quân nhân cho Đơn vị trực thuộc ID: ${don_vi_truc_thuoc_id}`,
+              error
+            );
+            throw new Error(
+              `Không thể cập nhật số lượng quân nhân của đơn vị trực thuộc: ${error.message}`
+            );
+          }
         }
       }
 
@@ -386,7 +414,7 @@ class AccountService {
    */
   async updateAccount(id, data) {
     try {
-      const { role } = data;
+      const { role, password } = data;
 
       // Kiểm tra tài khoản có tồn tại không
       const account = await prisma.taiKhoan.findUnique({
@@ -397,10 +425,24 @@ class AccountService {
         throw new Error('Tài khoản không tồn tại');
       }
 
-      // Cập nhật vai trò
+      // Chuẩn bị data để cập nhật
+      const updateData = {};
+
+      // Cập nhật vai trò nếu có
+      if (role) {
+        updateData.role = role;
+      }
+
+      // Cập nhật mật khẩu nếu có
+      if (password) {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        updateData.password_hash = hashedPassword;
+      }
+
+      // Cập nhật tài khoản
       const updatedAccount = await prisma.taiKhoan.update({
         where: { id },
-        data: { role },
+        data: updateData,
         include: {
           QuanNhan: {
             include: {
@@ -520,12 +562,12 @@ class AccountService {
         if (pendingProposals.length > 0 && !forceDelete) {
           throw new Error(
             `Không thể xóa tài khoản này vì quân nhân đang có ${pendingProposals.length} đề xuất chờ duyệt. ` +
-            `Hãy xử lý các đề xuất trước hoặc sử dụng force delete.`
+              `Hãy xử lý các đề xuất trước hoặc sử dụng force delete.`
           );
         }
 
         // Sử dụng transaction để đảm bảo data integrity
-        await prisma.$transaction(async (tx) => {
+        await prisma.$transaction(async tx => {
           // 1. Xóa quân nhân khỏi tất cả đề xuất
           for (const proposal of proposals) {
             let updated = false;
@@ -590,25 +632,34 @@ class AccountService {
 
           // 4. Giảm số lượng quân nhân trong đơn vị
           if (unitId) {
-            if (isCoQuanDonVi) {
-              await tx.coQuanDonVi.update({
-                where: { id: unitId },
-                data: {
-                  so_luong: {
-                    decrement: 1,
+            try {
+              if (isCoQuanDonVi) {
+                await tx.coQuanDonVi.update({
+                  where: { id: unitId },
+                  data: {
+                    so_luong: {
+                      decrement: 1,
+                    },
                   },
-                },
-              });
-            } else {
-              await tx.donViTrucThuoc.update({
-                where: { id: unitId },
-                data: {
-                  so_luong: {
-                    decrement: 1,
+                });
+                console.log(`Đã giảm số lượng quân nhân của Cơ quan đơn vị ID: ${unitId}`);
+              } else {
+                await tx.donViTrucThuoc.update({
+                  where: { id: unitId },
+                  data: {
+                    so_luong: {
+                      decrement: 1,
+                    },
                   },
-                },
-              });
+                });
+                console.log(`Đã giảm số lượng quân nhân của Đơn vị trực thuộc ID: ${unitId}`);
+              }
+            } catch (error) {
+              console.error(`Lỗi khi cập nhật số lượng quân nhân cho đơn vị ID: ${unitId}`, error);
+              throw new Error(`Không thể cập nhật số lượng quân nhân của đơn vị: ${error.message}`);
             }
+          } else {
+            console.warn(`Quân nhân ID: ${personnelId} không có đơn vị`);
           }
         });
 

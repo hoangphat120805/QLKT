@@ -301,7 +301,6 @@ export default function AccountsListPage() {
                 onChange={handleRoleFilterChange}
                 style={{ width: 200 }}
                 options={[
-                  { value: 'SUPER_ADMIN', label: 'Super Admin' },
                   { value: 'ADMIN', label: 'Admin' },
                   { value: 'MANAGER', label: 'Quản lý' },
                   { value: 'USER', label: 'Người dùng' },

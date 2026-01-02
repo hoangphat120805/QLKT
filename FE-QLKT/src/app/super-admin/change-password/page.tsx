@@ -32,11 +32,6 @@ export default function SuperAdminChangePasswordPage() {
     try {
       setLoading(true);
 
-      if (values.newPassword !== values.confirmPassword) {
-        message.error('Mật khẩu mới và xác nhận mật khẩu không khớp');
-        return;
-      }
-
       const result = await apiClient.changePassword(values.oldPassword, values.newPassword);
 
       if (result.success) {

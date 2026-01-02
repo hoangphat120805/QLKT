@@ -58,9 +58,7 @@ class UnitService {
    */
   async getAllSubUnits(coQuanDonViId) {
     try {
-      const whereClause = coQuanDonViId
-        ? { co_quan_don_vi_id: coQuanDonViId }
-        : {};
+      const whereClause = coQuanDonViId ? { co_quan_don_vi_id: coQuanDonViId } : {};
 
       const donViTrucThuoc = await prisma.donViTrucThuoc.findMany({
         where: whereClause,
@@ -202,6 +200,13 @@ class UnitService {
             ChucVu: true,
           },
         });
+
+        const donViTrucThuocCount = await prisma.donViTrucThuoc.count({
+          where: { co_quan_don_vi_id },
+        });
+        console.log(
+          `Đã thêm đơn vị trực thuộc "${ten_don_vi}" vào Cơ quan đơn vị ID: ${co_quan_don_vi_id}. Tổng số đơn vị trực thuộc: ${donViTrucThuocCount}`
+        );
 
         return newUnit;
       } else {
