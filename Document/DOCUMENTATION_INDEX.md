@@ -63,7 +63,7 @@
 
 ### 🎖️ Khen thưởng Đặc biệt
 
-#### Huân chương Quân kỳ Quyết thắng
+#### Huy chương quân kỳ Quyết thắng
 
 - **File**: [Document/05-HC-QKQT.md](./05-HC-QKQT.md)
 - **Điều kiện**: ≥ 25 năm phục vụ

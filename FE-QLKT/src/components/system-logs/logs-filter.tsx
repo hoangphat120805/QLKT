@@ -95,7 +95,7 @@ const resourceLabels: Record<string, string> = {
   'service_rewards': 'Khen thưởng niên hạn',
   'unit-annual-awards': 'Khen thưởng đơn vị hằng năm',
   'unit_annual_awards': 'Khen thưởng đơn vị hằng năm',
-  'hccsvv': 'Huân chương Chiến sỹ Vẻ vang',
+  'hccsvv': 'Huy chương Chiến sĩ Vẻ vang',
   categories: 'Danh mục',
   dashboard: 'Bảng điều khiển',
   'system-logs': 'Nhật ký hệ thống',

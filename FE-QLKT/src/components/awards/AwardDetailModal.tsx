@@ -52,9 +52,9 @@ const DANH_HIEU_DISPLAY: Record<string, string> = {
   DVTT: 'Đơn vị tiên tiến',
   BKTTCP: 'Bằng khen của Thủ tướng Chính phủ',
   // HCCSVV
-  HCCSVV_HANG_BA: 'Huân chương Chiến sĩ Vẻ vang Hạng Ba',
-  HCCSVV_HANG_NHI: 'Huân chương Chiến sĩ Vẻ vang Hạng Nhì',
-  HCCSVV_HANG_NHAT: 'Huân chương Chiến sĩ Vẻ vang Hạng Nhất',
+  HCCSVV_HANG_BA: 'Huy chương Chiến sĩ Vẻ vang Hạng Ba',
+  HCCSVV_HANG_NHI: 'Huy chương Chiến sĩ Vẻ vang Hạng Nhì',
+  HCCSVV_HANG_NHAT: 'Huy chương Chiến sĩ Vẻ vang Hạng Nhất',
   // HCBVTQ
   HCBVTQ_HANG_BA: 'Huân chương Bảo vệ Tổ quốc Hạng Ba',
   HCBVTQ_HANG_NHI: 'Huân chương Bảo vệ Tổ quốc Hạng Nhì',
@@ -70,10 +70,10 @@ const DANH_HIEU_DISPLAY: Record<string, string> = {
 const AWARD_TYPE_LABELS: Record<AwardType, string> = {
   annual: 'Cá nhân hằng năm',
   unit: 'Đơn vị hằng năm',
-  hccsvv: 'Huân chương Chiến sĩ Vẻ vang',
+  hccsvv: 'Huy chương Chiến sĩ Vẻ vang',
   contribution: 'Huân chương Bảo vệ Tổ quốc',
   commemoration: 'Kỷ niệm chương VSNXD QĐNDVN',
-  militaryFlag: 'Huân chương Quân kỳ Quyết thắng',
+  militaryFlag: 'Huy chương quân kỳ Quyết thắng',
   scientific: 'Thành tích khoa học',
   adhoc: 'Khen thưởng đột xuất',
 };

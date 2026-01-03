@@ -13,7 +13,7 @@ router.get('/annual/:personnel_id', verifyToken, requireAuth, profileController.
 
 /**
  * @route   GET /api/profiles/tenure/:personnel_id
- * @desc    Lấy hồ sơ đề xuất Huân chương Chiến sỹ Vẻ vang (HCCSVV) theo niên hạn
+ * @desc    Lấy hồ sơ đề xuất Huy chương Chiến sĩ Vẻ vang (HCCSVV) theo niên hạn
  *          Tự động recalculate khi gọi API
  * @access  Private - ADMIN, MANAGER, USER
  */

@@ -667,6 +667,7 @@ export default function PositionHistoryPage() {
           okText="Xóa"
           cancelText="Hủy"
           okButtonProps={{ danger: true }}
+          centered
         >
           <Paragraph>
             Bạn có chắc chắn muốn xóa lịch sử chức vụ này? Hành động này không thể hoàn tác.

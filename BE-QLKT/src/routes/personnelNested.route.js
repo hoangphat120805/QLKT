@@ -81,6 +81,42 @@ router.post(
   }
 );
 
+/**
+ * @route   PUT /api/personnel/:personnelId/position-history/:id
+ * @desc    Cập nhật lịch sử chức vụ (alias)
+ * @access  Private - ADMIN, MANAGER
+ */
+router.put(
+  '/position-history/:id',
+  verifyToken,
+  requireManager,
+  auditLog({
+    action: 'UPDATE',
+    resource: 'position-history',
+    getDescription: getLogDescription('position-history', 'UPDATE'),
+    getResourceId: getResourceId.fromParams('id'),
+  }),
+  positionHistoryController.updatePositionHistory
+);
+
+/**
+ * @route   DELETE /api/personnel/:personnelId/position-history/:id
+ * @desc    Xóa lịch sử chức vụ (alias)
+ * @access  Private - ADMIN, MANAGER
+ */
+router.delete(
+  '/position-history/:id',
+  verifyToken,
+  requireManager,
+  auditLog({
+    action: 'DELETE',
+    resource: 'position-history',
+    getDescription: getLogDescription('position-history', 'DELETE'),
+    getResourceId: getResourceId.fromParams('id'),
+  }),
+  positionHistoryController.deletePositionHistory
+);
+
 // ===== SCIENTIFIC ACHIEVEMENTS =====
 /**
  * @route   GET /api/personnel/:personnelId/scientific-achievements

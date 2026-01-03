@@ -3,7 +3,7 @@ const militaryFlagService = require('../services/militaryFlag.service');
 class MilitaryFlagController {
   /**
    * GET /api/military-flag/template
-   * Tải file mẫu Excel để import Huân chương Quân kỳ Quyết thắng
+   * Tải file mẫu Excel để import Huy chương quân kỳ Quyết thắng
    */
   async getTemplate(req, res) {
     try {
@@ -29,7 +29,7 @@ class MilitaryFlagController {
 
   /**
    * POST /api/military-flag/import
-   * Import Huân chương Quân kỳ Quyết thắng từ file Excel
+   * Import Huy chương quân kỳ Quyết thắng từ file Excel
    */
   async importFromExcel(req, res) {
     try {
@@ -44,7 +44,7 @@ class MilitaryFlagController {
 
       return res.status(200).json({
         success: true,
-        message: 'Import Huân chương Quân kỳ Quyết thắng thành công',
+        message: 'Import Huy chương quân kỳ Quyết thắng thành công',
         data: result,
       });
     } catch (error) {
@@ -58,7 +58,7 @@ class MilitaryFlagController {
 
   /**
    * GET /api/military-flag
-   * Lấy danh sách Huân chương Quân kỳ Quyết thắng
+   * Lấy danh sách Huy chương quân kỳ Quyết thắng
    */
   async getAll(req, res) {
     try {
@@ -116,7 +116,7 @@ class MilitaryFlagController {
 
   /**
    * GET /api/military-flag/export
-   * Xuất file Excel Huân chương Quân kỳ Quyết thắng
+   * Xuất file Excel Huy chương quân kỳ Quyết thắng
    */
   async exportToExcel(req, res) {
     try {
@@ -160,7 +160,7 @@ class MilitaryFlagController {
 
   /**
    * GET /api/military-flag/statistics
-   * Thống kê Huân chương Quân kỳ Quyết thắng
+   * Thống kê Huy chương quân kỳ Quyết thắng
    */
   async getStatistics(req, res) {
     try {
@@ -182,7 +182,7 @@ class MilitaryFlagController {
 
   /**
    * GET /api/military-flag/personnel/:personnel_id
-   * Lấy Huân chương Quân kỳ Quyết thắng theo personnel_id
+   * Lấy Huy chương quân kỳ Quyết thắng theo personnel_id
    */
   async getByPersonnelId(req, res) {
     try {

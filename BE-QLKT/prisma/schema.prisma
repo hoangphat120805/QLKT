@@ -268,7 +268,7 @@ model KyNiemChuongVSNXDQDNDVN {
   @@map("ky_niem_chuong_vsnxd_qdndvn")
 }
 
-// 12. Bảng Khen thưởng Huân chương Chiến sĩ Vẻ vang (OUTPUT)
+// 12. Bảng Khen thưởng Huy chương Chiến sĩ Vẻ vang (OUTPUT)
 model KhenThuongHCCSVV {
   id                     String   @id @default(cuid()) @db.VarChar(30)
   quan_nhan_id           String   @db.VarChar(30)
@@ -325,7 +325,7 @@ model HoSoNienHan {
   id           String @id @default(cuid()) @db.VarChar(30)
   quan_nhan_id String @unique @db.VarChar(30)
 
-  // Huân chương Chiến sĩ vẻ vang (HCCSVV)
+  // Huy chương Chiến sĩ vẻ vang (HCCSVV)
   hccsvv_hang_ba_status   String    @default("CHUA_DU") @db.VarChar(20) // CHUA_DU, DU_DIEU_KIEN, DA_NHAN
   hccsvv_hang_ba_ngay     DateTime? @db.Date
   hccsvv_hang_nhi_status  String    @default("CHUA_DU") @db.VarChar(20)

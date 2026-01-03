@@ -86,9 +86,9 @@ export default function ServiceHistoryModal({
       <Spin spinning={loading}>
         {serviceProfile ? (
           <div>
-            {/* Huân chương Chiến sĩ Vẻ vang */}
+            {/* Huy chương Chiến sĩ Vẻ vang */}
             <Title level={5} style={{ marginTop: 0 }}>
-              Huân chương Chiến sĩ Vẻ vang (HCCSVV)
+              Huy chương Chiến sĩ Vẻ vang (HCCSVV)
             </Title>
             <Descriptions bordered column={1} size="small" style={{ marginBottom: 24 }}>
               <Descriptions.Item label="Hạng Ba">

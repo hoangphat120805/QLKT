@@ -91,7 +91,7 @@ export default function AdminMilitaryFlagPage() {
           mappedFlags.push({
             id: 'hcqkqt',
             type: 'HCQKQT',
-            name: 'Huân chương Quân kỳ Quyết thắng',
+            name: 'Huy chương quân kỳ Quyết thắng',
             ngay_cap: serviceRes.data.hcqkqt_ngay_cap,
             status: serviceRes.data.hcqkqt_status,
           });

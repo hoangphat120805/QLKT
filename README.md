@@ -146,7 +146,7 @@ QLKT/
 ### 3. Tính toán Tự động ("Bộ não")
 
 - **Khen thưởng Niên hạn**:
-  - Huân chương Chiến sỹ Vẻ vang (10/15/20 năm)
+  - Huy chương Chiến sĩ Vẻ vang (10/15/20 năm)
   - Huân chương Bảo vệ Tổ quốc (dựa trên cống hiến)
 - **Khen thưởng Hằng năm**:
   - Bằng khen BQP (5 năm CSTĐCS liên tục)

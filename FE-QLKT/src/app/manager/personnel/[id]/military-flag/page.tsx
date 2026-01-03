@@ -86,7 +86,7 @@ export default function MilitaryFlagPage() {
           militaryRes.data.data.forEach((flag: any, index: number) => {
             mappedFlags.push({
               id: `flag_${index}`,
-              name: 'Huân chương Quân kỳ Quyết thắng',
+              name: 'Huy chương quân kỳ Quyết thắng',
               ngay_cap: flag.ngay_cap,
               status: 'DA_NHAN',
             });
@@ -207,7 +207,7 @@ export default function MilitaryFlagPage() {
           <Breadcrumb.Item>
             <Link href={`/manager/personnel/${personnelId}`}>{personnel?.ho_ten}</Link>
           </Breadcrumb.Item>
-          <Breadcrumb.Item>Huân chương QKQT</Breadcrumb.Item>
+          <Breadcrumb.Item>Huy chương QKQT</Breadcrumb.Item>
         </Breadcrumb>
 
         {/* Header */}
@@ -228,7 +228,7 @@ export default function MilitaryFlagPage() {
               </Link>
             </Space>
             <Title level={2} style={{ marginTop: 8, marginBottom: 8 }}>
-              Huân chương Quân kỳ Quyết thắng
+              Huy chương quân kỳ Quyết thắng
             </Title>
             {personnel && (
               <Paragraph style={{ fontSize: 14, color: '#666', marginBottom: 0 }}>
@@ -257,7 +257,7 @@ export default function MilitaryFlagPage() {
               rowKey="id"
               pagination={false}
               locale={{
-                emptyText: 'Chưa có dữ liệu huân chương QKQT',
+                emptyText: 'Chưa có dữ liệu huy chương QKQT',
               }}
             />
           </Card>
@@ -265,7 +265,7 @@ export default function MilitaryFlagPage() {
 
         {/* Form Modal */}
         <Modal
-          title={editingFlag ? 'Sửa huân chương QKQT' : 'Thêm huân chương QKQT mới'}
+          title={editingFlag ? 'Sửa huy chương QKQT' : 'Thêm huy chương QKQT mới'}
           open={dialogOpen}
           onCancel={handleCloseDialog}
           footer={null}

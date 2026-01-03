@@ -61,7 +61,7 @@ class ProfileService {
   }
 
   /**
-   * Lấy hồ sơ gợi ý niên hạn (HCCSVV - Huân chương Chiến sỹ Vẻ vang)
+   * Lấy hồ sơ gợi ý niên hạn (HCCSVV - Huy chương Chiến sĩ Vẻ vang)
    */
   async getTenureProfile(personnelId) {
     try {
@@ -864,7 +864,7 @@ class ProfileService {
   }
 
   /**
-   * Tính toán lại hồ sơ niên hạn cho 1 quân nhân (chỉ HCCSVV - Huân chương Chiến sỹ Vẻ vang)
+   * Tính toán lại hồ sơ niên hạn cho 1 quân nhân (chỉ HCCSVV - Huy chương Chiến sĩ Vẻ vang)
    * @param {string} personnelId - ID quân nhân
    */
   async recalculateTenureProfile(personnelId) {
@@ -913,7 +913,7 @@ class ProfileService {
         }
       }
 
-      // Tính HCCSVV (Huân chương Chiến sỹ Vẻ vang)
+      // Tính HCCSVV (Huy chương Chiến sĩ Vẻ vang)
       // Logic thứ bậc: Phải NHẬN hạng thấp trước mới được đề xuất hạng cao
       const hccsvvBa = this.calculateHCCSVV(
         personnel.ngay_nhap_ngu,
@@ -965,7 +965,7 @@ class ProfileService {
       const finalGoiY =
         goiYList.length > 0
           ? goiYList.join('\n')
-          : 'Chưa đủ điều kiện xét huân chương Chiến sĩ Vẻ vang.';
+          : 'Chưa đủ điều kiện xét Huy chương Chiến sĩ Vẻ vang.';
 
       // Cập nhật hoặc tạo mới hồ sơ niên hạn
       await prisma.hoSoNienHan.upsert({

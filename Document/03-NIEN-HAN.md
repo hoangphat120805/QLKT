@@ -1,24 +1,24 @@
-# ⏱️ Khen thưởng Niên hạn - Huân chương Chiến sĩ Vẻ vang
+# ⏱️ Khen thưởng Niên hạn - Huy chương Chiến sĩ Vẻ vang
 
 ## 📋 Tổng quan
 
-Khen thưởng Niên hạn là các Huân chương Chiến sĩ Vẻ vang (HCCSVV) được trao tặng dựa trên **thời gian phục vụ** của quân nhân trong Quân đội Nhân dân Việt Nam.
+Khen thưởng Niên hạn là các Huy chương Chiến sĩ Vẻ vang (HCCSVV) được trao tặng dựa trên **thời gian phục vụ** của quân nhân trong Quân đội Nhân dân Việt Nam.
 
 ## 🎯 Các Hạng Huân chương
 
-### 1. Huân chương Chiến sĩ Vẻ vang Hạng Ba
+### 1. Huy chương Chiến sĩ Vẻ vang Hạng Ba
 
 - **Mã**: `HCCSVV_HANG_BA`
 - **Mô tả**: Hạng thấp nhất trong hệ thống HCCSVV
 - **Điều kiện**: Dựa trên thời gian phục vụ (theo quy định)
 
-### 2. Huân chương Chiến sĩ Vẻ vang Hạng Nhì
+### 2. Huy chương Chiến sĩ Vẻ vang Hạng Nhì
 
 - **Mã**: `HCCSVV_HANG_NHI`
 - **Mô tả**: Hạng trung bình
 - **Điều kiện**: Dựa trên thời gian phục vụ (theo quy định)
 
-### 3. Huân chương Chiến sĩ Vẻ vang Hạng Nhất
+### 3. Huy chương Chiến sĩ Vẻ vang Hạng Nhất
 
 - **Mã**: `HCCSVV_HANG_NHAT`
 - **Mô tả**: Hạng cao nhất trong hệ thống HCCSVV
@@ -196,7 +196,7 @@ const remainingMonths = months % 12;
 
 **Actor**: Manager
 
-**Mô tả**: Manager tạo đề xuất Huân chương Chiến sĩ Vẻ vang cho quân nhân dựa trên thời gian phục vụ
+**Mô tả**: Manager tạo đề xuất Huy chương Chiến sĩ Vẻ vang cho quân nhân dựa trên thời gian phục vụ
 
 **Preconditions**:
 
@@ -422,7 +422,7 @@ const remainingMonths = months % 12;
 ```json
 {
   "success": false,
-  "error": "Quân nhân đã có Huân chương Chiến sĩ Vẻ vang",
+  "error": "Quân nhân đã có Huy chương Chiến sĩ Vẻ vang",
   "details": {
     "personnel_id": "abc123",
     "existing_record_id": "xyz789",

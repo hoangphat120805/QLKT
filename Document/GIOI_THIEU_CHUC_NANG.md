@@ -149,7 +149,7 @@ Tạo và quản lý đề xuất khen thưởng cho các loại khen thưởng 
 
 #### 3.3. Niên hạn
 
-- **Mô tả**: Đề xuất Huân chương Chiến sĩ Vẻ vang (HCCSVV) - Hạng Ba, Nhì, Nhất
+- **Mô tả**: Đề xuất Huy chương Chiến sĩ Vẻ vang (HCCSVV) - Hạng Ba, Nhì, Nhất
 - **Điều kiện**:
   - Nữ: >= 20 năm phục vụ
   - Nam: >= 25 năm phục vụ

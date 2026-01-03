@@ -313,7 +313,7 @@ export default function ManagerProposalDetailPage() {
       CONG_HIEN: 'Cống hiến',
       DOT_XUAT: 'Đột xuất',
       NCKH: 'ĐTKH/SKKH',
-      HC_QKQT: 'Huân chương Quân kỳ Quyết thắng',
+      HC_QKQT: 'Huy chương quân kỳ Quyết thắng',
       KNC_VSNXD_QDNDVN: 'Kỷ niệm chương Vì sự nghiệp xây dựng QĐNDVN',
     };
     return typeConfig[type] || type;
@@ -876,13 +876,13 @@ export default function ManagerProposalDetailPage() {
                   align: 'center',
                   render: (text: string) => {
                     const danhHieuMap: Record<string, string> = {
-                      HCCSVV_HANG_BA: 'Huân chương Chiến sĩ Vẻ vang - Hạng Ba',
-                      HCCSVV_HANG_NHI: 'Huân chương Chiến sĩ Vẻ vang - Hạng Nhì',
-                      HCCSVV_HANG_NHAT: 'Huân chương Chiến sĩ Vẻ vang - Hạng Nhất',
+                      HCCSVV_HANG_BA: 'Huy chương Chiến sĩ Vẻ vang - Hạng Ba',
+                      HCCSVV_HANG_NHI: 'Huy chương Chiến sĩ Vẻ vang - Hạng Nhì',
+                      HCCSVV_HANG_NHAT: 'Huy chương Chiến sĩ Vẻ vang - Hạng Nhất',
                       HCBVTQ_HANG_BA: 'Huân chương Bảo vệ Tổ quốc - Hạng Ba',
                       HCBVTQ_HANG_NHI: 'Huân chương Bảo vệ Tổ quốc - Hạng Nhì',
                       HCBVTQ_HANG_NHAT: 'Huân chương Bảo vệ Tổ quốc - Hạng Nhất',
-                      HC_QKQT: 'Huân chương Quân kỳ Quyết thắng',
+                      HC_QKQT: 'Huy chương quân kỳ Quyết thắng',
                       KNC_VSNXD_QDNDVN: 'Kỷ niệm chương Vì sự nghiệp xây dựng QĐNDVN',
                     };
                     return text ? (
@@ -1097,14 +1097,14 @@ export default function ManagerProposalDetailPage() {
                       ĐVTT: 'Đơn vị Tiên tiến',
                       BKTTCP: 'Bằng khen Thủ tướng Chính phủ',
                       // Niên hạn
-                      HCCSVV_HANG_BA: 'Huân chương Chiến sĩ Vẻ vang - Hạng Ba',
-                      HCCSVV_HANG_NHI: 'Huân chương Chiến sĩ Vẻ vang - Hạng Nhì',
-                      HCCSVV_HANG_NHAT: 'Huân chương Chiến sĩ Vẻ vang - Hạng Nhất',
+                      HCCSVV_HANG_BA: 'Huy chương Chiến sĩ Vẻ vang - Hạng Ba',
+                      HCCSVV_HANG_NHI: 'Huy chương Chiến sĩ Vẻ vang - Hạng Nhì',
+                      HCCSVV_HANG_NHAT: 'Huy chương Chiến sĩ Vẻ vang - Hạng Nhất',
                       // Cống hiến
                       HCBVTQ_HANG_BA: 'Huân chương Bảo vệ Tổ quốc - Hạng Ba',
                       HCBVTQ_HANG_NHI: 'Huân chương Bảo vệ Tổ quốc - Hạng Nhì',
                       HCBVTQ_HANG_NHAT: 'Huân chương Bảo vệ Tổ quốc - Hạng Nhất',
-                      HC_QKQT: 'Huân chương Quân kỳ Quyết thắng',
+                      HC_QKQT: 'Huy chương quân kỳ Quyết thắng',
                       KNC_VSNXD_QDNDVN: 'Kỷ niệm chương Vì sự nghiệp xây dựng QĐNDVN',
                     };
                     return text ? (
@@ -1287,13 +1287,13 @@ export default function ManagerProposalDetailPage() {
                   align: 'center',
                   render: (text: string) => {
                     const danhHieuMap: Record<string, string> = {
-                      HCCSVV_HANG_BA: 'Huân chương Chiến sĩ Vẻ vang - Hạng Ba',
-                      HCCSVV_HANG_NHI: 'Huân chương Chiến sĩ Vẻ vang - Hạng Nhì',
-                      HCCSVV_HANG_NHAT: 'Huân chương Chiến sĩ Vẻ vang - Hạng Nhất',
+                      HCCSVV_HANG_BA: 'Huy chương Chiến sĩ Vẻ vang - Hạng Ba',
+                      HCCSVV_HANG_NHI: 'Huy chương Chiến sĩ Vẻ vang - Hạng Nhì',
+                      HCCSVV_HANG_NHAT: 'Huy chương Chiến sĩ Vẻ vang - Hạng Nhất',
                       HCBVTQ_HANG_BA: 'Huân chương Bảo vệ Tổ quốc - Hạng Ba',
                       HCBVTQ_HANG_NHI: 'Huân chương Bảo vệ Tổ quốc - Hạng Nhì',
                       HCBVTQ_HANG_NHAT: 'Huân chương Bảo vệ Tổ quốc - Hạng Nhất',
-                      HC_QKQT: 'Huân chương Quân kỳ Quyết thắng',
+                      HC_QKQT: 'Huy chương quân kỳ Quyết thắng',
                       KNC_VSNXD_QDNDVN: 'Kỷ niệm chương Vì sự nghiệp xây dựng QĐNDVN',
                     };
                     return text ? (

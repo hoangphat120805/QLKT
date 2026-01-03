@@ -541,5 +541,5 @@ if (existing) {
 ## 🔗 Tài liệu Liên quan
 
 - [Tài liệu API](../QLKT.md) - Phần 5: Awards Management
-- [Huân chương Quân kỳ Quyết thắng](./05-HC-QKQT.md) - So sánh điều kiện (≥ 25 năm cho cả nam và nữ)
+- [Huy chương quân kỳ Quyết thắng](./05-HC-QKQT.md) - So sánh điều kiện (≥ 25 năm cho cả nam và nữ)
 - [Niên hạn](./03-NIEN-HAN.md) - So sánh với khen thưởng niên hạn

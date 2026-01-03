@@ -12,13 +12,13 @@ export const DANH_HIEU_MAP: Record<string, string> = {
   ĐVQT: 'Đơn vị Quyết thắng',
   ĐVTT: 'Đơn vị Tiên tiến',
   BKTTCP: 'Bằng khen Thủ tướng Chính phủ',
-  HCCSVV_HANG_BA: 'Huân chương Chiến sỹ Vẻ vang Hạng Ba',
-  HCCSVV_HANG_NHI: 'Huân chương Chiến sỹ Vẻ vang Hạng Nhì',
-  HCCSVV_HANG_NHAT: 'Huân chương Chiến sỹ Vẻ vang Hạng Nhất',
+  HCCSVV_HANG_BA: 'Huy chương Chiến sĩ Vẻ vang Hạng Ba',
+  HCCSVV_HANG_NHI: 'Huy chương Chiến sĩ Vẻ vang Hạng Nhì',
+  HCCSVV_HANG_NHAT: 'Huy chương Chiến sĩ Vẻ vang Hạng Nhất',
   HCBVTQ_HANG_BA: 'Huân chương Bảo vệ Tổ quốc Hạng Ba',
   HCBVTQ_HANG_NHI: 'Huân chương Bảo vệ Tổ quốc Hạng Nhì',
   HCBVTQ_HANG_NHAT: 'Huân chương Bảo vệ Tổ quốc Hạng Nhất',
-  HC_QKQT: 'Huân chương Quân kỳ Quyết thắng',
+  HC_QKQT: 'Huy chương quân kỳ Quyết thắng',
   KNC_VSNXD_QDNDVN: 'Kỷ niệm chương Vì sự nghiệp xây dựng QĐNDVN',
 };
 

@@ -732,7 +732,7 @@ class ProposalController {
   }
 
   // ============================================
-  // HCCSVV - HUÂN CHƯƠNG CHIẾN SĨ VẺ VANG
+  // HCCSVV - Huy chương Chiến sĩ VẺ VANG
   // ============================================
 
   /**
@@ -777,7 +777,7 @@ class ProposalController {
 
       return res.status(200).json({
         success: true,
-        message: 'Import Huân chương Chiến sĩ Vẻ vang thành công',
+        message: 'Import Huy chương Chiến sĩ Vẻ vang thành công',
         data: result,
       });
     } catch (error) {
@@ -1191,7 +1191,7 @@ class ProposalController {
   }
 
   // ============================================
-  // MILITARY FLAG - HUÂN CHƯƠNG QUÂN KỲ QUYẾT THẮNG
+  // MILITARY FLAG - Huy chương quân kỳ QUYẾT THẮNG
   // ============================================
 
   async getMilitaryFlagTemplate(req, res) {
@@ -1228,7 +1228,7 @@ class ProposalController {
 
       return res.status(200).json({
         success: true,
-        message: 'Import Huân chương Quân kỳ Quyết thắng thành công',
+        message: 'Import Huy chương quân kỳ Quyết thắng thành công',
         data: result,
       });
     } catch (error) {

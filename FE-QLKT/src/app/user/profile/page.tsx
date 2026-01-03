@@ -582,10 +582,10 @@ export default function UserProfilePage() {
               }
               size="small"
             >
-              {/* HC Chiến sỹ Vẻ vang */}
+              {/* Huy chương chiến sĩ Vẻ vang */}
               <div className="mb-6">
                 <Text strong className="text-base">
-                  Huân chương Chiến sỹ Vẻ vang
+                  Huy chương Chiến sĩ Vẻ vang
                 </Text>
                 <Divider className="my-3" />
                 <Row gutter={[16, 16]}>
@@ -734,14 +734,14 @@ export default function UserProfilePage() {
               {/* HC Quân kỳ Quyết thắng */}
               <div className="mb-6">
                 <Text strong className="text-base">
-                  Huân chương Quân kỳ Quyết thắng
+                  Huy chương quân kỳ Quyết thắng
                 </Text>
                 <Divider className="my-3" />
                 <Row gutter={[16, 16]}>
                   <Col xs={24} md={24}>
                     <Card size="small" className="h-full">
                       <Statistic
-                        title="Huân chương Quân kỳ Quyết thắng"
+                        title="Huy chương quân kỳ Quyết thắng"
                         value={0}
                         valueStyle={{ fontSize: '14px' }}
                         valueRender={() => {

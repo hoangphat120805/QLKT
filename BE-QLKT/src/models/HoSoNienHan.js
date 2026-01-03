@@ -19,7 +19,7 @@ const HoSoNienHan = sequelize.define(
       },
       onDelete: 'CASCADE',
     },
-    // Huân chương Chiến sĩ vẻ vang (HCCSVV)
+    // Huy chương Chiến sĩ vẻ vang (HCCSVV)
     hccsvv_hang_ba_status: {
       type: DataTypes.STRING(20),
       defaultValue: 'CHUA_DU',

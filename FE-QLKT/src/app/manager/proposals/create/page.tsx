@@ -1082,9 +1082,9 @@ export default function CreateProposalPage() {
                 ĐVTT: 'Đơn vị Tiên tiến',
                 BKTTCP: 'Bằng khen Thủ tướng Chính phủ',
                 // Niên hạn
-                HCCSVV_HANG_BA: 'Huân chương Chiến sỹ Vẻ vang Hạng Ba',
-                HCCSVV_HANG_NHI: 'Huân chương Chiến sỹ Vẻ vang Hạng Nhì',
-                HCCSVV_HANG_NHAT: 'Huân chương Chiến sỹ Vẻ vang Hạng Nhất',
+                HCCSVV_HANG_BA: 'Huy chương Chiến sĩ Vẻ vang Hạng Ba',
+                HCCSVV_HANG_NHI: 'Huy chương Chiến sĩ Vẻ vang Hạng Nhì',
+                HCCSVV_HANG_NHAT: 'Huy chương Chiến sĩ Vẻ vang Hạng Nhất',
                 // HC_QKQT
                 HC_QKQT: 'Huy chương Quân kỳ quyết thắng',
                 // KNC_VSNXD_QDNDVN

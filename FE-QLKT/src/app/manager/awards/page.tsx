@@ -632,7 +632,7 @@ export default function AdminAwardsPage() {
 
         // Military flag - Nếu có bản ghi thì mặc định là HC_QKQT
         if (activeTab === 'militaryFlag') {
-          const danhHieu = DANH_HIEU_MAP['HC_QKQT'] || 'Huân chương Quân kỳ Quyết thắng';
+          const danhHieu = DANH_HIEU_MAP['HC_QKQT'] || 'Huy chương quân kỳ Quyết thắng';
           return (
             <div style={COLUMN_STYLES.container}>
               <Text strong>{danhHieu}</Text>
@@ -740,7 +740,7 @@ export default function AdminAwardsPage() {
           },
           {
             key: 'hccsvv',
-            label: 'Huân chương Chiến sĩ Vẻ vang',
+            label: 'Huy chương Chiến sĩ Vẻ vang',
             children: renderAwardContent(),
           },
           {
@@ -755,7 +755,7 @@ export default function AdminAwardsPage() {
           },
           {
             key: 'militaryFlag',
-            label: 'Huân chương Quân kỳ Quyết thắng',
+            label: 'Huy chương quân kỳ Quyết thắng',
             children: renderAwardContent(),
           },
           {

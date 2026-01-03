@@ -698,7 +698,7 @@ class PersonnelService {
           where: { quan_nhan_id: id },
         });
 
-        // 6. Xóa Huân chương Quân kỳ Quyết thắng (HuanChuongQuanKyQuyetThang)
+        // 6. Xóa Huy chương quân kỳ Quyết thắng (HuanChuongQuanKyQuyetThang)
         await tx.huanChuongQuanKyQuyetThang.deleteMany({
           where: { quan_nhan_id: id },
         });
@@ -708,7 +708,7 @@ class PersonnelService {
           where: { quan_nhan_id: id },
         });
 
-        // 8. Xóa Huân chương Chiến sĩ Vẻ vang (KhenThuongHCCSVV)
+        // 8. Xóa Huy chương Chiến sĩ Vẻ vang (KhenThuongHCCSVV)
         await tx.khenThuongHCCSVV.deleteMany({
           where: { quan_nhan_id: id },
         });

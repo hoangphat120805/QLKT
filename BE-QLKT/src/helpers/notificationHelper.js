@@ -14,6 +14,35 @@ const formatProposalType = loaiDeXuat => {
   return proposalTypeMap[loaiDeXuat] || 'Đề xuất khen thưởng';
 };
 
+/**
+ * Helper function để lấy tên hiển thị (ưu tiên ho_ten, nếu không có thì dùng username)
+ * @param {string} username - Username của người dùng
+ * @returns {Promise<string>} - Tên hiển thị (ho_ten hoặc username)
+ */
+async function getDisplayName(username) {
+  try {
+    const account = await prisma.taiKhoan.findUnique({
+      where: { username },
+      include: {
+        QuanNhan: {
+          select: {
+            ho_ten: true,
+          },
+        },
+      },
+    });
+
+    if (account?.QuanNhan?.ho_ten) {
+      return account.QuanNhan.ho_ten;
+    }
+
+    return username;
+  } catch (error) {
+    console.error('Error getting display name:', error);
+    return username;
+  }
+}
+
 class NotificationHelper {
   /**
    * Gửi thông báo khi Manager gửi đề xuất khen thưởng
@@ -32,6 +61,8 @@ class NotificationHelper {
         },
       });
 
+      const submitterDisplayName = await getDisplayName(submitter.username);
+
       // Tạo thông báo cho từng admin
       const proposalTypeName = formatProposalType(proposal.loai_de_xuat);
       const notifications = admins.map(admin => ({
@@ -39,7 +70,7 @@ class NotificationHelper {
         recipient_role: admin.role,
         type: NOTIFICATION_TYPES.PROPOSAL_SUBMITTED,
         title: 'Đề xuất khen thưởng mới',
-        message: `${submitter.username} đã gửi ${proposalTypeName.toLowerCase()}`,
+        message: `${submitterDisplayName} đã gửi ${proposalTypeName.toLowerCase()}`,
         resource: RESOURCE_TYPES.PROPOSALS,
         tai_nguyen_id: proposal.id,
         link: `/admin/proposals/review/${proposal.id}`,
@@ -136,13 +167,15 @@ class NotificationHelper {
         return 0;
       }
 
+      const adminDisplayName = await getDisplayName(adminUsername);
+
       // Tạo thông báo cho từng manager
       const notifications = managers.map(manager => ({
         nguoi_nhan_id: manager.id,
         recipient_role: manager.role,
         type: NOTIFICATION_TYPES.AWARD_ADDED,
         title: 'Khen thưởng mới đã được thêm',
-        message: `${adminUsername} đã thêm danh sách khen thưởng ${awardType} năm ${year} cho đơn vị ${donViName}`,
+        message: `${adminDisplayName} đã thêm danh sách khen thưởng ${awardType} năm ${year} cho đơn vị ${donViName}`,
         resource: RESOURCE_TYPES.AWARDS,
         tai_nguyen_id: donViId,
         link: `/manager/awards?don_vi_id=${donViId}&nam=${year}`,
@@ -183,13 +216,15 @@ class NotificationHelper {
         return 0;
       }
 
+      const adminDisplayName = await getDisplayName(adminUsername);
+
       // Tạo thông báo cho từng manager
       const notifications = managers.map(manager => ({
         nguoi_nhan_id: manager.id,
         recipient_role: manager.role,
         type: NOTIFICATION_TYPES.PERSONNEL_ADDED,
         title: 'Quân nhân mới được thêm',
-        message: `${adminUsername} đã thêm quân nhân mới: ${personnel.ho_ten} (CCCD: ${personnel.cccd})`,
+        message: `${adminDisplayName} đã thêm quân nhân mới: ${personnel.ho_ten} (CCCD: ${personnel.cccd})`,
         resource: RESOURCE_TYPES.PERSONNEL,
         tai_nguyen_id: personnel.id,
         link: `/manager/personnel/${personnel.id}`,
@@ -281,10 +316,10 @@ class NotificationHelper {
 
       // Map loại khen thưởng sang tên tiếng Việt
       const awardTypeMap = {
-        HCCSVV: 'Huân chương Chiến sĩ Vẻ vang',
+        HCCSVV: 'Huy chương Chiến sĩ Vẻ vang',
         HCBVTQ: 'Huân chương Bảo vệ Tổ quốc',
         KNC_VSNXD: 'Kỷ niệm chương VSNXD QĐNDVN',
-        HCQKQT: 'Huân chương Quân kỳ Quyết thắng',
+        HCQKQT: 'Huy chương quân kỳ Quyết thắng',
         CA_NHAN_HANG_NAM: 'Danh hiệu hằng năm',
         NCKH: 'Thành tích khoa học',
       };
@@ -409,13 +444,13 @@ class NotificationHelper {
         CSTT: 'Chiến sĩ tiên tiến',
         BKBQP: 'Bằng khen của Bộ trưởng Bộ Quốc phòng',
         CSTDTQ: 'Chiến sĩ thi đua Toàn quân',
-        HCCSVV_HANG_BA: 'Huân chương Chiến sĩ Vẻ vang Hạng Ba',
-        HCCSVV_HANG_NHI: 'Huân chương Chiến sĩ Vẻ vang Hạng Nhì',
-        HCCSVV_HANG_NHAT: 'Huân chương Chiến sĩ Vẻ vang Hạng Nhất',
+        HCCSVV_HANG_BA: 'Huy chương Chiến sĩ Vẻ vang Hạng Ba',
+        HCCSVV_HANG_NHI: 'Huy chương Chiến sĩ Vẻ vang Hạng Nhì',
+        HCCSVV_HANG_NHAT: 'Huy chương Chiến sĩ Vẻ vang Hạng Nhất',
         HCBVTQ_HANG_BA: 'Huân chương Bảo vệ Tổ quốc Hạng Ba',
         HCBVTQ_HANG_NHI: 'Huân chương Bảo vệ Tổ quốc Hạng Nhì',
         HCBVTQ_HANG_NHAT: 'Huân chương Bảo vệ Tổ quốc Hạng Nhất',
-        HC_QKQT: 'Huân chương Quân kỳ Quyết thắng',
+        HC_QKQT: 'Huy chương quân kỳ Quyết thắng',
         KNC_VSNXD_QDNDVN: 'Kỷ niệm chương VSNXD QĐNDVN',
         DTKH: 'Đề tài khoa học',
         SKKH: 'Sáng kiến khoa học',

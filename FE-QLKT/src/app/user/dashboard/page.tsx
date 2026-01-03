@@ -721,7 +721,7 @@ export default function UserDashboard() {
 
                     <Divider orientation="left" className="!my-4">
                       <Text strong className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>
-                        Huân chương Chiến sỹ Vẻ vang
+                        Huy chương Chiến sĩ Vẻ vang
                       </Text>
                     </Divider>
 

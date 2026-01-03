@@ -44,7 +44,7 @@ class HCCSVVController {
 
       return res.status(200).json({
         success: true,
-        message: 'Import Huân chương Chiến sĩ Vẻ vang thành công',
+        message: 'Import Huy chương Chiến sĩ Vẻ vang thành công',
         data: result,
       });
     } catch (error) {

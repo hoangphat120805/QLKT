@@ -862,9 +862,9 @@ export default function ProposalDetailPage() {
           ĐVTT: 'Đơn vị Tiên tiến',
           BKTTCP: 'Bằng khen Thủ tướng Chính phủ',
           // Niên hạn
-          HCCSVV_HANG_BA: 'Huân chương Chiến sỹ Vẻ vang Hạng Ba',
-          HCCSVV_HANG_NHI: 'Huân chương Chiến sỹ Vẻ vang Hạng Nhì',
-          HCCSVV_HANG_NHAT: 'Huân chương Chiến sỹ Vẻ vang Hạng Nhất',
+          HCCSVV_HANG_BA: 'Huy chương Chiến sĩ Vẻ vang Hạng Ba',
+          HCCSVV_HANG_NHI: 'Huy chương Chiến sĩ Vẻ vang Hạng Nhì',
+          HCCSVV_HANG_NHAT: 'Huy chương Chiến sĩ Vẻ vang Hạng Nhất',
           // Cống hiến
           HCBVTQ_HANG_BA: 'Huân chương Bảo vệ Tổ quốc Hạng Ba',
           HCBVTQ_HANG_NHI: 'Huân chương Bảo vệ Tổ quốc Hạng Nhì',
@@ -892,9 +892,9 @@ export default function ProposalDetailPage() {
             break;
           case 'NIEN_HAN':
             options = [
-              { label: 'Huân chương Chiến sỹ Vẻ vang Hạng Ba', value: 'HCCSVV_HANG_BA' },
-              { label: 'Huân chương Chiến sỹ Vẻ vang Hạng Nhì', value: 'HCCSVV_HANG_NHI' },
-              { label: 'Huân chương Chiến sỹ Vẻ vang Hạng Nhất', value: 'HCCSVV_HANG_NHAT' },
+              { label: 'Huy chương Chiến sĩ Vẻ vang Hạng Ba', value: 'HCCSVV_HANG_BA' },
+              { label: 'Huy chương Chiến sĩ Vẻ vang Hạng Nhì', value: 'HCCSVV_HANG_NHI' },
+              { label: 'Huy chương Chiến sĩ Vẻ vang Hạng Nhất', value: 'HCCSVV_HANG_NHAT' },
             ];
             break;
           case 'CONG_HIEN':
@@ -1591,7 +1591,7 @@ export default function ProposalDetailPage() {
             proposal.loai_de_xuat === 'NIEN_HAN'
               ? 'Danh Sách Niên Hạn'
               : proposal.loai_de_xuat === 'HC_QKQT'
-              ? 'Huân Chương Quân Kỳ Quyết Thắng'
+              ? 'Huy chương quân kỳ Quyết Thắng'
               : 'Kỷ Niệm Chương Vì Sự Nghiệp XD QĐNDVN'
           }
           extra={

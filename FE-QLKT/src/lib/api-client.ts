@@ -742,7 +742,7 @@ export const apiClient = {
     }
   },
 
-  // HCCSVV (Huân chương Chiến sĩ Vẻ vang)
+  // HCCSVV (Huy chương Chiến sĩ Vẻ vang)
   async getHCCSVVTemplate(): Promise<Blob> {
     try {
       const res = await axiosInstance.get('/api/hccsvv/template', {
@@ -971,7 +971,7 @@ export const apiClient = {
     }
   },
 
-  // Military Flag (Huân chương Quân kỳ Quyết thắng)
+  // Military Flag (Huy chương quân kỳ Quyết thắng)
   async getMilitaryFlagTemplate(): Promise<Blob> {
     try {
       const res = await axiosInstance.get('/api/military-flag/template', {

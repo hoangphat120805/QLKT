@@ -86,12 +86,12 @@ export default function AdminServiceRewardsPage() {
         // Map service profile data to rewards array
         const mappedRewards: ServiceReward[] = [];
 
-        // HC Chiến sỹ Vẻ vang
+        // Huy chương chiến sĩ Vẻ vang
         if (serviceRes.data.hccsvv_hang_ba_status) {
           mappedRewards.push({
             id: 'hccsvv_ba',
             type: 'HCCSVV',
-            name: 'Huân chương Chiến sỹ Vẻ vang',
+            name: 'Huy chương Chiến sĩ Vẻ vang',
             rank: 'Hạng Ba',
             ngay_cap: serviceRes.data.hccsvv_hang_ba_ngay,
             status: serviceRes.data.hccsvv_hang_ba_status,
@@ -101,7 +101,7 @@ export default function AdminServiceRewardsPage() {
           mappedRewards.push({
             id: 'hccsvv_nhi',
             type: 'HCCSVV',
-            name: 'Huân chương Chiến sỹ Vẻ vang',
+            name: 'Huy chương Chiến sĩ Vẻ vang',
             rank: 'Hạng Nhì',
             ngay_cap: serviceRes.data.hccsvv_hang_nhi_ngay,
             status: serviceRes.data.hccsvv_hang_nhi_status,
@@ -111,7 +111,7 @@ export default function AdminServiceRewardsPage() {
           mappedRewards.push({
             id: 'hccsvv_nhat',
             type: 'HCCSVV',
-            name: 'Huân chương Chiến sỹ Vẻ vang',
+            name: 'Huy chương Chiến sĩ Vẻ vang',
             rank: 'Hạng Nhất',
             ngay_cap: serviceRes.data.hccsvv_hang_nhat_ngay,
             status: serviceRes.data.hccsvv_hang_nhat_status,
@@ -155,7 +155,7 @@ export default function AdminServiceRewardsPage() {
           mappedRewards.push({
             id: 'hcqkqt',
             type: 'HCQKQT',
-            name: 'Huân chương Quân kỳ Quyết thắng',
+            name: 'Huy chương quân kỳ Quyết thắng',
             ngay_cap: serviceRes.data.hcqkqt_ngay_cap,
             status: serviceRes.data.hcqkqt_status,
           });
@@ -262,7 +262,7 @@ export default function AdminServiceRewardsPage() {
       align: 'center',
       render: (type: string) => {
         const typeMap: Record<string, string> = {
-          HCCSVV: 'HC Chiến sỹ Vẻ vang',
+          HCCSVV: 'Huy chương chiến sĩ Vẻ vang',
           HCBVTQ: 'HC Bảo vệ Tổ quốc',
           HCQKQT: 'HC Quân kỳ Quyết thắng',
           KNC_VSNXD: 'KNC VSNXD',
@@ -386,7 +386,7 @@ export default function AdminServiceRewardsPage() {
               rules={[{ required: true, message: 'Vui lòng chọn loại khen thưởng' }]}
             >
               <Select placeholder="Chọn loại khen thưởng" size="large">
-                <Select.Option value="HCCSVV">HC Chiến sỹ Vẻ vang</Select.Option>
+                <Select.Option value="HCCSVV">Huy chương chiến sĩ Vẻ vang</Select.Option>
                 <Select.Option value="HCBVTQ">HC Bảo vệ Tổ quốc</Select.Option>
                 <Select.Option value="HCQKQT">HC Quân kỳ Quyết thắng</Select.Option>
                 <Select.Option value="KNC_VSNXD">KNC VSNXD</Select.Option>

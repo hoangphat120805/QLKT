@@ -17,7 +17,7 @@
 
 #### 2.2. Khen thưởng Niên hạn
 
-- [Huân chương Chiến sĩ Vẻ vang](./03-NIEN-HAN.md) - HCCSVV (Hạng Ba, Nhì, Nhất)
+- [Huy chương Chiến sĩ Vẻ vang](./03-NIEN-HAN.md) - HCCSVV (Hạng Ba, Nhì, Nhất)
 
 #### 2.3. Khen thưởng Cống hiến
 

@@ -35,7 +35,7 @@ class ProfileController {
 
   /**
    * GET /api/profiles/tenure/:personnel_id
-   * Lấy hồ sơ đề xuất Huân chương Chiến sỹ Vẻ vang (HCCSVV) theo niên hạn
+   * Lấy hồ sơ đề xuất Huy chương Chiến sĩ Vẻ vang (HCCSVV) theo niên hạn
    * Tự động tính toán khi gọi API
    */
   async getTenureProfile(req, res) {
