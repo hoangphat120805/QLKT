@@ -226,6 +226,11 @@ class PositionHistoryService {
           so_thang: soThang,
         },
         include: {
+          QuanNhan: {
+            select: {
+              ho_ten: true,
+            },
+          },
           ChucVu: {
             include: {
               CoQuanDonVi: true,
@@ -413,6 +418,11 @@ class PositionHistoryService {
         where: { id },
         data: updateData,
         include: {
+          QuanNhan: {
+            select: {
+              ho_ten: true,
+            },
+          },
           ChucVu: {
             include: {
               CoQuanDonVi: true,

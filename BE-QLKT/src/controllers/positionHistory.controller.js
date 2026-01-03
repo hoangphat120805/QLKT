@@ -135,6 +135,11 @@ class PositionHistoryController {
       return res.status(200).json({
         success: true,
         message: result.message,
+        data: {
+          id,
+          QuanNhan: result.QuanNhan,
+          ChucVu: result.ChucVu,
+        },
       });
     } catch (error) {
       return res.status(400).json({

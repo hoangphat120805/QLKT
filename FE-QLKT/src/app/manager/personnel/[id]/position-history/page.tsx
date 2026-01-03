@@ -58,7 +58,6 @@ export default function PositionHistoryPage() {
   const [personnel, setPersonnel] = useState<any>(null);
   const [histories, setHistories] = useState<HistoryRecord[]>([]);
   const [positions, setPositions] = useState([]);
-  const [units, setUnits] = useState<any[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingHistory, setEditingHistory] = useState<any>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -72,18 +71,16 @@ export default function PositionHistoryPage() {
   async function loadData() {
     try {
       setLoading(true);
-      const [personnelRes, historiesRes, positionsRes, unitsRes] = await Promise.all([
+      const [personnelRes, historiesRes, positionsRes] = await Promise.all([
         apiClient.getPersonnelById(personnelId),
         apiClient.getPositionHistory(personnelId),
         apiClient.getPositions(),
-        apiClient.getUnits(),
       ]);
 
       if (personnelRes.success) {
         setPersonnel(personnelRes.data);
       }
       if (historiesRes.success) {
-        // Map data để có chuc_vu_name và thông tin đơn vị từ ChucVu relation
         const mappedHistories = (historiesRes.data || []).map((h: any) => {
           const chucVu = h.ChucVu || {};
           let unitInfo = '';
@@ -115,9 +112,6 @@ export default function PositionHistoryPage() {
       }
       if (positionsRes.success) {
         setPositions(positionsRes.data || []);
-      }
-      if (unitsRes.success) {
-        setUnits(unitsRes.data || []);
       }
     } catch (error) {
       message.error('Không thể tải dữ liệu');
@@ -508,8 +502,8 @@ export default function PositionHistoryPage() {
                 style={{
                   marginBottom: 16,
                   padding: 12,
-                  backgroundColor: '#fff7e6',
-                  border: '1px solid #ffd591',
+                  backgroundColor: theme === 'dark' ? '#4a3c28' : '#fff7e6',
+                  border: `1px solid ${theme === 'dark' ? '#d4a574' : '#ffd591'}`,
                   borderRadius: 4,
                 }}
               >

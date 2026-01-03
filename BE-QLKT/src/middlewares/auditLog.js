@@ -42,7 +42,9 @@ const auditLog = (options = {}) => {
           } = options;
 
           const resourceId = getResourceId(req, res, responseData);
-          const description = getDescription(req, res, responseData);
+          const descriptionPromise = getDescription(req, res, responseData);
+          const description =
+            descriptionPromise instanceof Promise ? await descriptionPromise : descriptionPromise;
           const payload = getPayload(req, res, responseData);
 
           // Lấy IP và User Agent

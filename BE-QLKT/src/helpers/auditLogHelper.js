@@ -3,6 +3,159 @@
  * Logic này được tách ra khỏi router để dễ maintain và test
  */
 
+const { formatDate } = require('./datetimeHelper');
+
+// ==================== Helper Functions ====================
+
+/**
+ * Parse responseData (có thể là string JSON hoặc object)
+ */
+const parseResponseData = responseData => {
+  try {
+    return typeof responseData === 'string' ? JSON.parse(responseData) : responseData;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Lấy tên đơn vị từ ChucVu object
+ */
+const getUnitNameFromChucVu = chucVu => {
+  if (!chucVu) return '';
+  if (chucVu.CoQuanDonVi?.ten_don_vi) {
+    return chucVu.CoQuanDonVi.ten_don_vi;
+  }
+  if (chucVu.DonViTrucThuoc?.ten_don_vi) {
+    const tenDonVi = chucVu.DonViTrucThuoc.ten_don_vi;
+    if (chucVu.DonViTrucThuoc.CoQuanDonVi?.ten_don_vi) {
+      return `${tenDonVi} (${chucVu.DonViTrucThuoc.CoQuanDonVi.ten_don_vi})`;
+    }
+    return tenDonVi;
+  }
+  return '';
+};
+
+/**
+ * Query và lấy tên đơn vị từ unitId
+ */
+const getUnitNameFromUnitId = async (unitId, prisma) => {
+  if (!unitId) return '';
+  try {
+    const [coQuanDonVi, donViTrucThuoc] = await Promise.all([
+      prisma.coQuanDonVi.findUnique({
+        where: { id: unitId },
+        select: { ten_don_vi: true },
+      }),
+      prisma.donViTrucThuoc.findUnique({
+        where: { id: unitId },
+        include: {
+          CoQuanDonVi: { select: { ten_don_vi: true } },
+        },
+      }),
+    ]);
+
+    if (coQuanDonVi?.ten_don_vi) {
+      return coQuanDonVi.ten_don_vi;
+    }
+    if (donViTrucThuoc?.ten_don_vi) {
+      const tenDonVi = donViTrucThuoc.ten_don_vi;
+      if (donViTrucThuoc.CoQuanDonVi?.ten_don_vi) {
+        return `${tenDonVi} (${donViTrucThuoc.CoQuanDonVi.ten_don_vi})`;
+      }
+      return tenDonVi;
+    }
+    return '';
+  } catch {
+    return '';
+  }
+};
+
+/**
+ * Query tên quân nhân từ personnelId
+ */
+const queryPersonnelName = async (personnelId, prisma) => {
+  if (!personnelId || personnelId === 'N/A') return '';
+  try {
+    const personnel = await prisma.quanNhan.findUnique({
+      where: { id: personnelId },
+      select: { ho_ten: true },
+    });
+    return personnel?.ho_ten || '';
+  } catch {
+    return '';
+  }
+};
+
+/**
+ * Query thông tin chức vụ (tên và đơn vị) từ chucVuId
+ */
+const queryPositionInfo = async (chucVuId, prisma) => {
+  if (!chucVuId || chucVuId === 'N/A') return { tenChucVu: '', tenDonVi: '' };
+  try {
+    const chucVu = await prisma.chucVu.findUnique({
+      where: { id: chucVuId },
+      include: {
+        CoQuanDonVi: { select: { ten_don_vi: true } },
+        DonViTrucThuoc: {
+          include: {
+            CoQuanDonVi: { select: { ten_don_vi: true } },
+          },
+        },
+      },
+    });
+    if (!chucVu) return { tenChucVu: '', tenDonVi: '' };
+    return {
+      tenChucVu: chucVu.ten_chuc_vu || '',
+      tenDonVi: getUnitNameFromChucVu(chucVu),
+    };
+  } catch {
+    return { tenChucVu: '', tenDonVi: '' };
+  }
+};
+
+/**
+ * Tạo PrismaClient instance và đảm bảo disconnect sau khi dùng
+ */
+const withPrisma = async callback => {
+  const { PrismaClient } = require('../generated/prisma');
+  const prisma = new PrismaClient();
+  try {
+    return await callback(prisma);
+  } catch (error) {
+    console.error('Error querying database for log description:', error);
+    return null;
+  } finally {
+    await prisma.$disconnect();
+  }
+};
+
+/**
+ * Format date range cho log description
+ */
+const formatDateRange = (ngayBatDau, ngayKetThuc) => {
+  if (!ngayBatDau && ngayKetThuc === undefined) return '';
+  if (ngayBatDau) {
+    const formattedStart = formatDate(ngayBatDau);
+    if (ngayKetThuc !== undefined) {
+      if (ngayKetThuc) {
+        const formattedEnd = formatDate(ngayKetThuc);
+        return ` (Từ: ${formattedStart} đến: ${formattedEnd})`;
+      }
+      return ` (Từ: ${formattedStart} - Chưa kết thúc)`;
+    }
+    return ` (Từ: ${formattedStart})`;
+  }
+  if (ngayKetThuc !== undefined) {
+    if (ngayKetThuc) {
+      const formattedEnd = formatDate(ngayKetThuc);
+      return ` (Đến: ${formattedEnd})`;
+    }
+    return ' (Chưa kết thúc)';
+  }
+  return '';
+};
+
 const createLogDescription = {
   /**
    * Tạo mô tả cho proposals actions
@@ -194,26 +347,193 @@ const createLogDescription = {
    * Tạo mô tả cho position-history actions
    */
   'position-history': {
-    CREATE: (req, res, responseData) => {
+    CREATE: async (req, res, responseData) => {
+      const personnelId = req.params?.personnelId || req.body?.personnel_id || 'N/A';
       const chucVuId = req.body?.chuc_vu_id || 'N/A';
-      try {
-        const data = typeof responseData === 'string' ? JSON.parse(responseData) : responseData;
-        const history = data?.data || data;
-        if (history?.ChucVu?.ten_chuc_vu) {
-          return `Tạo lịch sử chức vụ: ${history.ChucVu.ten_chuc_vu}`;
-        }
-      } catch (e) {
-        // Ignore parse error
+
+      // Parse response data
+      const parsedData = parseResponseData(responseData);
+      const history = parsedData?.data || parsedData;
+
+      // Lấy thông tin từ response
+      let hoTen = history?.QuanNhan?.ho_ten || '';
+      let tenChucVu = history?.ChucVu?.ten_chuc_vu || '';
+      let tenDonVi = getUnitNameFromChucVu(history?.ChucVu);
+      let ngayBatDau = history?.ngay_bat_dau || req.body?.ngay_bat_dau || '';
+      let ngayKetThuc = history?.ngay_ket_thuc || req.body?.ngay_ket_thuc || '';
+
+      // Query database nếu thiếu thông tin
+      if ((!hoTen && personnelId !== 'N/A') || (!tenChucVu && chucVuId !== 'N/A')) {
+        await withPrisma(async prisma => {
+          if (!hoTen && personnelId !== 'N/A') {
+            hoTen = await queryPersonnelName(personnelId, prisma);
+          }
+          if (!tenChucVu && chucVuId !== 'N/A') {
+            const positionInfo = await queryPositionInfo(chucVuId, prisma);
+            tenChucVu = positionInfo.tenChucVu;
+            if (!tenDonVi) {
+              tenDonVi = positionInfo.tenDonVi;
+            }
+          }
+        });
       }
-      return `Tạo lịch sử chức vụ: ${chucVuId}`;
+
+      // Tạo mô tả
+      let description = 'Tạo lịch sử chức vụ';
+      if (hoTen) {
+        description += ` cho quân nhân: ${hoTen}`;
+      } else if (personnelId !== 'N/A') {
+        description += ` cho quân nhân ID: ${personnelId}`;
+      }
+
+      if (tenChucVu) {
+        description += ` - Chức vụ: ${tenChucVu}`;
+        if (tenDonVi) {
+          description += ` (${tenDonVi})`;
+        }
+      } else if (chucVuId !== 'N/A') {
+        description += ` - Chức vụ ID: ${chucVuId}`;
+      }
+
+      description += formatDateRange(ngayBatDau, ngayKetThuc);
+
+      return description;
     },
-    UPDATE: (req, res, responseData) => {
+    UPDATE: async (req, res, responseData) => {
       const historyId = req.params?.id || 'N/A';
-      return `Cập nhật lịch sử chức vụ: ${historyId}`;
+      const chucVuId = req.body?.chuc_vu_id || null;
+
+      // Parse response data
+      const parsedData = parseResponseData(responseData);
+      const history = parsedData?.data || parsedData;
+
+      // Lấy thông tin từ response
+      let hoTen = history?.QuanNhan?.ho_ten || '';
+      let personnelId = history?.quan_nhan_id || null;
+      let tenChucVu = history?.ChucVu?.ten_chuc_vu || '';
+      let tenDonVi = getUnitNameFromChucVu(history?.ChucVu);
+      let ngayBatDau = history?.ngay_bat_dau || req.body?.ngay_bat_dau || '';
+      let ngayKetThuc =
+        history?.ngay_ket_thuc !== undefined
+          ? history.ngay_ket_thuc
+          : req.body?.ngay_ket_thuc !== undefined
+          ? req.body.ngay_ket_thuc
+          : undefined;
+
+      // Query database nếu thiếu thông tin
+      if ((!hoTen || !tenChucVu) && historyId !== 'N/A') {
+        await withPrisma(async prisma => {
+          // Query lịch sử chức vụ để lấy personnelId và chucVuId
+          const historyRecord = await prisma.lichSuChucVu.findUnique({
+            where: { id: historyId },
+            select: {
+              quan_nhan_id: true,
+              chuc_vu_id: true,
+            },
+          });
+
+          if (historyRecord) {
+            if (!personnelId) {
+              personnelId = historyRecord.quan_nhan_id;
+            }
+            const finalChucVuId = chucVuId || historyRecord.chuc_vu_id;
+
+            if (!hoTen && personnelId) {
+              hoTen = await queryPersonnelName(personnelId, prisma);
+            }
+
+            if (!tenChucVu && finalChucVuId) {
+              const positionInfo = await queryPositionInfo(finalChucVuId, prisma);
+              tenChucVu = positionInfo.tenChucVu;
+              if (!tenDonVi) {
+                tenDonVi = positionInfo.tenDonVi;
+              }
+            }
+          }
+        });
+      }
+
+      // Tạo mô tả
+      let description = 'Cập nhật lịch sử chức vụ';
+      if (hoTen) {
+        description += ` cho quân nhân: ${hoTen}`;
+      } else {
+        description += ` ID: ${historyId}`;
+      }
+
+      if (tenChucVu) {
+        description += ` - Chức vụ: ${tenChucVu}`;
+        if (tenDonVi) {
+          description += ` (${tenDonVi})`;
+        }
+      }
+
+      description += formatDateRange(ngayBatDau, ngayKetThuc);
+
+      return description;
     },
-    DELETE: (req, res, responseData) => {
+    DELETE: async (req, res, responseData) => {
       const historyId = req.params?.id || 'N/A';
-      return `Xóa lịch sử chức vụ: ${historyId}`;
+
+      // Parse response data (service trả về thông tin trước khi xóa)
+      const parsedData = parseResponseData(responseData);
+      const result = parsedData?.data || parsedData;
+
+      // Lấy thông tin từ response
+      let hoTen = result?.QuanNhan?.ho_ten || '';
+      let tenChucVu = result?.ChucVu?.ten_chuc_vu || '';
+      let tenDonVi = getUnitNameFromChucVu(result?.ChucVu);
+
+      // Query database nếu thiếu thông tin
+      if ((!hoTen || !tenChucVu) && historyId !== 'N/A') {
+        await withPrisma(async prisma => {
+          const history = await prisma.lichSuChucVu.findUnique({
+            where: { id: historyId },
+            include: {
+              QuanNhan: { select: { ho_ten: true } },
+              ChucVu: {
+                include: {
+                  CoQuanDonVi: { select: { ten_don_vi: true } },
+                  DonViTrucThuoc: {
+                    include: {
+                      CoQuanDonVi: { select: { ten_don_vi: true } },
+                    },
+                  },
+                },
+              },
+            },
+          });
+
+          if (history) {
+            if (!hoTen && history.QuanNhan?.ho_ten) {
+              hoTen = history.QuanNhan.ho_ten;
+            }
+            if (!tenChucVu && history.ChucVu?.ten_chuc_vu) {
+              tenChucVu = history.ChucVu.ten_chuc_vu;
+            }
+            if (!tenDonVi) {
+              tenDonVi = getUnitNameFromChucVu(history.ChucVu);
+            }
+          }
+        });
+      }
+
+      // Tạo mô tả
+      let description = 'Xóa lịch sử chức vụ';
+      if (hoTen) {
+        description += ` của quân nhân: ${hoTen}`;
+      } else {
+        description += ` ID: ${historyId}`;
+      }
+
+      if (tenChucVu) {
+        description += ` - Chức vụ: ${tenChucVu}`;
+        if (tenDonVi) {
+          description += ` (${tenDonVi})`;
+        }
+      }
+
+      return description;
     },
   },
 
@@ -387,55 +707,109 @@ const createLogDescription = {
    * Tạo mô tả cho positions actions
    */
   positions: {
-    CREATE: (req, res, responseData) => {
-      try {
-        const data = typeof responseData === 'string' ? JSON.parse(responseData) : responseData;
-        const position = data?.data || data;
-        if (position?.ten_chuc_vu) {
-          return `Tạo chức vụ: ${position.ten_chuc_vu}`;
-        }
-      } catch (e) {
-        // Ignore parse error
-      }
+    CREATE: async (req, res, responseData) => {
       const tenChucVu = req.body?.ten_chuc_vu || 'N/A';
-      return `Tạo chức vụ: ${tenChucVu}`;
-    },
-    UPDATE: (req, res, responseData) => {
-      try {
-        const data = typeof responseData === 'string' ? JSON.parse(responseData) : responseData;
-        const position = data?.data || data;
-        if (position?.ten_chuc_vu) {
-          let description = `Cập nhật chức vụ: ${position.ten_chuc_vu}`;
+      const unitId = req.body?.unit_id || null;
+      const ngayHienTai = formatDate(new Date());
 
-          // Thêm thông tin về cơ quan đơn vị hoặc đơn vị trực thuộc
-          if (position?.CoQuanDonVi) {
-            description += ` - ${position.CoQuanDonVi.ten_don_vi}`;
-          } else if (position?.DonViTrucThuoc) {
-            description += ` - ${position.DonViTrucThuoc.ten_don_vi}`;
-            if (position.DonViTrucThuoc?.CoQuanDonVi) {
-              description += ` (${position.DonViTrucThuoc.CoQuanDonVi.ten_don_vi})`;
-            }
+      // Parse response data
+      const parsedData = parseResponseData(responseData);
+      const position = parsedData?.data || parsedData;
+
+      // Lấy thông tin từ response
+      let finalTenChucVu = position?.ten_chuc_vu || tenChucVu;
+      let tenDonVi = getUnitNameFromChucVu(position);
+
+      // Query database nếu thiếu thông tin đơn vị
+      if (!tenDonVi && unitId) {
+        await withPrisma(async prisma => {
+          tenDonVi = await getUnitNameFromUnitId(unitId, prisma);
+        });
+      }
+
+      let description = `Tạo chức vụ: ${finalTenChucVu}`;
+      if (tenDonVi) {
+        description += ` (${tenDonVi})`;
+      }
+      if (ngayHienTai) {
+        description += ` - Ngày: ${ngayHienTai}`;
+      }
+      return description;
+    },
+    UPDATE: async (req, res, responseData) => {
+      const positionId = req.params?.id || 'N/A';
+      const tenChucVu = req.body?.ten_chuc_vu || null;
+      const ngayHienTai = formatDate(new Date());
+
+      // Parse response data
+      const parsedData = parseResponseData(responseData);
+      const position = parsedData?.data || parsedData;
+
+      // Lấy thông tin từ response
+      let finalTenChucVu = position?.ten_chuc_vu || tenChucVu;
+      let tenDonVi = getUnitNameFromChucVu(position);
+
+      // Query database nếu thiếu thông tin
+      if ((!finalTenChucVu || !tenDonVi) && positionId !== 'N/A') {
+        await withPrisma(async prisma => {
+          const positionInfo = await queryPositionInfo(positionId, prisma);
+          if (!finalTenChucVu) {
+            finalTenChucVu = positionInfo.tenChucVu || positionId;
           }
+          if (!tenDonVi) {
+            tenDonVi = positionInfo.tenDonVi;
+          }
+        });
+      }
 
-          return description;
-        }
-      } catch (e) {
-        // Ignore parse error
+      let description = `Cập nhật chức vụ: ${finalTenChucVu || positionId}`;
+      if (tenDonVi) {
+        description += ` (${tenDonVi})`;
       }
-      const tenChucVu = req.body?.ten_chuc_vu || 'N/A';
-      return `Cập nhật chức vụ: ${tenChucVu}`;
+      if (ngayHienTai) {
+        description += ` - Ngày: ${ngayHienTai}`;
+      }
+      return description;
     },
-    DELETE: (req, res, responseData) => {
-      try {
-        const data = typeof responseData === 'string' ? JSON.parse(responseData) : responseData;
-        const position = data?.data || data;
-        if (position?.ten_chuc_vu) {
-          return `Xóa chức vụ: ${position.ten_chuc_vu}`;
-        }
-      } catch (e) {
-        // Ignore parse error
+    DELETE: async (req, res, responseData) => {
+      const positionId = req.params?.id || 'N/A';
+      const ngayHienTai = formatDate(new Date());
+
+      // Parse response data (service trả về thông tin trước khi xóa)
+      const parsedData = parseResponseData(responseData);
+      const position = parsedData?.data || parsedData;
+
+      // Lấy thông tin từ response
+      let tenChucVu = position?.ten_chuc_vu || '';
+      let tenDonVi = getUnitNameFromChucVu(position);
+
+      // Query database nếu thiếu thông tin
+      if ((!tenChucVu || !tenDonVi) && positionId !== 'N/A') {
+        await withPrisma(async prisma => {
+          const positionInfo = await queryPositionInfo(positionId, prisma);
+          if (!tenChucVu) {
+            tenChucVu = positionInfo.tenChucVu;
+          }
+          if (!tenDonVi) {
+            tenDonVi = positionInfo.tenDonVi;
+          }
+        });
       }
-      return `Xóa chức vụ: ID ${req.params?.id || 'N/A'}`;
+
+      let description = 'Xóa chức vụ';
+      if (tenChucVu) {
+        description += `: ${tenChucVu}`;
+        if (tenDonVi) {
+          description += ` (${tenDonVi})`;
+        }
+      } else {
+        description += ` ID: ${positionId}`;
+      }
+      if (ngayHienTai) {
+        description += ` - Ngày: ${ngayHienTai}`;
+      }
+
+      return description;
     },
   },
 

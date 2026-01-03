@@ -106,6 +106,12 @@ class PositionController {
       return res.status(200).json({
         success: true,
         message: result.message,
+        data: {
+          id,
+          ten_chuc_vu: result.ten_chuc_vu,
+          CoQuanDonVi: result.CoQuanDonVi,
+          DonViTrucThuoc: result.DonViTrucThuoc,
+        },
       });
     } catch (error) {
       console.error('Delete position error:', error);

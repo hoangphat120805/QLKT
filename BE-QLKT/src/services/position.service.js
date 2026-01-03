@@ -224,9 +224,16 @@ class PositionService {
    */
   async deletePosition(id) {
     try {
-      // Kiểm tra chức vụ có tồn tại không
       const position = await prisma.chucVu.findUnique({
         where: { id },
+        include: {
+          CoQuanDonVi: { select: { ten_don_vi: true } },
+          DonViTrucThuoc: {
+            include: {
+              CoQuanDonVi: { select: { ten_don_vi: true } },
+            },
+          },
+        },
       });
 
       if (!position) {
@@ -249,7 +256,12 @@ class PositionService {
         where: { id },
       });
 
-      return { message: 'Xóa chức vụ thành công' };
+      return {
+        message: 'Xóa chức vụ thành công',
+        ten_chuc_vu: position.ten_chuc_vu,
+        CoQuanDonVi: position.CoQuanDonVi,
+        DonViTrucThuoc: position.DonViTrucThuoc,
+      };
     } catch (error) {
       throw error;
     }
