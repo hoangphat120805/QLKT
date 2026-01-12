@@ -1893,19 +1893,21 @@ export default function AdhocAwardsPage() {
                   ))}
                 </div>
               )}
-              <Upload
-                fileList={editAttachedFileList.filter(f => !f.uid.startsWith('existing-attached-'))}
-                onChange={({ fileList }) => {
-                  const existingFiles = editAttachedFileList.filter(f => f.uid.startsWith('existing-attached-'));
-                  setEditAttachedFileList([...existingFiles, ...fileList]);
-                }}
-                beforeUpload={() => false}
-                multiple
-                accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
-                showUploadList={false}
-              >
-                <Button icon={<UploadOutlined />}>Thêm file đính kèm</Button>
-              </Upload>
+              <div style={{ textAlign: 'center' }}>
+                <Upload
+                  fileList={editAttachedFileList.filter(f => !f.uid.startsWith('existing-attached-'))}
+                  onChange={({ fileList }) => {
+                    const existingFiles = editAttachedFileList.filter(f => f.uid.startsWith('existing-attached-'));
+                    setEditAttachedFileList([...existingFiles, ...fileList]);
+                  }}
+                  beforeUpload={() => false}
+                  multiple
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+                  showUploadList={false}
+                >
+                  <Button icon={<UploadOutlined />}>Thêm file đính kèm</Button>
+                </Upload>
+              </div>
             </Card>
 
             {/* Footer */}

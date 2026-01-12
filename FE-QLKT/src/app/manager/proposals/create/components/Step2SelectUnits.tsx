@@ -370,7 +370,7 @@ export default function Step2SelectUnits({
       />
 
       {/* Upload Excel Section */}
-      <ExcelImportSection
+      {/* <ExcelImportSection
         templateEndpoint="/api/awards/units/annual/template"
         importEndpoint="/api/awards/units/annual/import"
         templateFileName="mau_import_don_vi_hang_nam"
@@ -381,7 +381,7 @@ export default function Step2SelectUnits({
         onLocalProcess={handleLocalExcelProcess}
       />
 
-      <Divider>Hoặc chọn thủ công</Divider>
+      <Divider>Hoặc chọn thủ công</Divider> */}
 
       {/* Filters */}
       <Space style={{ marginBottom: 16 }} size="middle">

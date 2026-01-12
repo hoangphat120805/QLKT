@@ -643,7 +643,7 @@ export default function Step2SelectPersonnelHCQKQT({
       />
 
       {/* Upload Excel Section */}
-      <ExcelImportSection
+      {/* <ExcelImportSection
         templateEndpoint="/api/military-flag/template"
         importEndpoint="/api/military-flag/import"
         templateFileName="mau_import_hcqkqt"
@@ -654,7 +654,7 @@ export default function Step2SelectPersonnelHCQKQT({
         onLocalProcess={handleLocalExcelProcess}
       />
 
-      <Divider>Hoặc chọn thủ công</Divider>
+      <Divider>Hoặc chọn thủ công</Divider> */}
 
       <Space style={{ marginBottom: 16 }} size="middle">
         <div>

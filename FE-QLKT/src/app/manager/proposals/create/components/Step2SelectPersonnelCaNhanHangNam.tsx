@@ -378,7 +378,7 @@ export default function Step2SelectPersonnelCaNhanHangNam({
   return (
     <div>
       {/* Upload Excel Section */}
-      <ExcelImportSection
+      {/* <ExcelImportSection
         templateEndpoint="/api/annual-rewards/template"
         importEndpoint="/api/annual-rewards/import"
         templateFileName="mau_import_ca_nhan_hang_nam"
@@ -389,7 +389,7 @@ export default function Step2SelectPersonnelCaNhanHangNam({
         onLocalProcess={handleLocalExcelProcess}
       />
 
-      <Divider>Hoặc chọn thủ công</Divider>
+      <Divider>Hoặc chọn thủ công</Divider> */}
 
       <Space style={{ marginBottom: 16 }} size="middle">
         <div>

@@ -832,7 +832,7 @@ export default function Step2SelectPersonnelNienHan({
       />
 
       {/* Upload Excel Section */}
-      <ExcelImportSection
+      {/* <ExcelImportSection
         templateEndpoint="/api/hccsvv/template"
         importEndpoint="/api/hccsvv/import"
         templateFileName="mau_import_hccsvv"
@@ -843,7 +843,7 @@ export default function Step2SelectPersonnelNienHan({
         onLocalProcess={handleLocalExcelProcess}
       />
 
-      <Divider>Hoặc chọn thủ công</Divider>
+      <Divider>Hoặc chọn thủ công</Divider> */}
 
       <Space style={{ marginBottom: 16 }} size="middle">
         <div>

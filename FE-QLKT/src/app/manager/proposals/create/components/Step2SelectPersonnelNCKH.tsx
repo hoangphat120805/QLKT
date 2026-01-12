@@ -398,7 +398,7 @@ export default function Step2SelectPersonnelNCKH({
       />
 
       {/* Upload Excel Section */}
-      <ExcelImportSection
+      {/* <ExcelImportSection
         templateEndpoint="/api/scientific-achievements/template"
         importEndpoint="/api/scientific-achievements/import"
         templateFileName="mau_import_thanh_tich_khoa_hoc"
@@ -409,7 +409,7 @@ export default function Step2SelectPersonnelNCKH({
         onLocalProcess={handleLocalExcelProcess}
       />
 
-      <Divider>Hoặc chọn thủ công</Divider>
+      <Divider>Hoặc chọn thủ công</Divider> */}
 
       <Space style={{ marginBottom: 16 }} size="middle">
         <div>

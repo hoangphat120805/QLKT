@@ -717,7 +717,7 @@ export default function Step2SelectPersonnelCongHien({
       />
 
       {/* Upload Excel Section */}
-      <ExcelImportSection
+      {/* <ExcelImportSection
         templateEndpoint="/api/contribution-awards/template"
         importEndpoint="/api/contribution-awards/import"
         templateFileName="mau_import_hcbvtq"
@@ -728,7 +728,7 @@ export default function Step2SelectPersonnelCongHien({
         onLocalProcess={handleLocalExcelProcess}
       />
 
-      <Divider>Hoặc chọn thủ công</Divider>
+      <Divider>Hoặc chọn thủ công</Divider> */}
 
       <Space style={{ marginBottom: 16 }} size="middle">
         <div>

@@ -661,7 +661,7 @@ export default function Step2SelectPersonnelKNCVSNXD({
       />
 
       {/* Upload Excel Section */}
-      <ExcelImportSection
+      {/* <ExcelImportSection
         templateEndpoint="/api/commemorative-medals/template"
         importEndpoint="/api/commemorative-medals/import"
         templateFileName="mau_import_knc_vsnxd"
@@ -672,7 +672,7 @@ export default function Step2SelectPersonnelKNCVSNXD({
         onLocalProcess={handleLocalExcelProcess}
       />
 
-      <Divider>Hoặc chọn thủ công</Divider>
+      <Divider>Hoặc chọn thủ công</Divider> */}
 
       <Space style={{ marginBottom: 16 }} size="middle">
         <div>
