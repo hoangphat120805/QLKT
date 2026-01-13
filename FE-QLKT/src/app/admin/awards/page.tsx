@@ -517,15 +517,15 @@ export default function AdminAwardsPage() {
       render: text => <Text strong>{text}</Text>,
     },
     {
-      title: 'Loại khen thưởng',
+      title: activeTab === 'scientific' ? 'Loại thành tích' : 'Loại khen thưởng',
       key: 'loai_khen_thuong',
       width: 140,
       align: 'center',
       render: (_: any, record: any) => {
         if (activeTab === 'scientific') {
           const loaiMap: Record<string, string> = {
-            DTKH: 'ĐTKH',
-            SKKH: 'SKKH',
+            DTKH: 'Đề tài khoa học',
+            SKKH: 'Sáng kiến khoa học',
           };
           return <Text>{loaiMap[record.loai] || record.loai || '-'}</Text>;
         }
@@ -555,9 +555,7 @@ export default function AdminAwardsPage() {
       title:
         activeTab === 'scientific'
           ? 'Mô tả'
-          : activeTab === 'militaryFlag' || activeTab === 'contribution'
-          ? 'Danh hiệu / Ghi chú'
-          : activeTab === 'commemoration'
+          : activeTab === 'militaryFlag' || activeTab === 'commemoration'
           ? 'Số quyết định / Ghi chú'
           : 'Danh hiệu',
       dataIndex: activeTab === 'scientific' ? 'mo_ta' : 'danh_hieu',
@@ -570,12 +568,12 @@ export default function AdminAwardsPage() {
           return (
             <div style={COLUMN_STYLES.container}>
               <Text>{text || '-'}</Text>
+              {renderDecision(record.so_quyet_dinh, handleDownloadDecision)}
               {record.ghi_chu && (
                 <Text type="secondary" style={COLUMN_STYLES.noteText}>
                   {record.ghi_chu}
                 </Text>
               )}
-              {renderDecision(record.so_quyet_dinh, handleDownloadDecision)}
             </div>
           );
         }
@@ -600,8 +598,13 @@ export default function AdminAwardsPage() {
         if (activeTab === 'militaryFlag') {
           return (
             <div style={COLUMN_STYLES.container}>
-              <Text>{record.ghi_chu || '-'}</Text>
               {renderDecision(record.so_quyet_dinh, handleDownloadDecision)}
+              {record.ghi_chu && (
+                <Text type="secondary" style={COLUMN_STYLES.noteText}>
+                  {record.ghi_chu}
+                </Text>
+              )}
+              {!record.so_quyet_dinh && !record.ghi_chu && <Text>-</Text>}
             </div>
           );
         }
@@ -612,12 +615,12 @@ export default function AdminAwardsPage() {
           return (
             <div style={COLUMN_STYLES.container}>
               <Text>{fullName}</Text>
+              {renderDecision(record.so_quyet_dinh, handleDownloadDecision)}
               {record.ghi_chu && (
                 <Text type="secondary" style={COLUMN_STYLES.noteText}>
                   {record.ghi_chu}
                 </Text>
               )}
-              {renderDecision(record.so_quyet_dinh, handleDownloadDecision)}
             </div>
           );
         }
@@ -628,12 +631,12 @@ export default function AdminAwardsPage() {
           return (
             <div style={COLUMN_STYLES.container}>
               <Text>{fullName}</Text>
+              {renderDecision(record.so_quyet_dinh, handleDownloadDecision)}
               {record.ghi_chu && (
                 <Text type="secondary" style={COLUMN_STYLES.noteText}>
                   {record.ghi_chu}
                 </Text>
               )}
-              {renderDecision(record.so_quyet_dinh, handleDownloadDecision)}
             </div>
           );
         }

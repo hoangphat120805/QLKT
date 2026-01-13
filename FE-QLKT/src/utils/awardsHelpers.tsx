@@ -116,6 +116,15 @@ export const renderAnnualAwards = (
     }
   });
 
+  // Ghi chú (in nghiêng)
+  if (record.ghi_chu) {
+    items.push(
+      <Text key="ghi_chu" type="secondary" style={COLUMN_STYLES.noteText}>
+        {record.ghi_chu}
+      </Text>
+    );
+  }
+
   if (items.length === 0) return <Text type="secondary">-</Text>;
 
   return <div style={COLUMN_STYLES.container}>{items}</div>;

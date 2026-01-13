@@ -594,11 +594,9 @@ export default function AdminAwardsPage() {
       title:
         activeTab === 'scientific'
           ? 'Mô tả'
-          : activeTab === 'militaryFlag' || activeTab === 'contribution'
-            ? 'Danh hiệu / Ghi chú'
-            : activeTab === 'commemoration'
-              ? 'Số quyết định / Ghi chú'
-              : 'Danh hiệu',
+          : activeTab === 'militaryFlag' || activeTab === 'commemoration'
+            ? 'Số quyết định / Ghi chú'
+            : 'Danh hiệu',
       dataIndex: activeTab === 'scientific' ? 'mo_ta' : 'danh_hieu',
       key: activeTab === 'scientific' ? 'mo_ta' : 'danh_hieu',
       width: 220,
