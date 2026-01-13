@@ -6,7 +6,6 @@ import {
   Card,
   Typography,
   Button,
-  Upload,
   Steps,
   Space,
   Breadcrumb,
@@ -19,7 +18,6 @@ import {
   Input,
 } from 'antd';
 import {
-  UploadOutlined,
   DownloadOutlined,
   HomeOutlined,
   TrophyOutlined,
@@ -30,11 +28,9 @@ import {
   CheckCircleOutlined,
   ArrowLeftOutlined,
   EditOutlined,
-  FileOutlined,
   FileTextOutlined,
 } from '@ant-design/icons';
 import Link from 'next/link';
-import type { UploadFile } from 'antd/es/upload/interface';
 import type { ColumnsType } from 'antd/es/table';
 import { apiClient } from '@/lib/api-client';
 import axiosInstance from '@/utils/axiosInstance';
@@ -95,10 +91,7 @@ export default function BulkAddAwardsPage() {
   // Step 3: Set Titles
   const [titleData, setTitleData] = useState<any[]>([]);
 
-  // Step 4: Upload Files
-  const [attachedFiles, setAttachedFiles] = useState<UploadFile[]>([]);
-
-  // Step 5: Personnel/Unit details for review
+  // Step 4: Personnel/Unit details for review
   const [personnelDetails, setPersonnelDetails] = useState<Personnel[]>([]);
   const [unitDetails, setUnitDetails] = useState<any[]>([]);
 
@@ -152,20 +145,25 @@ export default function BulkAddAwardsPage() {
     },
   };
 
-  // Steps config - 7 bước
+  // Steps config - 6 bước (đã bỏ bước upload file)
   const getSteps = () => {
     const step2Title = awardType === 'DON_VI_HANG_NAM' ? 'Chọn đơn vị' : 'Chọn quân nhân';
     return [
       { title: 'Chọn loại', icon: <TrophyOutlined /> },
       { title: step2Title, icon: <TeamOutlined /> },
       { title: 'Set danh hiệu', icon: <CheckCircleOutlined /> },
-      { title: 'Upload file đính kèm', icon: <UploadOutlined /> },
       { title: 'Xem lại thông tin', icon: <FileTextOutlined /> },
       { title: 'Thêm số quyết định', icon: <FileTextOutlined /> },
       { title: 'Thêm khen thưởng', icon: <CheckCircleOutlined /> },
     ];
   };
   const steps = getSteps();
+
+  // Kiểm tra loại khen thưởng nào có thể lưu ghi chú
+  // Tất cả các loại hiện tại đều hỗ trợ ghi chú trong schema và service
+  // Nếu có loại nào không lưu được ghi chú, thêm vào danh sách này
+  const awardTypesWithoutNote: AwardType[] = [];
+  const canShowNote = !awardTypesWithoutNote.includes(awardType);
 
   // Chỉ set năm hiện tại lần đầu khi component mount
   useEffect(() => {
@@ -181,7 +179,6 @@ export default function BulkAddAwardsPage() {
       setSelectedPersonnelIds([]);
       setSelectedUnitIds([]);
       setTitleData([]);
-      setAttachedFiles([]);
       setPersonnelDetails([]);
       setUnitDetails([]);
       setNote('');
@@ -194,7 +191,6 @@ export default function BulkAddAwardsPage() {
     setSelectedPersonnelIds([]);
     setSelectedUnitIds([]);
     setTitleData([]);
-    setAttachedFiles([]);
     setPersonnelDetails([]);
     setUnitDetails([]);
     setNote('');
@@ -202,9 +198,9 @@ export default function BulkAddAwardsPage() {
     setNam(new Date().getFullYear());
   }, [awardType]);
 
-  // Fetch personnel/unit details when reaching Step 5 (Review)
+  // Fetch personnel/unit details when reaching Step 4 (Review) - đã giảm từ step 5 xuống step 4
   useEffect(() => {
-    if (currentStep === 4) {
+    if (currentStep === 3) {
       if (awardType === 'DON_VI_HANG_NAM' && selectedUnitIds.length > 0) {
         fetchUnitDetails();
       } else if (selectedPersonnelIds.length > 0) {
@@ -264,10 +260,8 @@ export default function BulkAddAwardsPage() {
           d => d.danh_hieu && d.cap_bac?.trim() && d.chuc_vu?.trim()
         );
       case 3:
-        return true; // Upload file is optional
-      case 4:
         return true; // Review step
-      case 5:
+      case 4:
         return true; // Decision step - optional
       default:
         return false;
@@ -333,15 +327,6 @@ export default function BulkAddAwardsPage() {
 
       if (note.trim()) {
         formData.append('ghi_chu', note.trim());
-      }
-
-      // Upload các file đính kèm
-      if (attachedFiles.length > 0) {
-        attachedFiles.forEach(file => {
-          if (file.originFileObj) {
-            formData.append('attached_files', file.originFileObj as File);
-          }
-        });
       }
 
       // Gọi API bulk create với validation đầy đủ
@@ -533,37 +518,7 @@ export default function BulkAddAwardsPage() {
           />
         );
 
-      case 3: // Step 4: Upload Files
-        return (
-          <div>
-            <Alert
-              message="Bước 4: Upload file đính kèm"
-              description="Upload các file đính kèm liên quan (tùy chọn, không giới hạn số lượng)"
-              type="info"
-              showIcon
-              style={{ marginBottom: 24 }}
-            />
-
-            <Upload.Dragger
-              fileList={attachedFiles}
-              onChange={({ fileList }) => setAttachedFiles(fileList)}
-              beforeUpload={() => false}
-              multiple
-              accept=".pdf,.doc,.docx,.xls,.xlsx"
-            >
-              <p className="ant-upload-drag-icon">
-                <UploadOutlined style={{ fontSize: 48, color: '#1890ff' }} />
-              </p>
-              <p className="ant-upload-text">Click hoặc kéo file vào đây để upload</p>
-              <p className="ant-upload-hint">
-                Hỗ trợ: PDF, Word (.doc, .docx), Excel (.xls, .xlsx). Có thể chọn nhiều file cùng
-                lúc, không giới hạn số lượng.
-              </p>
-            </Upload.Dragger>
-          </div>
-        );
-
-      case 4: // Step 5: Review (không có nút gửi đề xuất)
+      case 3: // Step 4: Review (không có nút gửi đề xuất)
         // Merge personnel/unit details with title data
         let reviewTableData: any[] = [];
 
@@ -752,65 +707,8 @@ export default function BulkAddAwardsPage() {
                       : selectedPersonnelIds.length}
                   </Text>
                 </Descriptions.Item>
-                <Descriptions.Item label="File đính kèm" span={2}>
-                  {attachedFiles.length > 0 ? (
-                    <Text strong>{attachedFiles.length} file</Text>
-                  ) : (
-                    <Text type="secondary">Không có file</Text>
-                  )}
-                </Descriptions.Item>
               </Descriptions>
             </Card>
-
-            {attachedFiles.length > 0 && (
-              <Card title="File đính kèm" style={{ marginTop: 16, marginBottom: 16 }}>
-                <Space direction="vertical" style={{ width: '100%' }} size="middle">
-                  {attachedFiles.map((file, index) => (
-                    <div
-                      key={index}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '8px 12px',
-                        backgroundColor: 'rgba(0, 0, 0, 0.02)',
-                        border: '1px solid rgba(0, 0, 0, 0.06)',
-                        borderRadius: '4px',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <FileOutlined style={{ color: '#1890ff', fontSize: '16px' }} />
-                        <Text style={{ fontSize: '14px' }}>{file.name || 'Không có tên file'}</Text>
-                        {file.size && (
-                          <Text type="secondary" style={{ fontSize: '12px' }}>
-                            ({(file.size / 1024).toFixed(2)} KB)
-                          </Text>
-                        )}
-                      </div>
-                      <Button
-                        type="link"
-                        icon={<DownloadOutlined />}
-                        style={{ padding: '0 8px', borderRadius: '6px' }}
-                        onClick={() => {
-                          if (file.originFileObj) {
-                            const url = URL.createObjectURL(file.originFileObj);
-                            const link = document.createElement('a');
-                            link.href = url;
-                            link.download = file.name;
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                            URL.revokeObjectURL(url);
-                          }
-                        }}
-                      >
-                        Tải xuống
-                      </Button>
-                    </div>
-                  ))}
-                </Space>
-              </Card>
-            )}
 
             <Card
               title={
@@ -833,28 +731,31 @@ export default function BulkAddAwardsPage() {
               />
             </Card>
 
-            <Card
-              title={
-                <Space>
-                  <EditOutlined />
-                  <span>Ghi chú (tùy chọn)</span>
-                </Space>
-              }
-              style={{ marginTop: 16 }}
-            >
-              <Input.TextArea
-                placeholder="Nhập ghi chú (không bắt buộc)..."
-                value={note}
-                onChange={e => setNote(e.target.value)}
-                rows={3}
-                maxLength={1000}
-                showCount
-              />
-            </Card>
+            {/* Chỉ hiển thị trường ghi chú nếu loại khen thưởng hỗ trợ lưu ghi chú */}
+            {canShowNote && (
+              <Card
+                title={
+                  <Space>
+                    <EditOutlined />
+                    <span>Ghi chú (tùy chọn)</span>
+                  </Space>
+                }
+                style={{ marginTop: 16 }}
+              >
+                <Input.TextArea
+                  placeholder="Nhập ghi chú (không bắt buộc)..."
+                  value={note}
+                  onChange={e => setNote(e.target.value)}
+                  rows={3}
+                  maxLength={1000}
+                  showCount
+                />
+              </Card>
+            )}
           </div>
         );
 
-      case 5: // Step 6: Thêm số quyết định
+      case 4: // Step 5: Thêm số quyết định
         const decisionTableData = awardType === 'DON_VI_HANG_NAM' 
           ? unitDetails 
           : personnelDetails;
@@ -917,7 +818,7 @@ export default function BulkAddAwardsPage() {
         return (
           <div>
             <Alert
-              message="Bước 6: Thêm số quyết định"
+              message="Bước 5: Thêm số quyết định"
               description="Thêm số quyết định cho từng quân nhân/đơn vị (tùy chọn)"
               type="info"
               showIcon
@@ -953,7 +854,7 @@ export default function BulkAddAwardsPage() {
           </div>
         );
 
-      case 6: // Step 7: Final review before submit
+      case 5: // Step 6: Final review before submit
         const finalTableData = awardType === 'DON_VI_HANG_NAM' 
           ? unitDetails 
           : personnelDetails;
@@ -1048,7 +949,7 @@ export default function BulkAddAwardsPage() {
         return (
           <div>
             <Alert
-              message="Bước 7: Xác nhận và thêm khen thưởng"
+              message="Bước 6: Xác nhận và thêm khen thưởng"
               description="Kiểm tra lại thông tin trước khi thêm khen thưởng vào hệ thống"
               type="warning"
               showIcon

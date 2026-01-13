@@ -39,6 +39,9 @@ interface TitleData {
   danh_hieu?: string;
   cap_bac?: string;
   chuc_vu?: string;
+  thoi_gian_nhom_0_7?: { years: number; months: number } | null;
+  thoi_gian_nhom_0_8?: { years: number; months: number } | null;
+  thoi_gian_nhom_0_9_1_0?: { years: number; months: number } | null;
 }
 
 interface Step3SetTitlesCongHienProps {
@@ -104,24 +107,52 @@ export default function Step3SetTitlesCongHien({
       // Fetch position histories for display
       await fetchPositionHistories(personnelData);
 
+      // Helper function to convert months to {years, months} object
+      const monthsToTimeObject = (totalMonths: number) => {
+        if (!totalMonths || totalMonths <= 0) return null;
+        const years = Math.floor(totalMonths / 12);
+        const months = totalMonths % 12;
+        return { years, months };
+      };
+
       // Initialize title data if empty
       if (titleData.length === 0) {
-        const initialData = personnelData.map((p: Personnel) => ({
-          personnel_id: p.id,
-          danh_hieu: getHighestEligibleAward(profilesMap[p.id]),
-          cap_bac: p.cap_bac || '',
-          chuc_vu: p.ChucVu?.ten_chuc_vu || '',
-        }));
+        const initialData = personnelData.map((p: Personnel) => {
+          const profile = profilesMap[p.id];
+          return {
+            personnel_id: p.id,
+            danh_hieu: getHighestEligibleAward(profile),
+            cap_bac: p.cap_bac || '',
+            chuc_vu: p.ChucVu?.ten_chuc_vu || '',
+            thoi_gian_nhom_0_7: monthsToTimeObject(profile?.months_07 || 0),
+            thoi_gian_nhom_0_8: monthsToTimeObject(profile?.months_08 || 0),
+            thoi_gian_nhom_0_9_1_0: monthsToTimeObject(profile?.months_0910 || 0),
+          };
+        });
         onTitleDataChange(initialData);
       } else {
-        // Cập nhật cap_bac và chuc_vu nếu chưa có
+        // Cập nhật cap_bac, chuc_vu và thoi_gian nếu chưa có
         const updatedData = titleData.map(item => {
           const p = personnelData.find((pd: Personnel) => pd.id === item.personnel_id);
-          if (p && (!item.cap_bac || !item.chuc_vu)) {
+          const profile = profilesMap[item.personnel_id || ''];
+          const needsUpdate =
+            !item.cap_bac ||
+            !item.chuc_vu ||
+            !item.thoi_gian_nhom_0_7 ||
+            !item.thoi_gian_nhom_0_8 ||
+            !item.thoi_gian_nhom_0_9_1_0;
+
+          if (p && needsUpdate) {
             return {
               ...item,
               cap_bac: item.cap_bac || p.cap_bac || '',
               chuc_vu: item.chuc_vu || p.ChucVu?.ten_chuc_vu || '',
+              thoi_gian_nhom_0_7:
+                item.thoi_gian_nhom_0_7 || monthsToTimeObject(profile?.months_07 || 0),
+              thoi_gian_nhom_0_8:
+                item.thoi_gian_nhom_0_8 || monthsToTimeObject(profile?.months_08 || 0),
+              thoi_gian_nhom_0_9_1_0:
+                item.thoi_gian_nhom_0_9_1_0 || monthsToTimeObject(profile?.months_0910 || 0),
             };
           }
           return item;
@@ -299,7 +330,7 @@ export default function Step3SetTitlesCongHien({
             value={data.cap_bac || record.cap_bac}
             onChange={value => updateTitle(record.id, 'cap_bac', value)}
             placeholder="Chọn cấp bậc"
-            style={{ width: '100%' }}
+            style={{ width: '100%', height: 32 }}
             size="middle"
             showSearch
             optionFilterProp="label"
@@ -324,7 +355,7 @@ export default function Step3SetTitlesCongHien({
             value={data.chuc_vu || record.ChucVu?.ten_chuc_vu || ''}
             onChange={e => updateTitle(record.id, 'chuc_vu', e.target.value)}
             placeholder="Nhập chức vụ"
-            style={{ width: '100%' }}
+            style={{ width: '100%', height: 32 }}
             size="middle"
           />
         );

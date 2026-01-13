@@ -208,7 +208,7 @@ export default function Step3SetTitlesHCQKQT({
             value={data.cap_bac ?? record.cap_bac ?? undefined}
             onChange={value => updateTitle(record.id, 'cap_bac', value)}
             placeholder="Chọn cấp bậc"
-            style={{ width: '100%', height: 40 }}
+            style={{ width: '100%', height: 32 }}
             size="middle"
             showSearch
             optionFilterProp="label"
@@ -234,7 +234,7 @@ export default function Step3SetTitlesHCQKQT({
             value={data.chuc_vu ?? record.ChucVu?.ten_chuc_vu ?? ''}
             onChange={e => updateTitle(record.id, 'chuc_vu', e.target.value)}
             placeholder="Nhập chức vụ"
-            style={{ width: '100%', height: 40 }}
+            style={{ width: '100%', height: 32 }}
             size="middle"
             allowClear
           />

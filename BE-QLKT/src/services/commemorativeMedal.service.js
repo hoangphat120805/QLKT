@@ -320,7 +320,9 @@ class CommemorativeMedalService {
       { header: 'Năm', key: 'nam', width: 10 },
       { header: 'Cấp bậc', key: 'cap_bac', width: 15 },
       { header: 'Chức vụ', key: 'chuc_vu', width: 30 },
+      { header: 'Thời gian (tháng)', key: 'thoi_gian', width: 18 },
       { header: 'Số quyết định', key: 'so_quyet_dinh', width: 20 },
+      { header: 'Ghi chú', key: 'ghi_chu', width: 30 },
     ];
 
     worksheet.getRow(1).font = { bold: true };
@@ -328,6 +330,28 @@ class CommemorativeMedalService {
       type: 'pattern',
       pattern: 'solid',
       fgColor: { argb: 'FFD9E1F2' },
+    };
+
+    // Helper function để convert thoi_gian từ object {years, months} sang số tháng
+    const convertThoiGian = thoiGian => {
+      if (!thoiGian) return '';
+      if (typeof thoiGian === 'object') {
+        const years = thoiGian.years || 0;
+        const months = thoiGian.months || 0;
+        return years * 12 + months;
+      } else if (typeof thoiGian === 'number') {
+        return thoiGian;
+      } else if (typeof thoiGian === 'string') {
+        try {
+          const parsed = JSON.parse(thoiGian);
+          const years = parsed.years || 0;
+          const months = parsed.months || 0;
+          return years * 12 + months;
+        } catch {
+          return thoiGian;
+        }
+      }
+      return '';
     };
 
     data.forEach((item, index) => {
@@ -340,7 +364,9 @@ class CommemorativeMedalService {
         nam: item.nam,
         cap_bac: item.cap_bac,
         chuc_vu: item.chuc_vu,
+        thoi_gian: convertThoiGian(item.thoi_gian),
         so_quyet_dinh: item.so_quyet_dinh,
+        ghi_chu: item.ghi_chu || '',
       });
     });
 

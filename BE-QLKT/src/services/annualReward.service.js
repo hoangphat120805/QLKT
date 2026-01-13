@@ -973,8 +973,14 @@ class AnnualRewardService {
       { header: 'Cấp bậc', key: 'cap_bac', width: 15 },
       { header: 'Chức vụ', key: 'chuc_vu', width: 20 },
       { header: 'Năm', key: 'nam', width: 10 },
-      { header: 'Danh hiệu', key: 'danh_hieu', width: 20 },
-      { header: 'Số quyết định', key: 'so_quyet_dinh', width: 20 },
+      { header: 'Danh hiệu', key: 'danh_hieu', width: 25 },
+      { header: 'Số QĐ danh hiệu', key: 'so_quyet_dinh', width: 20 },
+      { header: 'BKBQP', key: 'nhan_bkbqp', width: 10 },
+      { header: 'Số QĐ BKBQP', key: 'so_quyet_dinh_bkbqp', width: 20 },
+      { header: 'CSTĐTQ', key: 'nhan_cstdtq', width: 10 },
+      { header: 'Số QĐ CSTĐTQ', key: 'so_quyet_dinh_cstdtq', width: 20 },
+      { header: 'BKTTCP', key: 'nhan_bkttcp', width: 10 },
+      { header: 'Số QĐ BKTTCP', key: 'so_quyet_dinh_bkttcp', width: 20 },
       { header: 'Ghi chú', key: 'ghi_chu', width: 30 },
     ];
 
@@ -989,7 +995,10 @@ class AnnualRewardService {
 
     // Thêm dữ liệu
     filteredAwards.forEach((award, index) => {
-      const donVi = award.QuanNhan?.DonViTrucThuoc?.ten || award.QuanNhan?.CoQuanDonVi?.ten || '';
+      const donVi =
+        award.QuanNhan?.DonViTrucThuoc?.ten_don_vi ||
+        award.QuanNhan?.CoQuanDonVi?.ten_don_vi ||
+        '';
 
       worksheet.addRow({
         stt: index + 1,
@@ -999,8 +1008,14 @@ class AnnualRewardService {
         cap_bac: award.cap_bac || '',
         chuc_vu: award.chuc_vu || '',
         nam: award.nam,
-        danh_hieu: award.danh_hieu,
+        danh_hieu: award.danh_hieu || '',
         so_quyet_dinh: award.so_quyet_dinh || '',
+        nhan_bkbqp: award.nhan_bkbqp ? 'Có' : '',
+        so_quyet_dinh_bkbqp: award.so_quyet_dinh_bkbqp || '',
+        nhan_cstdtq: award.nhan_cstdtq ? 'Có' : '',
+        so_quyet_dinh_cstdtq: award.so_quyet_dinh_cstdtq || '',
+        nhan_bkttcp: award.nhan_bkttcp ? 'Có' : '',
+        so_quyet_dinh_bkttcp: award.so_quyet_dinh_bkttcp || '',
         ghi_chu: award.ghi_chu || '',
       });
     });

@@ -3,6 +3,7 @@ const ExcelJS = require('exceljs');
 const proposalService = require('./proposal.service');
 const profileService = require('./profile.service');
 const notificationHelper = require('../helpers/notificationHelper');
+const { getDanhHieuName } = require('../constants/danhHieu.constants');
 
 class ContributionAwardService {
   /**
@@ -349,7 +350,11 @@ class ContributionAwardService {
       { header: 'Danh hiệu', key: 'danh_hieu', width: 25 },
       { header: 'Cấp bậc', key: 'cap_bac', width: 15 },
       { header: 'Chức vụ', key: 'chuc_vu', width: 30 },
+      { header: 'TG nhóm 0.7 (tháng)', key: 'thoi_gian_nhom_0_7', width: 18 },
+      { header: 'TG nhóm 0.8 (tháng)', key: 'thoi_gian_nhom_0_8', width: 18 },
+      { header: 'TG nhóm 0.9-1.0 (tháng)', key: 'thoi_gian_nhom_0_9_1_0', width: 20 },
       { header: 'Số quyết định', key: 'so_quyet_dinh', width: 20 },
+      { header: 'Ghi chú', key: 'ghi_chu', width: 30 },
     ];
 
     worksheet.getRow(1).font = { bold: true };
@@ -357,6 +362,28 @@ class ContributionAwardService {
       type: 'pattern',
       pattern: 'solid',
       fgColor: { argb: 'FFD9E1F2' },
+    };
+
+    // Helper function để convert thoi_gian từ object {years, months} sang số tháng
+    const convertThoiGian = thoiGian => {
+      if (!thoiGian) return '';
+      if (typeof thoiGian === 'object') {
+        const years = thoiGian.years || 0;
+        const months = thoiGian.months || 0;
+        return years * 12 + months;
+      } else if (typeof thoiGian === 'number') {
+        return thoiGian;
+      } else if (typeof thoiGian === 'string') {
+        try {
+          const parsed = JSON.parse(thoiGian);
+          const years = parsed.years || 0;
+          const months = parsed.months || 0;
+          return years * 12 + months;
+        } catch {
+          return thoiGian;
+        }
+      }
+      return '';
     };
 
     data.forEach((item, index) => {
@@ -367,10 +394,14 @@ class ContributionAwardService {
         don_vi:
           item.QuanNhan.CoQuanDonVi?.ten_don_vi || item.QuanNhan.DonViTrucThuoc?.ten_don_vi || '',
         nam: item.nam,
-        danh_hieu: item.danh_hieu,
+        danh_hieu: getDanhHieuName(item.danh_hieu),
         cap_bac: item.cap_bac,
         chuc_vu: item.chuc_vu,
+        thoi_gian_nhom_0_7: convertThoiGian(item.thoi_gian_nhom_0_7),
+        thoi_gian_nhom_0_8: convertThoiGian(item.thoi_gian_nhom_0_8),
+        thoi_gian_nhom_0_9_1_0: convertThoiGian(item.thoi_gian_nhom_0_9_1_0),
         so_quyet_dinh: item.so_quyet_dinh,
+        ghi_chu: item.ghi_chu || '',
       });
     });
 

@@ -1,5 +1,6 @@
 const { prisma } = require('../models');
 const proposalService = require('./proposal.service');
+const { getDanhHieuName } = require('../constants/danhHieu.constants');
 
 class UnitAnnualAwardService {
   /**
@@ -1156,7 +1157,11 @@ class UnitAnnualAwardService {
       { header: 'Tên đơn vị', key: 'ten_don_vi', width: 30 },
       { header: 'Năm', key: 'nam', width: 10 },
       { header: 'Danh hiệu', key: 'danh_hieu', width: 20 },
-      { header: 'Số quyết định', key: 'so_quyet_dinh', width: 20 },
+      { header: 'Số QĐ danh hiệu', key: 'so_quyet_dinh', width: 20 },
+      { header: 'BKBQP', key: 'nhan_bkbqp', width: 10 },
+      { header: 'Số QĐ BKBQP', key: 'so_quyet_dinh_bkbqp', width: 20 },
+      { header: 'BKTTCP', key: 'nhan_bkttcp', width: 10 },
+      { header: 'Số QĐ BKTTCP', key: 'so_quyet_dinh_bkttcp', width: 20 },
       { header: 'Ghi chú', key: 'ghi_chu', width: 30 },
     ];
 
@@ -1175,8 +1180,12 @@ class UnitAnnualAwardService {
         ma_don_vi: donVi?.ma_don_vi || '',
         ten_don_vi: donVi?.ten || '',
         nam: award.nam,
-        danh_hieu: award.danh_hieu,
+        danh_hieu: getDanhHieuName(award.danh_hieu),
         so_quyet_dinh: award.so_quyet_dinh || '',
+        nhan_bkbqp: award.nhan_bkbqp ? 'Có' : '',
+        so_quyet_dinh_bkbqp: award.so_quyet_dinh_bkbqp || '',
+        nhan_bkttcp: award.nhan_bkttcp ? 'Có' : '',
+        so_quyet_dinh_bkttcp: award.so_quyet_dinh_bkttcp || '',
         ghi_chu: award.ghi_chu || '',
       });
     });

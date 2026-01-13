@@ -3,6 +3,7 @@ const ExcelJS = require('exceljs');
 const proposalService = require('./proposal.service');
 const profileService = require('./profile.service');
 const notificationHelper = require('../helpers/notificationHelper');
+const { getDanhHieuName } = require('../constants/danhHieu.constants');
 
 class HCCSVVService {
   /**
@@ -357,7 +358,9 @@ class HCCSVVService {
       { header: 'Danh hiệu', key: 'danh_hieu', width: 25 },
       { header: 'Cấp bậc', key: 'cap_bac', width: 15 },
       { header: 'Chức vụ', key: 'chuc_vu', width: 30 },
+      { header: 'Thời gian (tháng)', key: 'thoi_gian', width: 18 },
       { header: 'Số quyết định', key: 'so_quyet_dinh', width: 20 },
+      { header: 'Ghi chú', key: 'ghi_chu', width: 30 },
     ];
 
     worksheet.getRow(1).font = { bold: true };
@@ -368,6 +371,27 @@ class HCCSVVService {
     };
 
     data.forEach((item, index) => {
+      // Convert thoi_gian từ object {years, months} sang số tháng
+      let thoiGianThang = '';
+      if (item.thoi_gian) {
+        if (typeof item.thoi_gian === 'object') {
+          const years = item.thoi_gian.years || 0;
+          const months = item.thoi_gian.months || 0;
+          thoiGianThang = years * 12 + months;
+        } else if (typeof item.thoi_gian === 'number') {
+          thoiGianThang = item.thoi_gian;
+        } else if (typeof item.thoi_gian === 'string') {
+          try {
+            const parsed = JSON.parse(item.thoi_gian);
+            const years = parsed.years || 0;
+            const months = parsed.months || 0;
+            thoiGianThang = years * 12 + months;
+          } catch {
+            thoiGianThang = item.thoi_gian;
+          }
+        }
+      }
+
       worksheet.addRow({
         stt: index + 1,
         cccd: item.QuanNhan.cccd,
@@ -375,10 +399,12 @@ class HCCSVVService {
         don_vi:
           item.QuanNhan.CoQuanDonVi?.ten_don_vi || item.QuanNhan.DonViTrucThuoc?.ten_don_vi || '',
         nam: item.nam,
-        danh_hieu: item.danh_hieu,
+        danh_hieu: getDanhHieuName(item.danh_hieu),
         cap_bac: item.cap_bac,
         chuc_vu: item.chuc_vu,
+        thoi_gian: thoiGianThang,
         so_quyet_dinh: item.so_quyet_dinh,
+        ghi_chu: item.ghi_chu || '',
       });
     });
 

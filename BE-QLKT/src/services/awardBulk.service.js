@@ -637,7 +637,9 @@ class AwardBulkService {
                 chuc_vu: item.chuc_vu || null,
                 ghi_chu: ghiChu || null,
                 so_quyet_dinh: item.so_quyet_dinh || null,
-                // Note: thoi_gian_nhom_* sẽ được tính trong recalculateContributionProfile
+                thoi_gian_nhom_0_7: item.thoi_gian_nhom_0_7 || null,
+                thoi_gian_nhom_0_8: item.thoi_gian_nhom_0_8 || null,
+                thoi_gian_nhom_0_9_1_0: item.thoi_gian_nhom_0_9_1_0 || null,
               },
               update: {
                 danh_hieu: item.danh_hieu,
@@ -646,6 +648,9 @@ class AwardBulkService {
                 chuc_vu: item.chuc_vu || null,
                 ghi_chu: ghiChu || null,
                 so_quyet_dinh: item.so_quyet_dinh || null,
+                thoi_gian_nhom_0_7: item.thoi_gian_nhom_0_7 || null,
+                thoi_gian_nhom_0_8: item.thoi_gian_nhom_0_8 || null,
+                thoi_gian_nhom_0_9_1_0: item.thoi_gian_nhom_0_9_1_0 || null,
               },
             });
 

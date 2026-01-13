@@ -263,6 +263,8 @@ class ScientificAchievementService {
       { header: 'Năm', key: 'nam', width: 10 },
       { header: 'Loại', key: 'loai', width: 15 },
       { header: 'Mô tả', key: 'mo_ta', width: 40 },
+      { header: 'Trạng thái', key: 'status', width: 15 },
+      { header: 'Số quyết định', key: 'so_quyet_dinh', width: 20 },
       { header: 'Ghi chú', key: 'ghi_chu', width: 30 },
     ];
 
@@ -283,6 +285,12 @@ class ScientificAchievementService {
           : achievement.loai === 'SKKH'
           ? 'Sáng kiến khoa học'
           : achievement.loai;
+      const statusText =
+        achievement.status === 'APPROVED'
+          ? 'Đã duyệt'
+          : achievement.status === 'PENDING'
+          ? 'Chờ duyệt'
+          : achievement.status || '';
 
       worksheet.addRow({
         stt: index + 1,
@@ -294,6 +302,8 @@ class ScientificAchievementService {
         nam: achievement.nam,
         loai: loaiText,
         mo_ta: achievement.mo_ta || '',
+        status: statusText,
+        so_quyet_dinh: achievement.so_quyet_dinh || '',
         ghi_chu: achievement.ghi_chu || '',
       });
     });

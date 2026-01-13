@@ -234,7 +234,7 @@ export default function Step3SetTitlesNCKH({
             value={data.cap_bac || record.cap_bac}
             onChange={value => updateTitle(record.id, 'cap_bac', value)}
             placeholder="Chọn cấp bậc"
-            style={{ width: '100%' }}
+            style={{ width: '100%', height: 32 }}
             size="middle"
             showSearch
             optionFilterProp="label"
@@ -259,7 +259,7 @@ export default function Step3SetTitlesNCKH({
             value={data.chuc_vu || record.ChucVu?.ten_chuc_vu || ''}
             onChange={e => updateTitle(record.id, 'chuc_vu', e.target.value)}
             placeholder="Nhập chức vụ"
-            style={{ width: '100%' }}
+            style={{ width: '100%', height: 32 }}
             size="middle"
           />
         );
@@ -281,7 +281,7 @@ export default function Step3SetTitlesNCKH({
             value={data.loai}
             onChange={value => updateTitle(record.id, 'loai', value)}
             placeholder="Chọn loại"
-            style={{ width: '100%', fontSize: '14px' }}
+            style={{ width: '100%', height: 32, fontSize: '14px' }}
             size="middle"
             popupMatchSelectWidth={false}
             styles={{ popup: { root: { minWidth: 'max-content' } } }}
@@ -312,7 +312,7 @@ export default function Step3SetTitlesNCKH({
             rows={1}
             maxLength={500}
             showCount
-            style={{ fontSize: '14px' }}
+            style={{ width: '100%', height: 32, fontSize: '14px' }}
           />
         );
       },
