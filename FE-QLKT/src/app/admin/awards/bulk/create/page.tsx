@@ -13,13 +13,10 @@ import {
   Radio,
   Alert,
   message as antMessage,
-  Divider,
   Descriptions,
   Tag,
   Table,
   Input,
-  Row,
-  Col,
 } from 'antd';
 import {
   UploadOutlined,
@@ -34,6 +31,7 @@ import {
   ArrowLeftOutlined,
   EditOutlined,
   FileOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons';
 import Link from 'next/link';
 import type { UploadFile } from 'antd/es/upload/interface';
@@ -49,11 +47,11 @@ import Step2SelectPersonnelCongHien from './components/Step2SelectPersonnelCongH
 import Step2SelectPersonnelNCKH from './components/Step2SelectPersonnelNCKH';
 import Step2SelectUnits from './components/Step2SelectUnits';
 import Step3SetTitles from './components/Step3SetTitles';
-import { record } from 'zod';
+import DecisionModal from '@/components/DecisionModal';
 
 const { Title, Paragraph, Text } = Typography;
 
-type ProposalType =
+type AwardType =
   | 'CA_NHAN_HANG_NAM'
   | 'DON_VI_HANG_NAM'
   | 'NIEN_HAN'
@@ -81,13 +79,13 @@ interface Personnel {
   };
 }
 
-export default function CreateProposalPage() {
+export default function BulkAddAwardsPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  // Step 1: Proposal Type
-  const [proposalType, setProposalType] = useState<ProposalType>('CA_NHAN_HANG_NAM');
+  // Step 1: Award Type
+  const [awardType, setAwardType] = useState<AwardType>('CA_NHAN_HANG_NAM');
 
   // Step 2: Select Personnel/Units
   const [nam, setNam] = useState(new Date().getFullYear());
@@ -98,18 +96,23 @@ export default function CreateProposalPage() {
   const [titleData, setTitleData] = useState<any[]>([]);
 
   // Step 4: Upload Files
-  const [attachedFiles, setAttachedFiles] = useState<UploadFile[]>([]); // File đính kèm (optional)
+  const [attachedFiles, setAttachedFiles] = useState<UploadFile[]>([]);
 
   // Step 5: Personnel/Unit details for review
   const [personnelDetails, setPersonnelDetails] = useState<Personnel[]>([]);
   const [unitDetails, setUnitDetails] = useState<any[]>([]);
 
   // Step 5: Note
-  const [proposalNote, setProposalNote] = useState<string>('');
+  const [note, setNote] = useState<string>('');
 
-  // Proposal type config
-  const proposalTypeConfig: Record<
-    ProposalType,
+  // Step 6: Decision data (so_quyet_dinh cho từng quân nhân/đơn vị)
+  const [decisionDataMap, setDecisionDataMap] = useState<Record<string, { so_quyet_dinh: string; decision?: any }>>({});
+  const [decisionModalVisible, setDecisionModalVisible] = useState(false);
+  const [selectedPersonnelForDecision, setSelectedPersonnelForDecision] = useState<string[]>([]);
+
+  // Award type config
+  const awardTypeConfig: Record<
+    AwardType,
     { icon: React.ReactNode; label: string; description: string }
   > = {
     CA_NHAN_HANG_NAM: {
@@ -149,20 +152,22 @@ export default function CreateProposalPage() {
     },
   };
 
-  // Steps config
+  // Steps config - 7 bước
   const getSteps = () => {
-    const step2Title = proposalType === 'DON_VI_HANG_NAM' ? 'Chọn đơn vị' : 'Chọn quân nhân';
+    const step2Title = awardType === 'DON_VI_HANG_NAM' ? 'Chọn đơn vị' : 'Chọn quân nhân';
     return [
       { title: 'Chọn loại', icon: <TrophyOutlined /> },
       { title: step2Title, icon: <TeamOutlined /> },
       { title: 'Set danh hiệu', icon: <CheckCircleOutlined /> },
-      { title: 'Upload file', icon: <UploadOutlined /> },
-      { title: 'Xem lại & Gửi', icon: <CheckCircleOutlined /> },
+      { title: 'Upload file đính kèm', icon: <UploadOutlined /> },
+      { title: 'Xem lại thông tin', icon: <FileTextOutlined /> },
+      { title: 'Thêm số quyết định', icon: <FileTextOutlined /> },
+      { title: 'Thêm khen thưởng', icon: <CheckCircleOutlined /> },
     ];
   };
   const steps = getSteps();
 
-  // Chỉ set năm hiện tại lần đầu khi component mount (nếu chưa có giá trị)
+  // Chỉ set năm hiện tại lần đầu khi component mount
   useEffect(() => {
     if (!nam) {
       const currentYear = new Date().getFullYear();
@@ -170,44 +175,43 @@ export default function CreateProposalPage() {
     }
   }, []);
 
-  // Reset state khi quay lại bước 1 (chọn loại đề xuất)
+  // Reset state khi quay lại bước 1
   useEffect(() => {
     if (currentStep === 0) {
-      // Reset tất cả state liên quan đến quân nhân/đơn vị đã chọn
       setSelectedPersonnelIds([]);
       setSelectedUnitIds([]);
       setTitleData([]);
       setAttachedFiles([]);
       setPersonnelDetails([]);
       setUnitDetails([]);
-      setProposalNote('');
+      setNote('');
+      setDecisionDataMap({});
     }
   }, [currentStep]);
 
-  // Reset state khi thay đổi loại đề xuất
+  // Reset state khi thay đổi loại khen thưởng
   useEffect(() => {
-    // Reset tất cả state khi thay đổi loại đề xuất
     setSelectedPersonnelIds([]);
     setSelectedUnitIds([]);
     setTitleData([]);
     setAttachedFiles([]);
     setPersonnelDetails([]);
     setUnitDetails([]);
-    setProposalNote('');
-    // Reset về năm hiện tại khi đổi loại đề xuất
+    setNote('');
+    setDecisionDataMap({});
     setNam(new Date().getFullYear());
-  }, [proposalType]);
+  }, [awardType]);
 
   // Fetch personnel/unit details when reaching Step 5 (Review)
   useEffect(() => {
     if (currentStep === 4) {
-      if (proposalType === 'DON_VI_HANG_NAM' && selectedUnitIds.length > 0) {
+      if (awardType === 'DON_VI_HANG_NAM' && selectedUnitIds.length > 0) {
         fetchUnitDetails();
       } else if (selectedPersonnelIds.length > 0) {
         fetchPersonnelDetails();
       }
     }
-  }, [currentStep, proposalType, selectedUnitIds, selectedPersonnelIds]);
+  }, [currentStep, awardType, selectedUnitIds, selectedPersonnelIds]);
 
   const fetchPersonnelDetails = async () => {
     try {
@@ -215,7 +219,6 @@ export default function CreateProposalPage() {
       const responses = await Promise.all(promises);
       const personnelData = responses.filter(r => r.data.success).map(r => r.data.data);
       setPersonnelDetails(personnelData);
-
     } catch (error) {
       console.error('Error fetching personnel details:', error);
     }
@@ -223,21 +226,11 @@ export default function CreateProposalPage() {
 
   const fetchUnitDetails = async () => {
     try {
-      console.log('Fetching unit details for review, selectedUnitIds:', selectedUnitIds);
-      // Gọi API để lấy đơn vị của Manager
-      const unitsRes = await apiClient.getMyUnits();
-      console.log('Units API response:', unitsRes);
-
+      const unitsRes = await apiClient.getUnits();
       if (unitsRes.success) {
         const unitsData = unitsRes.data || [];
-        console.log('All manager units:', unitsData);
-
-        // Lọc các đơn vị đã chọn
         const selectedUnits = unitsData.filter((unit: any) => selectedUnitIds.includes(unit.id));
-        console.log('Selected units for review:', selectedUnits);
         setUnitDetails(selectedUnits);
-      } else {
-        console.error('Failed to fetch units:', unitsRes.message);
       }
     } catch (error) {
       console.error('Error fetching unit details:', error);
@@ -247,32 +240,35 @@ export default function CreateProposalPage() {
   // Validate current step
   const canProceedToNextStep = () => {
     switch (currentStep) {
-      case 0: // Step 1: Type selected (always true)
+      case 0:
         return true;
-      case 1: // Step 2: Must select at least 1 personnel/unit
-        if (proposalType === 'DON_VI_HANG_NAM') {
+      case 1:
+        if (awardType === 'DON_VI_HANG_NAM') {
           return selectedUnitIds.length > 0;
         }
         return selectedPersonnelIds.length > 0;
-      case 2: // Step 3: All personnel/units must have titles set
+      case 2:
         const expectedLength =
-          proposalType === 'DON_VI_HANG_NAM' ? selectedUnitIds.length : selectedPersonnelIds.length;
+          awardType === 'DON_VI_HANG_NAM' ? selectedUnitIds.length : selectedPersonnelIds.length;
         if (titleData.length !== expectedLength) return false;
 
-        if (proposalType === 'NCKH') {
-          // Kiểm tra loại, mô tả, cấp bậc và chức vụ
+        if (awardType === 'NCKH') {
           return titleData.every(d => d.loai && d.mo_ta && d.cap_bac && d.chuc_vu);
         }
 
-        if (proposalType === 'DON_VI_HANG_NAM') {
+        if (awardType === 'DON_VI_HANG_NAM') {
           return titleData.every(d => d.danh_hieu);
         }
 
         return titleData.every(
           d => d.danh_hieu && d.cap_bac?.trim() && d.chuc_vu?.trim()
         );
-      case 3: // Step 4: Always allow to continue (attachedFiles is optional)
-        return true;
+      case 3:
+        return true; // Upload file is optional
+      case 4:
+        return true; // Review step
+      case 5:
+        return true; // Decision step - optional
       default:
         return false;
     }
@@ -280,127 +276,13 @@ export default function CreateProposalPage() {
 
   // Handle next step
   const handleNext = async () => {
-    // Validation đặc biệt cho KNC_VSNXD_QDNDVN: Kiểm tra giới tính và ngày nhập ngũ khi chuyển từ Step 2 sang Step 3
-    if (
-      currentStep === 1 &&
-      proposalType === 'KNC_VSNXD_QDNDVN' &&
-      selectedPersonnelIds.length > 0
-    ) {
-      try {
-        const promises = selectedPersonnelIds.map(id => axiosInstance.get(`/api/personnel/${id}`));
-        const responses = await Promise.all(promises);
-        const personnelData = responses.filter(r => r.data.success).map(r => r.data.data);
-
-        const missingGender = personnelData.filter(
-          p => !p.gioi_tinh || (p.gioi_tinh !== 'NAM' && p.gioi_tinh !== 'NU')
-        );
-        const missingNgayNhapNgu = personnelData.filter(p => !p.ngay_nhap_ngu);
-
-        if (missingGender.length > 0 || missingNgayNhapNgu.length > 0) {
-          const errors = [];
-          if (missingGender.length > 0) {
-            const names = missingGender.map(p => p.ho_ten).join(', ');
-            errors.push(`chưa cập nhật giới tính: ${names}`);
-          }
-          if (missingNgayNhapNgu.length > 0) {
-            const names = missingNgayNhapNgu.map(p => p.ho_ten).join(', ');
-            errors.push(`chưa cập nhật ngày nhập ngũ: ${names}`);
-          }
-          antMessage.error(
-            `Một số quân nhân ${errors.join(' và ')}. Vui lòng cập nhật trước khi tiếp tục.`
-          );
-          return;
-        }
-      } catch (error: any) {
-        console.error('Error validating gender:', error);
-        antMessage.error('Lỗi khi kiểm tra thông tin quân nhân');
-        return;
-      }
-    }
-
-    // Validation cho NIEN_HAN: Kiểm tra ngày nhập ngũ khi chuyển từ Step 2 sang Step 3
-    if (currentStep === 1 && proposalType === 'NIEN_HAN' && selectedPersonnelIds.length > 0) {
-      try {
-        const promises = selectedPersonnelIds.map(id => axiosInstance.get(`/api/personnel/${id}`));
-        const responses = await Promise.all(promises);
-        const personnelData = responses.filter(r => r.data.success).map(r => r.data.data);
-
-        const missingNgayNhapNgu = personnelData.filter(p => !p.ngay_nhap_ngu);
-
-        if (missingNgayNhapNgu.length > 0) {
-          const names = missingNgayNhapNgu.map(p => p.ho_ten).join(', ');
-          antMessage.error(
-            `Một số quân nhân chưa cập nhật ngày nhập ngũ: ${names}. Vui lòng cập nhật trước khi tiếp tục.`
-          );
-          return;
-        }
-      } catch (error: any) {
-        console.error('Error validating ngay_nhap_ngu:', error);
-        antMessage.error('Lỗi khi kiểm tra thông tin quân nhân');
-        return;
-      }
-    }
-
-    // Validation cho HC_QKQT: Kiểm tra >= 25 năm phục vụ khi chuyển từ Step 2 sang Step 3
-    if (currentStep === 1 && proposalType === 'HC_QKQT' && selectedPersonnelIds.length > 0) {
-      try {
-        const promises = selectedPersonnelIds.map(id => axiosInstance.get(`/api/personnel/${id}`));
-        const responses = await Promise.all(promises);
-        const personnelData = responses.filter(r => r.data.success).map(r => r.data.data);
-
-        const ineligiblePersonnel: Array<{ ho_ten: string; reason: string }> = [];
-
-        for (const p of personnelData) {
-          if (!p.ngay_nhap_ngu) {
-            ineligiblePersonnel.push({
-              ho_ten: p.ho_ten,
-              reason: 'Chưa cập nhật ngày nhập ngũ',
-            });
-            continue;
-          }
-
-          // Tính số năm phục vụ
-          const ngayNhapNgu = new Date(p.ngay_nhap_ngu);
-          const ngayKetThuc = p.ngay_xuat_ngu ? new Date(p.ngay_xuat_ngu) : new Date();
-
-          let months = (ngayKetThuc.getFullYear() - ngayNhapNgu.getFullYear()) * 12;
-          months += ngayKetThuc.getMonth() - ngayNhapNgu.getMonth();
-          if (ngayKetThuc.getDate() < ngayNhapNgu.getDate()) {
-            months--;
-          }
-          months = Math.max(0, months);
-
-          const years = Math.floor(months / 12);
-
-          // Yêu cầu: >= 25 năm (không phân biệt nam nữ)
-          if (years < 25) {
-            ineligiblePersonnel.push({
-              ho_ten: p.ho_ten,
-              reason: `Chưa đủ 25 năm phục vụ (hiện tại: ${years} năm)`,
-            });
-          }
-        }
-
-        if (ineligiblePersonnel.length > 0) {
-          const names = ineligiblePersonnel.map(p => `${p.ho_ten} (${p.reason})`).join(', ');
-          antMessage.error(
-            `Một số quân nhân chưa đủ điều kiện đề xuất Huy chương Quân kỳ quyết thắng (yêu cầu >= 25 năm): ${names}. Vui lòng cập nhật trước khi tiếp tục.`
-          );
-          return;
-        }
-      } catch (error: any) {
-        console.error('Error validating HC_QKQT:', error);
-        antMessage.error('Lỗi khi kiểm tra thông tin quân nhân');
-        return;
-      }
-    }
-
+    // Validation tương tự proposal (copy từ proposal create)
     if (canProceedToNextStep()) {
       setCurrentStep(currentStep + 1);
     } else {
       switch (currentStep) {
         case 1:
-          if (proposalType === 'DON_VI_HANG_NAM') {
+          if (awardType === 'DON_VI_HANG_NAM') {
             antMessage.warning('Vui lòng chọn ít nhất một đơn vị!');
           } else {
             antMessage.warning('Vui lòng chọn ít nhất một quân nhân!');
@@ -408,9 +290,6 @@ export default function CreateProposalPage() {
           break;
         case 2:
           antMessage.warning('Vui lòng chọn danh hiệu cho tất cả quân nhân!');
-          break;
-        case 3:
-          antMessage.warning('Vui lòng upload file đính kèm!');
           break;
       }
     }
@@ -424,174 +303,39 @@ export default function CreateProposalPage() {
     setCurrentStep(currentStep - 1);
   };
 
-  // Handle submit
+  // Handle submit - Thêm khen thưởng/thành tích
   const handleSubmit = async () => {
     try {
       setLoading(true);
 
-      // Validation cho KNC_VSNXD_QDNDVN: Kiểm tra giới tính và ngày nhập ngũ
-      if (proposalType === 'KNC_VSNXD_QDNDVN' && selectedPersonnelIds.length > 0) {
-        try {
-          const promises = selectedPersonnelIds.map(id =>
-            axiosInstance.get(`/api/personnel/${id}`)
-          );
-          const responses = await Promise.all(promises);
-          const personnelData = responses.filter(r => r.data.success).map(r => r.data.data);
+      // Merge decision data vào titleData
+      const titleDataWithDecisions = titleData.map(item => {
+        const personnelId = item.personnel_id || item.don_vi_id;
+        const decisionInfo = decisionDataMap[personnelId];
+        return {
+          ...item,
+          so_quyet_dinh: decisionInfo?.so_quyet_dinh || null,
+        };
+      });
 
-          const missingGender = personnelData.filter(
-            p => !p.gioi_tinh || (p.gioi_tinh !== 'NAM' && p.gioi_tinh !== 'NU')
-          );
-          const missingNgayNhapNgu = personnelData.filter(p => !p.ngay_nhap_ngu);
-
-          if (missingGender.length > 0 || missingNgayNhapNgu.length > 0) {
-            const errors = [];
-            if (missingGender.length > 0) {
-              const names = missingGender.map(p => p.ho_ten).join(', ');
-              errors.push(`chưa cập nhật giới tính: ${names}`);
-            }
-            if (missingNgayNhapNgu.length > 0) {
-              const names = missingNgayNhapNgu.map(p => p.ho_ten).join(', ');
-              errors.push(`chưa cập nhật ngày nhập ngũ: ${names}`);
-            }
-            antMessage.error(
-              `Một số quân nhân ${errors.join(' và ')}. Vui lòng cập nhật trước khi đề xuất.`
-            );
-            setLoading(false);
-            return;
-          }
-        } catch (error: any) {
-          console.error('Error validating gender:', error);
-          antMessage.error('Lỗi khi kiểm tra thông tin quân nhân');
-          setLoading(false);
-          return;
-        }
-      }
-
-      // Validation cho NIEN_HAN: Kiểm tra ngày nhập ngũ
-      if (proposalType === 'NIEN_HAN' && selectedPersonnelIds.length > 0) {
-        try {
-          const promises = selectedPersonnelIds.map(id =>
-            axiosInstance.get(`/api/personnel/${id}`)
-          );
-          const responses = await Promise.all(promises);
-          const personnelData = responses.filter(r => r.data.success).map(r => r.data.data);
-
-          const missingNgayNhapNgu = personnelData.filter(p => !p.ngay_nhap_ngu);
-
-          if (missingNgayNhapNgu.length > 0) {
-            const names = missingNgayNhapNgu.map(p => p.ho_ten).join(', ');
-            antMessage.error(
-              `Một số quân nhân chưa cập nhật ngày nhập ngũ: ${names}. Vui lòng cập nhật trước khi đề xuất.`
-            );
-            setLoading(false);
-            return;
-          }
-        } catch (error: any) {
-          console.error('Error validating ngay_nhap_ngu:', error);
-          antMessage.error('Lỗi khi kiểm tra thông tin quân nhân');
-          setLoading(false);
-          return;
-        }
-      }
-
-      // Validation cho cấp bậc và chức vụ bắt buộc (cho tất cả loại trừ DON_VI_HANG_NAM)
-      // Cấp bậc/chức vụ đã được nhập ở bước 3 (Set Titles), kiểm tra trong titleData
-      if (proposalType !== 'DON_VI_HANG_NAM' && selectedPersonnelIds.length > 0) {
-        const missingInfo = titleData.filter(
-          item => !item.cap_bac || !item.chuc_vu
-        );
-        if (missingInfo.length > 0) {
-          const missingNames = missingInfo
-            .map(item => personnelDetails.find(p => p.id === item.personnel_id || p.id === item.personnelId)?.ho_ten)
-            .filter(Boolean)
-            .join(', ');
-          antMessage.error(`Vui lòng nhập đầy đủ cấp bậc và chức vụ cho: ${missingNames}`);
-          setLoading(false);
-          return;
-        }
-      }
-
-      // Validation cho HC_QKQT: Kiểm tra >= 25 năm phục vụ
-      if (proposalType === 'HC_QKQT' && selectedPersonnelIds.length > 0) {
-        try {
-          const promises = selectedPersonnelIds.map(id =>
-            axiosInstance.get(`/api/personnel/${id}`)
-          );
-          const responses = await Promise.all(promises);
-          const personnelData = responses.filter(r => r.data.success).map(r => r.data.data);
-
-          const ineligiblePersonnel: Array<{ ho_ten: string; reason: string }> = [];
-
-          for (const p of personnelData) {
-            if (!p.ngay_nhap_ngu) {
-              ineligiblePersonnel.push({
-                ho_ten: p.ho_ten,
-                reason: 'Chưa cập nhật ngày nhập ngũ',
-              });
-              continue;
-            }
-
-            // Tính số năm phục vụ
-            const ngayNhapNgu = new Date(p.ngay_nhap_ngu);
-            const ngayKetThuc = p.ngay_xuat_ngu ? new Date(p.ngay_xuat_ngu) : new Date();
-
-            let months = (ngayKetThuc.getFullYear() - ngayNhapNgu.getFullYear()) * 12;
-            months += ngayKetThuc.getMonth() - ngayNhapNgu.getMonth();
-            if (ngayKetThuc.getDate() < ngayNhapNgu.getDate()) {
-              months--;
-            }
-            months = Math.max(0, months);
-
-            const years = Math.floor(months / 12);
-
-            // Yêu cầu: >= 25 năm (không phân biệt nam nữ)
-            if (years < 25) {
-              ineligiblePersonnel.push({
-                ho_ten: p.ho_ten,
-                reason: `Chưa đủ 25 năm phục vụ (hiện tại: ${years} năm)`,
-              });
-            }
-          }
-
-          if (ineligiblePersonnel.length > 0) {
-            const names = ineligiblePersonnel.map(p => `${p.ho_ten} (${p.reason})`).join(', ');
-            antMessage.error(
-              `Một số quân nhân chưa đủ điều kiện đề xuất Huy chương Quân kỳ quyết thắng (yêu cầu >= 25 năm): ${names}. Vui lòng cập nhật trước khi đề xuất.`
-            );
-            setLoading(false);
-            return;
-          }
-        } catch (error: any) {
-          console.error('Error validating HC_QKQT:', error);
-          antMessage.error('Lỗi khi kiểm tra thông tin quân nhân');
-          setLoading(false);
-          return;
-        }
-      }
-
-      // Tạo FormData
+      // Tạo FormData để gửi lên server
       const formData = new FormData();
-      formData.append('type', proposalType);
+      formData.append('type', awardType);
       formData.append('nam', String(nam));
 
-      if (proposalType === 'DON_VI_HANG_NAM') {
+      if (awardType === 'DON_VI_HANG_NAM') {
         formData.append('selected_units', JSON.stringify(selectedUnitIds));
       } else {
         formData.append('selected_personnel', JSON.stringify(selectedPersonnelIds));
       }
 
-      // titleData đã có cap_bac và chuc_vu từ bước 3 (Set Titles)
-      // Gửi đúng dữ liệu đã sửa ở bước 3, KHÔNG fallback về personnel (giống khen thưởng đột xuất)
-      // Cấp bậc/chức vụ từ personnel chỉ để điền sẵn ở bước 3, không dùng khi submit
-      formData.append('title_data', JSON.stringify(titleData));
-      console.log('Submitting proposal with title_data:', titleData);
+      formData.append('title_data', JSON.stringify(titleDataWithDecisions));
 
-      // Gửi ghi chú nếu có
-      if (proposalNote.trim()) {
-        formData.append('ghi_chu', proposalNote.trim());
+      if (note.trim()) {
+        formData.append('ghi_chu', note.trim());
       }
 
-      // Upload các file đính kèm (optional, multiple)
+      // Upload các file đính kèm
       if (attachedFiles.length > 0) {
         attachedFiles.forEach(file => {
           if (file.originFileObj) {
@@ -600,32 +344,37 @@ export default function CreateProposalPage() {
         });
       }
 
-      const result = await apiClient.submitProposal(formData);
+      // Gọi API bulk create với validation đầy đủ
+      const result = await apiClient.bulkCreateAwards(formData);
 
-      if (!result.success) {
-        throw new Error(result.message || 'Gửi đề xuất thất bại');
+      if (result.success) {
+        const data = result.data || {};
+        const importedCount = data.importedCount || 0;
+        const errorCount = data.errorCount || 0;
+        
+        const message =
+          importedCount > 0
+            ? `Đã thêm thành công ${importedCount} ${awardType === 'DON_VI_HANG_NAM' ? 'đơn vị' : 'quân nhân'}${
+                errorCount > 0 ? `, ${errorCount} lỗi` : ''
+              }`
+            : 'Thêm khen thưởng thành công!';
+
+        if (errorCount > 0 && data.errors) {
+          antMessage.warning(message);
+          console.error('Lỗi chi tiết:', data.errors);
+        } else {
+          antMessage.success(message);
+        }
+
+        // Reset và quay về trang awards
+        setTimeout(() => {
+          router.push('/admin/awards');
+        }, 1000);
+      } else {
+        throw new Error(result.message || 'Thêm khen thưởng thất bại');
       }
-
-      antMessage.success('Gửi đề xuất thành công! Chờ Quản trị viên phê duyệt.');
-
-      // Reset form
-      setCurrentStep(0);
-      setProposalType('CA_NHAN_HANG_NAM');
-      setNam(new Date().getFullYear()); // Reset về năm hiện tại
-      setSelectedPersonnelIds([]);
-      setSelectedUnitIds([]);
-      setTitleData([]);
-      setAttachedFiles([]);
-      setPersonnelDetails([]);
-      setUnitDetails([]);
-      setProposalNote('');
-
-      // Chuyển về trang danh sách đề xuất sau 1 giây
-      setTimeout(() => {
-        router.push('/manager/proposals');
-      }, 1000);
     } catch (error: any) {
-      antMessage.error(error.message || 'Lỗi khi gửi đề xuất');
+      antMessage.error(error.message || 'Lỗi khi thêm khen thưởng');
     } finally {
       setLoading(false);
     }
@@ -639,19 +388,19 @@ export default function CreateProposalPage() {
           <div>
             <Alert
               message="Bước 1: Chọn loại khen thưởng"
-              description="Vui lòng chọn loại khen thưởng bạn muốn đề xuất"
+              description="Vui lòng chọn loại khen thưởng bạn muốn thêm"
               type="info"
               showIcon
               style={{ marginBottom: 24 }}
             />
             <Radio.Group
-              value={proposalType}
-              onChange={e => setProposalType(e.target.value)}
+              value={awardType}
+              onChange={e => setAwardType(e.target.value)}
               size="large"
               style={{ width: '100%' }}
             >
               <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-                {Object.entries(proposalTypeConfig).map(([key, config]) => (
+                {Object.entries(awardTypeConfig).map(([key, config]) => (
                   <Radio.Button
                     key={key}
                     value={key}
@@ -662,7 +411,7 @@ export default function CreateProposalPage() {
                         <span
                           style={{
                             fontSize: 20,
-                            color: proposalType === key ? '#1890ff' : '#8c8c8c',
+                            color: awardType === key ? '#1890ff' : '#8c8c8c',
                           }}
                         >
                           {config.icon}
@@ -686,7 +435,7 @@ export default function CreateProposalPage() {
         );
 
       case 1: // Step 2: Select Personnel/Units
-        if (proposalType === 'DON_VI_HANG_NAM') {
+        if (awardType === 'DON_VI_HANG_NAM') {
           return (
             <Step2SelectUnits
               selectedUnitIds={selectedUnitIds}
@@ -698,8 +447,7 @@ export default function CreateProposalPage() {
             />
           );
         }
-        // Render component riêng cho từng loại đề xuất
-        switch (proposalType) {
+        switch (awardType) {
           case 'CA_NHAN_HANG_NAM':
             return (
               <Step2SelectPersonnelCaNhanHangNam
@@ -776,7 +524,7 @@ export default function CreateProposalPage() {
           <Step3SetTitles
             selectedPersonnelIds={selectedPersonnelIds}
             selectedUnitIds={selectedUnitIds}
-            proposalType={proposalType}
+            proposalType={awardType as any}
             titleData={titleData}
             onTitleDataChange={setTitleData}
             onPersonnelChange={setSelectedPersonnelIds}
@@ -796,7 +544,6 @@ export default function CreateProposalPage() {
               style={{ marginBottom: 24 }}
             />
 
-            {/* Upload file đính kèm */}
             <Upload.Dragger
               fileList={attachedFiles}
               onChange={({ fileList }) => setAttachedFiles(fileList)}
@@ -816,11 +563,11 @@ export default function CreateProposalPage() {
           </div>
         );
 
-      case 4: // Step 5: Review & Submit
+      case 4: // Step 5: Review (không có nút gửi đề xuất)
         // Merge personnel/unit details with title data
         let reviewTableData: any[] = [];
 
-        if (proposalType === 'DON_VI_HANG_NAM') {
+        if (awardType === 'DON_VI_HANG_NAM') {
           reviewTableData = unitDetails.map(unit => {
             const titleInfo = titleData.find(t => t.don_vi_id === unit.id);
             return {
@@ -829,25 +576,21 @@ export default function CreateProposalPage() {
             };
           });
         } else {
-          // Merge titleData vào reviewTableData
-          // titleData đã có cap_bac và chuc_vu từ bước 3 (đã được sửa hoặc điền sẵn)
-          // Ưu tiên dữ liệu từ titleData, không fallback về personnel details
           reviewTableData = personnelDetails.map(p => {
             const titleInfo = titleData.find(t => String(t.personnel_id) === String(p.id));
             return {
               ...p,
               ...titleInfo,
-              // Đảm bảo cap_bac và chuc_vu từ titleData được ưu tiên (giống khen thưởng đột xuất)
               cap_bac: titleInfo?.cap_bac || '',
               chuc_vu: titleInfo?.chuc_vu || '',
             };
           });
         }
 
-        // Build table columns based on proposal type
+        // Build table columns (tương tự proposal)
         const reviewColumns: ColumnsType<any> = [];
 
-        if (proposalType === 'DON_VI_HANG_NAM') {
+        if (awardType === 'DON_VI_HANG_NAM') {
           reviewColumns.push(
             {
               title: 'STT',
@@ -913,9 +656,6 @@ export default function CreateProposalPage() {
               width: 200,
               align: 'center',
               render: (_, record: any) => {
-                // Hiển thị cấp bậc/chức vụ từ titleData (đã được sửa ở bước 3)
-                // KHÔNG fallback về personnel details (giống khen thưởng đột xuất)
-                // Cấp bậc/chức vụ từ personnel chỉ để điền sẵn ở bước 3, không dùng ở bước 5
                 const capBac = record.cap_bac;
                 const chucVu = record.chuc_vu;
                 return (
@@ -931,99 +671,10 @@ export default function CreateProposalPage() {
               },
             }
           );
-
-          // Thêm cột Tổng tháng cho đề xuất Niên hạn
-          if (
-            proposalType === 'NIEN_HAN' ||
-            proposalType === 'HC_QKQT' ||
-            proposalType === 'KNC_VSNXD_QDNDVN'
-          ) {
-            // Hàm tính tổng số tháng
-            const calculateTotalMonths = (
-              ngayNhapNgu: string | Date | null | undefined,
-              ngayXuatNgu: string | Date | null | undefined
-            ) => {
-              if (!ngayNhapNgu) return null;
-
-              try {
-                const startDate =
-                  typeof ngayNhapNgu === 'string' ? new Date(ngayNhapNgu) : ngayNhapNgu;
-                const endDate = ngayXuatNgu
-                  ? typeof ngayXuatNgu === 'string'
-                    ? new Date(ngayXuatNgu)
-                    : ngayXuatNgu
-                  : new Date();
-
-                if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-                  return null;
-                }
-
-                let years = endDate.getFullYear() - startDate.getFullYear();
-                let months = endDate.getMonth() - startDate.getMonth();
-                let days = endDate.getDate() - startDate.getDate();
-
-                if (days < 0) {
-                  months -= 1;
-                  const lastDayOfPrevMonth = new Date(
-                    endDate.getFullYear(),
-                    endDate.getMonth(),
-                    0
-                  ).getDate();
-                  days += lastDayOfPrevMonth;
-                }
-
-                if (months < 0) {
-                  years -= 1;
-                  months += 12;
-                }
-
-                const totalMonths = years * 12 + months;
-                const totalYears = Math.floor(totalMonths / 12);
-                const remainingMonths = totalMonths % 12;
-
-                return {
-                  years: totalYears,
-                  months: remainingMonths,
-                  totalMonths: totalMonths,
-                };
-              } catch {
-                return null;
-              }
-            };
-
-            reviewColumns.push({
-              title: 'Tổng tháng',
-              key: 'tong_thang',
-              width: 150,
-              align: 'center' as const,
-              render: (_: any, record: any) => {
-                const result = calculateTotalMonths(record.ngay_nhap_ngu, record.ngay_xuat_ngu);
-                if (!result) return <Text type="secondary">-</Text>;
-
-                // Hiển thị năm ở trên, tháng nhỏ bên dưới
-                if (result.years > 0 && result.months > 0) {
-                  return (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      <Text strong>{result.years} năm</Text>
-                      <Text type="secondary" style={{ fontSize: '12px', lineHeight: '1.2' }}>
-                        {result.months} tháng
-                      </Text>
-                    </div>
-                  );
-                } else if (result.years > 0) {
-                  return <Text strong>{result.years} năm</Text>;
-                } else if (result.totalMonths > 0) {
-                  return <Text strong>{result.totalMonths} tháng</Text>;
-                } else {
-                  return <Text type="secondary">0 tháng</Text>;
-                }
-              },
-            });
-          }
         }
 
-        // Add title/achievement columns based on type
-        if (proposalType === 'NCKH') {
+        // Add title/achievement columns
+        if (awardType === 'NCKH') {
           reviewColumns.push(
             {
               title: 'Loại',
@@ -1054,19 +705,16 @@ export default function CreateProposalPage() {
           );
         } else {
           reviewColumns.push({
-            title: 'Danh hiệu đề xuất',
+            title: 'Danh hiệu',
             dataIndex: 'danh_hieu',
             key: 'danh_hieu',
             width: 250,
             align: 'center',
             render: (_, record) => {
-              // Lấy danh_hieu trực tiếp từ titleData để đảm bảo chính xác
-              console.log('Record in review table:', titleData);
               const titleInfo = titleData.find(
                 t =>
                   String(t.personnel_id) === String(record.id) ||
-                  String(t.don_vi_id) === String(record.id) ||
-                  String(t.personnel_id) === String(record.id)
+                  String(t.don_vi_id) === String(record.id)
               );
               const danh_hieu = titleInfo?.danh_hieu;
               const fullName = getDanhHieuName(danh_hieu);
@@ -1078,28 +726,28 @@ export default function CreateProposalPage() {
         return (
           <div>
             <Alert
-              message="Bước 5: Xem lại thông tin và gửi đề xuất"
-              description="Kiểm tra kỹ thông tin trước khi gửi"
+              message="Bước 5: Xem lại thông tin"
+              description="Kiểm tra kỹ thông tin trước khi tiếp tục"
               type="success"
               showIcon
               style={{ marginBottom: 24 }}
             />
 
-            <Card title="Tóm tắt đề xuất" style={{ marginBottom: 16 }}>
+            <Card title="Tóm tắt" style={{ marginBottom: 16 }}>
               <Descriptions bordered column={2}>
                 <Descriptions.Item label="Loại khen thưởng" span={2}>
-                  <Tag icon={proposalTypeConfig[proposalType].icon}>
-                    {proposalTypeConfig[proposalType].label}
+                  <Tag icon={awardTypeConfig[awardType].icon}>
+                    {awardTypeConfig[awardType].label}
                   </Tag>
                 </Descriptions.Item>
-                <Descriptions.Item label="Năm đề xuất">
+                <Descriptions.Item label="Năm">
                   <Text strong>{nam}</Text>
                 </Descriptions.Item>
                 <Descriptions.Item
-                  label={proposalType === 'DON_VI_HANG_NAM' ? 'Số đơn vị' : 'Số quân nhân'}
+                  label={awardType === 'DON_VI_HANG_NAM' ? 'Số đơn vị' : 'Số quân nhân'}
                 >
                   <Text strong>
-                    {proposalType === 'DON_VI_HANG_NAM'
+                    {awardType === 'DON_VI_HANG_NAM'
                       ? selectedUnitIds.length
                       : selectedPersonnelIds.length}
                   </Text>
@@ -1114,7 +762,6 @@ export default function CreateProposalPage() {
               </Descriptions>
             </Card>
 
-            {/* File đính kèm */}
             {attachedFiles.length > 0 && (
               <Card title="File đính kèm" style={{ marginTop: 16, marginBottom: 16 }}>
                 <Space direction="vertical" style={{ width: '100%' }} size="middle">
@@ -1167,59 +814,9 @@ export default function CreateProposalPage() {
 
             <Card
               title={
-                <div style={{ display: 'flex', alignItems: 'baseline' }}>
-                  <span>
-                    {proposalType === 'DON_VI_HANG_NAM'
-                      ? 'Danh sách đơn vị và danh hiệu'
-                      : 'Danh sách quân nhân và danh hiệu'}
-                  </span>
-                  {(proposalType === 'CA_NHAN_HANG_NAM' || proposalType === 'DON_VI_HANG_NAM') &&
-                    reviewTableData.length > 0 &&
-                    (() => {
-                      // Chỉ tính cho CSTT, CSTDCS, DVTT, DVQT
-                      const allowedTitles = ['CSTT', 'CSTDCS', 'ĐVTT', 'ĐVQT'];
-                      const titleCounts: Record<string, number> = {};
-
-                      reviewTableData.forEach((item: any) => {
-                        const title = item.danh_hieu;
-                        if (title && allowedTitles.includes(title)) {
-                          titleCounts[title] = (titleCounts[title] || 0) + 1;
-                        }
-                      });
-
-                      if (Object.keys(titleCounts).length === 0) return null;
-
-                      const total = Object.values(titleCounts).reduce(
-                        (sum, count) => sum + count,
-                        0
-                      );
-                      const percentages = Object.entries(titleCounts).map(([title, count]) => ({
-                        title,
-                        count,
-                        percentage: ((count / total) * 100).toFixed(1),
-                      }));
-
-                      return (
-                        <span
-                          style={{
-                            fontSize: '14px',
-                            marginLeft: '12px',
-                            color: '#1890ff',
-                            fontWeight: 600,
-                          }}
-                        >
-                          (
-                          {percentages.map((item, idx) => (
-                            <span key={item.title}>
-                              {item.title}: {item.count} ({item.percentage}%)
-                              {idx < percentages.length - 1 ? ', ' : ''}
-                            </span>
-                          ))}
-                          )
-                        </span>
-                      );
-                    })()}
-                </div>
+                awardType === 'DON_VI_HANG_NAM'
+                  ? 'Danh sách đơn vị và danh hiệu'
+                  : 'Danh sách quân nhân và danh hiệu'
               }
             >
               <Table
@@ -1229,24 +826,13 @@ export default function CreateProposalPage() {
                 pagination={false}
                 size="small"
                 bordered
-                scroll={{
-                  x:
-                    proposalType === 'NCKH'
-                      ? 1100
-                      : proposalType === 'NIEN_HAN' ||
-                        proposalType === 'HC_QKQT' ||
-                        proposalType === 'KNC_VSNXD_QDNDVN'
-                      ? 1150
-                      : 1000,
-                }}
+                scroll={{ x: 1000 }}
                 locale={{
                   emptyText: 'Không có dữ liệu',
                 }}
               />
             </Card>
 
-
-            {/* Ghi chú */}
             <Card
               title={
                 <Space>
@@ -1257,12 +843,227 @@ export default function CreateProposalPage() {
               style={{ marginTop: 16 }}
             >
               <Input.TextArea
-                placeholder="Nhập ghi chú cho đề xuất này (không bắt buộc)..."
-                value={proposalNote}
-                onChange={e => setProposalNote(e.target.value)}
+                placeholder="Nhập ghi chú (không bắt buộc)..."
+                value={note}
+                onChange={e => setNote(e.target.value)}
                 rows={3}
                 maxLength={1000}
                 showCount
+              />
+            </Card>
+          </div>
+        );
+
+      case 5: // Step 6: Thêm số quyết định
+        const decisionTableData = awardType === 'DON_VI_HANG_NAM' 
+          ? unitDetails 
+          : personnelDetails;
+
+        const decisionColumns: ColumnsType<any> = [
+          {
+            title: 'STT',
+            key: 'index',
+            width: 60,
+            align: 'center',
+            render: (_, __, index) => index + 1,
+          },
+          {
+            title: awardType === 'DON_VI_HANG_NAM' ? 'Tên đơn vị' : 'Họ và tên',
+            dataIndex: awardType === 'DON_VI_HANG_NAM' ? 'ten_don_vi' : 'ho_ten',
+            key: awardType === 'DON_VI_HANG_NAM' ? 'ten_don_vi' : 'ho_ten',
+            width: 200,
+            align: 'center',
+            render: (text: string) => <Text strong>{text}</Text>,
+          },
+          {
+            title: 'Số quyết định',
+            key: 'so_quyet_dinh',
+            width: 300,
+            align: 'center',
+            render: (_, record) => {
+              const id = record.id;
+              const decisionInfo = decisionDataMap[id];
+              const soQuyetDinh = decisionInfo?.so_quyet_dinh;
+
+              return (
+                <Space>
+                  {soQuyetDinh ? (
+                    <Tag color="green" closable onClose={() => {
+                      const newMap = { ...decisionDataMap };
+                      delete newMap[id];
+                      setDecisionDataMap(newMap);
+                    }}>
+                      {soQuyetDinh}
+                    </Tag>
+                  ) : (
+                    <Text type="secondary">Chưa có số quyết định</Text>
+                  )}
+                  <Button
+                    size="small"
+                    type="link"
+                    onClick={() => {
+                      setSelectedPersonnelForDecision([id]);
+                      setDecisionModalVisible(true);
+                    }}
+                  >
+                    {soQuyetDinh ? 'Sửa' : 'Thêm'}
+                  </Button>
+                </Space>
+              );
+            },
+          },
+        ];
+
+        return (
+          <div>
+            <Alert
+              message="Bước 6: Thêm số quyết định"
+              description="Thêm số quyết định cho từng quân nhân/đơn vị (tùy chọn)"
+              type="info"
+              showIcon
+              style={{ marginBottom: 24 }}
+            />
+
+            <Card
+              title="Danh sách quân nhân/đơn vị"
+              extra={
+                <Button
+                  type="primary"
+                  onClick={() => {
+                    const allIds = awardType === 'DON_VI_HANG_NAM'
+                      ? selectedUnitIds
+                      : selectedPersonnelIds;
+                    setSelectedPersonnelForDecision(allIds);
+                    setDecisionModalVisible(true);
+                  }}
+                >
+                  Thêm số quyết định cho tất cả
+                </Button>
+              }
+            >
+              <Table
+                columns={decisionColumns}
+                dataSource={decisionTableData}
+                rowKey="id"
+                pagination={false}
+                size="small"
+                bordered
+              />
+            </Card>
+          </div>
+        );
+
+      case 6: // Step 7: Final review before submit
+        const finalTableData = awardType === 'DON_VI_HANG_NAM' 
+          ? unitDetails 
+          : personnelDetails;
+
+        const finalColumns: ColumnsType<any> = [
+          {
+            title: 'STT',
+            key: 'index',
+            width: 60,
+            align: 'center',
+            render: (_, __, index) => index + 1,
+          },
+          {
+            title: awardType === 'DON_VI_HANG_NAM' ? 'Tên đơn vị' : 'Họ và tên',
+            dataIndex: awardType === 'DON_VI_HANG_NAM' ? 'ten_don_vi' : 'ho_ten',
+            key: awardType === 'DON_VI_HANG_NAM' ? 'ten_don_vi' : 'ho_ten',
+            width: 200,
+            align: 'center',
+            render: (text: string) => <Text strong>{text}</Text>,
+          },
+        ];
+
+        // Add columns based on award type
+        if (awardType === 'NCKH') {
+          finalColumns.push(
+            {
+              title: 'Loại',
+              dataIndex: 'loai',
+              key: 'loai',
+              width: 150,
+              align: 'center',
+              render: (_, record) => {
+                const titleInfo = titleData.find(
+                  t => String(t.personnel_id) === String(record.id)
+                );
+                const loai = titleInfo?.loai;
+                return (
+                  <Tag color={loai === 'NCKH' ? 'blue' : 'green'}>
+                    {loai === 'NCKH' ? 'Đề tài khoa học' : 'Sáng kiến khoa học'}
+                  </Tag>
+                );
+              },
+            },
+            {
+              title: 'Mô tả',
+              key: 'mo_ta',
+              width: 300,
+              align: 'center',
+              render: (_, record) => {
+                const titleInfo = titleData.find(
+                  t => String(t.personnel_id) === String(record.id)
+                );
+                return <Text>{titleInfo?.mo_ta || '-'}</Text>;
+              },
+            }
+          );
+        } else {
+          finalColumns.push({
+            title: 'Danh hiệu',
+            key: 'danh_hieu',
+            width: 250,
+            align: 'center',
+            render: (_, record) => {
+              const titleInfo = titleData.find(
+                t =>
+                  String(t.personnel_id) === String(record.id) ||
+                  String(t.don_vi_id) === String(record.id)
+              );
+              const danh_hieu = titleInfo?.danh_hieu;
+              const fullName = getDanhHieuName(danh_hieu);
+              return <Text>{fullName || '-'}</Text>;
+            },
+          });
+        }
+
+        finalColumns.push({
+          title: 'Số quyết định',
+          key: 'so_quyet_dinh',
+          width: 200,
+          align: 'center',
+          render: (_, record) => {
+            const id = record.id;
+            const decisionInfo = decisionDataMap[id];
+            return decisionInfo?.so_quyet_dinh ? (
+              <Tag color="green">{decisionInfo.so_quyet_dinh}</Tag>
+            ) : (
+              <Text type="secondary">Chưa có</Text>
+            );
+          },
+        });
+
+        return (
+          <div>
+            <Alert
+              message="Bước 7: Xác nhận và thêm khen thưởng"
+              description="Kiểm tra lại thông tin trước khi thêm khen thưởng vào hệ thống"
+              type="warning"
+              showIcon
+              style={{ marginBottom: 24 }}
+            />
+
+            <Card title="Danh sách khen thưởng sẽ được thêm">
+              <Table
+                columns={finalColumns}
+                dataSource={finalTableData}
+                rowKey="id"
+                pagination={false}
+                size="small"
+                bordered
+                scroll={{ x: 1000 }}
               />
             </Card>
           </div>
@@ -1273,6 +1074,22 @@ export default function CreateProposalPage() {
     }
   };
 
+  // Handle decision modal success
+  const handleDecisionSuccess = (decision: any, isNewDecision: boolean) => {
+    // Áp dụng số quyết định cho tất cả quân nhân/đơn vị đã chọn
+    const newMap = { ...decisionDataMap };
+    selectedPersonnelForDecision.forEach(id => {
+      newMap[id] = {
+        so_quyet_dinh: decision.so_quyet_dinh,
+        decision: decision,
+      };
+    });
+    setDecisionDataMap(newMap);
+    setDecisionModalVisible(false);
+    setSelectedPersonnelForDecision([]);
+    antMessage.success('Đã thêm số quyết định thành công');
+  };
+
   return (
     <div style={{ padding: '24px' }}>
       {/* Breadcrumb */}
@@ -1281,13 +1098,13 @@ export default function CreateProposalPage() {
         items={[
           {
             title: (
-              <Link href="/manager/dashboard">
+              <Link href="/admin/dashboard">
                 <HomeOutlined />
               </Link>
             ),
           },
           {
-            title: 'Tạo Danh Sách Đề Xuất Khen Thưởng',
+            title: 'Thêm khen thưởng đồng loạt',
           },
         ]}
       />
@@ -1299,23 +1116,21 @@ export default function CreateProposalPage() {
             icon={<ArrowLeftOutlined />}
             onClick={() => {
               if (currentStep === 0) {
-                // Nếu đang ở bước chọn loại đề xuất, quay về trang danh sách
-                router.push('/manager/proposals');
+                router.push('/admin/awards');
               } else {
-                // Nếu đang ở bước khác, quay lại bước chọn loại đề xuất
                 setCurrentStep(0);
               }
             }}
             style={{ marginBottom: 0 }}
           >
-            {currentStep === 0 ? 'Quay lại danh sách' : 'Quay lại chọn loại đề xuất'}
+            {currentStep === 0 ? 'Quay lại' : 'Quay lại chọn loại'}
           </Button>
         </div>
         <Title level={2} style={{ marginBottom: 8 }}>
-          Tạo Danh Sách Đề Xuất Khen Thưởng
+          Thêm khen thưởng đồng loạt
         </Title>
         <Paragraph type="secondary">
-          Theo dõi các bước bên dưới để hoàn thành đề xuất khen thưởng
+          Theo dõi các bước bên dưới để thêm khen thưởng vào hệ thống
         </Paragraph>
       </div>
 
@@ -1351,12 +1166,23 @@ export default function CreateProposalPage() {
                 loading={loading}
                 icon={<CheckCircleOutlined />}
               >
-                Gửi đề xuất
+                Thêm khen thưởng
               </Button>
             )}
           </div>
         </div>
       </Card>
+
+      {/* Decision Modal */}
+      <DecisionModal
+        visible={decisionModalVisible}
+        onClose={() => {
+          setDecisionModalVisible(false);
+          setSelectedPersonnelForDecision([]);
+        }}
+        onSuccess={handleDecisionSuccess}
+        loaiKhenThuong={awardType}
+      />
     </div>
   );
 }

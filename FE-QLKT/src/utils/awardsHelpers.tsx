@@ -1,26 +1,14 @@
 import { Typography } from 'antd';
 import type { CSSProperties } from 'react';
+import {
+  DANH_HIEU_MAP,
+  getLoaiKhenThuongByDanhHieu,
+} from '@/constants/danhHieu.constants';
 
 const { Text } = Typography;
 
-// Constants
-export const DANH_HIEU_MAP: Record<string, string> = {
-  CSTDCS: 'Chiến sĩ thi đua cơ sở',
-  CSTT: 'Chiến sĩ tiên tiến',
-  BKBQP: 'Bằng khen của Bộ trưởng BQP',
-  CSTDTQ: 'Chiến sĩ thi đua toàn quân',
-  ĐVQT: 'Đơn vị Quyết thắng',
-  ĐVTT: 'Đơn vị Tiên tiến',
-  BKTTCP: 'Bằng khen Thủ tướng Chính phủ',
-  HCCSVV_HANG_BA: 'Huy chương Chiến sĩ Vẻ vang Hạng Ba',
-  HCCSVV_HANG_NHI: 'Huy chương Chiến sĩ Vẻ vang Hạng Nhì',
-  HCCSVV_HANG_NHAT: 'Huy chương Chiến sĩ Vẻ vang Hạng Nhất',
-  HCBVTQ_HANG_BA: 'Huân chương Bảo vệ Tổ quốc Hạng Ba',
-  HCBVTQ_HANG_NHI: 'Huân chương Bảo vệ Tổ quốc Hạng Nhì',
-  HCBVTQ_HANG_NHAT: 'Huân chương Bảo vệ Tổ quốc Hạng Nhất',
-  HC_QKQT: 'Huy chương quân kỳ Quyết thắng',
-  KNC_VSNXD_QDNDVN: 'Kỷ niệm chương Vì sự nghiệp xây dựng QĐNDVN',
-};
+// Re-export DANH_HIEU_MAP for backward compatibility
+export { DANH_HIEU_MAP };
 
 export const COLUMN_STYLES: {
   container: CSSProperties;
@@ -134,12 +122,10 @@ export const renderAnnualAwards = (
 };
 
 // Determine loại khen thưởng based on danh_hieu
+// Re-export from constants for backward compatibility
 export const getLoaiKhenThuong = (danhHieu: string | null): string => {
   if (!danhHieu) return '-';
-  if (danhHieu.startsWith('HCBVTQ')) return 'Cống hiến';
-  if (danhHieu.startsWith('HCCSVV')) return 'Niên hạn';
-  if (['CSTDCS', 'CSTT', 'BKBQP', 'CSTDTQ'].includes(danhHieu)) return 'Cá nhân Hằng năm';
-  if (['ĐVQT', 'ĐVTT', 'BKTTCP'].includes(danhHieu)) return 'Đơn vị Hằng năm';
-  return '-';
+  const result = getLoaiKhenThuongByDanhHieu(danhHieu);
+  return result === 'Chưa xác định' ? '-' : result;
 };
 

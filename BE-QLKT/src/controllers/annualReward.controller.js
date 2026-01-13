@@ -243,14 +243,69 @@ class AnnualRewardController {
   }
 
   /**
+   * POST /api/annual-rewards/check
+   * Kiểm tra quân nhân đã có khen thưởng hoặc đề xuất cho năm đó chưa
+   * Body: { personnel_ids: [1,2,3], nam: 2024, danh_hieu: 'CSTDCS' }
+   */
+  async checkAnnualRewards(req, res) {
+    try {
+      let { personnel_ids, nam, danh_hieu } = req.body;
+
+      // Lọc bỏ null/undefined (giữ nguyên string IDs vì Prisma dùng String cho ID)
+      if (personnel_ids && Array.isArray(personnel_ids)) {
+        personnel_ids = personnel_ids.filter(id => {
+          const isValid = id !== null && id !== undefined && id !== '' && typeof id === 'string';
+          return isValid;
+        });
+      }
+
+      if (!personnel_ids || !Array.isArray(personnel_ids) || personnel_ids.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Vui lòng cung cấp danh sách quân nhân hợp lệ',
+        });
+      }
+
+      if (!nam || !danh_hieu) {
+        return res.status(400).json({
+          success: false,
+          message: 'Vui lòng cung cấp năm và danh hiệu',
+        });
+      }
+
+      const result = await annualRewardService.checkAnnualRewards(personnel_ids, nam, danh_hieu);
+
+      return res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      console.error('Check annual rewards error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Lỗi khi kiểm tra khen thưởng',
+      });
+    }
+  }
+
+  /**
    * POST /api/annual-rewards/bulk
    * Thêm danh hiệu hằng năm đồng loạt cho nhiều quân nhân
-   * Body: { personnel_ids: [1,2,3], nam: 2024, danh_hieu: 'CSTDCS', so_quyet_dinh: '123/QĐ' }
-   * File: file_quyet_dinh (PDF, optional)
+   * Body: { personnel_ids: [1,2,3], nam: 2024, danh_hieu: 'CSTDCS', so_quyet_dinh: '123/QĐ', cap_bac: 'Thiếu tá', chuc_vu: 'Trưởng phòng' }
+   * File: file_dinh_kem (optional)
    */
   async bulkCreateAnnualRewards(req, res) {
     try {
-      const { personnel_ids, nam, danh_hieu, cap_bac, chuc_vu, ghi_chu, so_quyet_dinh } = req.body;
+      const {
+        personnel_ids,
+        personnel_rewards_data,
+        nam,
+        danh_hieu,
+        ghi_chu,
+        so_quyet_dinh,
+        cap_bac,
+        chuc_vu,
+      } = req.body;
 
       // Parse personnel_ids nếu là string
       let parsedPersonnelIds = personnel_ids;
@@ -283,18 +338,26 @@ class AnnualRewardController {
         });
       }
 
-      // Lấy file path nếu có upload
-      const file_quyet_dinh = req.file ? req.file.filename : null;
+      // Parse personnel_rewards_data nếu có
+      let parsedPersonnelRewardsData = personnel_rewards_data;
+      if (typeof personnel_rewards_data === 'string') {
+        try {
+          parsedPersonnelRewardsData = JSON.parse(personnel_rewards_data);
+        } catch (e) {
+          // Nếu parse lỗi, để null
+          parsedPersonnelRewardsData = null;
+        }
+      }
 
       const result = await annualRewardService.bulkCreateAnnualRewards({
         personnel_ids: parsedPersonnelIds,
+        personnel_rewards_data: parsedPersonnelRewardsData,
         nam,
         danh_hieu,
-        cap_bac,
-        chuc_vu,
         ghi_chu,
         so_quyet_dinh,
-        file_quyet_dinh,
+        cap_bac,
+        chuc_vu,
       });
 
       return res.status(201).json({

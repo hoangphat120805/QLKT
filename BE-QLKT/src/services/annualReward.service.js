@@ -454,8 +454,11 @@ class AnnualRewardService {
               'APPROVED'
             );
             if (duplicateCheck.isDuplicate) {
+              const { getDanhHieuName } = require('../constants/danhHieu.constants');
               errors.push(
-                `Dòng ${rowNumber}: ${duplicateCheck.message} (Quân nhân: ${ho_ten}, Năm: ${nam}, Danh hiệu: ${danh_hieu})`
+                `Dòng ${rowNumber}: ${
+                  duplicateCheck.message
+                } (Quân nhân: ${ho_ten}, Năm: ${nam}, Danh hiệu: ${getDanhHieuName(danh_hieu)})`
               );
               continue;
             }
@@ -540,23 +543,131 @@ class AnnualRewardService {
   }
 
   /**
+   * Kiểm tra quân nhân đã có khen thưởng hoặc đề xuất cho năm đó chưa
+   */
+  async checkAnnualRewards(personnelIds, nam, danhHieu) {
+    try {
+      console.log('🔍 [checkAnnualRewards] Service called with:');
+      console.log('  - personnelIds:', personnelIds);
+      console.log('  - personnelIds type:', typeof personnelIds);
+      console.log('  - Is array:', Array.isArray(personnelIds));
+      console.log('  - nam:', nam);
+      console.log('  - danhHieu:', danhHieu);
+
+      const results = [];
+
+      for (const personnelId of personnelIds) {
+        console.log(
+          `🔍 [checkAnnualRewards] Processing personnelId: ${personnelId} (${typeof personnelId})`
+        );
+        // Chuyển đổi personnelId sang string nếu cần
+        const personnelIdStr = String(personnelId);
+
+        if (!personnelIdStr) {
+          continue;
+        }
+
+        const result = {
+          personnel_id: personnelId,
+          has_reward: false,
+          has_proposal: false,
+          reward: null,
+          proposal: null,
+        };
+
+        // Kiểm tra đã có khen thưởng cho năm này chưa
+        const existingReward = await prisma.danhHieuHangNam.findFirst({
+          where: {
+            quan_nhan_id: personnelIdStr,
+            nam: parseInt(nam),
+          },
+        });
+
+        if (existingReward) {
+          result.has_reward = true;
+          result.reward = {
+            id: existingReward.id,
+            nam: existingReward.nam,
+            danh_hieu: existingReward.danh_hieu,
+            nhan_bkbqp: existingReward.nhan_bkbqp,
+            nhan_cstdtq: existingReward.nhan_cstdtq,
+            nhan_bkttcp: existingReward.nhan_bkttcp,
+          };
+        }
+
+        // Kiểm tra có đề xuất đang chờ hoặc đã duyệt cho năm này không
+        const proposals = await prisma.bangDeXuat.findMany({
+          where: {
+            loai_de_xuat: 'CA_NHAN_HANG_NAM',
+            nam: parseInt(nam),
+            status: {
+              in: ['PENDING', 'APPROVED'],
+            },
+          },
+          select: {
+            id: true,
+            nam: true,
+            status: true,
+            data_danh_hieu: true,
+          },
+        });
+
+        // Kiểm tra xem quân nhân có trong đề xuất nào không
+        for (const proposal of proposals) {
+          if (proposal.data_danh_hieu) {
+            const dataList = Array.isArray(proposal.data_danh_hieu) ? proposal.data_danh_hieu : [];
+
+            const found = dataList.some(
+              item => String(item.personnel_id) === personnelIdStr && item.danh_hieu === danhHieu
+            );
+
+            if (found) {
+              result.has_proposal = true;
+              result.proposal = {
+                id: proposal.id,
+                nam: proposal.nam,
+                status: proposal.status,
+              };
+              break;
+            }
+          }
+        }
+
+        results.push(result);
+      }
+
+      return {
+        results,
+        summary: {
+          total: personnelIds.length,
+          has_reward: results.filter(r => r.has_reward).length,
+          has_proposal: results.filter(r => r.has_proposal).length,
+          can_add: results.filter(r => !r.has_reward && !r.has_proposal).length,
+        },
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
    * Thêm danh hiệu đồng loạt cho nhiều quân nhân
    */
   async bulkCreateAnnualRewards(data) {
     try {
       const {
         personnel_ids,
+        personnel_rewards_data, // Mảng chứa thông tin riêng cho từng quân nhân
         nam,
         danh_hieu,
-        cap_bac,
-        chuc_vu,
         ghi_chu,
-        so_quyet_dinh,
-        file_quyet_dinh,
+        so_quyet_dinh, // Giữ lại để tương thích ngược
+        cap_bac, // Giữ lại để tương thích ngược
+        chuc_vu, // Giữ lại để tương thích ngược
       } = data;
 
-      // Validate danh hiệu
-      const validDanhHieu = ['CSTDCS', 'CSTT', 'KHONG_DAT'];
+      // Validate danh hiệu - mở rộng để hỗ trợ tất cả các loại
+      const validDanhHieu = ['CSTDCS', 'CSTT', 'BKBQP', 'CSTDTQ', 'BKTTCP'];
       if (!validDanhHieu.includes(danh_hieu)) {
         throw new Error('Danh hiệu không hợp lệ. Danh hiệu hợp lệ: ' + validDanhHieu.join(', '));
       }
@@ -565,11 +676,38 @@ class AnnualRewardService {
       const errors = [];
       const skipped = [];
 
+      // Tạo map từ personnel_rewards_data để tra cứu nhanh
+      const personnelDataMap = {};
+      if (personnel_rewards_data && Array.isArray(personnel_rewards_data)) {
+        personnel_rewards_data.forEach(item => {
+          if (item.personnel_id) {
+            personnelDataMap[item.personnel_id] = item;
+          }
+        });
+      }
+
       for (const personnelId of personnel_ids) {
         try {
+          // Chuyển đổi personnelId sang string nếu cần
+          const personnelIdStr = String(personnelId);
+
+          if (!personnelIdStr) {
+            errors.push({
+              personnelId,
+              error: 'ID quân nhân không hợp lệ',
+            });
+            continue;
+          }
+
+          // Lấy thông tin riêng cho quân nhân này (ưu tiên personnel_rewards_data)
+          const personnelData = personnelDataMap[personnelIdStr] || {};
+          const individualSoQuyetDinh = personnelData.so_quyet_dinh || so_quyet_dinh;
+          const individualCapBac = personnelData.cap_bac || cap_bac;
+          const individualChucVu = personnelData.chuc_vu || chuc_vu;
+
           // Kiểm tra quân nhân có tồn tại không
           const personnel = await prisma.quanNhan.findUnique({
-            where: { id: personnelId },
+            where: { id: personnelIdStr },
           });
 
           if (!personnel) {
@@ -583,59 +721,128 @@ class AnnualRewardService {
           // Kiểm tra đã có danh hiệu cho năm này chưa
           const existingReward = await prisma.danhHieuHangNam.findFirst({
             where: {
-              quan_nhan_id: personnelId,
+              quan_nhan_id: personnelIdStr,
               nam: parseInt(nam),
             },
           });
 
-          if (existingReward) {
-            skipped.push({
-              personnelId,
-              reason: `Đã có danh hiệu cho năm ${nam}`,
-            });
-            continue;
+          // Xử lý danh hiệu: CSTDCS/CSTT lưu vào trường danh_hieu, BKBQP/CSTDTQ/BKTTCP lưu vào boolean fields
+          let finalDanhHieu = null;
+          let nhanBKBQP = false;
+          let nhanCSTDTQ = false;
+          let nhanBKTTCP = false;
+
+          if (danh_hieu === 'CSTDCS' || danh_hieu === 'CSTT') {
+            finalDanhHieu = danh_hieu;
+          } else if (danh_hieu === 'BKBQP') {
+            nhanBKBQP = true;
+          } else if (danh_hieu === 'CSTDTQ') {
+            nhanCSTDTQ = true;
+          } else if (danh_hieu === 'BKTTCP') {
+            nhanBKTTCP = true;
           }
 
-          // Tạo bản ghi mới (KHONG_DAT = null trong DB)
-          const finalDanhHieu = danh_hieu === 'KHONG_DAT' ? null : danh_hieu;
+          let rewardRecord;
 
-          const newReward = await prisma.danhHieuHangNam.create({
-            data: {
-              quan_nhan_id: personnelId,
-              nam: parseInt(nam),
-              danh_hieu: finalDanhHieu,
-              cap_bac: cap_bac || null,
-              chuc_vu: chuc_vu || null,
-              ghi_chu: ghi_chu || null,
-              so_quyet_dinh: so_quyet_dinh || null,
-              file_quyet_dinh: file_quyet_dinh || null,
-              nhan_bkbqp: false,
-              so_quyet_dinh_bkbqp: null,
-              nhan_cstdtq: false,
-              so_quyet_dinh_cstdtq: null,
-              nhan_bkttcp: false,
-              so_quyet_dinh_bkttcp: null,
-            },
-          });
+          if (existingReward) {
+            // Nếu đã có bản ghi, cập nhật thêm các trường boolean nếu chọn BKBQP/CSTDTQ/BKTTCP
+            if (danh_hieu === 'BKBQP' || danh_hieu === 'CSTDTQ' || danh_hieu === 'BKTTCP') {
+              // Cập nhật các trường boolean
+              const updateData = {};
+              if (danh_hieu === 'BKBQP') {
+                updateData.nhan_bkbqp = true;
+              } else if (danh_hieu === 'CSTDTQ') {
+                updateData.nhan_cstdtq = true;
+              } else if (danh_hieu === 'BKTTCP') {
+                updateData.nhan_bkttcp = true;
+              }
 
-          created.push(newReward);
+              // Cập nhật các trường khác nếu có
+              if (individualCapBac) updateData.cap_bac = individualCapBac;
+              if (individualChucVu) updateData.chuc_vu = individualChucVu;
+              if (individualSoQuyetDinh) updateData.so_quyet_dinh = individualSoQuyetDinh;
+              if (ghi_chu) updateData.ghi_chu = ghi_chu;
+
+              rewardRecord = await prisma.danhHieuHangNam.update({
+                where: { id: existingReward.id },
+                data: updateData,
+              });
+            } else {
+              // Nếu chọn CSTDCS/CSTT mà đã có bản ghi thì bỏ qua
+              skipped.push({
+                personnelId,
+                reason: `Đã có danh hiệu cho năm ${nam}`,
+              });
+              continue;
+            }
+          } else {
+            // Tạo bản ghi mới
+            console.log(
+              `✅ [bulkCreateAnnualRewards] Tạo bản ghi mới cho quân nhân ${personnelIdStr}:`,
+              {
+                nam: parseInt(nam),
+                danh_hieu: finalDanhHieu,
+                cap_bac: individualCapBac,
+                chuc_vu: individualChucVu,
+                so_quyet_dinh: individualSoQuyetDinh,
+              }
+            );
+
+            rewardRecord = await prisma.danhHieuHangNam.create({
+              data: {
+                quan_nhan_id: personnelIdStr,
+                nam: parseInt(nam),
+                danh_hieu: finalDanhHieu,
+                cap_bac: individualCapBac || null,
+                chuc_vu: individualChucVu || null,
+                so_quyet_dinh: individualSoQuyetDinh || null,
+                ghi_chu: ghi_chu || null,
+                nhan_bkbqp: nhanBKBQP,
+                nhan_cstdtq: nhanCSTDTQ,
+                nhan_bkttcp: nhanBKTTCP,
+              },
+            });
+
+            console.log(
+              `✅ [bulkCreateAnnualRewards] Đã tạo thành công bản ghi ID: ${rewardRecord.id}`
+            );
+          }
+
+          created.push(rewardRecord);
+          console.log(
+            `✅ [bulkCreateAnnualRewards] Đã thêm vào danh sách created. Tổng: ${created.length}`
+          );
 
           // Tự động cập nhật lại hồ sơ hằng năm
           try {
-            await profileService.recalculateAnnualProfile(personnelId);
+            console.log(
+              `🔄 [bulkCreateAnnualRewards] Bắt đầu tính toán lại hồ sơ cho quân nhân ${personnelIdStr}`
+            );
+            await profileService.recalculateAnnualProfile(personnelIdStr);
+            console.log(
+              `✅ [bulkCreateAnnualRewards] Đã tính toán lại hồ sơ thành công cho quân nhân ${personnelIdStr}`
+            );
           } catch (recalcError) {
             console.error(
-              `⚠️ Failed to auto-recalculate annual profile for personnel ${personnelId}:`,
+              `⚠️ [bulkCreateAnnualRewards] Failed to auto-recalculate annual profile for personnel ${personnelIdStr}:`,
               recalcError.message
             );
           }
         } catch (error) {
           errors.push({
-            personnelId,
+            personnelId: personnelId || 'Chưa có ID quân nhân',
             error: error.message,
           });
         }
       }
+
+      console.log(`📊 [bulkCreateAnnualRewards] Kết quả tổng hợp:`, {
+        success: created.length,
+        skipped: skipped.length,
+        errors: errors.length,
+        total: personnel_ids.length,
+        createdIds: created.map(r => r.id),
+      });
 
       return {
         success: created.length,

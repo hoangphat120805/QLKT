@@ -187,8 +187,11 @@ class ContributionAwardService {
             'APPROVED'
           );
           if (duplicateCheck.isDuplicate) {
+            const { getDanhHieuName } = require('../constants/danhHieu.constants');
             results.errors.push(
-              `Dòng ${rowNumber}: ${duplicateCheck.message} (Quân nhân: ${ho_ten}, Năm: ${nam}, Danh hiệu: ${danh_hieu})`
+              `Dòng ${rowNumber}: ${
+                duplicateCheck.message
+              } (Quân nhân: ${ho_ten}, Năm: ${nam}, Danh hiệu: ${getDanhHieuName(danh_hieu)})`
             );
             results.failed++;
             continue;

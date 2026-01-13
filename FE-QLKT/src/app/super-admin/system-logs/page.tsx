@@ -68,7 +68,6 @@ export default function SystemLogsPage() {
 
         // Chuẩn hóa dữ liệu cho UI
         const normalized = list.map((l: any) => {
-          const actionCombined = [l?.action, l?.resource].filter(Boolean).join('_').toUpperCase();
           const actorName =
             l?.NguoiThucHien?.QuanNhan?.ho_ten ||
             l?.NguoiThucHien?.username ||
@@ -78,7 +77,7 @@ export default function SystemLogsPage() {
             l?.actor_id;
           return {
             ...l,
-            action: actionCombined, // dùng kết hợp ACTION_RESOURCE để map nhãn
+            action: l?.action?.toUpperCase() || l?.action, // Giữ nguyên action từ database
             actor_name: actorName,
             details: l?.description || l?.details || '', // Ưu tiên description từ backend (đã dịch tiếng Việt)
             description: l?.description || l?.details || '', // Đảm bảo có description
@@ -142,52 +141,242 @@ export default function SystemLogsPage() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
             gap: '16px',
             marginBottom: '24px',
           }}
         >
-          <Card>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px' }}>
-              <div style={{ padding: '8px', backgroundColor: '#dcfce7', borderRadius: '8px' }}>
-                <FileTextOutlined style={{ fontSize: '20px', color: '#16a34a' }} />
+          <Card
+            hoverable
+            style={{
+              borderRadius: '10px',
+              boxShadow: theme === 'dark' ? '0 1px 6px rgba(0, 0, 0, 0.35)' : '0 1px 4px rgba(0, 0, 0, 0.06)',
+              transition: 'all 0.3s ease',
+            }}
+            bodyStyle={{ padding: '20px' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div
+                style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '12px',
+                  background: theme === 'dark' ? '#1e3a8a' : '#e6f0ff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow:
+                    theme === 'dark'
+                      ? '0 1px 3px rgba(59, 130, 246, 0.3)'
+                      : '0 1px 3px rgba(59, 130, 246, 0.2)',
+                }}
+              >
+                <FileTextOutlined
+                  style={{
+                    fontSize: '26px',
+                    color: theme === 'dark' ? '#60a5fa' : '#2563eb',
+                  }}
+                />
               </div>
-              <div>
-                <Text type="secondary" style={{ fontSize: '14px' }}>
+              <div style={{ flex: 1 }}>
+                <Text
+                  type="secondary"
+                  style={{
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    display: 'block',
+                    marginBottom: '4px',
+                    color: theme === 'dark' ? '#cbd5e1' : '#475569',
+                  }}
+                >
                   Tổng nhật ký
                 </Text>
-                <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{pagination.total}</div>
+                <div
+                  style={{
+                    fontSize: '32px',
+                    fontWeight: 'bold',
+                    color: theme === 'dark' ? '#e5e7eb' : '#0f172a',
+                    lineHeight: '1.1',
+                  }}
+                >
+                  {pagination.total}
+                </div>
               </div>
             </div>
           </Card>
 
-          <Card>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px' }}>
-              <div style={{ padding: '8px', backgroundColor: '#e0f2fe', borderRadius: '8px' }}>
-                <FundOutlined style={{ fontSize: '20px', color: '#0284c7' }} />
+          <Card
+            hoverable
+            style={{
+              borderRadius: '10px',
+              boxShadow: theme === 'dark' ? '0 1px 6px rgba(0, 0, 0, 0.35)' : '0 1px 4px rgba(0, 0, 0, 0.06)',
+              transition: 'all 0.3s ease',
+            }}
+            bodyStyle={{ padding: '20px' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div
+                style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '12px',
+                  background: theme === 'dark' ? '#0b3d2e' : '#e8f5e9',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow:
+                    theme === 'dark'
+                      ? '0 1px 3px rgba(16, 185, 129, 0.3)'
+                      : '0 1px 3px rgba(16, 185, 129, 0.2)',
+                }}
+              >
+                <FundOutlined
+                  style={{
+                    fontSize: '26px',
+                    color: theme === 'dark' ? '#34d399' : '#059669',
+                  }}
+                />
               </div>
-              <div>
-                <Text type="secondary" style={{ fontSize: '14px' }}>
+              <div style={{ flex: 1 }}>
+                <Text
+                  type="secondary"
+                  style={{
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    display: 'block',
+                    marginBottom: '4px',
+                    color: theme === 'dark' ? '#cbd5e1' : '#475569',
+                  }}
+                >
                   Hành động tạo
                 </Text>
-                <div style={{ fontSize: '24px', fontWeight: 'bold' }}>
+                <div
+                  style={{
+                    fontSize: '28px',
+                    fontWeight: 'bold',
+                    color: theme === 'dark' ? '#e5e7eb' : '#0f172a',
+                    lineHeight: '1.1',
+                  }}
+                >
                   {logs.filter(l => l.action?.includes('CREATE')).length}
                 </div>
               </div>
             </div>
           </Card>
 
-          <Card>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px' }}>
-              <div style={{ padding: '8px', backgroundColor: '#fee2e2', borderRadius: '8px' }}>
-                <FundOutlined style={{ fontSize: '20px', color: '#dc2626' }} />
+          <Card
+            hoverable
+            style={{
+              borderRadius: '10px',
+              boxShadow: theme === 'dark' ? '0 1px 6px rgba(0, 0, 0, 0.35)' : '0 1px 4px rgba(0, 0, 0, 0.06)',
+              transition: 'all 0.3s ease',
+            }}
+            bodyStyle={{ padding: '20px' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div
+                style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '12px',
+                  background: theme === 'dark' ? '#7f1d1d' : '#fee2e2',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow:
+                    theme === 'dark'
+                      ? '0 1px 3px rgba(239, 68, 68, 0.3)'
+                      : '0 1px 3px rgba(239, 68, 68, 0.2)',
+                }}
+              >
+                <FundOutlined
+                  style={{
+                    fontSize: '26px',
+                    color: theme === 'dark' ? '#f87171' : '#dc2626',
+                  }}
+                />
               </div>
-              <div>
-                <Text type="secondary" style={{ fontSize: '14px' }}>
+              <div style={{ flex: 1 }}>
+                <Text
+                  type="secondary"
+                  style={{
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    display: 'block',
+                    marginBottom: '4px',
+                    color: theme === 'dark' ? '#cbd5e1' : '#475569',
+                  }}
+                >
                   Hành động xóa
                 </Text>
-                <div style={{ fontSize: '24px', fontWeight: 'bold' }}>
+                <div
+                  style={{
+                    fontSize: '28px',
+                    fontWeight: 'bold',
+                    color: theme === 'dark' ? '#e5e7eb' : '#0f172a',
+                    lineHeight: '1.1',
+                  }}
+                >
                   {logs.filter(l => l.action?.includes('DELETE')).length}
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          <Card
+            hoverable
+            style={{
+              borderRadius: '10px',
+              boxShadow: theme === 'dark' ? '0 1px 6px rgba(0, 0, 0, 0.35)' : '0 1px 4px rgba(0, 0, 0, 0.06)',
+              transition: 'all 0.3s ease',
+            }}
+            bodyStyle={{ padding: '20px' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div
+                style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '12px',
+                  background: theme === 'dark' ? '#78350f' : '#fef3c7',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow:
+                    theme === 'dark'
+                      ? '0 1px 3px rgba(251, 191, 36, 0.3)'
+                      : '0 1px 3px rgba(251, 191, 36, 0.2)',
+                }}
+              >
+                <FundOutlined
+                  style={{
+                    fontSize: '26px',
+                    color: theme === 'dark' ? '#fbbf24' : '#d97706',
+                  }}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <Text
+                  type="secondary"
+                  style={{
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    display: 'block',
+                    marginBottom: '4px',
+                    color: theme === 'dark' ? '#cbd5e1' : '#475569',
+                  }}
+                >
+                  Hành động cập nhật
+                </Text>
+                <div
+                  style={{
+                    fontSize: '28px',
+                    fontWeight: 'bold',
+                    color: theme === 'dark' ? '#e5e7eb' : '#0f172a',
+                    lineHeight: '1.1',
+                  }}
+                >
+                  {logs.filter(l => l.action?.includes('UPDATE')).length}
                 </div>
               </div>
             </div>

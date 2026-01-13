@@ -379,23 +379,48 @@ export const apiClient = {
     }
   },
 
-  async bulkCreateAnnualRewards(body: {
-    personnel_ids: number[];
+  async checkAnnualRewards(body: {
+    personnel_ids: string[] | number[];
     nam: number;
     danh_hieu: string;
+  }): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.post('/api/annual-rewards/check', body);
+      return { success: true, data: res.data?.data || res.data };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  async bulkCreateAnnualRewards(body: {
+    personnel_ids: string[] | number[];
+    personnel_rewards_data?: Array<{
+      personnel_id: string;
+      so_quyet_dinh?: string;
+      cap_bac?: string;
+      chuc_vu?: string;
+    }>;
+    nam: number;
+    danh_hieu: string;
+    so_quyet_dinh?: string;
     cap_bac?: string;
     chuc_vu?: string;
     ghi_chu?: string;
-    so_quyet_dinh?: string;
-    file_quyet_dinh?: File;
+    file_dinh_kem?: File;
   }): Promise<ApiResponse> {
     try {
       // Nếu có file, gửi dưới dạng FormData
-      if (body.file_quyet_dinh) {
+      if (body.file_dinh_kem) {
         const formData = new FormData();
         formData.append('personnel_ids', JSON.stringify(body.personnel_ids));
+        if (body.personnel_rewards_data) {
+          formData.append('personnel_rewards_data', JSON.stringify(body.personnel_rewards_data));
+        }
         formData.append('nam', body.nam.toString());
         formData.append('danh_hieu', body.danh_hieu);
+        if (body.so_quyet_dinh) {
+          formData.append('so_quyet_dinh', body.so_quyet_dinh);
+        }
         if (body.cap_bac) {
           formData.append('cap_bac', body.cap_bac);
         }
@@ -405,10 +430,7 @@ export const apiClient = {
         if (body.ghi_chu) {
           formData.append('ghi_chu', body.ghi_chu);
         }
-        if (body.so_quyet_dinh) {
-          formData.append('so_quyet_dinh', body.so_quyet_dinh);
-        }
-        formData.append('file_quyet_dinh', body.file_quyet_dinh);
+        formData.append('file_dinh_kem', body.file_dinh_kem);
 
         const res = await axiosInstance.post('/api/annual-rewards/bulk', formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
@@ -417,7 +439,20 @@ export const apiClient = {
       }
 
       // Nếu không có file, gửi dưới dạng JSON
-      const res = await axiosInstance.post('/api/annual-rewards/bulk', body);
+      const jsonBody: any = {
+        personnel_ids: body.personnel_ids,
+        nam: body.nam,
+        danh_hieu: body.danh_hieu,
+      };
+      if (body.personnel_rewards_data) {
+        jsonBody.personnel_rewards_data = body.personnel_rewards_data;
+      }
+      if (body.so_quyet_dinh) jsonBody.so_quyet_dinh = body.so_quyet_dinh;
+      if (body.cap_bac) jsonBody.cap_bac = body.cap_bac;
+      if (body.chuc_vu) jsonBody.chuc_vu = body.chuc_vu;
+      if (body.ghi_chu) jsonBody.ghi_chu = body.ghi_chu;
+      
+      const res = await axiosInstance.post('/api/annual-rewards/bulk', jsonBody);
       return { success: true, data: res.data?.data || res.data, message: res.data?.message };
     } catch (e: any) {
       return { success: false, message: e?.response?.data?.message || e.message };
@@ -1514,6 +1549,20 @@ export const apiClient = {
         params: { unitType },
       });
       return { success: true, data: res.data?.data || res.data };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
+  // Bulk Create Awards (với validation đầy đủ)
+  async bulkCreateAwards(formData: FormData): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.post('/api/awards/bulk', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return { success: true, data: res.data?.data || res.data, message: res.data?.message };
     } catch (e: any) {
       return { success: false, message: e?.response?.data?.message || e.message };
     }

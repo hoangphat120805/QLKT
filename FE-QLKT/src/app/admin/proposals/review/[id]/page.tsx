@@ -41,6 +41,7 @@ import { apiClient } from '@/lib/api-client';
 import { downloadDecisionFile } from '@/utils/downloadDecisionFile';
 import { useTheme } from '@/components/theme-provider';
 import axiosInstance from '@/utils/axiosInstance';
+import { getDanhHieuName } from '@/constants/danhHieu.constants';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -850,66 +851,8 @@ export default function ProposalDetailPage() {
       width: 250,
       align: 'center' as const,
       render: (_: any, record: DanhHieuItem, index: number) => {
-        // Map mã danh hiệu sang tên đầy đủ cho tất cả loại đề xuất
-        const danhHieuMap: Record<string, string> = {
-          // Cá nhân Hằng năm
-          CSTDCS: 'Chiến sĩ thi đua cơ sở',
-          CSTT: 'Chiến sĩ tiên tiến',
-          BKBQP: 'Bằng khen của Bộ trưởng Bộ Quốc phòng',
-          CSTDTQ: 'Chiến sĩ thi đua toàn quân',
-          // Đơn vị Hằng năm
-          ĐVQT: 'Đơn vị Quyết thắng',
-          ĐVTT: 'Đơn vị Tiên tiến',
-          BKTTCP: 'Bằng khen Thủ tướng Chính phủ',
-          // Niên hạn
-          HCCSVV_HANG_BA: 'Huy chương Chiến sĩ Vẻ vang Hạng Ba',
-          HCCSVV_HANG_NHI: 'Huy chương Chiến sĩ Vẻ vang Hạng Nhì',
-          HCCSVV_HANG_NHAT: 'Huy chương Chiến sĩ Vẻ vang Hạng Nhất',
-          // Cống hiến
-          HCBVTQ_HANG_BA: 'Huân chương Bảo vệ Tổ quốc Hạng Ba',
-          HCBVTQ_HANG_NHI: 'Huân chương Bảo vệ Tổ quốc Hạng Nhì',
-          HCBVTQ_HANG_NHAT: 'Huân chương Bảo vệ Tổ quốc Hạng Nhất',
-        };
-
-        // Lấy options dựa trên loại đề xuất
-        let options: { label: string; value: string }[] = [];
-        switch (proposal.loai_de_xuat) {
-          case 'CA_NHAN_HANG_NAM':
-            options = [
-              { label: 'Chiến sĩ thi đua cơ sở', value: 'CSTDCS' },
-              { label: 'Chiến sĩ tiên tiến', value: 'CSTT' },
-              { label: 'Bằng khen của Bộ trưởng Bộ Quốc phòng', value: 'BKBQP' },
-              { label: 'Chiến sĩ thi đua toàn quân', value: 'CSTDTQ' },
-            ];
-            break;
-          case 'DON_VI_HANG_NAM':
-            options = [
-              { label: 'Đơn vị Quyết thắng', value: 'ĐVQT' },
-              { label: 'Đơn vị Tiên tiến', value: 'ĐVTT' },
-              { label: 'Bằng khen của Bộ trưởng Bộ Quốc phòng', value: 'BKBQP' },
-              { label: 'Bằng khen Thủ tướng Chính phủ', value: 'BKTTCP' },
-            ];
-            break;
-          case 'NIEN_HAN':
-            options = [
-              { label: 'Huy chương Chiến sĩ Vẻ vang Hạng Ba', value: 'HCCSVV_HANG_BA' },
-              { label: 'Huy chương Chiến sĩ Vẻ vang Hạng Nhì', value: 'HCCSVV_HANG_NHI' },
-              { label: 'Huy chương Chiến sĩ Vẻ vang Hạng Nhất', value: 'HCCSVV_HANG_NHAT' },
-            ];
-            break;
-          case 'CONG_HIEN':
-            options = [
-              { label: 'Huân chương Bảo vệ Tổ quốc Hạng Ba', value: 'HCBVTQ_HANG_BA' },
-              { label: 'Huân chương Bảo vệ Tổ quốc Hạng Nhì', value: 'HCBVTQ_HANG_NHI' },
-              { label: 'Huân chương Bảo vệ Tổ quốc Hạng Nhất', value: 'HCBVTQ_HANG_NHAT' },
-            ];
-            break;
-          default:
-            options = [];
-        }
-
-        // Luôn hiển thị tên đầy đủ, không cho phép chỉnh sửa danh hiệu
-        const fullName = danhHieuMap[record.danh_hieu || ''] || record.danh_hieu || '-';
+        // Sử dụng hàm helper để map mã danh hiệu sang tên đầy đủ
+        const fullName = getDanhHieuName(record.danh_hieu || '');
         return (
           <div style={{ textAlign: 'center' }}>
             <Text>{fullName}</Text>
@@ -1768,10 +1711,15 @@ export default function ProposalDetailPage() {
         cancelText="Hủy"
         okButtonProps={{ danger: true }}
         width={600}
+        centered
       >
         <Alert
           message="Lưu ý"
-          description="Vui lòng nhập lý do từ chối để Manager biết và chỉnh sửa lại đề xuất."
+          description={
+            <div style={{ textAlign: 'center' }}>
+              Vui lòng nhập lý do từ chối để Manager biết và chỉnh sửa lại đề xuất.
+            </div>
+          }
           type="warning"
           showIcon
           style={{ marginBottom: 16 }}

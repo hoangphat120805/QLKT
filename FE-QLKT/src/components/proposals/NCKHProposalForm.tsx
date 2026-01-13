@@ -29,7 +29,7 @@ interface NCKHRecord {
   personnel_name: string;
   cccd: string;
   nam: number;
-  loai: 'NCKH' | 'SKKH';
+  loai: 'DTKH' | 'SKKH';
   mo_ta: string;
   status: 'APPROVED' | 'PENDING';
 }
@@ -87,7 +87,7 @@ export default function NCKHProposalForm({
     form.resetFields();
     form.setFieldsValue({
       nam: new Date().getFullYear(),
-      loai: 'NCKH',
+      loai: 'DTKH',
       status: 'APPROVED',
     });
     setIsModalOpen(true);
@@ -141,8 +141,8 @@ export default function NCKHProposalForm({
       width: 100,
       align: 'center',
       render: (loai: string) => (
-        <Tag color={loai === 'NCKH' ? 'blue' : 'green'}>
-          {loai === 'NCKH' ? 'Đề tài KH' : 'Sáng kiến KH'}
+        <Tag color={loai === 'DTKH' ? 'blue' : 'green'}>
+          {loai === 'DTKH' ? 'Đề tài KH' : 'Sáng kiến KH'}
         </Tag>
       ),
     },
@@ -293,7 +293,7 @@ export default function NCKHProposalForm({
                 popupMatchSelectWidth={false}
                 styles={{ popup: { root: { minWidth: 'max-content' } } }}
               >
-                <Select.Option value="NCKH">Đề tài Khoa học (ĐTKH)</Select.Option>
+                <Select.Option value="DTKH">Đề tài Khoa học (ĐTKH)</Select.Option>
                 <Select.Option value="SKKH">Sáng kiến Khoa học (SKKH)</Select.Option>
               </Select>
             </Form.Item>

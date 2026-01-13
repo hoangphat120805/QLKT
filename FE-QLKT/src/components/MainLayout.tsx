@@ -30,7 +30,7 @@ import {
   ApartmentOutlined,
   TrophyOutlined,
 } from '@ant-design/icons';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useTheme } from './theme-provider';
 import { apiClient } from '@/lib/api-client';
@@ -54,6 +54,7 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
   const [actualRole, setActualRole] = useState<'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'USER'>(role);
   const [personnelId, setPersonnelId] = useState<string | null>(null);
   const router = useRouter();
+  const pathname = usePathname();
   const { theme, toggle } = useTheme();
 
   useEffect(() => {
@@ -259,6 +260,11 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
           label: <Link href="/admin/awards">Quản lý Khen Thưởng</Link>,
         },
         {
+          key: 'bulk-awards',
+          icon: <TrophyOutlined />,
+          label: <Link href="/admin/awards/bulk/create">Thêm khen thưởng đồng loạt</Link>,
+        },
+        {
           key: 'adhoc-awards',
           icon: <TrophyOutlined />,
           label: <Link href="/admin/adhoc-awards">Khen thưởng Đột xuất</Link>,
@@ -359,6 +365,75 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
     }
   };
 
+  // Xác định menu key nào nên active dựa vào pathname
+  const getSelectedKey = () => {
+    if (!pathname) return 'dashboard';
+
+    // Xử lý route awards/bulk trước để ưu tiên (vì nó là sub-route của awards)
+    if (pathname.startsWith('/admin/awards/bulk')) {
+      return 'bulk-awards';
+    }
+    if (pathname.startsWith('/admin/awards')) {
+      return 'awards';
+    }
+    if (pathname.startsWith('/admin/adhoc-awards')) {
+      return 'adhoc-awards';
+    }
+    if (pathname.startsWith('/admin/personnel')) {
+      return 'personnel';
+    }
+    if (pathname.startsWith('/admin/categories')) {
+      return 'categories';
+    }
+    if (pathname.startsWith('/admin/proposals')) {
+      return 'proposals';
+    }
+    if (pathname.startsWith('/admin/decisions')) {
+      return 'decisions';
+    }
+    if (pathname.startsWith('/admin/accounts')) {
+      return 'accounts';
+    }
+    if (pathname.startsWith('/admin/system-logs')) {
+      return 'system-logs';
+    }
+    if (pathname.startsWith('/admin/dashboard') || pathname === '/admin') {
+      return 'dashboard';
+    }
+
+    // Xử lý cho SUPER_ADMIN
+    if (pathname.startsWith('/super-admin/accounts')) {
+      return 'accounts';
+    }
+    if (pathname.startsWith('/super-admin/system-logs')) {
+      return 'system-logs';
+    }
+    if (pathname.startsWith('/super-admin/dashboard') || pathname === '/super-admin') {
+      return 'dashboard';
+    }
+
+    // Xử lý cho MANAGER
+    if (pathname.startsWith('/manager/personnel')) {
+      return 'personnel';
+    }
+    if (pathname.startsWith('/manager/proposals')) {
+      return 'proposals';
+    }
+    if (pathname.startsWith('/manager/dashboard') || pathname === '/manager') {
+      return 'dashboard';
+    }
+
+    // Xử lý cho USER
+    if (pathname.startsWith('/user/profile')) {
+      return 'profile';
+    }
+    if (pathname.startsWith('/user/dashboard') || pathname === '/user') {
+      return 'dashboard';
+    }
+
+    return 'dashboard';
+  };
+
   const userMenuItems = [
     {
       key: 'change-password',
@@ -432,6 +507,7 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
         mode="inline"
         items={getMenuItems()}
         className="flex-1"
+        selectedKeys={[getSelectedKey()]}
         style={{
           borderRight: 'none',
         }}

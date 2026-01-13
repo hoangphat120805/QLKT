@@ -1,4 +1,5 @@
 'use client';
+import { useState, useMemo } from 'react';
 import {
   Table,
   TableBody,
@@ -7,8 +8,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Tag } from 'antd';
-import { Loader2, Clock, User, Shield, Activity, FileText } from 'lucide-react';
+import { Tag, Tooltip } from 'antd';
+import { Loader2, Clock, User, Shield, Activity, FileText, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
@@ -17,56 +18,69 @@ interface LogsTableProps {
   loading?: boolean;
 }
 
+type SortField = 'time' | 'actor' | 'role' | 'action' | null;
+type SortOrder = 'asc' | 'desc' | null;
+
+// Mapping cho resource labels
+const resourceLabels: Record<string, string> = {
+  accounts: 'Tài khoản',
+  personnel: 'Quân nhân',
+  units: 'Đơn vị',
+  positions: 'Chức vụ',
+  proposals: 'Đề xuất',
+  'annual-rewards': 'Danh hiệu hằng năm',
+  'annual_rewards': 'Danh hiệu hằng năm',
+  'position-history': 'Lịch sử chức vụ',
+  'position_history': 'Lịch sử chức vụ',
+  'scientific-achievements': 'Thành tích khoa học',
+  'scientific_achievements': 'Thành tích khoa học',
+  decisions: 'Quyết định',
+  auth: 'Xác thực',
+  'adhoc-awards': 'Khen thưởng đột xuất',
+  'adhoc_awards': 'Khen thưởng đột xuất',
+  'commemorative-medals': 'Kỷ niệm chương',
+  'commemorative_medals': 'Kỷ niệm chương',
+  'contribution-awards': 'Khen thưởng cống hiến',
+  'contribution_awards': 'Khen thưởng cống hiến',
+  'military-flag': 'Cờ thi đua',
+  'military_flag': 'Cờ thi đua',
+  'service-rewards': 'Khen thưởng niên hạn',
+  'service_rewards': 'Khen thưởng niên hạn',
+  'unit-annual-awards': 'Khen thưởng đơn vị hằng năm',
+  'unit_annual_awards': 'Khen thưởng đơn vị hằng năm',
+  hccsvv: 'Huy chương Chiến sĩ Vẻ vang',
+  categories: 'Danh mục',
+};
+
+// Mapping cho action labels
 const actionLabels: Record<string, string> = {
-  // Accounts
-  CREATE_ACCOUNT: 'Tạo tài khoản',
-  UPDATE_ACCOUNT: 'Cập nhật tài khoản',
-  DELETE_ACCOUNT: 'Xóa tài khoản',
-  RESET_PASSWORD: 'Đặt lại mật khẩu',
-  // Personnel
-  CREATE_PERSONNEL: 'Tạo quân nhân',
-  UPDATE_PERSONNEL: 'Cập nhật quân nhân',
-  DELETE_PERSONNEL: 'Xóa quân nhân',
-  // Units
-  CREATE_UNIT: 'Tạo cơ quan đơn vị/đơn vị trực thuộc',
-  UPDATE_UNIT: 'Cập nhật cơ quan đơn vị/đơn vị trực thuộc',
-  DELETE_UNIT: 'Xóa cơ quan đơn vị/đơn vị trực thuộc',
-  // Positions
-  CREATE_POSITIONS: 'Tạo chức vụ',
-  UPDATE_POSITIONS: 'Cập nhật chức vụ',
-  DELETE_POSITIONS: 'Xóa chức vụ',
-  // Proposals
-  CREATE_PROPOSALS: 'Tạo đề xuất',
-  UPDATE_PROPOSALS: 'Cập nhật đề xuất',
-  DELETE_PROPOSALS: 'Xóa đề xuất',
-  APPROVE_PROPOSALS: 'Phê duyệt đề xuất',
-  REJECT_PROPOSALS: 'Từ chối đề xuất',
-  // Annual Rewards
-  CREATE_ANNUAL_REWARDS: 'Tạo danh hiệu hằng năm',
-  UPDATE_ANNUAL_REWARDS: 'Cập nhật danh hiệu hằng năm',
-  DELETE_ANNUAL_REWARDS: 'Xóa danh hiệu hằng năm',
-  BULK_ANNUAL_REWARDS: 'Thêm đồng loạt danh hiệu hằng năm',
-  IMPORT_ANNUAL_REWARDS: 'Import danh hiệu hằng năm',
-  // Position History
-  CREATE_POSITION_HISTORY: 'Tạo lịch sử chức vụ',
-  UPDATE_POSITION_HISTORY: 'Cập nhật lịch sử chức vụ',
-  DELETE_POSITION_HISTORY: 'Xóa lịch sử chức vụ',
-  // Scientific Achievements
-  CREATE_SCIENTIFIC_ACHIEVEMENTS: 'Tạo thành tích khoa học',
-  UPDATE_SCIENTIFIC_ACHIEVEMENTS: 'Cập nhật thành tích khoa học',
-  DELETE_SCIENTIFIC_ACHIEVEMENTS: 'Xóa thành tích khoa học',
-  // Decisions
-  CREATE_DECISIONS: 'Tạo quyết định',
-  UPDATE_DECISIONS: 'Cập nhật quyết định',
-  DELETE_DECISIONS: 'Xóa quyết định',
-  // Auth
+  CREATE: 'Tạo',
+  UPDATE: 'Cập nhật',
+  DELETE: 'Xóa',
+  APPROVE: 'Phê duyệt',
+  REJECT: 'Từ chối',
   LOGIN: 'Đăng nhập',
   LOGOUT: 'Đăng xuất',
+  RESET_PASSWORD: 'Đặt lại mật khẩu',
   CHANGE_PASSWORD: 'Đổi mật khẩu',
-  // Personnel
-  IMPORT_PERSONNEL: 'Import quân nhân',
-  EXPORT_PERSONNEL: 'Xuất dữ liệu quân nhân',
+  IMPORT: 'Import',
+  EXPORT: 'Xuất dữ liệu',
+  BULK: 'Thêm đồng loạt',
 };
+
+// Helper function để lấy label cho resource
+function getResourceLabel(resource: string): string {
+  if (!resource) return '';
+  const normalized = resource.replace(/_/g, '-');
+  return resourceLabels[resource] || resourceLabels[normalized] || resource;
+}
+
+// Helper function để lấy label cho action
+function getActionLabel(action: string): string {
+  if (!action) return '-';
+  const actionUpper = action.toUpperCase();
+  return actionLabels[actionUpper] || actionUpper;
+}
 
 const actionColors: Record<string, string> = {
   CREATE:
@@ -124,6 +138,71 @@ function getRoleText(role: string): string {
 }
 
 export function LogsTable({ logs, loading }: LogsTableProps) {
+  const [sortField, setSortField] = useState<SortField>(null);
+  const [sortOrder, setSortOrder] = useState<SortOrder>(null);
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      if (sortOrder === 'asc') {
+        setSortOrder('desc');
+      } else if (sortOrder === 'desc') {
+        setSortField(null);
+        setSortOrder(null);
+      } else {
+        setSortOrder('asc');
+      }
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
+  const sortedLogs = useMemo(() => {
+    if (!sortField || !sortOrder) return logs;
+
+    const sorted = [...logs].sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (sortField) {
+        case 'time':
+          aValue = new Date(a.created_at).getTime();
+          bValue = new Date(b.created_at).getTime();
+          break;
+        case 'actor':
+          aValue = (a.actor_name || a.actor_id || '').toLowerCase();
+          bValue = (b.actor_name || b.actor_id || '').toLowerCase();
+          break;
+        case 'role':
+          aValue = (a.actor_role || '').toLowerCase();
+          bValue = (b.actor_role || '').toLowerCase();
+          break;
+        case 'action':
+          aValue = (actionLabels[a.action] || a.action || '').toLowerCase();
+          bValue = (actionLabels[b.action] || b.action || '').toLowerCase();
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return sorted;
+  }, [logs, sortField, sortOrder]);
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="h-3 w-3 ml-1 text-gray-400" />;
+    }
+    if (sortOrder === 'asc') {
+      return <ArrowUp className="h-3 w-3 ml-1 text-blue-500" />;
+    }
+    return <ArrowDown className="h-3 w-3 ml-1 text-blue-500" />;
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-16">
@@ -152,28 +231,44 @@ export function LogsTable({ logs, loading }: LogsTableProps) {
       <Table>
         <TableHeader className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
           <TableRow className="bg-gray-50 dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 border-0">
-            <TableHead className="font-semibold text-gray-700 dark:text-gray-300">
+            <TableHead 
+              className="font-semibold text-gray-700 dark:text-gray-300 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              onClick={() => handleSort('time')}
+            >
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4" />
                 Thời gian
+                <SortIcon field="time" />
               </div>
             </TableHead>
-            <TableHead className="font-semibold text-gray-700 dark:text-gray-300">
+            <TableHead 
+              className="font-semibold text-gray-700 dark:text-gray-300 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              onClick={() => handleSort('actor')}
+            >
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4" />
                 Người dùng
+                <SortIcon field="actor" />
               </div>
             </TableHead>
-            <TableHead className="font-semibold text-gray-700 dark:text-gray-300">
+            <TableHead 
+              className="font-semibold text-gray-700 dark:text-gray-300 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              onClick={() => handleSort('role')}
+            >
               <div className="flex items-center gap-2">
                 <Shield className="h-4 w-4" />
                 Vai trò
+                <SortIcon field="role" />
               </div>
             </TableHead>
-            <TableHead className="font-semibold text-gray-700 dark:text-gray-300">
+            <TableHead 
+              className="font-semibold text-gray-700 dark:text-gray-300 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              onClick={() => handleSort('action')}
+            >
               <div className="flex items-center gap-2">
                 <Activity className="h-4 w-4" />
                 Hành động
+                <SortIcon field="action" />
               </div>
             </TableHead>
             <TableHead className="font-semibold text-gray-700 dark:text-gray-300">
@@ -185,7 +280,7 @@ export function LogsTable({ logs, loading }: LogsTableProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {logs.map(log => (
+          {sortedLogs.map(log => (
             <TableRow
               key={log.id}
               className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors border-gray-200 dark:border-gray-700"
@@ -200,14 +295,14 @@ export function LogsTable({ logs, loading }: LogsTableProps) {
                 <Tag color={getRoleTagColor(log.actor_role)}>{getRoleText(log.actor_role)}</Tag>
               </TableCell>
               <TableCell className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                {actionLabels[log.action] ||
-                  actionLabels[log.action?.replace(/-/g, '_')] ||
-                  log.action}
+                {getActionLabel(log.action)}
               </TableCell>
               <TableCell className="text-sm text-gray-600 dark:text-gray-400 max-w-md">
-                <div className="whitespace-normal break-words" title={log.details || log.description || ''}>
+                <Tooltip title={log.details || log.description || '-'} placement="topLeft">
+                  <div className="whitespace-normal break-words line-clamp-2 cursor-help">
                   {log.details || log.description || '-'}
                 </div>
+                </Tooltip>
               </TableCell>
             </TableRow>
           ))}

@@ -293,7 +293,10 @@ class ProposalController {
       return res.status(200).json({
         success: true,
         message: result.message,
-        data: result.result,
+        data: {
+          ...result.result,
+          proposal: result.proposal,
+        },
       });
     } catch (error) {
       console.error('Approve proposal error:', error);
@@ -370,7 +373,10 @@ class ProposalController {
       return res.status(200).json({
         success: true,
         message: result.message,
-        data: result.result,
+        data: {
+          ...result.result,
+          proposal: result.proposal,
+        },
       });
     } catch (error) {
       console.error('Reject proposal error:', error);

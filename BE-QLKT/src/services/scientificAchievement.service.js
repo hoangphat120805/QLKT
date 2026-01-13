@@ -31,12 +31,14 @@ class ScientificAchievementService {
 
   async createAchievement(data) {
     try {
-      const { personnel_id, nam, loai, mo_ta, cap_bac, chuc_vu, ghi_chu, status } = data;
+      const { personnel_id, nam, loai, mo_ta, cap_bac, chuc_vu, so_quyet_dinh, ghi_chu, status } =
+        data;
 
       console.log('=== CREATE ACHIEVEMENT ===');
       console.log('Received data:', data);
       console.log('cap_bac:', cap_bac);
       console.log('chuc_vu:', chuc_vu);
+      console.log('so_quyet_dinh:', so_quyet_dinh);
 
       const personnel = await prisma.quanNhan.findUnique({
         where: { id: personnel_id },
@@ -46,7 +48,7 @@ class ScientificAchievementService {
         throw new Error('Quân nhân không tồn tại');
       }
 
-      const validLoai = ['NCKH', 'SKKH'];
+      const validLoai = ['DTKH', 'SKKH'];
       if (!validLoai.includes(loai)) {
         throw new Error('Loại thành tích không hợp lệ. Loại hợp lệ: ' + validLoai.join(', '));
       }
@@ -63,6 +65,7 @@ class ScientificAchievementService {
         mo_ta,
         cap_bac: cap_bac || null,
         chuc_vu: chuc_vu || null,
+        so_quyet_dinh: so_quyet_dinh || null,
         ghi_chu: ghi_chu || null,
         status: status || 'PENDING',
       };
@@ -108,7 +111,7 @@ class ScientificAchievementService {
       }
 
       if (loai) {
-        const validLoai = ['NCKH', 'SKKH'];
+        const validLoai = ['DTKH', 'SKKH'];
         if (!validLoai.includes(loai)) {
           throw new Error('Loại thành tích không hợp lệ');
         }
@@ -196,7 +199,12 @@ class ScientificAchievementService {
 
       // Gửi thông báo cho Manager và quân nhân
       try {
-        await notificationHelper.notifyOnAwardDeleted(achievement, personnel, 'NCKH', adminUsername);
+        await notificationHelper.notifyOnAwardDeleted(
+          achievement,
+          personnel,
+          'NCKH',
+          adminUsername
+        );
         console.log(`✅ Sent notification for deleted scientific achievement`);
       } catch (notifyError) {
         console.error(`⚠️ Failed to send notification:`, notifyError.message);
@@ -270,8 +278,8 @@ class ScientificAchievementService {
       const quanNhan = achievement.QuanNhan;
       const donVi = quanNhan?.DonViTrucThuoc?.ten_don_vi || quanNhan?.CoQuanDonVi?.ten_don_vi || '';
       const loaiText =
-        achievement.loai === 'NCKH'
-          ? 'Nghiên cứu khoa học'
+        achievement.loai === 'DTKH'
+          ? 'Đề tài khoa học'
           : achievement.loai === 'SKKH'
           ? 'Sáng kiến khoa học'
           : achievement.loai;
@@ -333,8 +341,8 @@ class ScientificAchievementService {
       ho_ten: 'Nguyễn Văn A',
       ngay_sinh: '15/05/1990',
       nam: 2024,
-      loai: 'NCKH',
-      mo_ta: 'Nghiên cứu mẫu',
+      loai: 'DTKH',
+      mo_ta: 'Mô tả đề tài khoa học',
       cap_bac: 'Trung úy',
       chuc_vu: 'Phó phòng',
       ghi_chu: 'Ghi chú mẫu',
@@ -395,8 +403,8 @@ class ScientificAchievementService {
           throw new Error('Thiếu thông tin bắt buộc (họ tên, năm, loại, mô tả)');
         }
 
-        if (!['NCKH', 'SKKH'].includes(loai)) {
-          throw new Error('Loại không hợp lệ (chỉ chấp nhận NCKH hoặc SKKH)');
+        if (!['DTKH', 'SKKH'].includes(loai)) {
+          throw new Error('Loại không hợp lệ (chỉ chấp nhận DTKH hoặc SKKH)');
         }
 
         if (!Number.isInteger(nam) || nam < 1900 || nam > 2100) {

@@ -101,12 +101,20 @@ router.delete(
   annualRewardController.deleteAnnualReward
 );
 
-// Thêm danh hiệu đồng loạt cho nhiều quân nhân (có thể kèm file PDF quyết định)
+// Kiểm tra quân nhân đã có khen thưởng hoặc đề xuất cho năm đó chưa
+router.post(
+  '/check',
+  verifyToken,
+  requireAdmin,
+  annualRewardController.checkAnnualRewards
+);
+
+// Thêm danh hiệu đồng loạt cho nhiều quân nhân (có thể kèm file đính kèm)
 router.post(
   '/bulk',
   verifyToken,
   requireAdmin,
-  pdfUpload.single('file_quyet_dinh'),
+  pdfUpload.single('file_dinh_kem'),
   auditLog({
     action: 'BULK',
     resource: 'annual-rewards',

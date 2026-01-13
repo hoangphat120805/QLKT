@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const adhocAwardController = require('../controllers/adhocAward.controller');
 const { verifyToken, checkRole } = require('../middlewares/auth');
+const { auditLog } = require('../middlewares/auditLog');
+const { getLogDescription, getResourceId } = require('../helpers/auditLogHelper');
 const multer = require('multer');
 
 // Configure multer for file uploads
@@ -52,14 +54,22 @@ router.get('/', checkRole(['ADMIN', 'MANAGER']), adhocAwardController.getAdhocAw
  * @desc    Get all ad-hoc awards for a specific personnel
  * @access  Admin (all), Manager (own unit only), User (own only)
  */
-router.get('/personnel/:personnelId', checkRole(['ADMIN', 'MANAGER', 'USER']), adhocAwardController.getAdhocAwardsByPersonnel);
+router.get(
+  '/personnel/:personnelId',
+  checkRole(['ADMIN', 'MANAGER', 'USER']),
+  adhocAwardController.getAdhocAwardsByPersonnel
+);
 
 /**
  * @route   GET /api/adhoc-awards/unit/:unitId
  * @desc    Get all ad-hoc awards for a specific unit
  * @access  Admin (all), Manager (own unit only)
  */
-router.get('/unit/:unitId', checkRole(['ADMIN', 'MANAGER']), adhocAwardController.getAdhocAwardsByUnit);
+router.get(
+  '/unit/:unitId',
+  checkRole(['ADMIN', 'MANAGER']),
+  adhocAwardController.getAdhocAwardsByUnit
+);
 
 /**
  * @route   GET /api/adhoc-awards/:id
@@ -82,6 +92,12 @@ router.post(
     { name: 'decisionFiles', maxCount: 10 },
     { name: 'attachedFiles', maxCount: 10 },
   ]),
+  auditLog({
+    action: 'CREATE',
+    resource: 'adhoc-awards',
+    getDescription: getLogDescription('adhoc-awards', 'CREATE'),
+    getResourceId: getResourceId.fromResponse(),
+  }),
   adhocAwardController.createAdhocAward
 );
 
@@ -96,6 +112,12 @@ router.put(
     { name: 'decisionFiles', maxCount: 10 },
     { name: 'attachedFiles', maxCount: 10 },
   ]),
+  auditLog({
+    action: 'UPDATE',
+    resource: 'adhoc-awards',
+    getDescription: getLogDescription('adhoc-awards', 'UPDATE'),
+    getResourceId: getResourceId.fromParams('id'),
+  }),
   adhocAwardController.updateAdhocAward
 );
 
@@ -104,6 +126,15 @@ router.put(
  * @desc    Delete ad-hoc award
  * @access  Admin only
  */
-router.delete('/:id', adhocAwardController.deleteAdhocAward);
+router.delete(
+  '/:id',
+  auditLog({
+    action: 'DELETE',
+    resource: 'adhoc-awards',
+    getDescription: getLogDescription('adhoc-awards', 'DELETE'),
+    getResourceId: getResourceId.fromParams('id'),
+  }),
+  adhocAwardController.deleteAdhocAward
+);
 
 module.exports = router;

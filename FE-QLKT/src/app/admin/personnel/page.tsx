@@ -383,11 +383,6 @@ export default function PersonnelPage() {
             </Text>
           </div>
           <Space>
-            <Link href="/admin/annual-rewards/bulk">
-              <Button size="large" icon={<PlusOutlined />}>
-                Thêm danh hiệu đồng loạt
-              </Button>
-            </Link>
             <Link href="/admin/personnel/create">
               <Button type="primary" size="large" icon={<PlusOutlined />}>
                 Thêm Quân nhân
@@ -667,6 +662,7 @@ export default function PersonnelPage() {
             }}
           />
         </Card>
+
       </div>
     </ConfigProvider>
   );

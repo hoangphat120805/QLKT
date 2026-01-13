@@ -203,59 +203,6 @@ class UnitAnnualAwardService {
     return null;
   }
 
-  /** Admin tạo/cập nhật khen thưởng đơn vị (status=APPROVED) */
-  async upsert({
-    don_vi_id,
-    nam,
-    danh_hieu,
-    so_quyet_dinh,
-    file_quyet_dinh,
-    ghi_chu,
-    nguoi_tao_id,
-  }) {
-    const year = Number(nam);
-    const unitId = don_vi_id;
-
-    // Xác định xem đơn vị là CoQuanDonVi hay DonViTrucThuoc
-    const coQuanDonVi = await prisma.coQuanDonVi.findUnique({ where: { id: unitId } });
-    const donViTrucThuoc = await prisma.donViTrucThuoc.findUnique({ where: { id: unitId } });
-
-    if (!coQuanDonVi && !donViTrucThuoc) {
-      throw new Error('Không tìm thấy đơn vị');
-    }
-
-    const isCoQuanDonVi = !!coQuanDonVi;
-
-    // Tạo/cập nhật bản ghi DanhHieuDonViHangNam với status APPROVED
-    const record = await prisma.danhHieuDonViHangNam.upsert({
-      where: isCoQuanDonVi
-        ? { co_quan_don_vi_id_nam: { co_quan_don_vi_id: unitId, nam: year } }
-        : { don_vi_truc_thuoc_id_nam: { don_vi_truc_thuoc_id: unitId, nam: year } },
-      update: {
-        danh_hieu: danh_hieu || null,
-        so_quyet_dinh: so_quyet_dinh || null,
-        ghi_chu: ghi_chu || null,
-        status: 'APPROVED',
-      },
-      create: {
-        co_quan_don_vi_id: isCoQuanDonVi ? unitId : null,
-        don_vi_truc_thuoc_id: isCoQuanDonVi ? null : unitId,
-        nam: year,
-        danh_hieu: danh_hieu || null,
-        so_quyet_dinh: so_quyet_dinh || null,
-        ghi_chu: ghi_chu || null,
-        nguoi_tao_id: nguoi_tao_id,
-        status: 'APPROVED',
-      },
-      include: { CoQuanDonVi: true, DonViTrucThuoc: true },
-    });
-
-    // Cập nhật hoặc tạo HoSoDonViHangNam
-    await this.recalculateAnnualUnit(unitId, year);
-
-    return record;
-  }
-
   /** Manager đề xuất (status=PENDING) - Tạo bản ghi DanhHieuDonViHangNam */
   async propose({ don_vi_id, nam, danh_hieu, ghi_chu, nguoi_tao_id }) {
     const year = Number(nam);
@@ -488,22 +435,24 @@ class UnitAnnualAwardService {
 
   /**
    * Upsert bản ghi DanhHieuDonViHangNam và tự động cập nhật HoSoDonViHangNam
+   * @param {Object} params - Tham số
+   * @param {string} params.don_vi_id - ID đơn vị (có thể là CoQuanDonVi hoặc DonViTrucThuoc)
+   * @param {number} params.nam - Năm
+   * @param {string} params.danh_hieu - Danh hiệu
+   * @param {string} [params.so_quyet_dinh] - Số quyết định
+   * @param {string} [params.ghi_chu] - Ghi chú
+   * @param {string} params.nguoi_tao_id - ID người tạo
+   * @returns {Promise<Object>} Bản ghi đã tạo/cập nhật
    */
-  async upsert({
-    don_vi_id,
-    nam,
-    danh_hieu,
-    so_quyet_dinh,
-    file_quyet_dinh,
-    ghi_chu,
-    nguoi_tao_id,
-  }) {
+  async upsert({ don_vi_id, nam, danh_hieu, so_quyet_dinh, ghi_chu, nguoi_tao_id }) {
     const year = Number(nam);
     const unitId = don_vi_id;
 
-    // Xác định loại đơn vị
-    const coQuanDonVi = await prisma.coQuanDonVi.findUnique({ where: { id: unitId } });
-    const donViTrucThuoc = await prisma.donViTrucThuoc.findUnique({ where: { id: unitId } });
+    // Xác định loại đơn vị (query song song để tối ưu)
+    const [coQuanDonVi, donViTrucThuoc] = await Promise.all([
+      prisma.coQuanDonVi.findUnique({ where: { id: unitId } }),
+      prisma.donViTrucThuoc.findUnique({ where: { id: unitId } }),
+    ]);
 
     if (!coQuanDonVi && !donViTrucThuoc) {
       throw new Error('Không tìm thấy đơn vị');
@@ -511,33 +460,34 @@ class UnitAnnualAwardService {
 
     const isCoQuanDonVi = !!coQuanDonVi;
 
+    // Xây dựng where condition và create data
     const whereCondition = isCoQuanDonVi
       ? { unique_co_quan_don_vi_nam_dh: { co_quan_don_vi_id: unitId, nam: year } }
       : { unique_don_vi_truc_thuoc_nam_dh: { don_vi_truc_thuoc_id: unitId, nam: year } };
+
+    const createData = {
+      nam: year,
+      danh_hieu: danh_hieu || null,
+      so_quyet_dinh: so_quyet_dinh || null,
+      ghi_chu: ghi_chu || null,
+      nguoi_tao_id: nguoi_tao_id,
+      status: 'APPROVED',
+      // Set foreign key: nếu là cơ quan đơn vị thì lưu vào co_quan_don_vi_id, ngược lại lưu vào don_vi_truc_thuoc_id
+      ...(isCoQuanDonVi ? { co_quan_don_vi_id: unitId } : { don_vi_truc_thuoc_id: unitId }),
+    };
 
     const record = await prisma.danhHieuDonViHangNam.upsert({
       where: whereCondition,
       update: {
         danh_hieu: danh_hieu || null,
         so_quyet_dinh: so_quyet_dinh || null,
-        file_quyet_dinh: file_quyet_dinh || null,
         ghi_chu: ghi_chu || null,
       },
-      create: {
-        co_quan_don_vi_id: isCoQuanDonVi ? unitId : null,
-        don_vi_truc_thuoc_id: isCoQuanDonVi ? null : unitId,
-        nam: year,
-        danh_hieu: danh_hieu || null,
-        so_quyet_dinh: so_quyet_dinh || null,
-        file_quyet_dinh: file_quyet_dinh || null,
-        ghi_chu: ghi_chu || null,
-        nguoi_tao_id: nguoi_tao_id,
-        status: 'APPROVED', // Mặc định là APPROVED cho upsert trực tiếp
-      },
+      create: createData,
       include: { CoQuanDonVi: true, DonViTrucThuoc: true },
     });
 
-    // Tự động recalculate toàn bộ hồ sơ (giống profileService)
+    // Tự động recalculate hồ sơ đơn vị
     await this.recalculateAnnualUnit(unitId, year);
 
     return record;
@@ -711,7 +661,8 @@ class UnitAnnualAwardService {
       const bkbqpLienTuc = await this.calculateBKBQPContinuous(donViId, targetYear);
 
       const du_dieu_kien_bk_tong_cuc = dvqtLienTuc % 2 === 0 && dvqtLienTuc >= 1;
-      const du_dieu_kien_bk_thu_tuong = dvqtLienTuc % 7 === 0 && bkbqpLienTuc % 3 === 0 && dvqtLienTuc >= 7 && bkbqpLienTuc >= 3;
+      const du_dieu_kien_bk_thu_tuong =
+        dvqtLienTuc % 7 === 0 && bkbqpLienTuc % 3 === 0 && dvqtLienTuc >= 7 && bkbqpLienTuc >= 3;
 
       // Kiểm tra xem có bằng khen chưa
       const currentYearAward = danhHieuList.find(dh => dh.nam === targetYear);
@@ -1052,11 +1003,11 @@ class UnitAnnualAwardService {
               danhHieu,
               'DON_VI_HANG_NAM'
             );
-            if (duplicateCheck.isDuplicate) {
+            if (duplicateCheck.exists) {
               throw new Error(duplicateCheck.message);
             }
           } catch (checkError) {
-            if (checkError.message.includes('duplicate')) {
+            if (checkError.message.includes('duplicate') || checkError.message.includes('đã có')) {
               throw checkError;
             }
             console.error('Error checking unit duplicates:', checkError);
@@ -1103,7 +1054,7 @@ class UnitAnnualAwardService {
               danhHieu,
               'DON_VI_HANG_NAM'
             );
-            if (duplicateCheck.isDuplicate) {
+            if (duplicateCheck.exists) {
               throw new Error(duplicateCheck.message);
             }
           } catch (checkError) {

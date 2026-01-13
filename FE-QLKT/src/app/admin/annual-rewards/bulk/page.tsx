@@ -28,6 +28,7 @@ import {
   FilePdfOutlined,
 } from '@ant-design/icons';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
 
 const { Title, Text } = Typography;
@@ -37,17 +38,28 @@ interface Personnel {
   id: number;
   ho_ten: string;
   cccd: string;
-  don_vi_id?: number;
-  chuc_vu_id?: number;
-  DonVi?: { id: number; ten_don_vi: string };
-  ChucVu?: { id: number; ten_chuc_vu: string };
+  ngay_sinh?: string;
+  cap_bac?: string;
+  co_quan_don_vi_id?: string;
+  don_vi_truc_thuoc_id?: string;
+  chuc_vu_id?: string;
+  CoQuanDonVi?: { id: string; ten_don_vi: string };
+  DonViTrucThuoc?: { id: string; ten_don_vi: string; CoQuanDonVi?: { id: string; ten_don_vi: string } };
+  ChucVu?: { id: string; ten_chuc_vu: string };
 }
 
 export default function BulkAddAnnualRewardsPage() {
+  const router = useRouter();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [personnelList, setPersonnelList] = useState<Personnel[]>([]);
   const [filteredPersonnel, setFilteredPersonnel] = useState<Personnel[]>([]);
+
+  // Set năm hiện tại làm giá trị mặc định
+  useEffect(() => {
+    const currentYear = new Date().getFullYear();
+    form.setFieldsValue({ nam: currentYear });
+  }, [form]);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [units, setUnits] = useState<any[]>([]);
   const [searchText, setSearchText] = useState('');
@@ -70,7 +82,9 @@ export default function BulkAddAnnualRewardsPage() {
     }
 
     if (filterUnitId) {
-      filtered = filtered.filter(p => p.DonVi?.id === filterUnitId);
+      filtered = filtered.filter(
+        p => p.CoQuanDonVi?.id === filterUnitId || p.DonViTrucThuoc?.id === filterUnitId
+      );
     }
 
     setFilteredPersonnel(filtered);
@@ -110,45 +124,96 @@ export default function BulkAddAnnualRewardsPage() {
     }
   };
 
-  const handleSubmit = async (values: any) => {
+  // Format date helper
+  const formatDate = (date: string | Date | null | undefined) => {
+    if (!date) return null;
+    const d = typeof date === 'string' ? new Date(date) : date;
+    return d.toISOString().split('T')[0];
+  };
+
+  const handleCheckAndOpenModal = async () => {
+    console.log('🔍 [handleCheckAndOpenModal] selectedRowKeys:', selectedRowKeys);
+    console.log('🔍 [handleCheckAndOpenModal] selectedRowKeys type:', typeof selectedRowKeys[0]);
+    
     if (selectedRowKeys.length === 0) {
       message.warning('Vui lòng chọn ít nhất một quân nhân');
+      return;
+    }
+
+    const values = form.getFieldsValue();
+    console.log('🔍 [handleCheckAndOpenModal] form values:', values);
+    
+    if (!values.nam || !values.danh_hieu) {
+      message.warning('Vui lòng chọn năm và danh hiệu');
       return;
     }
 
     try {
       setLoading(true);
 
-      // Lấy file từ fileList nếu có
-      const file = fileList.length > 0 ? (fileList[0].originFileObj as File) : undefined;
+      // Kiểm tra khen thưởng/đề xuất
+      // Lọc bỏ null/undefined (giữ nguyên string IDs vì Prisma dùng String cho ID)
+      console.log('🔍 [handleCheckAndOpenModal] Before filter - selectedRowKeys:', selectedRowKeys);
+      
+      const validPersonnelIds = selectedRowKeys
+        .filter(k => {
+          const isValid = k !== null && k !== undefined && k !== '' && typeof k === 'string';
+          console.log(`🔍 [handleCheckAndOpenModal] Filtering key: ${k}, type: ${typeof k}, isValid: ${isValid}`);
+          return isValid;
+        })
+        .map(k => {
+          // Giữ nguyên string ID, không convert sang number
+          console.log(`🔍 [handleCheckAndOpenModal] Keeping string ID: ${k}`);
+          return k;
+        });
 
-      const result = await apiClient.bulkCreateAnnualRewards({
-        personnel_ids: selectedRowKeys.map(k => Number(k)),
+      console.log('🔍 [handleCheckAndOpenModal] validPersonnelIds:', validPersonnelIds);
+
+      if (validPersonnelIds.length === 0) {
+        message.warning('Vui lòng chọn ít nhất một quân nhân hợp lệ');
+        return;
+      }
+
+      const requestData = {
+        personnel_ids: validPersonnelIds,
         nam: values.nam,
         danh_hieu: values.danh_hieu,
-        cap_bac: values.cap_bac,
-        chuc_vu: values.chuc_vu,
-        ghi_chu: values.ghi_chu,
-        so_quyet_dinh: values.so_quyet_dinh,
-        file_quyet_dinh: file,
-      });
+      };
+      
+      console.log('🔍 [handleCheckAndOpenModal] Sending request:', requestData);
 
-      if (result.success) {
-        message.success(result.message || 'Thêm danh hiệu thành công');
-        setSelectedRowKeys([]);
-        setFileList([]);
-        form.resetFields();
+      const checkResult = await apiClient.checkAnnualRewards(requestData);
 
-        // Show details
-        if (result.data?.details) {
-          const { success, skipped, errors } = result.data;
-          message.info(`Kết quả: Thành công ${success}, Bỏ qua ${skipped}, Lỗi ${errors}`, 5);
+      if (checkResult.success && checkResult.data) {
+        // Lọc ra các quân nhân có thể thêm (không có khen thưởng và không có đề xuất)
+        const eligible = checkResult.data.results
+          .filter((r: any) => !r.has_reward && !r.has_proposal)
+          .map((r: any) => r.personnel_id);
+
+        if (eligible.length === 0) {
+          message.warning('Tất cả quân nhân đã chọn đều đã có khen thưởng hoặc đề xuất cho năm này');
+          return;
         }
+
+        // Gửi tất cả quân nhân đã chọn (không chỉ eligible) để hiển thị đầy đủ
+        // Trong page details sẽ chỉ thêm khen thưởng cho những người eligible
+        const allSelectedIds = validPersonnelIds;
+
+        // Chuyển sang page nhập thông tin chi tiết
+        const params = new URLSearchParams({
+          personnel_ids: encodeURIComponent(JSON.stringify(allSelectedIds)),
+          eligible_ids: encodeURIComponent(JSON.stringify(eligible)),
+          nam: values.nam.toString(),
+          danh_hieu: values.danh_hieu,
+          check_results: encodeURIComponent(JSON.stringify(checkResult.data)),
+        });
+
+        router.push(`/admin/annual-rewards/bulk/details?${params.toString()}`);
       } else {
-        message.error(result.message || 'Có lỗi xảy ra');
+        message.error(checkResult.message || 'Có lỗi khi kiểm tra khen thưởng');
       }
     } catch (error: any) {
-      message.error('Có lỗi xảy ra khi thêm danh hiệu');
+      message.error('Có lỗi xảy ra khi kiểm tra khen thưởng');
     } finally {
       setLoading(false);
     }
@@ -156,10 +221,11 @@ export default function BulkAddAnnualRewardsPage() {
 
   const columns: ColumnsType<Personnel> = [
     {
-      title: 'ID',
-      dataIndex: 'id',
-      key: 'id',
+      title: 'STT',
+      key: 'stt',
       width: 60,
+      align: 'center',
+      render: (_: any, __: any, index: number) => index + 1,
     },
     {
       title: 'Họ tên',
@@ -168,28 +234,44 @@ export default function BulkAddAnnualRewardsPage() {
       width: 200,
     },
     {
-      title: 'CCCD',
-      dataIndex: 'cccd',
-      key: 'cccd',
-      width: 150,
+      title: 'Ngày sinh',
+      dataIndex: 'ngay_sinh',
+      key: 'ngay_sinh',
+      width: 120,
+      render: (date: string) => {
+        if (!date) return '-';
+        const d = new Date(date);
+        return d.toLocaleDateString('vi-VN');
+      },
     },
     {
-      title: 'Đơn vị',
-      dataIndex: 'DonVi',
-      key: 'don_vi',
-      width: 150,
-      render: donVi => donVi?.ten_don_vi || '-',
+      title: 'Cơ quan đơn vị',
+      key: 'co_quan_don_vi',
+      width: 200,
+      render: (_: any, record: Personnel) => {
+        if (record.DonViTrucThuoc?.CoQuanDonVi) {
+          return record.DonViTrucThuoc.CoQuanDonVi.ten_don_vi;
+        }
+        return record.CoQuanDonVi?.ten_don_vi || '-';
+      },
+    },
+    {
+      title: 'Đơn vị trực thuộc',
+      key: 'don_vi_truc_thuoc',
+      width: 200,
+      render: (_: any, record: Personnel) => {
+        return record.DonViTrucThuoc?.ten_don_vi || '-';
+      },
     },
     {
       title: 'Cấp bậc / Chức vụ',
       key: 'cap_bac_chuc_vu',
-      width: 180,
-      align: 'center',
-      render: (_: any, record: any) => {
+      width: 200,
+      render: (_: any, record: Personnel) => {
         const capBac = record.cap_bac;
         const chucVu = record.ChucVu?.ten_chuc_vu;
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
             <Text strong style={{ marginBottom: '4px' }}>
               {capBac || '-'}
             </Text>
@@ -205,7 +287,9 @@ export default function BulkAddAnnualRewardsPage() {
   const rowSelection = {
     selectedRowKeys,
     onChange: (newSelectedRowKeys: React.Key[]) => {
-      setSelectedRowKeys(newSelectedRowKeys);
+      // Lọc bỏ null/undefined trước khi set
+      const validKeys = newSelectedRowKeys.filter(k => k !== null && k !== undefined && k !== '');
+      setSelectedRowKeys(validKeys);
     },
     selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT, Table.SELECTION_NONE],
   };
@@ -239,7 +323,7 @@ export default function BulkAddAnnualRewardsPage() {
 
       {/* Form */}
       <Card title="Thông tin danh hiệu" className="shadow-sm">
-        <Form form={form} layout="vertical" onFinish={handleSubmit}>
+        <Form form={form} layout="vertical">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Form.Item
               name="nam"
@@ -267,49 +351,31 @@ export default function BulkAddAnnualRewardsPage() {
                 <Select.Option value="CSTT">
                   <Tag color="green">CSTT</Tag> Chiến sĩ tiên tiến
                 </Select.Option>
-                <Select.Option value="KHONG_DAT">
-                  <Tag color="red">KHONG_DAT</Tag> Không đạt
+                <Select.Option value="BKBQP">
+                  <Tag color="purple">BKBQP</Tag> Bằng khen của Bộ trưởng Bộ Quốc phòng
+                </Select.Option>
+                <Select.Option value="CSTDTQ">
+                  <Tag color="orange">CSTDTQ</Tag> Chiến sĩ thi đua Toàn quân
+                </Select.Option>
+                <Select.Option value="BKTTCP">
+                  <Tag color="cyan">BKTTCP</Tag> Bằng khen của Thủ tướng Chính phủ
                 </Select.Option>
               </Select>
             </Form.Item>
 
-            <Form.Item name="cap_bac" label="Cấp bậc (tại thời điểm đề nghị)">
-              <Select placeholder="Chọn cấp bậc" size="large" allowClear>
-                <Select.Option value="Thượng tá">Thượng tá</Select.Option>
-                <Select.Option value="Trung tá">Trung tá</Select.Option>
-                <Select.Option value="Thiếu tá">Thiếu tá</Select.Option>
-                <Select.Option value="Đại úy">Đại úy</Select.Option>
-                <Select.Option value="Thượng úy">Thượng úy</Select.Option>
-                <Select.Option value="Trung úy">Trung úy</Select.Option>
-                <Select.Option value="Thiếu úy">Thiếu úy</Select.Option>
-                <Select.Option value="Thượng sĩ">Thượng sĩ</Select.Option>
-                <Select.Option value="Trung sĩ">Trung sĩ</Select.Option>
-                <Select.Option value="Hạ sĩ">Hạ sĩ</Select.Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item name="chuc_vu" label="Chức vụ (tại thời điểm đề nghị)">
-              <Input placeholder="Nhập chức vụ" size="large" />
-            </Form.Item>
-
-            <Form.Item name="so_quyet_dinh" label="Số quyết định" rules={[{ required: false }]}>
-              <Input placeholder="VD: 123/QĐ-HVKHQS" size="large" prefix={<FilePdfOutlined />} />
-            </Form.Item>
-
             <Form.Item
-              name="file_quyet_dinh"
-              label="File quyết định (PDF)"
+              name="file_dinh_kem"
+              label="File đính kèm"
               rules={[{ required: false }]}
             >
               <Upload
                 fileList={fileList}
                 onChange={({ fileList: newFileList }) => setFileList(newFileList)}
                 beforeUpload={() => false}
-                accept=".pdf"
                 maxCount={1}
               >
                 <Button icon={<UploadOutlined />} size="large">
-                  Chọn file PDF
+                  Chọn file đính kèm
                 </Button>
               </Upload>
             </Form.Item>
@@ -325,7 +391,7 @@ export default function BulkAddAnnualRewardsPage() {
 
           <div className="text-gray-500 text-sm mt-2">
             <FilePdfOutlined className="mr-2" />
-            Số quyết định và file PDF sẽ được lưu chung cho tất cả quân nhân được chọn
+            File đính kèm sẽ được lưu chung cho tất cả quân nhân được chọn
           </div>
         </Form>
       </Card>
@@ -392,7 +458,7 @@ export default function BulkAddAnnualRewardsPage() {
           rowSelection={rowSelection}
           columns={columns}
           dataSource={filteredPersonnel}
-          rowKey="id"
+          rowKey={(record) => record?.id || `key-${Math.random()}`}
           loading={loading}
           pagination={{
             pageSize: 10,
@@ -413,14 +479,15 @@ export default function BulkAddAnnualRewardsPage() {
             type="primary"
             size="large"
             icon={<PlusOutlined />}
-            onClick={() => form.submit()}
+            onClick={handleCheckAndOpenModal}
             loading={loading}
             disabled={selectedRowKeys.length === 0}
           >
-            Thêm danh hiệu cho {selectedRowKeys.length} quân nhân
+            Thêm khen thưởng
           </Button>
         </div>
       </Card>
+
     </div>
   );
 }

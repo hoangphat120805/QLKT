@@ -1023,7 +1023,7 @@ export default function UserDashboard() {
                 </Link>
               </Col>
               <Col xs={24} sm={12} md={8}>
-                <Link href="/user/settings" className="block">
+                <Link href="/user/change-password" className="block">
                   <Card
                     hoverable
                     className={`text-center h-full ${

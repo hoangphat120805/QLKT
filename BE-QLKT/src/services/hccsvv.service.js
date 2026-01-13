@@ -211,8 +211,9 @@ class HCCSVVService {
         });
 
         if (existing) {
+          const { getDanhHieuName } = require('../constants/danhHieu.constants');
           results.errors.push(
-            `Dòng ${rowNumber}: Quân nhân ${personnel.ho_ten} đã có ${danh_hieu}`
+            `Dòng ${rowNumber}: Quân nhân ${personnel.ho_ten} đã có ${getDanhHieuName(danh_hieu)}`
           );
           results.failed++;
           continue;

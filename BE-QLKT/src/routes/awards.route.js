@@ -1,7 +1,10 @@
 const router = require('express').Router();
 const multer = require('multer');
 const proposalController = require('../controllers/proposal.controller');
-const { verifyToken, checkRole } = require('../middlewares/auth');
+const awardBulkController = require('../controllers/awardBulk.controller');
+const { verifyToken, checkRole, requireAdmin } = require('../middlewares/auth');
+const { auditLog } = require('../middlewares/auditLog');
+const { getLogDescription, getResourceId } = require('../helpers/auditLogHelper');
 
 // Cấu hình multer cho file upload
 const upload = multer({
@@ -78,6 +81,81 @@ router.get(
   verifyToken,
   checkRole(['ADMIN', 'MANAGER']),
   proposalController.getAwardsStatistics
+);
+
+/**
+ * @route   POST /api/awards/bulk
+ * @desc    Thêm khen thưởng đồng loạt với validation đầy đủ
+ * @access  ADMIN
+ */
+const bulkUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+});
+router.post(
+  '/bulk',
+  verifyToken,
+  requireAdmin,
+  bulkUpload.fields([{ name: 'attached_files', maxCount: 10 }]),
+  auditLog({
+    action: 'BULK',
+    resource: 'awards',
+    getDescription: getLogDescription('awards', 'BULK'),
+    getResourceId: () => null, // Bulk operation không có single resource ID
+    getPayload: (req, res, responseData) => {
+      try {
+        const data = typeof responseData === 'string' ? JSON.parse(responseData) : responseData;
+        const result = data?.data || data || {};
+
+        // Parse request body
+        let type = req.body?.type || '';
+        let nam = req.body?.nam || '';
+        let selectedPersonnel = req.body?.selected_personnel || [];
+        let selectedUnits = req.body?.selected_units || [];
+        let titleData = req.body?.title_data || [];
+
+        // Parse JSON strings nếu cần
+        if (typeof selectedPersonnel === 'string') {
+          try {
+            selectedPersonnel = JSON.parse(selectedPersonnel);
+          } catch (e) {
+            // Ignore
+          }
+        }
+        if (typeof selectedUnits === 'string') {
+          try {
+            selectedUnits = JSON.parse(selectedUnits);
+          } catch (e) {
+            // Ignore
+          }
+        }
+        if (typeof titleData === 'string') {
+          try {
+            titleData = JSON.parse(titleData);
+          } catch (e) {
+            // Ignore
+          }
+        }
+
+        return {
+          type,
+          nam: nam ? parseInt(nam) : null,
+          selected_personnel_count: Array.isArray(selectedPersonnel) ? selectedPersonnel.length : 0,
+          selected_units_count: Array.isArray(selectedUnits) ? selectedUnits.length : 0,
+          title_data_count: Array.isArray(titleData) ? titleData.length : 0,
+          imported_count: result?.importedCount || 0,
+          error_count: result?.errorCount || 0,
+          affected_personnel_ids: result?.affectedPersonnelIds || [],
+          has_attached_files: req.files?.attached_files?.length > 0,
+          attached_files_count: req.files?.attached_files?.length || 0,
+        };
+      } catch (error) {
+        console.error('Error creating bulk awards payload:', error);
+        return null;
+      }
+    },
+  }),
+  awardBulkController.bulkCreateAwards
 );
 
 module.exports = router;

@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, Input, DatePicker, Select, Button, Typography, Spin } from 'antd';
-import { SearchOutlined, ClearOutlined, CalendarOutlined } from '@ant-design/icons';
+import { Card, Input, DatePicker, Select, Button, Typography, Spin, Space } from 'antd';
+import { SearchOutlined, ClearOutlined, CalendarOutlined, FilterOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import 'dayjs/locale/vi';
 import type { SelectProps } from 'antd';
@@ -68,66 +68,12 @@ const getActionLabel = (action: string): string => {
     .join(' ');
 };
 
-// Mapping cho resources tiếng Việt
-const resourceLabels: Record<string, string> = {
-  accounts: 'Tài khoản',
-  personnel: 'Quân nhân',
-  units: 'Đơn vị',
-  positions: 'Chức vụ',
-  proposals: 'Đề xuất',
-  'annual-rewards': 'Danh hiệu hằng năm',
-  'annual_rewards': 'Danh hiệu hằng năm',
-  'position-history': 'Lịch sử chức vụ',
-  'position_history': 'Lịch sử chức vụ',
-  'scientific-achievements': 'Thành tích khoa học',
-  'scientific_achievements': 'Thành tích khoa học',
-  decisions: 'Quyết định',
-  auth: 'Xác thực',
-  'adhoc-awards': 'Khen thưởng đột xuất',
-  'adhoc_awards': 'Khen thưởng đột xuất',
-  'commemorative-medals': 'Kỷ niệm chương',
-  'commemorative_medals': 'Kỷ niệm chương',
-  'contribution-awards': 'Khen thưởng cống hiến',
-  'contribution_awards': 'Khen thưởng cống hiến',
-  'military-flag': 'Cờ thi đua',
-  'military_flag': 'Cờ thi đua',
-  'service-rewards': 'Khen thưởng niên hạn',
-  'service_rewards': 'Khen thưởng niên hạn',
-  'unit-annual-awards': 'Khen thưởng đơn vị hằng năm',
-  'unit_annual_awards': 'Khen thưởng đơn vị hằng năm',
-  'hccsvv': 'Huy chương Chiến sĩ Vẻ vang',
-  categories: 'Danh mục',
-  dashboard: 'Bảng điều khiển',
-  'system-logs': 'Nhật ký hệ thống',
-  'system_logs': 'Nhật ký hệ thống',
+// Helper function để lấy base action từ action phức tạp (ví dụ: CREATE_PERSONNEL -> CREATE)
+const getBaseAction = (action: string): string => {
+  if (!action) return action;
+  return action.split('_')[0];
 };
 
-// Helper function để map resource với format khác nhau
-const getResourceLabel = (resource: string): string => {
-  if (!resource) return resource;
-  
-  // Thử tìm label trực tiếp
-  if (resourceLabels[resource]) {
-    return resourceLabels[resource];
-  }
-  
-  // Thử với format khác (dash vs underscore)
-  const normalized = resource.replace(/_/g, '-');
-  if (resourceLabels[normalized]) {
-    return resourceLabels[normalized];
-  }
-  
-  const normalized2 = resource.replace(/-/g, '_');
-  if (resourceLabels[normalized2]) {
-    return resourceLabels[normalized2];
-  }
-  
-  // Nếu không tìm thấy, format lại resource
-  return resource
-    .split(/[-_]/)
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
-};
 
 export function LogsFilter({ onFilterChange }: LogsFilterProps) {
   const [search, setSearch] = useState('');
@@ -135,49 +81,33 @@ export function LogsFilter({ onFilterChange }: LogsFilterProps) {
   const [endDate, setEndDate] = useState<Dayjs | null>(null);
   const [actorRole, setActorRole] = useState<string | undefined>();
   const [actions, setActions] = useState<string[]>([]);
-  const [resources, setResources] = useState<string[]>([]);
   const [action, setAction] = useState<string | undefined>();
-  const [resource, setResource] = useState<string | undefined>();
   const [loading, setLoading] = useState(true);
 
-  // Fetch actions and resources from API
+  // Fetch actions from API
   useEffect(() => {
     const fetchFilterOptions = async () => {
       try {
         setLoading(true);
-        const [actionsRes, resourcesRes] = await Promise.all([
-          apiClient.getSystemLogActions(),
-          apiClient.getSystemLogResources(),
-        ]);
+        const actionsRes = await apiClient.getSystemLogActions();
 
         if (actionsRes.success && Array.isArray(actionsRes.data)) {
           // Loại bỏ null/undefined và trùng lặp, sắp xếp
+          // Giữ nguyên các action từ database (CREATE, UPDATE, DELETE, LOGIN, LOGOUT, etc.)
           const uniqueActions = Array.from(
             new Set(actionsRes.data.filter((a): a is string => Boolean(a)))
           ).sort();
+          
           setActions(uniqueActions);
         } else {
           console.warn('Invalid actions response:', actionsRes);
-          // Fallback to default values
-          setActions(['CREATE', 'UPDATE', 'DELETE', 'APPROVE', 'REJECT', 'LOGIN', 'LOGOUT']);
-        }
-
-        if (resourcesRes.success && Array.isArray(resourcesRes.data)) {
-          // Loại bỏ null/undefined và trùng lặp, sắp xếp
-          const uniqueResources = Array.from(
-            new Set(resourcesRes.data.filter((r): r is string => Boolean(r)))
-          ).sort();
-          setResources(uniqueResources);
-        } else {
-          console.warn('Invalid resources response:', resourcesRes);
-          // Fallback to default values
-          setResources(['accounts', 'personnel', 'units', 'positions', 'proposals', 'annual-rewards']);
+          // Fallback to default values - các action thực tế trong database
+          setActions(['CREATE', 'UPDATE', 'DELETE', 'APPROVE', 'REJECT', 'LOGIN', 'LOGOUT', 'CHANGE_PASSWORD', 'RESET_PASSWORD', 'IMPORT', 'EXPORT', 'BULK']);
         }
       } catch (error) {
         console.error('Error fetching filter options:', error);
-        // Fallback to default values
-        setActions(['CREATE', 'UPDATE', 'DELETE', 'APPROVE', 'REJECT', 'LOGIN', 'LOGOUT']);
-        setResources(['accounts', 'personnel', 'units', 'positions', 'proposals', 'annual-rewards']);
+        // Fallback to default values với đầy đủ các action
+        setActions(['CREATE', 'UPDATE', 'DELETE', 'APPROVE', 'REJECT', 'LOGIN', 'LOGOUT', 'CHANGE_PASSWORD', 'RESET_PASSWORD', 'IMPORT', 'EXPORT', 'BULK']);
       } finally {
         setLoading(false);
       }
@@ -196,7 +126,6 @@ export function LogsFilter({ onFilterChange }: LogsFilterProps) {
         endDate: endDate?.toISOString(),
         actorRole,
         action,
-        resource,
       });
     }, search ? 300 : 0); // No delay if clearing search
 
@@ -204,7 +133,7 @@ export function LogsFilter({ onFilterChange }: LogsFilterProps) {
       clearTimeout(timeout);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, startDate, endDate, actorRole, action, resource]);
+  }, [search, startDate, endDate, actorRole, action]);
 
   const handleSearch = (value: string) => {
     setSearch(value);
@@ -228,22 +157,38 @@ export function LogsFilter({ onFilterChange }: LogsFilterProps) {
     setAction(a);
   };
 
-  const handleResourceChange = (value: string) => {
-    const r = value === 'ALL' ? undefined : value;
-    setResource(r);
-  };
-
   const handleReset = () => {
     setSearch('');
     setStartDate(null);
     setEndDate(null);
     setActorRole(undefined);
     setAction(undefined);
-    setResource(undefined);
     // useEffect will handle the filter change automatically
   };
 
-  const hasActiveFilters = search || startDate || endDate || actorRole || action || resource;
+  const handleQuickDateFilter = (type: 'today' | 'week' | 'month' | 'all') => {
+    const today = dayjs();
+    switch (type) {
+      case 'today':
+        setStartDate(today.startOf('day'));
+        setEndDate(today.endOf('day'));
+        break;
+      case 'week':
+        setStartDate(today.startOf('week'));
+        setEndDate(today.endOf('week'));
+        break;
+      case 'month':
+        setStartDate(today.startOf('month'));
+        setEndDate(today.endOf('month'));
+        break;
+      case 'all':
+        setStartDate(null);
+        setEndDate(null);
+        break;
+    }
+  };
+
+  const hasActiveFilters = search || startDate || endDate || actorRole || action;
 
   const disabledStartDate = (current: Dayjs) => {
     if (!endDate) return false;
@@ -271,22 +216,73 @@ export function LogsFilter({ onFilterChange }: LogsFilterProps) {
     })),
   ];
 
-  const resourceOptions: SelectProps['options'] = [
-    { label: 'Tất cả', value: 'ALL' },
-    ...resources.map(r => ({
-      label: getResourceLabel(r),
-      value: r,
-    })),
-  ];
 
   return (
-    <Card className="mb-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
+    <Card 
+      className="mb-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm"
+      title={
+        <div className="flex items-center gap-2">
+          <FilterOutlined className="text-blue-500" />
+          <span className="text-gray-700 dark:text-gray-300 font-semibold">Bộ lọc tìm kiếm</span>
+        </div>
+      }
+      extra={
+        hasActiveFilters && (
+          <Button
+            type="text"
+            size="small"
+            icon={<ClearOutlined />}
+            onClick={handleReset}
+            className="text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400"
+          >
+            Xóa bộ lọc
+          </Button>
+        )
+      }
+    >
       {loading ? (
         <div className="flex justify-center py-8">
           <Spin size="large" />
         </div>
       ) : (
         <>
+          {/* Quick Date Filters */}
+          <div className="mb-4">
+            <Text className="text-sm font-medium mb-2 block text-gray-700 dark:text-gray-300">
+              Lọc nhanh theo thời gian
+            </Text>
+            <Space wrap>
+              <Button
+                size="small"
+                type={startDate && endDate && dayjs().isSame(startDate, 'day') && dayjs().isSame(endDate, 'day') ? 'primary' : 'default'}
+                onClick={() => handleQuickDateFilter('today')}
+              >
+                Hôm nay
+              </Button>
+              <Button
+                size="small"
+                type={startDate && endDate && dayjs().startOf('week').isSame(startDate, 'day') ? 'primary' : 'default'}
+                onClick={() => handleQuickDateFilter('week')}
+              >
+                Tuần này
+              </Button>
+              <Button
+                size="small"
+                type={startDate && endDate && dayjs().startOf('month').isSame(startDate, 'day') ? 'primary' : 'default'}
+                onClick={() => handleQuickDateFilter('month')}
+              >
+                Tháng này
+              </Button>
+              <Button
+                size="small"
+                type={!startDate && !endDate ? 'primary' : 'default'}
+                onClick={() => handleQuickDateFilter('all')}
+              >
+                Tất cả
+              </Button>
+            </Space>
+          </div>
+
           {/* Hàng 1: Tìm kiếm và Bộ lọc ngày */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
             {/* Search Input */}
@@ -342,7 +338,7 @@ export function LogsFilter({ onFilterChange }: LogsFilterProps) {
           </div>
 
           {/* Hàng 2: Các bộ lọc Select */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Actor Role */}
             <div>
               <Text className="text-sm font-medium mb-2 block text-gray-700 dark:text-gray-300">
@@ -357,9 +353,10 @@ export function LogsFilter({ onFilterChange }: LogsFilterProps) {
                 style={{ width: '100%' }}
                 className="bg-white dark:bg-gray-700"
                 showSearch
-                filterOption={(input, option) =>
-                  (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                }
+                filterOption={(input, option) => {
+                  const label = typeof option?.label === 'string' ? option.label : String(option?.label ?? '');
+                  return label.toLowerCase().includes(input.toLowerCase());
+                }}
               />
             </div>
 
@@ -377,47 +374,14 @@ export function LogsFilter({ onFilterChange }: LogsFilterProps) {
                 style={{ width: '100%' }}
                 className="bg-white dark:bg-gray-700"
                 showSearch
-                filterOption={(input, option) =>
-                  (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                }
-              />
-            </div>
-
-            {/* Resource */}
-            <div>
-              <Text className="text-sm font-medium mb-2 block text-gray-700 dark:text-gray-300">
-                Tài nguyên
-              </Text>
-              <Select
-                placeholder="Tất cả"
-                value={resource || 'ALL'}
-                onChange={handleResourceChange}
-                options={resourceOptions}
-                size="large"
-                style={{ width: '100%' }}
-                className="bg-white dark:bg-gray-700"
-                showSearch
-                filterOption={(input, option) =>
-                  (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                }
+                filterOption={(input, option) => {
+                  const label = typeof option?.label === 'string' ? option.label : String(option?.label ?? '');
+                  return label.toLowerCase().includes(input.toLowerCase());
+                }}
               />
             </div>
           </div>
         </>
-      )}
-
-      {/* Reset Button */}
-      {!loading && hasActiveFilters && (
-        <div className="mt-4 flex justify-end">
-          <Button
-            type="text"
-            icon={<ClearOutlined />}
-            onClick={handleReset}
-            className="text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400"
-          >
-            Xóa bộ lọc
-          </Button>
-        </div>
       )}
     </Card>
   );

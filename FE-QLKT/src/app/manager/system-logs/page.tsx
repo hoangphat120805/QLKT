@@ -68,7 +68,6 @@ export default function ManagerSystemLogsPage() {
         }
 
         const normalized = list.map((l: any) => {
-          const actionCombined = [l?.action, l?.resource].filter(Boolean).join('_').toUpperCase();
           const actorName =
             l?.NguoiThucHien?.QuanNhan?.ho_ten ||
             l?.NguoiThucHien?.username ||
@@ -78,7 +77,7 @@ export default function ManagerSystemLogsPage() {
             l?.actor_id;
           return {
             ...l,
-            action: actionCombined,
+            action: l?.action?.toUpperCase() || l?.action, // Giữ nguyên action từ database
             actor_name: actorName,
             details: l?.description || l?.details || '', // Ưu tiên description từ backend (đã dịch tiếng Việt)
             description: l?.description || l?.details || '', // Đảm bảo có description
@@ -140,7 +139,7 @@ export default function ManagerSystemLogsPage() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
             gap: '16px',
             marginBottom: '24px',
           }}
@@ -317,6 +316,65 @@ export default function ManagerSystemLogsPage() {
                   }}
                 >
                   {logs.filter(l => l.action?.includes('DELETE')).length}
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          <Card
+            hoverable
+            style={{
+              borderRadius: '10px',
+              boxShadow: theme === 'dark' ? '0 1px 6px rgba(0, 0, 0, 0.35)' : '0 1px 4px rgba(0, 0, 0, 0.06)',
+              transition: 'all 0.3s ease',
+            }}
+            bodyStyle={{ padding: '20px' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div
+                style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '12px',
+                  background: theme === 'dark' ? '#78350f' : '#fef3c7',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow:
+                    theme === 'dark'
+                      ? '0 1px 3px rgba(251, 191, 36, 0.3)'
+                      : '0 1px 3px rgba(251, 191, 36, 0.2)',
+                }}
+              >
+                <FundOutlined
+                  style={{
+                    fontSize: '26px',
+                    color: theme === 'dark' ? '#fbbf24' : '#d97706',
+                  }}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <Text
+                  type="secondary"
+                  style={{
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    display: 'block',
+                    marginBottom: '4px',
+                    color: theme === 'dark' ? '#cbd5e1' : '#475569',
+                  }}
+                >
+                  Hành động cập nhật
+                </Text>
+                <div
+                  style={{
+                    fontSize: '28px',
+                    fontWeight: 'bold',
+                    color: theme === 'dark' ? '#e5e7eb' : '#0f172a',
+                    lineHeight: '1.1',
+                  }}
+                >
+                  {logs.filter(l => l.action?.includes('UPDATE')).length}
                 </div>
               </div>
             </div>

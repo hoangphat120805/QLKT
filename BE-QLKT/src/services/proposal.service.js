@@ -4,6 +4,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const profileService = require('./profile.service');
 const unitAnnualAwardService = require('./unitAnnualAward.service');
+const { getDanhHieuName } = require('../constants/danhHieu.constants');
 
 // Dynamic import for uuid (ES Module) - load once and cache
 let uuidv4;
@@ -3005,9 +3006,12 @@ class ProposalService {
                 affectedPersonnelIds.add(quanNhan.id);
               } else {
                 // Hạng mới thấp hơn hoặc bằng, bỏ qua
+                const existingDanhHieuName = getDanhHieuName(existingCongHien.danh_hieu);
+                const newDanhHieuName = getDanhHieuName(item.danh_hieu);
+
                 errors.push(
-                  `Quân nhân "${quanNhan.ho_ten}" đã có danh hiệu cống hiến "${existingCongHien.danh_hieu}" (năm ${existingCongHien.nam}). ` +
-                    `Không thể lưu danh hiệu "${item.danh_hieu}" vì hạng thấp hơn hoặc bằng.`
+                  `Quân nhân "${quanNhan.ho_ten}" đã có danh hiệu cống hiến "${existingDanhHieuName}" (năm ${existingCongHien.nam}). ` +
+                    `Không thể lưu danh hiệu "${newDanhHieuName}" vì hạng thấp hơn hoặc bằng.`
                 );
               }
             } else {
@@ -3031,7 +3035,7 @@ class ProposalService {
             }
           } catch (error) {
             errors.push(
-              `Lỗi import cống hiến personnel_id ${item.personnel_id || 'N/A'}: ${error.message}`
+              `Lỗi import cống hiến personnel_id ${item.personnel_id || ' '}: ${error.message}`
             );
           }
         }
@@ -3701,7 +3705,7 @@ class ProposalService {
                 d =>
                   d.so_quyet_dinh === soQuyetDinh ||
                   d.so_quyet_dinh_bkbqp === soQuyetDinh ||
-                  d.so_quyet_dinh_cstdtq === soQuyetDinh || 
+                  d.so_quyet_dinh_cstdtq === soQuyetDinh ||
                   d.so_quyet_dinh_bkttcp === soQuyetDinh
               );
               if (matchingDanhHieu) {
@@ -3805,7 +3809,9 @@ class ProposalService {
       // Nếu có lỗi khi import, không cho phép phê duyệt
       if (errors.length > 0) {
         throw new Error(
-          `Không thể phê duyệt đề xuất do có ${errors.length} lỗi khi import:\n${errors.join('\n')}`
+          `Không thể phê duyệt đề xuất do có ${
+            errors.length
+          } lỗi khi thêm khen thưởng:\n${errors.join('\n')}`
         );
       }
 
@@ -4907,7 +4913,9 @@ class ProposalService {
         if (existing) {
           return {
             exists: true,
-            message: `Quân nhân đã có đề xuất danh hiệu ${danhHieu} cho năm ${nam} `,
+            message: `Quân nhân đã có đề xuất danh hiệu ${getDanhHieuName(
+              danhHieu
+            )} cho năm ${nam}`,
             status: existing.status,
           };
         }
@@ -4933,7 +4941,7 @@ class ProposalService {
         if (existing) {
           return {
             exists: true,
-            message: `Quân nhân đã có ${danhHieu} (năm ${existing.nam})`,
+            message: `Quân nhân đã có ${getDanhHieuName(danhHieu)} (năm ${existing.nam})`,
           };
         }
       }
@@ -5000,9 +5008,13 @@ class ProposalService {
         });
 
         if (existing) {
+          // Lấy danh hiệu từ proposal data
+          const dataCongHien = existing.data_cong_hien || [];
+          const congHienItem = dataCongHien.find(item => item.personnel_id === personnelId);
+          const danhHieu = congHienItem?.danh_hieu || existing.danh_hieu;
           return {
             exists: true,
-            message: `Quân nhân đã có ${existing.danh_hieu} (năm ${existing.nam})`,
+            message: `Quân nhân đã có ${getDanhHieuName(danhHieu)} (năm ${existing.nam})`,
           };
         }
       }
@@ -5047,7 +5059,7 @@ class ProposalService {
         if (existing) {
           return {
             exists: true,
-            message: `Đơn vị đã có đề xuất danh hiệu ${danhHieu} cho năm ${nam}`,
+            message: `Đơn vị đã có đề xuất danh hiệu ${getDanhHieuName(danhHieu)} cho năm ${nam}`,
             status: existing.status,
           };
         }

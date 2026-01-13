@@ -216,9 +216,9 @@ export default function SuperAdminDashboard() {
       chartData.roleDistribution.length > 0
         ? chartData.roleDistribution.map((item: any) => {
             const roleMap: Record<string, string> = {
-              SUPER_ADMIN: 'Super Admin',
-              ADMIN: 'Admin',
-              MANAGER: 'Quản lý',
+              SUPER_ADMIN: 'Quản trị viên cấp cao',
+              ADMIN: 'Quản trị viên',
+              MANAGER: 'Chỉ huy đơn vị',
               USER: 'Người dùng',
             };
             return roleMap[item.role] || item.role;
@@ -353,16 +353,35 @@ export default function SuperAdminDashboard() {
   };
 
   // Bar chart - Logs theo hành động
+  // Mapping action sang tiếng Việt
+  const actionLabelsMap: Record<string, string> = {
+    CREATE: 'Tạo',
+    UPDATE: 'Cập nhật',
+    DELETE: 'Xóa',
+    APPROVE: 'Phê duyệt',
+    REJECT: 'Từ chối',
+    LOGIN: 'Đăng nhập',
+    LOGOUT: 'Đăng xuất',
+    RESET_PASSWORD: 'Đặt lại mật khẩu',
+    CHANGE_PASSWORD: 'Đổi mật khẩu',
+    IMPORT: 'Import',
+    EXPORT: 'Xuất dữ liệu',
+    BULK: 'Thêm đồng loạt',
+  };
+
   const logsChartData = {
     labels:
       chartData.logsByAction.length > 0
         ? chartData.logsByAction.map((item: any) => {
+            // Map action sang tiếng Việt
+            const action = item.action?.toUpperCase() || '';
+            const vietnameseLabel = actionLabelsMap[action] || action;
+            
             // Rút gọn tên hành động nếu quá dài
-            const action = item.action;
-            if (action && action.length > 20) {
-              return action.substring(0, 20) + '...';
+            if (vietnameseLabel && vietnameseLabel.length > 20) {
+              return vietnameseLabel.substring(0, 20) + '...';
             }
-            return action || '';
+            return vietnameseLabel || '';
           })
         : ['Chưa có dữ liệu'],
     datasets: [
@@ -403,6 +422,15 @@ export default function SuperAdminDashboard() {
     scales: {
       y: {
         beginAtZero: true,
+        title: {
+          display: true,
+          text: 'Số lượng',
+          color: textColor,
+          font: {
+            size: 14,
+            weight: 'bold' as const,
+          },
+        },
         ticks: {
           color: textColor,
           stepSize: 1,
@@ -412,6 +440,15 @@ export default function SuperAdminDashboard() {
         },
       },
       x: {
+        title: {
+          display: true,
+          text: 'Hành động',
+          color: textColor,
+          font: {
+            size: 14,
+            weight: 'bold' as const,
+          },
+        },
         ticks: {
           color: textColor,
           maxRotation: 45,
@@ -526,7 +563,7 @@ export default function SuperAdminDashboard() {
           </div>
           <div>
             <Title level={1} style={{ margin: 0 }}>
-              Xin chào, {displayName}
+              Xin chào, Quản trị viên cấp cao
             </Title>
             <Text type="secondary" style={{ display: 'block', marginTop: '4px' }}>
               Bảng điều khiển hệ thống
