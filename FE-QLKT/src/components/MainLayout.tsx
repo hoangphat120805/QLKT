@@ -29,6 +29,11 @@ import {
   BellOutlined,
   ApartmentOutlined,
   TrophyOutlined,
+  FileSyncOutlined,
+  FileDoneOutlined,
+  ContainerOutlined,
+  HistoryOutlined,
+  SolutionOutlined,
 } from '@ant-design/icons';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
@@ -246,7 +251,7 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
         },
         {
           key: 'proposals',
-          icon: <FileTextOutlined />,
+          icon: <FileSyncOutlined />,
           label: <Link href="/admin/proposals/review">Duyệt Đề xuất</Link>,
         },
         {
@@ -256,22 +261,22 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
         },
         {
           key: 'awards',
-          icon: <FileTextOutlined />,
+          icon: <FileDoneOutlined />,
           label: <Link href="/admin/awards">Quản lý Khen Thưởng</Link>,
         },
         {
           key: 'bulk-awards',
           icon: <TrophyOutlined />,
-          label: <Link href="/admin/awards/bulk/create">Thêm khen thưởng đồng loạt</Link>,
+          label: <Link href="/admin/awards/bulk/create">Thêm khen thưởng</Link>,
         },
         {
           key: 'adhoc-awards',
-          icon: <TrophyOutlined />,
+          icon: <ContainerOutlined />,
           label: <Link href="/admin/adhoc-awards">Khen thưởng Đột xuất</Link>,
         },
         {
           key: 'system-logs',
-          icon: <FileTextOutlined />,
+          icon: <HistoryOutlined />,
           label: <Link href="/admin/system-logs">Nhật ký hệ thống</Link>,
         },
       ];
@@ -287,7 +292,7 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
         },
         {
           key: 'proposals-list',
-          icon: <FileTextOutlined />,
+          icon: <FileSyncOutlined />,
           label: <Link href="/manager/proposals">Đề xuất của tôi</Link>,
         },
         {
@@ -307,12 +312,12 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
         },
         {
           key: 'system-logs',
-          icon: <FileTextOutlined />,
+          icon: <HistoryOutlined />,
           label: <Link href="/manager/system-logs">Nhật ký hệ thống</Link>,
         },
         {
           key: 'profile',
-          icon: <FileTextOutlined />,
+          icon: <SolutionOutlined />,
           label: (
             <Link
               href={
@@ -338,7 +343,7 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
         ...baseItems,
         {
           key: 'profile',
-          icon: <FileTextOutlined />,
+          icon: <SolutionOutlined />,
           label: <Link href="/user/profile">Hồ sơ của tôi</Link>,
         },
         {
@@ -413,17 +418,39 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
     }
 
     // Xử lý cho MANAGER
+    if (pathname.startsWith('/manager/profile/edit')) {
+      return 'profile-edit';
+    }
+    // Xử lý /manager/personnel/[id] trước để ưu tiên (vì nó là sub-route của personnel)
+    if (pathname.match(/^\/manager\/personnel\/[^/]+$/)) {
+      return 'profile';
+    }
     if (pathname.startsWith('/manager/personnel')) {
       return 'personnel';
     }
     if (pathname.startsWith('/manager/proposals')) {
-      return 'proposals';
+      return 'proposals-list';
+    }
+    if (pathname.startsWith('/manager/awards')) {
+      return 'awards';
+    }
+    if (pathname.startsWith('/manager/units')) {
+      return 'units';
+    }
+    if (pathname.startsWith('/manager/adhoc-awards')) {
+      return 'adhoc-awards';
+    }
+    if (pathname.startsWith('/manager/system-logs')) {
+      return 'system-logs';
     }
     if (pathname.startsWith('/manager/dashboard') || pathname === '/manager') {
       return 'dashboard';
     }
 
     // Xử lý cho USER
+    if (pathname.startsWith('/user/profile/edit')) {
+      return 'profile-edit';
+    }
     if (pathname.startsWith('/user/profile')) {
       return 'profile';
     }

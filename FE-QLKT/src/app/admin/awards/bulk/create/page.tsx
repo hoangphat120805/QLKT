@@ -733,24 +733,24 @@ export default function BulkAddAwardsPage() {
 
             {/* Chỉ hiển thị trường ghi chú nếu loại khen thưởng hỗ trợ lưu ghi chú */}
             {canShowNote && (
-              <Card
-                title={
-                  <Space>
-                    <EditOutlined />
-                    <span>Ghi chú (tùy chọn)</span>
-                  </Space>
-                }
-                style={{ marginTop: 16 }}
-              >
-                <Input.TextArea
-                  placeholder="Nhập ghi chú (không bắt buộc)..."
-                  value={note}
-                  onChange={e => setNote(e.target.value)}
-                  rows={3}
-                  maxLength={1000}
-                  showCount
-                />
-              </Card>
+            <Card
+              title={
+                <Space>
+                  <EditOutlined />
+                  <span>Ghi chú (tùy chọn)</span>
+                </Space>
+              }
+              style={{ marginTop: 16 }}
+            >
+              <Input.TextArea
+                placeholder="Nhập ghi chú (không bắt buộc)..."
+                value={note}
+                onChange={e => setNote(e.target.value)}
+                rows={3}
+                maxLength={1000}
+                showCount
+              />
+            </Card>
             )}
           </div>
         );
