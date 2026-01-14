@@ -261,10 +261,10 @@ export default function DecisionModal({
   const loaiKhenThuongOptions = [
     { label: 'Cá nhân Hằng năm', value: 'CA_NHAN_HANG_NAM' },
     { label: 'Đơn vị Hằng năm', value: 'DON_VI_HANG_NAM' },
-    { label: 'Niên hạn', value: 'NIEN_HAN' },
+    { label: 'Huy chương Chiến sĩ vẻ vang', value: 'NIEN_HAN' },
     { label: 'Huy chương Quân kỳ Quyết thắng', value: 'HC_QKQT' },
     { label: 'Kỷ niệm chương Vì sự nghiệp xây dựng QĐNDVN', value: 'KNC_VSNXD_QDNDVN' },
-    { label: 'Cống hiến', value: 'CONG_HIEN' },
+    { label: 'Huân chương Bảo vệ Tổ quốc', value: 'CONG_HIEN' },
     { label: 'Đột xuất', value: 'DOT_XUAT' },
     { label: 'Thành tích Khoa học', value: 'NCKH' },
   ];

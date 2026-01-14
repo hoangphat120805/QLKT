@@ -48,14 +48,14 @@ class ProfileController {
 
       return res.status(200).json({
         success: true,
-        message: 'Lấy hồ sơ niên hạn thành công',
+        message: 'Lấy hồ sơ Huy chương Chiến sĩ vẻ vang thành công',
         data: result,
       });
     } catch (error) {
       console.error('Get tenure profile error:', error);
       return res.status(500).json({
         success: false,
-        message: error.message || 'Lấy hồ sơ niên hạn thất bại',
+        message: error.message || 'Lấy hồ sơ Huy chương Chiến sĩ vẻ vang thất bại',
       });
     }
   }
@@ -75,14 +75,14 @@ class ProfileController {
 
       return res.status(200).json({
         success: true,
-        message: 'Lấy hồ sơ cống hiến thành công',
+        message: 'Lấy hồ sơ Huân chương Bảo vệ Tổ quốc thành công',
         data: result,
       });
     } catch (error) {
       console.error('Get contribution profile error:', error);
       return res.status(500).json({
         success: false,
-        message: error.message || 'Lấy hồ sơ cống hiến thất bại',
+        message: error.message || 'Lấy hồ sơ Huân chương Bảo vệ Tổ quốc thất bại',
       });
     }
   }
@@ -148,14 +148,14 @@ class ProfileController {
 
       return res.status(200).json({
         success: true,
-        message: 'Lấy danh sách hồ sơ niên hạn thành công',
+        message: 'Lấy danh sách hồ sơ Huy chương Chiến sĩ vẻ vang thành công',
         data: result,
       });
     } catch (error) {
       console.error('Get all tenure profiles error:', error);
       return res.status(500).json({
         success: false,
-        message: error.message || 'Lấy danh sách hồ sơ niên hạn thất bại',
+        message: error.message || 'Lấy danh sách hồ sơ Huy chương Chiến sĩ vẻ vang thất bại',
       });
     }
   }
@@ -173,14 +173,14 @@ class ProfileController {
 
       return res.status(200).json({
         success: true,
-        message: 'Cập nhật hồ sơ niên hạn thành công',
+        message: 'Cập nhật hồ sơ Huy chương Chiến sĩ vẻ vang thành công',
         data: result,
       });
     } catch (error) {
       console.error('Update tenure profile error:', error);
       return res.status(500).json({
         success: false,
-        message: error.message || 'Cập nhật hồ sơ niên hạn thất bại',
+        message: error.message || 'Cập nhật hồ sơ Huy chương Chiến sĩ vẻ vang thất bại',
       });
     }
   }

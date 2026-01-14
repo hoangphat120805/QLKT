@@ -8,7 +8,7 @@ const {
 
 // Helper function to format proposal type to Vietnamese
 const formatProposalType = loaiDeXuat => {
-  const prefix = 'Đề xuất ';
+  const prefix = 'Đề xuất khen thưởng ';
   const typeName = LOAI_DE_XUAT_MAP[loaiDeXuat];
   return typeName ? prefix + typeName.toLowerCase() : 'Đề xuất khen thưởng';
 };
@@ -531,10 +531,10 @@ class NotificationHelper {
         CA_NHAN_HANG_NAM: 'Danh hiệu hằng năm',
         DON_VI_HANG_NAM: 'Danh hiệu đơn vị hằng năm',
         NCKH: 'Thành tích khoa học',
-        NIEN_HAN: 'Khen thưởng niên hạn',
+        NIEN_HAN: 'Huy chương Chiến sĩ vẻ vang',
         HC_QKQT: 'Huy chương Quân kỳ Quyết thắng',
         KNC_VSNXD_QDNDVN: 'Kỷ niệm chương VSNXD QĐNDVN',
-        CONG_HIEN: 'Khen thưởng cống hiến',
+        CONG_HIEN: 'Huân chương Bảo vệ Tổ quốc',
       };
       const awardTypeName = bulkAwardTypeMap[awardType] || awardType;
 

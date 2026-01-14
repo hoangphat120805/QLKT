@@ -53,6 +53,7 @@ const getRoleText = (role: string) => {
 export default function AccountsListPage() {
   const { theme } = useTheme();
   const [loading, setLoading] = useState(false);
+  const [tableLoading, setTableLoading] = useState(false);
   const [accounts, setAccounts] = useState([]);
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
   const [searchText, setSearchText] = useState('');
@@ -60,7 +61,12 @@ export default function AccountsListPage() {
   const [roleFilter, setRoleFilter] = useState<string | undefined>(undefined);
 
   const fetchAccounts = async (page = 1, pageSize = 10, search = '', role?: string) => {
-    setLoading(true);
+    // Chỉ set loading ban đầu, khi chuyển trang thì dùng tableLoading
+    if (accounts.length === 0 || page === 1) {
+      setLoading(true);
+    } else {
+      setTableLoading(true);
+    }
     try {
       const params: any = { page, limit: pageSize };
       if (search) params.search = search;
@@ -82,6 +88,7 @@ export default function AccountsListPage() {
       message.error(error.message || 'Không thể tải danh sách tài khoản');
     } finally {
       setLoading(false);
+      setTableLoading(false);
     }
   };
 
@@ -118,6 +125,7 @@ export default function AccountsListPage() {
   };
 
   const handleTableChange = (pag: any) => {
+    setTableLoading(true);
     fetchAccounts(pag.current, pag.pageSize, debouncedSearch, roleFilter);
   };
 
@@ -329,7 +337,7 @@ export default function AccountsListPage() {
             columns={columns}
             dataSource={accounts}
             rowKey="id"
-            loading={loading}
+            loading={loading || tableLoading}
             pagination={{
               ...pagination,
               showTotal: total => `Tổng ${total} tài khoản`,

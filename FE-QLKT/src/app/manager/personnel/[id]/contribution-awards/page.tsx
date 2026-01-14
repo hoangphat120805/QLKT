@@ -237,7 +237,7 @@ export default function ContributionAwardsPage() {
           <Breadcrumb.Item>
             <Link href={`/manager/personnel/${personnelId}`}>{personnel?.ho_ten}</Link>
           </Breadcrumb.Item>
-          <Breadcrumb.Item>Khen thưởng cống hiến</Breadcrumb.Item>
+          <Breadcrumb.Item>Huân chương Bảo vệ Tổ quốc</Breadcrumb.Item>
         </Breadcrumb>
 
         {/* Header */}
@@ -258,7 +258,7 @@ export default function ContributionAwardsPage() {
               </Link>
             </Space>
             <Title level={2} style={{ marginTop: 8, marginBottom: 8 }}>
-              Khen thưởng cống hiến
+              Huân chương Bảo vệ Tổ quốc
             </Title>
             {personnel && (
               <Paragraph style={{ fontSize: 14, color: '#666', marginBottom: 0 }}>
@@ -287,7 +287,7 @@ export default function ContributionAwardsPage() {
               rowKey="id"
               pagination={false}
               locale={{
-                emptyText: 'Chưa có dữ liệu khen thưởng cống hiến',
+                emptyText: 'Chưa có dữ liệu Huân chương Bảo vệ Tổ quốc',
               }}
             />
           </Card>

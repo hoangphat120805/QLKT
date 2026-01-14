@@ -814,11 +814,11 @@ export default function Step2SelectPersonnelNienHan({
   return (
     <div>
       <Alert
-        message="Bước 2: Chọn quân nhân - Niên hạn"
+        message="Bước 2: Chọn quân nhân - Huy chương Chiến sĩ vẻ vang"
         description={
           <div>
             <p>1. Nhập năm đề xuất khen thưởng</p>
-            <p>2. Chọn các quân nhân cần đề xuất khen thưởng niên hạn từ danh sách dưới đây</p>
+            <p>2. Chọn các quân nhân cần đề xuất Huy chương Chiến sĩ vẻ vang từ danh sách dưới đây</p>
             <p>
               3. Bảng hiển thị thông tin ngày nhập ngũ, xuất ngũ và tổng tháng để hỗ trợ lựa chọn
             </p>

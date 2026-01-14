@@ -8,9 +8,6 @@ import {
   Button,
   Table,
   Modal,
-  Form,
-  Input,
-  Select,
   Space,
   Typography,
   Breadcrumb,
@@ -19,15 +16,11 @@ import {
   Spin,
   ConfigProvider,
   theme as antdTheme,
-  DatePicker,
-  Row,
-  Col,
   Tag,
 } from 'antd';
 import type { TableColumnsType } from 'antd';
 import {
   LeftOutlined,
-  PlusOutlined,
   DeleteOutlined,
   EditOutlined,
   HomeOutlined,
@@ -37,7 +30,7 @@ import {
 import { apiClient } from '@/lib/api-client';
 import { formatDate } from '@/lib/utils';
 import { useTheme } from '@/components/theme-provider';
-import dayjs from 'dayjs';
+import { downloadDecisionFile } from '@/utils/downloadDecisionFile';
 
 const { Title, Paragraph } = Typography;
 
@@ -45,8 +38,13 @@ interface ContributionAward {
   id: string;
   type: string;
   name: string;
+  nam?: number;
+  cap_bac?: string;
+  chuc_vu?: string;
+  so_quyet_dinh?: string;
+  ghi_chu?: string;
+  danh_hieu?: string;
   rank?: string;
-  ngay_cap?: string;
   status: string;
 }
 
@@ -54,17 +52,12 @@ export default function AdminContributionAwardsPage() {
   const params = useParams();
   const personnelId = params?.id as string;
   const { theme } = useTheme();
-  const [form] = Form.useForm();
-
   const [loading, setLoading] = useState(true);
   const [personnel, setPersonnel] = useState<any>(null);
   const [serviceProfile, setServiceProfile] = useState<any>(null);
   const [awards, setAwards] = useState<ContributionAward[]>([]);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingAward, setEditingAward] = useState<any>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -73,107 +66,52 @@ export default function AdminContributionAwardsPage() {
   async function loadData() {
     try {
       setLoading(true);
-      const [personnelRes, serviceRes] = await Promise.all([
-        apiClient.getPersonnelById(personnelId),
-        apiClient.getContributionProfile(personnelId),
-      ]);
+      const personnelRes = await apiClient.getPersonnelById(personnelId);
 
-      if (personnelRes.success) {
-        setPersonnel(personnelRes.data);
+      if (!personnelRes.success || !personnelRes.data) {
+        message.error('Không tìm thấy thông tin quân nhân');
+        return;
       }
-      if (serviceRes.success) {
-        setServiceProfile(serviceRes.data);
-        // Map service profile data to awards array
-        const mappedAwards: ContributionAward[] = [];
 
-        // Huy chương chiến sĩ Vẻ vang
-        if (serviceRes.data.hccsvv_hang_ba_status) {
-          mappedAwards.push({
-            id: 'hccsvv_ba',
-            type: 'HCCSVV',
-            name: 'Huy chương Chiến sĩ Vẻ vang',
-            rank: 'Hạng Ba',
-            ngay_cap: serviceRes.data.hccsvv_hang_ba_ngay,
-            status: serviceRes.data.hccsvv_hang_ba_status,
-          });
-        }
-        if (serviceRes.data.hccsvv_hang_nhi_status) {
-          mappedAwards.push({
-            id: 'hccsvv_nhi',
-            type: 'HCCSVV',
-            name: 'Huy chương Chiến sĩ Vẻ vang',
-            rank: 'Hạng Nhì',
-            ngay_cap: serviceRes.data.hccsvv_hang_nhi_ngay,
-            status: serviceRes.data.hccsvv_hang_nhi_status,
-          });
-        }
-        if (serviceRes.data.hccsvv_hang_nhat_status) {
-          mappedAwards.push({
-            id: 'hccsvv_nhat',
-            type: 'HCCSVV',
-            name: 'Huy chương Chiến sĩ Vẻ vang',
-            rank: 'Hạng Nhất',
-            ngay_cap: serviceRes.data.hccsvv_hang_nhat_ngay,
-            status: serviceRes.data.hccsvv_hang_nhat_status,
-          });
-        }
+      setPersonnel(personnelRes.data);
 
-        // HC Bảo vệ Tổ quốc
-        if (serviceRes.data.hcbvtq_hang_ba_status) {
-          mappedAwards.push({
-            id: 'hcbvtq_ba',
-            type: 'HCBVTQ',
-            name: 'Huân chương Bảo vệ Tổ quốc hạng Ba',
-            rank: 'Hạng Ba',
-            ngay_cap: serviceRes.data.hcbvtq_hang_ba_ngay,
-            status: serviceRes.data.hcbvtq_hang_ba_status,
-          });
-        }
-        if (serviceRes.data.hcbvtq_hang_nhi_status) {
-          mappedAwards.push({
-            id: 'hcbvtq_nhi',
-            type: 'HCBVTQ',
-            name: 'Huân chương Bảo vệ Tổ quốc hạng Nhì',
-            rank: 'Hạng Nhì',
-            ngay_cap: serviceRes.data.hcbvtq_hang_nhi_ngay,
-            status: serviceRes.data.hcbvtq_hang_nhi_status,
-          });
-        }
-        if (serviceRes.data.hcbvtq_hang_nhat_status) {
-          mappedAwards.push({
-            id: 'hcbvtq_nhat',
-            type: 'HCBVTQ',
-            name: 'Huân chương Bảo vệ Tổ quốc hạng Nhất',
-            rank: 'Hạng Nhất',
-            ngay_cap: serviceRes.data.hcbvtq_hang_nhat_ngay,
-            status: serviceRes.data.hcbvtq_hang_nhat_status,
-          });
-        }
+      // Lấy dữ liệu từ API Contribution Awards (HCBVTQ) - lấy tất cả và filter theo personnelId
+      const contributionRes = await apiClient.getContributionAwards({ limit: 1000 });
 
-        // HC Quân kỳ Quyết thắng
-        if (serviceRes.data.hcqkqt_status) {
-          mappedAwards.push({
-            id: 'hcqkqt',
-            type: 'HCQKQT',
-            name: 'Huy chương quân kỳ Quyết thắng',
-            ngay_cap: serviceRes.data.hcqkqt_ngay_cap,
-            status: serviceRes.data.hcqkqt_status,
-          });
-        }
+      const mappedAwards: ContributionAward[] = [];
 
-        // Kỷ niệm chương VSNXD
-        if (serviceRes.data.knc_vsnxd_status) {
-          mappedAwards.push({
-            id: 'knc_vsnxd',
-            type: 'KNC_VSNXD',
-            name: 'Kỷ niệm chương Vì sự nghiệp xây dựng Quân đội Nhân dân Việt Nam',
-            ngay_cap: serviceRes.data.knc_vsnxd_ngay_cap,
-            status: serviceRes.data.knc_vsnxd_status,
-          });
-        }
+      // Lấy dữ liệu từ API Contribution Awards (HCBVTQ) và filter theo personnelId
+      if (contributionRes.success && contributionRes.data?.data) {
+        contributionRes.data.data.forEach((award: any) => {
+          // Kiểm tra cả quan_nhan_id trực tiếp và QuanNhan.id
+          const awardPersonnelId = award.quan_nhan_id || award.QuanNhan?.id;
+          if (awardPersonnelId === personnelId) {
+            const danhHieu = award.danh_hieu || '';
+            let rank = '';
+            if (danhHieu.includes('HANG_BA')) rank = 'Hạng Ba';
+            else if (danhHieu.includes('HANG_NHI')) rank = 'Hạng Nhì';
+            else if (danhHieu.includes('HANG_NHAT')) rank = 'Hạng Nhất';
 
-        setAwards(mappedAwards.filter(a => a.status === 'DA_NHAN'));
+            mappedAwards.push({
+              id: award.id,
+              type: 'HCBVTQ',
+              name: `Huân chương Bảo vệ Tổ quốc ${rank}`,
+              nam: award.nam,
+              cap_bac: award.cap_bac,
+              chuc_vu: award.chuc_vu,
+              so_quyet_dinh: award.so_quyet_dinh,
+              ghi_chu: award.ghi_chu,
+              danh_hieu: award.danh_hieu,
+              rank: rank,
+              status: 'DA_NHAN',
+            });
+          }
+        });
+      } else if (!contributionRes.success) {
+        console.error('Error loading contribution awards:', contributionRes.message);
       }
+
+      setAwards(mappedAwards);
     } catch (error) {
       message.error('Không thể tải dữ liệu');
     } finally {
@@ -191,62 +129,15 @@ export default function AdminContributionAwardsPage() {
     return <Tag color={s.color}>{s.label}</Tag>;
   };
 
-  const handleOpenDialog = (award?: any) => {
-    if (award) {
-      setEditingAward(award);
-      form.setFieldsValue({
-        type: award.type,
-        name: award.name,
-        rank: award.rank,
-        ngay_cap: award.ngay_cap ? dayjs(award.ngay_cap) : null,
-        status: award.status,
-      });
-    } else {
-      setEditingAward(null);
-      form.resetFields();
-    }
-    setDialogOpen(true);
-  };
-
-  const handleCloseDialog = () => {
-    setDialogOpen(false);
-    setEditingAward(null);
-    form.resetFields();
-  };
-
-  const onSubmit = async (values: any) => {
-    try {
-      setSubmitting(true);
-
-      const payload = {
-        type: values.type,
-        name: values.name,
-        rank: values.rank,
-        ngay_cap: values.ngay_cap ? dayjs(values.ngay_cap).format('YYYY-MM-DD') : null,
-        status: values.status,
-      };
-
-      // Note: This would need actual API endpoints for contribution awards
-      // For now, just show success message
-      message.success(
-        editingAward
-          ? 'Cập nhật khen thưởng cống hiến thành công'
-          : 'Thêm khen thưởng cống hiến thành công'
-      );
-      handleCloseDialog();
-      loadData();
-    } catch (error: any) {
-      message.error(error?.response?.data?.message || error?.message || 'Có lỗi xảy ra');
-    } finally {
-      setSubmitting(false);
-    }
+  const handleOpenDecisionFile = async (soQuyetDinh: string) => {
+    await downloadDecisionFile(soQuyetDinh);
   };
 
   const handleDelete = async () => {
     if (!deleteId) return;
     try {
       // Note: This would need actual API endpoint
-      message.success('Xóa khen thưởng cống hiến thành công');
+      message.success('Xóa Huân chương Bảo vệ Tổ quốc thành công');
       setDeleteModalOpen(false);
       setDeleteId(null);
       loadData();
@@ -257,26 +148,12 @@ export default function AdminContributionAwardsPage() {
 
   const columns: TableColumnsType<ContributionAward> = [
     {
-      title: 'Loại khen thưởng',
-      dataIndex: 'type',
-      key: 'type',
-      width: 150,
-      align: 'center',
-      render: (type: string) => {
-        const typeMap: Record<string, string> = {
-          HCCSVV: 'Huy chương chiến sĩ Vẻ vang',
-          HCBVTQ: 'HC Bảo vệ Tổ quốc',
-          HCQKQT: 'HC Quân kỳ Quyết thắng',
-          KNC_VSNXD: 'KNC VSNXD',
-        };
-        return typeMap[type] || type;
-      },
-    },
-    {
       title: 'Tên khen thưởng',
       dataIndex: 'name',
       key: 'name',
-      width: 300,
+      width: 220,
+      minWidth: 180,
+      fixed: 'left',
       render: (name: string, record: ContributionAward) => (
         <div>
           <div style={{ fontWeight: 500 }}>{name}</div>
@@ -287,11 +164,80 @@ export default function AdminContributionAwardsPage() {
       ),
     },
     {
+      title: 'Năm',
+      dataIndex: 'nam',
+      key: 'nam',
+      width: 80,
+      minWidth: 70,
+      align: 'center',
+      render: (nam: number) => nam || '-',
+    },
+    {
+      title: 'Cấp bậc',
+      dataIndex: 'cap_bac',
+      key: 'cap_bac',
+      width: 120,
+      minWidth: 100,
+      align: 'center',
+      render: (capBac: string) => capBac || '-',
+    },
+    {
+      title: 'Chức vụ',
+      dataIndex: 'chuc_vu',
+      key: 'chuc_vu',
+      width: 150,
+      minWidth: 120,
+      align: 'center',
+      ellipsis: true,
+      render: (chucVu: string) => chucVu || '-',
+    },
+    {
+      title: 'Số quyết định',
+      dataIndex: 'so_quyet_dinh',
+      key: 'so_quyet_dinh',
+      width: 140,
+      minWidth: 120,
+      align: 'center',
+      render: (soQuyetDinh: string, record: ContributionAward) => {
+        if (!soQuyetDinh || soQuyetDinh.trim() === '') {
+          return <span style={{ color: '#999' }}>Chưa có</span>;
+        }
+        return (
+          <a
+            onClick={e => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleOpenDecisionFile(soQuyetDinh);
+            }}
+            style={{
+              color: '#52c41a',
+              fontWeight: 500,
+              textDecoration: 'underline',
+              cursor: 'pointer',
+            }}
+          >
+            {soQuyetDinh}
+          </a>
+        );
+      },
+    },
+    {
+      title: 'Ghi chú',
+      dataIndex: 'ghi_chu',
+      key: 'ghi_chu',
+      width: 200,
+      minWidth: 150,
+      ellipsis: true,
+      render: (ghiChu: string) => ghiChu || '-',
+    },
+    {
       title: 'Trạng thái',
       dataIndex: 'status',
       key: 'status',
       width: 120,
+      minWidth: 100,
       align: 'center',
+      fixed: 'right',
       render: (status: string) => getStatusTag(status),
     },
   ];
@@ -316,7 +262,7 @@ export default function AdminContributionAwardsPage() {
           <Breadcrumb.Item>
             <Link href={`/admin/personnel/${personnelId}`}>{personnel?.ho_ten}</Link>
           </Breadcrumb.Item>
-          <Breadcrumb.Item>Khen thưởng cống hiến</Breadcrumb.Item>
+          <Breadcrumb.Item>Huân chương Bảo vệ Tổ quốc</Breadcrumb.Item>
         </Breadcrumb>
 
         {/* Header */}
@@ -337,7 +283,7 @@ export default function AdminContributionAwardsPage() {
               </Link>
             </Space>
             <Title level={2} style={{ marginTop: 8, marginBottom: 8 }}>
-              Khen thưởng cống hiến
+              Huân chương Bảo vệ Tổ quốc
             </Title>
             {personnel && (
               <Paragraph style={{ fontSize: 14, color: '#666', marginBottom: 0 }}>
@@ -345,9 +291,6 @@ export default function AdminContributionAwardsPage() {
               </Paragraph>
             )}
           </div>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => handleOpenDialog()}>
-            Thêm khen thưởng
-          </Button>
         </div>
 
         {/* Table */}
@@ -365,80 +308,14 @@ export default function AdminContributionAwardsPage() {
               dataSource={awards}
               rowKey="id"
               pagination={false}
+              scroll={{ x: 'max-content' }}
+              size="small"
               locale={{
-                emptyText: 'Chưa có dữ liệu khen thưởng cống hiến',
+                emptyText: 'Chưa có dữ liệu Huân chương Bảo vệ Tổ quốc',
               }}
             />
           </Card>
         )}
-
-        {/* Form Modal */}
-        <Modal
-          title={editingAward ? 'Sửa khen thưởng cống hiến' : 'Thêm khen thưởng cống hiến mới'}
-          open={dialogOpen}
-          onCancel={handleCloseDialog}
-          footer={null}
-          width={600}
-          centered
-        >
-          <Form form={form} onFinish={onSubmit} layout="vertical" style={{ marginTop: 24 }}>
-            <Form.Item
-              name="type"
-              label="Loại khen thưởng"
-              rules={[{ required: true, message: 'Vui lòng chọn loại khen thưởng' }]}
-            >
-              <Select placeholder="Chọn loại khen thưởng" size="large">
-                <Select.Option value="HCCSVV">Huy chương chiến sĩ Vẻ vang</Select.Option>
-                <Select.Option value="HCBVTQ">HC Bảo vệ Tổ quốc</Select.Option>
-                <Select.Option value="HCQKQT">HC Quân kỳ Quyết thắng</Select.Option>
-                <Select.Option value="KNC_VSNXD">KNC VSNXD</Select.Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item
-              name="name"
-              label="Tên khen thưởng"
-              rules={[{ required: true, message: 'Vui lòng nhập tên khen thưởng' }]}
-            >
-              <Input placeholder="Nhập tên khen thưởng" size="large" />
-            </Form.Item>
-
-            <Form.Item name="rank" label="Hạng (nếu có)">
-              <Select placeholder="Chọn hạng" size="large" allowClear>
-                <Select.Option value="Hạng Ba">Hạng Ba</Select.Option>
-                <Select.Option value="Hạng Nhì">Hạng Nhì</Select.Option>
-                <Select.Option value="Hạng Nhất">Hạng Nhất</Select.Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item name="ngay_cap" label="Ngày cấp">
-              <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} size="large" />
-            </Form.Item>
-
-            <Form.Item
-              name="status"
-              label="Trạng thái"
-              rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}
-            >
-              <Select placeholder="Chọn trạng thái" size="large">
-                <Select.Option value="DA_NHAN">Đã nhận</Select.Option>
-                <Select.Option value="DU_DIEU_KIEN">Đủ điều kiện</Select.Option>
-                <Select.Option value="CHUA_DU">Chưa đủ</Select.Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
-              <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-                <Button onClick={handleCloseDialog} disabled={submitting}>
-                  Hủy
-                </Button>
-                <Button type="primary" htmlType="submit" loading={submitting}>
-                  {editingAward ? 'Cập nhật' : 'Tạo mới'}
-                </Button>
-              </Space>
-            </Form.Item>
-          </Form>
-        </Modal>
 
         {/* Delete Confirmation Modal */}
         <Modal

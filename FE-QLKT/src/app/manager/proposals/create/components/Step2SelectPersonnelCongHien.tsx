@@ -229,7 +229,7 @@ export default function Step2SelectPersonnelCongHien({
     }
   };
 
-  // Kiểm tra quân nhân có đủ điều kiện cho hạng cống hiến không từ API data
+  // Kiểm tra quân nhân có đủ điều kiện cho hạng huân chương bảo vệ tổ quốc không từ API data
   const checkEligibleForRank = (
     personnelId: string,
     rank: 'HANG_NHAT' | 'HANG_NHI' | 'HANG_BA'
@@ -651,9 +651,9 @@ export default function Step2SelectPersonnelCongHien({
       } else if (ineligible) {
         disabled = true;
         if (ineligible.status === 'APPROVED') {
-          title = `Quân nhân đã nhận danh hiệu cống hiến năm ${ineligible.awardYear}`;
+          title = `Quân nhân đã nhận danh hiệu huân chương bảo vệ tổ quốc năm ${ineligible.awardYear}`;
         } else if (ineligible.status === 'PENDING') {
-          title = 'Quân nhân đang có đề xuất cống hiến chờ duyệt';
+          title = 'Quân nhân đang có đề xuất huân chương bảo vệ tổ quốc chờ duyệt';
         }
       } else if (notEligible) {
         disabled = true;
@@ -680,10 +680,10 @@ export default function Step2SelectPersonnelCongHien({
         if (ineligible) {
           if (ineligible.status === 'APPROVED') {
             message.warning(
-              `Quân nhân ${record.ho_ten} đã nhận danh hiệu cống hiến năm ${ineligible.awardYear}`
+              `Quân nhân ${record.ho_ten} đã nhận danh hiệu huân chương bảo vệ tổ quốc năm ${ineligible.awardYear}`
             );
           } else if (ineligible.status === 'PENDING') {
-            message.warning(`Quân nhân ${record.ho_ten} đang có đề xuất cống hiến chờ duyệt`);
+            message.warning(`Quân nhân ${record.ho_ten} đang có đề xuất huân chương bảo vệ tổ quốc chờ duyệt`);
           }
           return false;
         }
@@ -702,11 +702,11 @@ export default function Step2SelectPersonnelCongHien({
   return (
     <div>
       <Alert
-        message="Bước 2: Chọn quân nhân - Cống hiến"
+        message="Bước 2: Chọn quân nhân - Huân chương Bảo vệ Tổ quốc"
         description={
           <div>
             <p>1. Nhập năm đề xuất khen thưởng</p>
-            <p>2. Chọn các quân nhân cần đề xuất khen thưởng cống hiến từ danh sách dưới đây</p>
+            <p>2. Chọn các quân nhân cần đề xuất Huân chương Bảo vệ Tổ quốc từ danh sách dưới đây</p>
             <p>3. Sau khi chọn xong, nhấn &quot;Tiếp tục&quot; để sang bước chọn danh hiệu</p>
           </div>
         }
@@ -853,7 +853,7 @@ export default function Step2SelectPersonnelCongHien({
             <Alert
               key="eligibility-warning"
               message="Thông báo"
-              description={`Có ${ineligibleCount} quân nhân đã nhận hoặc đang chờ duyệt khen thưởng cống hiến, không được phép chọn lại.`}
+              description={`Có ${ineligibleCount} quân nhân đã nhận hoặc đang chờ duyệt Huân chương Bảo vệ Tổ quốc, không được phép chọn lại.`}
               type="info"
               showIcon
               style={{ marginBottom: 16 }}

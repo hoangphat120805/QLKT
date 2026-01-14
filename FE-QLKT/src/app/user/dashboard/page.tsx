@@ -697,7 +697,7 @@ export default function UserDashboard() {
                 title={
                   <Space>
                     <SafetyOutlined className="text-purple-600" />
-                    <span className="font-semibold">Hồ sơ Khen thưởng Niên hạn</span>
+                    <span className="font-semibold">Hồ sơ Huy chương Chiến sĩ vẻ vang</span>
                   </Space>
                 }
                 className="shadow-md border-0 h-full"
@@ -815,7 +815,7 @@ export default function UserDashboard() {
                     </div>
                   </Space>
                 ) : (
-                  <Alert message="Chưa có dữ liệu hồ sơ niên hạn" type="warning" showIcon />
+                  <Alert message="Chưa có dữ liệu hồ sơ huy chương chiến sĩ vẻ vang" type="warning" showIcon />
                 )}
               </Card>
             </Col>
@@ -828,7 +828,7 @@ export default function UserDashboard() {
                 title={
                   <Space>
                     <TrophyOutlined className="text-orange-600" />
-                    <span className="font-semibold">Hồ sơ Khen thưởng Cống hiến</span>
+                    <span className="font-semibold">Hồ sơ Huân chương Bảo vệ Tổ quốc</span>
                   </Space>
                 }
                 className="shadow-md border-0 h-full"
@@ -985,7 +985,7 @@ export default function UserDashboard() {
                     })()}
                   </Space>
                 ) : (
-                  <Alert message="Chưa có dữ liệu hồ sơ cống hiến" type="warning" showIcon />
+                  <Alert message="Chưa có dữ liệu hồ sơ huân chương bảo vệ tổ quốc" type="warning" showIcon />
                 )}
               </Card>
             </Col>

@@ -445,16 +445,16 @@ export default function ProposalDetailPage() {
     if (editedNienHan.length > 0) {
       editedNienHan.forEach((item, index) => {
         if (!item.so_quyet_dinh || item.so_quyet_dinh.trim() === '') {
-          missingDecisions.push(`Niên hạn ${index + 1}: ${item.ho_ten || 'N/A'}`);
+          missingDecisions.push(`Huy chương Chiến sĩ vẻ vang ${index + 1}: ${item.ho_ten || 'N/A'}`);
         }
       });
     }
 
-    // Kiểm tra cống hiến (CONG_HIEN)
+    // Kiểm tra huân chương bảo vệ tổ quốc (CONG_HIEN)
     if (editedCongHien.length > 0) {
       editedCongHien.forEach((item, index) => {
         if (!item.so_quyet_dinh || item.so_quyet_dinh.trim() === '') {
-          missingDecisions.push(`Cống hiến ${index + 1}: ${item.ho_ten || 'N/A'}`);
+          missingDecisions.push(`Huân chương Bảo vệ Tổ quốc ${index + 1}: ${item.ho_ten || 'N/A'}`);
         }
       });
     }
@@ -541,9 +541,9 @@ export default function ProposalDetailPage() {
               loaiDeXuat === 'HC_QKQT' ||
               loaiDeXuat === 'KNC_VSNXD_QDNDVN'
             ) {
-              successMessage += `Đã thêm ${importedNienHan}/${totalNienHan} khen thưởng niên hạn thành công.`;
+              successMessage += `Đã thêm ${importedNienHan}/${totalNienHan} Huy chương Chiến sĩ vẻ vang thành công.`;
             } else if (loaiDeXuat === 'CONG_HIEN') {
-              successMessage += `Đã thêm ${importedDanhHieu}/${totalDanhHieu} khen thưởng cống hiến thành công.`;
+              successMessage += `Đã thêm ${importedDanhHieu}/${totalDanhHieu} Huân chương Bảo vệ Tổ quốc thành công.`;
             } else if (loaiDeXuat === 'NCKH') {
               successMessage += `Đã thêm ${importedThanhTich}/${totalThanhTich} thành tích nghiên cứu khoa học thành công.`;
             } else if (loaiDeXuat === 'DON_VI_HANG_NAM') {
@@ -1326,9 +1326,9 @@ export default function ProposalDetailPage() {
                   : proposal.loai_de_xuat === 'DON_VI_HANG_NAM'
                   ? 'Đơn vị Hằng năm'
                   : proposal.loai_de_xuat === 'NIEN_HAN'
-                  ? 'Niên hạn'
+                  ? 'Huy chương Chiến sĩ vẻ vang'
                   : proposal.loai_de_xuat === 'CONG_HIEN'
-                  ? 'Cống hiến'
+                  ? 'Huân chương Bảo vệ Tổ quốc'
                   : proposal.loai_de_xuat === 'NCKH'
                   ? 'Nghiên cứu khoa học'
                   : proposal.loai_de_xuat}
@@ -1532,7 +1532,7 @@ export default function ProposalDetailPage() {
         <Card
           title={
             proposal.loai_de_xuat === 'NIEN_HAN'
-              ? 'Danh Sách Niên Hạn'
+              ? 'Danh Sách Huy chương Chiến sĩ vẻ vang'
               : proposal.loai_de_xuat === 'HC_QKQT'
               ? 'Huy chương quân kỳ Quyết Thắng'
               : 'Kỷ Niệm Chương Vì Sự Nghiệp XD QĐNDVN'
@@ -1556,7 +1556,7 @@ export default function ProposalDetailPage() {
           {editedNienHan.length === 0 ? (
             <Empty
               image={<WarningOutlined style={{ fontSize: 48, color: '#d9d9d9' }} />}
-              description="Không có dữ liệu niên hạn"
+              description="Không có dữ liệu huy chương chiến sĩ vẻ vang"
             />
           ) : (
             <Table
@@ -1572,7 +1572,7 @@ export default function ProposalDetailPage() {
       ) : proposal.loai_de_xuat === 'CONG_HIEN' ? (
         // Component cho đề xuất CỐNG HIẾN - hiển thị từ editedCongHien
         <Card
-          title="Danh Sách Cống Hiến"
+          title="Danh Sách Huân chương Bảo vệ Tổ quốc"
           extra={
             proposal.status === 'PENDING' && (
               <Button
@@ -1592,7 +1592,7 @@ export default function ProposalDetailPage() {
           {editedCongHien.length === 0 ? (
             <Empty
               image={<WarningOutlined style={{ fontSize: 48, color: '#d9d9d9' }} />}
-              description="Không có dữ liệu cống hiến"
+              description="Không có dữ liệu huân chương bảo vệ tổ quốc"
             />
           ) : (
             <Table

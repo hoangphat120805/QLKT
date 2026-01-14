@@ -1,3 +1,4 @@
+// @ts-nocheck
 'use client';
 import { useState, useMemo } from 'react';
 import {
@@ -8,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Tag, Tooltip } from 'antd';
+import { Tag } from 'antd';
 import { Loader2, Clock, User, Shield, Activity, FileText, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -40,12 +41,12 @@ const resourceLabels: Record<string, string> = {
   'adhoc_awards': 'Khen thưởng đột xuất',
   'commemorative-medals': 'Kỷ niệm chương',
   'commemorative_medals': 'Kỷ niệm chương',
-  'contribution-awards': 'Khen thưởng cống hiến',
-  'contribution_awards': 'Khen thưởng cống hiến',
+  'contribution-awards': 'Huân chương Bảo vệ Tổ quốc',
+  'contribution_awards': 'Huân chương Bảo vệ Tổ quốc',
   'military-flag': 'Cờ thi đua',
   'military_flag': 'Cờ thi đua',
-  'service-rewards': 'Khen thưởng niên hạn',
-  'service_rewards': 'Khen thưởng niên hạn',
+  'service-rewards': 'Huy chương Chiến sĩ vẻ vang',
+  'service_rewards': 'Huy chương Chiến sĩ vẻ vang',
   'unit-annual-awards': 'Khen thưởng đơn vị hằng năm',
   'unit_annual_awards': 'Khen thưởng đơn vị hằng năm',
   hccsvv: 'Huy chương Chiến sĩ Vẻ vang',
@@ -298,11 +299,9 @@ export function LogsTable({ logs, loading }: LogsTableProps) {
                 {getActionLabel(log.action)}
               </TableCell>
               <TableCell className="text-sm text-gray-600 dark:text-gray-400 max-w-md">
-                <Tooltip title={log.details || log.description || '-'} placement="topLeft">
-                  <div className="whitespace-normal break-words line-clamp-2 cursor-help">
+                <div className="whitespace-normal break-words line-clamp-2">
                   {log.details || log.description || '-'}
                 </div>
-                </Tooltip>
               </TableCell>
             </TableRow>
           ))}

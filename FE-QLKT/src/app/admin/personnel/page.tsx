@@ -59,16 +59,16 @@ export default function PersonnelPage() {
 
   useEffect(() => {
     loadData();
-  }, [pagination.current, pagination.pageSize]);
+  }, []); // Chỉ load một lần khi mount, không load lại khi pagination thay đổi
 
   async function loadData() {
     try {
-      setLoading(true);
+      setTableLoading(true);
 
-      // 1. Lấy danh sách quân nhân với pagination
+      // 1. Lấy tất cả danh sách quân nhân (không pagination) để paginate ở client-side
       const personnelRes = await apiClient.getPersonnel({
-        page: pagination.current,
-        limit: pagination.pageSize,
+        page: 1,
+        limit: 10000, // Lấy tất cả để paginate ở client
       });
       if (personnelRes.success) {
         const personnelData = (personnelRes.data?.personnel || []).map(p => {
@@ -123,7 +123,7 @@ export default function PersonnelPage() {
 
         setPersonnel(personnelData);
         
-        // Cập nhật pagination total từ API
+        // Cập nhật pagination total từ API (tổng số records)
         const total = personnelRes.data?.pagination?.total || personnelData.length;
         setPagination(prev => ({
           ...prev,
@@ -191,6 +191,7 @@ export default function PersonnelPage() {
       message.error('Không thể tải dữ liệu');
     } finally {
       setLoading(false);
+      setTableLoading(false);
     }
   }
 
@@ -262,7 +263,8 @@ export default function PersonnelPage() {
       key: 'index',
       width: 60,
       align: 'center',
-      render: (_: any, __: any, index: number) => index + 1,
+      render: (_: any, __: any, index: number) =>
+        (pagination.current - 1) * pagination.pageSize + index + 1,
     },
     {
       title: 'Họ tên',
@@ -632,16 +634,17 @@ export default function PersonnelPage() {
             columns={columns}
             dataSource={filteredPersonnel}
             rowKey="id"
-            loading={loading || tableLoading}
+            loading={loading}
             pagination={{
               current: pagination.current,
               pageSize: pagination.pageSize,
-              total: pagination.total,
+              total: filteredPersonnel.length, // Dùng filteredPersonnel.length thay vì total từ API
               showSizeChanger: true,
               showTotal: (total, range) =>
                 `${range[0]}-${range[1]} của ${total} quân nhân`,
               pageSizeOptions: ['10', '20', '50', '100'],
               onChange: (page, pageSize) => {
+                // Client-side pagination - không cần gọi API, không cần loading
                 setPagination(prev => ({
                   ...prev,
                   current: page,
@@ -649,6 +652,7 @@ export default function PersonnelPage() {
                 }));
               },
               onShowSizeChange: (current, size) => {
+                // Client-side pagination - không cần gọi API, không cần loading
                 setPagination(prev => ({
                   ...prev,
                   current: 1,

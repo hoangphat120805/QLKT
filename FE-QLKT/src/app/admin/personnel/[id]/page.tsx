@@ -790,7 +790,7 @@ export default function PersonnelDetailPage() {
                   <div className="flex flex-col items-center gap-2">
                     <SafetyOutlined style={{ fontSize: '32px' }} />
                     <Text strong style={{ fontSize: '16px' }}>
-                      Khen thưởng niên hạn
+                      Huy chương Chiến sĩ vẻ vang
                     </Text>
                   </div>
                 </Card>
@@ -834,7 +834,7 @@ export default function PersonnelDetailPage() {
                   <div className="flex flex-col items-center gap-2">
                     <TrophyOutlined style={{ fontSize: '32px' }} />
                     <Text strong style={{ fontSize: '16px' }}>
-                      Kỷ niệm chương VSNXD
+                      Kỷ niệm chương VSNXD QĐNDVN
                     </Text>
                   </div>
                 </Card>
@@ -856,7 +856,7 @@ export default function PersonnelDetailPage() {
                   <div className="flex flex-col items-center gap-2">
                     <TrophyOutlined style={{ fontSize: '32px' }} />
                     <Text strong style={{ fontSize: '16px' }}>
-                      Khen thưởng cống hiến
+                      Huân chương Bảo vệ Tổ quốc
                     </Text>
                   </div>
                 </Card>

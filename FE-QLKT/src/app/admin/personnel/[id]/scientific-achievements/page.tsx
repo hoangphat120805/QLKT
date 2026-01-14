@@ -8,9 +8,6 @@ import {
   Button,
   Table,
   Modal,
-  Form,
-  Input,
-  Select,
   Space,
   Typography,
   Breadcrumb,
@@ -21,7 +18,6 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import {
   LeftOutlined,
-  PlusOutlined,
   DeleteOutlined,
   EditOutlined,
   HomeOutlined,
@@ -43,16 +39,11 @@ interface AchievementRecord {
 export default function ScientificAchievementsPage() {
   const params = useParams();
   const personnelId = params?.id as string;
-  const [form] = Form.useForm();
-
   const [loading, setLoading] = useState(true);
   const [personnel, setPersonnel] = useState<any>(null);
   const [achievements, setAchievements] = useState<AchievementRecord[]>([]);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingAchievement, setEditingAchievement] = useState<any>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -78,77 +69,6 @@ export default function ScientificAchievementsPage() {
       setLoading(false);
     }
   }
-
-  const handleOpenDialog = (achievement?: any) => {
-    if (achievement) {
-      setEditingAchievement(achievement);
-      form.setFieldsValue({
-        nam: achievement.nam?.toString() || new Date().getFullYear().toString(),
-        loai: achievement.loai || '',
-        mo_ta: achievement.mo_ta || '',
-        ghi_chu: achievement.ghi_chu || '',
-      });
-    } else {
-      setEditingAchievement(null);
-      form.setFieldsValue({
-        nam: new Date().getFullYear().toString(),
-        loai: '',
-        mo_ta: '',
-        ghi_chu: '',
-      });
-    }
-    setDialogOpen(true);
-  };
-
-  const handleCloseDialog = () => {
-    setDialogOpen(false);
-    setEditingAchievement(null);
-    form.resetFields();
-  };
-
-  const onSubmit = async (values: any) => {
-    try {
-      setSubmitting(true);
-
-      // Lấy chức vụ và cấp bậc từ thông tin quân nhân
-      const chucVu = personnel?.ChucVu?.ten_chuc_vu || null;
-      const capBac = personnel?.cap_bac || null;
-
-      console.log('Personnel data:', personnel);
-      console.log('Cap bac:', capBac);
-      console.log('Chuc vu:', chucVu);
-
-      const payload = {
-        nam: parseInt(values.nam),
-        loai: values.loai,
-        mo_ta: values.mo_ta,
-        cap_bac: capBac,
-        chuc_vu: chucVu,
-        ghi_chu: values.ghi_chu || null,
-        status: 'PENDING',
-      };
-
-      console.log('Payload:', payload);
-
-      const res = editingAchievement
-        ? await apiClient.updateScientificAchievement(editingAchievement.id, payload)
-        : await apiClient.createScientificAchievement(personnelId, payload);
-
-      if (res.success) {
-        message.success(
-          editingAchievement ? 'Cập nhật thành tích thành công' : 'Thêm thành tích thành công'
-        );
-        handleCloseDialog();
-        loadData();
-      } else {
-        message.error(res.message || 'Có lỗi xảy ra');
-      }
-    } catch (error) {
-      message.error('Có lỗi xảy ra');
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -263,9 +183,6 @@ export default function ScientificAchievementsPage() {
             </Paragraph>
           )}
         </div>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => handleOpenDialog()}>
-          Thêm thành tích
-        </Button>
       </div>
 
       {/* Table */}
@@ -289,60 +206,6 @@ export default function ScientificAchievementsPage() {
           />
         </Card>
       )}
-
-      {/* Form Modal */}
-      <Modal
-        title={editingAchievement ? 'Sửa thành tích khoa học' : 'Thêm thành tích khoa học mới'}
-        open={dialogOpen}
-        onCancel={handleCloseDialog}
-        footer={null}
-        width={600}
-      >
-        <Form form={form} onFinish={onSubmit} layout="vertical" style={{ marginTop: 24 }}>
-          <Form.Item
-            name="nam"
-            label="Năm"
-            rules={[{ required: true, message: 'Năm không hợp lệ' }]}
-          >
-            <Input placeholder="Nhập năm (YYYY)" maxLength={4} size="large" />
-          </Form.Item>
-
-          <Form.Item
-            name="loai"
-            label="Loại thành tích"
-            rules={[{ required: true, message: 'Vui lòng chọn loại thành tích' }]}
-          >
-            <Select
-              placeholder="Chọn loại thành tích"
-              size="large"
-              popupMatchSelectWidth={false}
-              styles={{ popup: { root: { minWidth: 'max-content' } } }}
-            >
-              <Select.Option value="DTKH">Đề tài khoa học (ĐTKH)</Select.Option>
-              <Select.Option value="SKKH">Sáng kiến khoa học (SKKH)</Select.Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            name="mo_ta"
-            label="Mô tả"
-            rules={[{ required: true, message: 'Vui lòng nhập mô tả' }]}
-          >
-            <Input.TextArea placeholder="Nhập mô tả chi tiết (nếu có)" rows={4} size="large" />
-          </Form.Item>
-
-          <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
-            <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-              <Button onClick={handleCloseDialog} disabled={submitting}>
-                Hủy
-              </Button>
-              <Button type="primary" htmlType="submit" loading={submitting}>
-                {editingAchievement ? 'Cập nhật' : 'Tạo mới'}
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Modal>
 
       {/* Delete Confirmation Modal */}
       <Modal

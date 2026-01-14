@@ -990,7 +990,7 @@ class ProfileService {
           goi_y: finalGoiY,
         },
       });
-      return { message: 'Tính toán lại hồ sơ niên hạn thành công' };
+      return { message: 'Tính toán lại hồ sơ Huy chương Chiến sĩ vẻ vang thành công' };
     } catch (error) {
       console.error('Lỗi recalculateTenureProfile:', error);
       throw error;
@@ -1186,7 +1186,7 @@ class ProfileService {
         });
       }
 
-      return { message: 'Tính toán lại hồ sơ cống hiến thành công' };
+      return { message: 'Tính toán lại hồ sơ Huân chương Bảo vệ Tổ quốc thành công' };
     } catch (error) {
       console.error('Lỗi recalculateContributionProfile:', error);
       throw error;
@@ -1315,7 +1315,7 @@ class ProfileService {
       });
 
       if (!profile) {
-        throw new Error('Hồ sơ niên hạn không tồn tại');
+        throw new Error('Hồ sơ Huy chương Chiến sĩ vẻ vang không tồn tại');
       }
 
       // Validate và cập nhật

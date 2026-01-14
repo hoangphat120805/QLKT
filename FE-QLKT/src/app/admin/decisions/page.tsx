@@ -56,8 +56,8 @@ interface Decision {
 const loaiKhenThuongOptions = [
   { label: 'Cá nhân Hằng năm', value: 'CA_NHAN_HANG_NAM' },
   { label: 'Đơn vị Hằng năm', value: 'DON_VI_HANG_NAM' },
-  { label: 'Niên hạn', value: 'NIEN_HAN' },
-  { label: 'Cống hiến', value: 'CONG_HIEN' },
+  { label: 'Huy chương Chiến sĩ vẻ vang', value: 'NIEN_HAN' },
+  { label: 'Huân chương Bảo vệ Tổ quốc', value: 'CONG_HIEN' },
   { label: 'Đột xuất', value: 'DOT_XUAT' },
   { label: 'ĐTKH/SKKH', value: 'NCKH' },
 ];
@@ -65,6 +65,7 @@ const loaiKhenThuongOptions = [
 export default function AdminDecisionsPage() {
   const { message } = App.useApp();
   const [loading, setLoading] = useState(false);
+  const [tableLoading, setTableLoading] = useState(false);
   const [decisions, setDecisions] = useState<Decision[]>([]);
   const [pagination, setPagination] = useState({
     current: 1,
@@ -85,7 +86,13 @@ export default function AdminDecisionsPage() {
 
   const fetchDecisions = async (customPagination?: { current: number; pageSize: number }) => {
     try {
-      setLoading(true);
+      // Chỉ set loading ban đầu, khi chuyển trang thì dùng tableLoading
+      const paginationToUse = customPagination || pagination;
+      if (decisions.length === 0 || paginationToUse.current === 1) {
+        setLoading(true);
+      } else {
+        setTableLoading(true);
+      }
       const paginationToUse = customPagination || pagination;
       const params: any = {
         page: paginationToUse.current,
@@ -130,6 +137,7 @@ export default function AdminDecisionsPage() {
       message.error('Lỗi khi tải danh sách quyết định');
     } finally {
       setLoading(false);
+      setTableLoading(false);
     }
   };
 
@@ -383,21 +391,23 @@ export default function AdminDecisionsPage() {
           columns={columns}
           dataSource={decisions}
           rowKey="id"
-          loading={loading}
-          pagination={{
-            current: pagination.current,
-            pageSize: pagination.pageSize,
-            total: pagination.total,
-            showSizeChanger: true,
-            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} quyết định`,
-            pageSizeOptions: ['10', '20', '50', '100'],
-            onChange: (page, pageSize) => {
-              setPagination({ ...pagination, current: page, pageSize: pageSize || pagination.pageSize });
-            },
-            onShowSizeChange: (current, size) => {
-              setPagination({ ...pagination, current: 1, pageSize: size });
-            },
-          }}
+            loading={loading || tableLoading}
+            pagination={{
+              current: pagination.current,
+              pageSize: pagination.pageSize,
+              total: pagination.total,
+              showSizeChanger: true,
+              showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} quyết định`,
+              pageSizeOptions: ['10', '20', '50', '100'],
+              onChange: (page, pageSize) => {
+                setTableLoading(true);
+                setPagination({ ...pagination, current: page, pageSize: pageSize || pagination.pageSize });
+              },
+              onShowSizeChange: (current, size) => {
+                setTableLoading(true);
+                setPagination({ ...pagination, current: 1, pageSize: size });
+              },
+            }}
           bordered
           locale={{
             emptyText: 'Không có quyết định nào',

@@ -27,7 +27,7 @@ export const DANH_HIEU_DON_VI_HANG_NAM = {
 } as const;
 
 /**
- * Mã Huy chương Chiến sĩ Vẻ vang (Niên hạn)
+ * Mã Huy chương Chiến sĩ Vẻ vang
  */
 export const DANH_HIEU_HCCSVV = {
   HANG_BA: 'HCCSVV_HANG_BA',
@@ -36,7 +36,7 @@ export const DANH_HIEU_HCCSVV = {
 } as const;
 
 /**
- * Mã Huân chương Bảo vệ Tổ quốc (Cống hiến)
+ * Mã Huân chương Bảo vệ Tổ quốc
  */
 export const DANH_HIEU_HCBVTQ = {
   HANG_BA: 'HCBVTQ_HANG_BA',
@@ -80,12 +80,12 @@ export const DANH_HIEU_MAP: Record<string, string> = {
   ĐVQT: 'Đơn vị Quyết thắng',
   ĐVTT: 'Đơn vị Tiên tiến',
 
-  // Huy chương Chiến sĩ Vẻ vang (Niên hạn)
+  // Huy chương Chiến sĩ Vẻ vang
   HCCSVV_HANG_BA: 'Huy chương Chiến sĩ Vẻ vang Hạng Ba',
   HCCSVV_HANG_NHI: 'Huy chương Chiến sĩ Vẻ vang Hạng Nhì',
   HCCSVV_HANG_NHAT: 'Huy chương Chiến sĩ Vẻ vang Hạng Nhất',
 
-  // Huân chương Bảo vệ Tổ quốc (Cống hiến)
+  // Huân chương Bảo vệ Tổ quốc
   HCBVTQ_HANG_BA: 'Huân chương Bảo vệ Tổ quốc Hạng Ba',
   HCBVTQ_HANG_NHI: 'Huân chương Bảo vệ Tổ quốc Hạng Nhì',
   HCBVTQ_HANG_NHAT: 'Huân chương Bảo vệ Tổ quốc Hạng Nhất',
@@ -109,8 +109,8 @@ export const DANH_HIEU_MAP: Record<string, string> = {
 export const LOAI_DE_XUAT_MAP: Record<string, string> = {
   CA_NHAN_HANG_NAM: 'Cá nhân Hằng năm',
   DON_VI_HANG_NAM: 'Đơn vị Hằng năm',
-  NIEN_HAN: 'Niên hạn',
-  CONG_HIEN: 'Cống hiến',
+  NIEN_HAN: 'Huy chương Chiến sĩ vẻ vang',
+  CONG_HIEN: 'Huân chương Bảo vệ Tổ quốc',
   DOT_XUAT: 'Đột xuất',
   HC_QKQT: 'Huy chương Quân kỳ Quyết thắng',
   KNC_VSNXD_QDNDVN: 'Kỷ niệm chương Vì sự nghiệp xây dựng QĐNDVN',
@@ -123,8 +123,8 @@ export const LOAI_DE_XUAT_MAP: Record<string, string> = {
 export const AWARD_TYPE_MAP: Record<string, string> = {
   ANNUAL_PERSONAL: 'Cá nhân Hằng năm',
   ANNUAL_UNIT: 'Đơn vị Hằng năm',
-  CONTRIBUTION: 'Cống hiến',
-  TENURE: 'Niên hạn',
+  CONTRIBUTION: 'Huân chương Bảo vệ Tổ quốc',
+  TENURE: 'Huy chương Chiến sĩ vẻ vang',
   ADHOC: 'Đột xuất',
   SCIENTIFIC: 'Thành tích khoa học',
 };
@@ -180,8 +180,8 @@ export function getAwardTypeName(awardType: string | null | undefined): string {
  */
 export function getLoaiKhenThuongByDanhHieu(danhHieu: string | null | undefined): string {
   if (!danhHieu) return 'Chưa xác định';
-  if (danhHieu.startsWith('HCBVTQ')) return 'Cống hiến';
-  if (danhHieu.startsWith('HCCSVV')) return 'Niên hạn';
+  if (danhHieu.startsWith('HCBVTQ')) return 'Huân chương Bảo vệ Tổ quốc';
+  if (danhHieu.startsWith('HCCSVV')) return 'Huy chương Chiến sĩ vẻ vang';
   if (['CSTDCS', 'CSTT', 'BKBQP', 'CSTDTQ', 'BKTTCP'].includes(danhHieu)) return 'Cá nhân Hằng năm';
   if (['ĐVQT', 'ĐVTT'].includes(danhHieu)) return 'Đơn vị Hằng năm';
   if (danhHieu === 'HC_QKQT') return 'Huy chương Quân kỳ Quyết thắng';

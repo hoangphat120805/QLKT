@@ -853,7 +853,7 @@ export const apiClient = {
     }
   },
 
-  // Contribution Awards (Huân chương Bảo vệ Tổ quốc - Cống hiến)
+  // Contribution Awards (Huân chương Bảo vệ Tổ quốc)
   async getContributionAwardsTemplate(): Promise<Blob> {
     try {
       const res = await axiosInstance.get('/api/contribution-awards/template', {

@@ -25,6 +25,7 @@ export default function ManagerSystemLogsPage() {
   const { theme } = useTheme();
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tableLoading, setTableLoading] = useState(false);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 20,
@@ -45,7 +46,12 @@ export default function ManagerSystemLogsPage() {
   useEffect(() => {
     const fetchLogs = async () => {
       try {
-        setLoading(true);
+        // Chỉ set loading ban đầu, khi chuyển trang thì dùng tableLoading
+        if (logs.length === 0) {
+          setLoading(true);
+        } else {
+          setTableLoading(true);
+        }
         const res = await apiClient.getSystemLogs({
           ...filters,
           page: pagination.current,
@@ -91,6 +97,7 @@ export default function ManagerSystemLogsPage() {
         setLogs([]);
       } finally {
         setLoading(false);
+        setTableLoading(false);
       }
     };
 
@@ -392,7 +399,7 @@ export default function ManagerSystemLogsPage() {
             </Text>
           </div>
           <div style={{ padding: 0 }}>
-            <LogsTable logs={logs} loading={loading} />
+            <LogsTable logs={logs} loading={loading || tableLoading} />
             {pagination.total > 0 && (
               <div
                 style={{
@@ -411,10 +418,19 @@ export default function ManagerSystemLogsPage() {
                   showTotal={(total, range) => `${range[0]}-${range[1]} của ${total} nhật ký`}
                   pageSizeOptions={['10', '20', '50', '100']}
                   onChange={(page, pageSize) => {
+                    setTableLoading(true);
                     setPagination(prev => ({
                       ...prev,
                       current: page,
                       pageSize: pageSize || prev.pageSize,
+                    }));
+                  }}
+                  onShowSizeChange={(current, size) => {
+                    setTableLoading(true);
+                    setPagination(prev => ({
+                      ...prev,
+                      current: 1,
+                      pageSize: size,
                     }));
                   }}
                 />

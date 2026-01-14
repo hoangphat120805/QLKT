@@ -8,9 +8,6 @@ import {
   Button,
   Table,
   Modal,
-  Form,
-  Input,
-  Select,
   Space,
   Typography,
   Breadcrumb,
@@ -19,15 +16,11 @@ import {
   Spin,
   ConfigProvider,
   theme as antdTheme,
-  DatePicker,
-  Row,
-  Col,
   Tag,
 } from 'antd';
 import type { TableColumnsType } from 'antd';
 import {
   LeftOutlined,
-  PlusOutlined,
   DeleteOutlined,
   EditOutlined,
   HomeOutlined,
@@ -37,14 +30,18 @@ import {
 import { apiClient } from '@/lib/api-client';
 import { formatDate } from '@/lib/utils';
 import { useTheme } from '@/components/theme-provider';
-import dayjs from 'dayjs';
+import { downloadDecisionFile } from '@/utils/downloadDecisionFile';
 
 const { Title, Paragraph } = Typography;
 
 interface CommemorationMedal {
   id: string;
   name: string;
-  ngay_cap?: string;
+  nam?: number;
+  cap_bac?: string;
+  chuc_vu?: string;
+  so_quyet_dinh?: string;
+  ghi_chu?: string;
   status: string;
 }
 
@@ -52,17 +49,12 @@ export default function AdminCommemorativeMedalsPage() {
   const params = useParams();
   const personnelId = params?.id as string;
   const { theme } = useTheme();
-  const [form] = Form.useForm();
-
   const [loading, setLoading] = useState(true);
   const [personnel, setPersonnel] = useState<any>(null);
   const [commemorationMedals, setCommemorationMedals] = useState<any>(null);
   const [medals, setMedals] = useState<CommemorationMedal[]>([]);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingMedal, setEditingMedal] = useState<any>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -84,11 +76,15 @@ export default function AdminCommemorativeMedalsPage() {
         // Map commemoration medals data to medals array
         const mappedMedals: CommemorationMedal[] = [];
         if (commRes.data && commRes.data.hasReceived && commRes.data.data) {
-          commRes.data.data.forEach((medal: any, index: number) => {
+          commRes.data.data.forEach((medal: any) => {
             mappedMedals.push({
-              id: `medal_${index}`,
-              name: 'Kỷ niệm chương Vì sự nghiệp xây dựng Quân đội Nhân dân Việt Nam',
-              ngay_cap: medal.ngay_cap,
+              id: medal.id,
+              name: 'Kỷ niệm chương VSNXD QĐNDVN',
+              nam: medal.nam,
+              cap_bac: medal.cap_bac,
+              chuc_vu: medal.chuc_vu,
+              so_quyet_dinh: medal.so_quyet_dinh,
+              ghi_chu: medal.ghi_chu,
               status: 'DA_NHAN',
             });
           });
@@ -112,53 +108,8 @@ export default function AdminCommemorativeMedalsPage() {
     return <Tag color={s.color}>{s.label}</Tag>;
   };
 
-  const handleOpenDialog = (medal?: any) => {
-    if (medal) {
-      setEditingMedal(medal);
-      form.setFieldsValue({
-        type: medal.type,
-        name: medal.name,
-        rank: medal.rank,
-        ngay_cap: medal.ngay_cap ? dayjs(medal.ngay_cap) : null,
-        status: medal.status,
-      });
-    } else {
-      setEditingMedal(null);
-      form.resetFields();
-    }
-    setDialogOpen(true);
-  };
-
-  const handleCloseDialog = () => {
-    setDialogOpen(false);
-    setEditingMedal(null);
-    form.resetFields();
-  };
-
-  const onSubmit = async (values: any) => {
-    try {
-      setSubmitting(true);
-
-      const payload = {
-        type: values.type,
-        name: values.name,
-        rank: values.rank,
-        ngay_cap: values.ngay_cap ? dayjs(values.ngay_cap).format('YYYY-MM-DD') : null,
-        status: values.status,
-      };
-
-      // Note: This would need actual API endpoints for commemorative medals
-      // For now, just show success message
-      message.success(
-        editingMedal ? 'Cập nhật kỷ niệm chương thành công' : 'Thêm kỷ niệm chương thành công'
-      );
-      handleCloseDialog();
-      loadData();
-    } catch (error: any) {
-      message.error(error?.response?.data?.message || error?.message || 'Có lỗi xảy ra');
-    } finally {
-      setSubmitting(false);
-    }
+  const handleOpenDecisionFile = async (soQuyetDinh: string) => {
+    await downloadDecisionFile(soQuyetDinh);
   };
 
   const handleDelete = async () => {
@@ -176,21 +127,78 @@ export default function AdminCommemorativeMedalsPage() {
 
   const columns: TableColumnsType<CommemorationMedal> = [
     {
-      title: 'Tên kỷ niệm chương',
-      dataIndex: 'name',
-      key: 'name',
-      width: 300,
-      render: (name: string, record: CommemorationMedal) => (
-        <div>
-          <div style={{ fontWeight: 500 }}>{name}</div>
-        </div>
-      ),
+      title: 'Năm',
+      dataIndex: 'nam',
+      key: 'nam',
+      width: 80,
+      minWidth: 70,
+      align: 'center',
+      render: (nam: number) => nam || '-',
+    },
+    {
+      title: 'Cấp bậc',
+      dataIndex: 'cap_bac',
+      key: 'cap_bac',
+      width: 120,
+      minWidth: 100,
+      align: 'center',
+      render: (capBac: string) => capBac || '-',
+    },
+    {
+      title: 'Chức vụ',
+      dataIndex: 'chuc_vu',
+      key: 'chuc_vu',
+      width: 150,
+      minWidth: 120,
+      align: 'center',
+      ellipsis: true,
+      render: (chucVu: string) => chucVu || '-',
+    },
+    {
+      title: 'Số quyết định',
+      dataIndex: 'so_quyet_dinh',
+      key: 'so_quyet_dinh',
+      width: 140,
+      minWidth: 120,
+      align: 'center',
+      render: (soQuyetDinh: string, record: CommemorationMedal) => {
+        if (!soQuyetDinh || soQuyetDinh.trim() === '') {
+          return <span style={{ color: '#999' }}>Chưa có</span>;
+        }
+        return (
+          <a
+            onClick={e => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleOpenDecisionFile(soQuyetDinh);
+            }}
+            style={{
+              color: '#52c41a',
+              fontWeight: 500,
+              textDecoration: 'underline',
+              cursor: 'pointer',
+            }}
+          >
+            {soQuyetDinh}
+          </a>
+        );
+      },
+    },
+    {
+      title: 'Ghi chú',
+      dataIndex: 'ghi_chu',
+      key: 'ghi_chu',
+      width: 200,
+      minWidth: 150,
+      ellipsis: true,
+      render: (ghiChu: string) => ghiChu || '-',
     },
     {
       title: 'Trạng thái',
       dataIndex: 'status',
       key: 'status',
       width: 120,
+      minWidth: 100,
       align: 'center',
       render: (status: string) => getStatusTag(status),
     },
@@ -216,7 +224,7 @@ export default function AdminCommemorativeMedalsPage() {
           <Breadcrumb.Item>
             <Link href={`/admin/personnel/${personnelId}`}>{personnel?.ho_ten}</Link>
           </Breadcrumb.Item>
-          <Breadcrumb.Item>Kỷ niệm chương</Breadcrumb.Item>
+          <Breadcrumb.Item>Kỷ niệm chương VSNXD QĐNDVN</Breadcrumb.Item>
         </Breadcrumb>
 
         {/* Header */}
@@ -237,7 +245,7 @@ export default function AdminCommemorativeMedalsPage() {
               </Link>
             </Space>
             <Title level={2} style={{ marginTop: 8, marginBottom: 8 }}>
-              Kỷ niệm chương
+              Kỷ niệm chương VSNXD QĐNDVN
             </Title>
             {personnel && (
               <Paragraph style={{ fontSize: 14, color: '#666', marginBottom: 0 }}>
@@ -245,9 +253,6 @@ export default function AdminCommemorativeMedalsPage() {
               </Paragraph>
             )}
           </div>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => handleOpenDialog()}>
-            Thêm kỷ niệm chương
-          </Button>
         </div>
 
         {/* Table */}
@@ -265,77 +270,14 @@ export default function AdminCommemorativeMedalsPage() {
               dataSource={medals}
               rowKey="id"
               pagination={false}
+              scroll={{ x: 'max-content' }}
+              size="small"
               locale={{
                 emptyText: 'Chưa có dữ liệu kỷ niệm chương',
               }}
             />
           </Card>
         )}
-
-        {/* Form Modal */}
-        <Modal
-          title={editingMedal ? 'Sửa kỷ niệm chương' : 'Thêm kỷ niệm chương mới'}
-          open={dialogOpen}
-          onCancel={handleCloseDialog}
-          footer={null}
-          width={600}
-          centered
-        >
-          <Form form={form} onFinish={onSubmit} layout="vertical" style={{ marginTop: 24 }}>
-            <Form.Item
-              name="type"
-              label="Loại kỷ niệm chương"
-              rules={[{ required: true, message: 'Vui lòng chọn loại kỷ niệm chương' }]}
-            >
-              <Select placeholder="Chọn loại kỷ niệm chương" size="large">
-                <Select.Option value="KNC_VSNXD">KNC VSNXD</Select.Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item
-              name="name"
-              label="Tên kỷ niệm chương"
-              rules={[{ required: true, message: 'Vui lòng nhập tên kỷ niệm chương' }]}
-            >
-              <Input placeholder="Nhập tên kỷ niệm chương" size="large" />
-            </Form.Item>
-
-            <Form.Item name="rank" label="Hạng (nếu có)">
-              <Select placeholder="Chọn hạng" size="large" allowClear>
-                <Select.Option value="Hạng Ba">Hạng Ba</Select.Option>
-                <Select.Option value="Hạng Nhì">Hạng Nhì</Select.Option>
-                <Select.Option value="Hạng Nhất">Hạng Nhất</Select.Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item name="ngay_cap" label="Ngày cấp">
-              <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} size="large" />
-            </Form.Item>
-
-            <Form.Item
-              name="status"
-              label="Trạng thái"
-              rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}
-            >
-              <Select placeholder="Chọn trạng thái" size="large">
-                <Select.Option value="DA_NHAN">Đã nhận</Select.Option>
-                <Select.Option value="DU_DIEU_KIEN">Đủ điều kiện</Select.Option>
-                <Select.Option value="CHUA_DU">Chưa đủ</Select.Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
-              <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-                <Button onClick={handleCloseDialog} disabled={submitting}>
-                  Hủy
-                </Button>
-                <Button type="primary" htmlType="submit" loading={submitting}>
-                  {editingMedal ? 'Cập nhật' : 'Tạo mới'}
-                </Button>
-              </Space>
-            </Form.Item>
-          </Form>
-        </Modal>
 
         {/* Delete Confirmation Modal */}
         <Modal

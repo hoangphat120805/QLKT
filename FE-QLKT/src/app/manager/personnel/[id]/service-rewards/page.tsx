@@ -314,7 +314,7 @@ export default function ServiceRewardsPage() {
           <Breadcrumb.Item>
             <Link href={`/manager/personnel/${personnelId}`}>{personnel?.ho_ten}</Link>
           </Breadcrumb.Item>
-          <Breadcrumb.Item>Khen thưởng niên hạn</Breadcrumb.Item>
+          <Breadcrumb.Item>Huy chương Chiến sĩ vẻ vang</Breadcrumb.Item>
         </Breadcrumb>
 
         {/* Header */}
@@ -335,7 +335,7 @@ export default function ServiceRewardsPage() {
               </Link>
             </Space>
             <Title level={2} style={{ marginTop: 8, marginBottom: 8 }}>
-              Khen thưởng niên hạn
+              Huy chương Chiến sĩ vẻ vang
             </Title>
             {personnel && (
               <Paragraph style={{ fontSize: 14, color: '#666', marginBottom: 0 }}>
@@ -364,7 +364,7 @@ export default function ServiceRewardsPage() {
               rowKey="id"
               pagination={false}
               locale={{
-                emptyText: 'Chưa có dữ liệu khen thưởng niên hạn',
+                emptyText: 'Chưa có dữ liệu Huy chương Chiến sĩ vẻ vang',
               }}
             />
           </Card>
@@ -372,7 +372,7 @@ export default function ServiceRewardsPage() {
 
         {/* Form Modal */}
         <Modal
-          title={editingReward ? 'Sửa khen thưởng niên hạn' : 'Thêm khen thưởng niên hạn mới'}
+          title={editingReward ? 'Sửa Huy chương Chiến sĩ vẻ vang' : 'Thêm Huy chương Chiến sĩ vẻ vang mới'}
           open={dialogOpen}
           onCancel={handleCloseDialog}
           footer={null}

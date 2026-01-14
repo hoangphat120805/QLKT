@@ -63,8 +63,8 @@ export default function ProposalDetailModal({
   const proposalTypeLabels: Record<string, string> = {
     CA_NHAN_HANG_NAM: 'Cá nhân Hằng năm',
     DON_VI_HANG_NAM: 'Đơn vị Hằng năm',
-    NIEN_HAN: 'Niên hạn',
-    CONG_HIEN: 'Cống hiến',
+    NIEN_HAN: 'Huy chương Chiến sĩ vẻ vang',
+    CONG_HIEN: 'Huân chương Bảo vệ Tổ quốc',
     DOT_XUAT: 'Đột xuất',
     NCKH: 'ĐTKH/SKKH',
   };

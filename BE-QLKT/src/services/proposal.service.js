@@ -1323,7 +1323,7 @@ class ProposalService {
 
         if (invalidDanhHieus.length > 0) {
           throw new Error(
-            `Loại đề xuất "Niên hạn" chỉ cho phép các hạng HCCSVV. ` +
+            `Loại đề xuất "Huy chương Chiến sĩ vẻ vang" chỉ cho phép các hạng HCCSVV. ` +
               `Các danh hiệu không hợp lệ: ${invalidDanhHieus.join(', ')}. ` +
               `Vui lòng sử dụng loại đề xuất riêng cho HC_QKQT hoặc KNC_VSNXD_QDNDVN.`
           );
@@ -3010,7 +3010,7 @@ class ProposalService {
                 const newDanhHieuName = getDanhHieuName(item.danh_hieu);
 
                 errors.push(
-                  `Quân nhân "${quanNhan.ho_ten}" đã có danh hiệu cống hiến "${existingDanhHieuName}" (năm ${existingCongHien.nam}). ` +
+                  `Quân nhân "${quanNhan.ho_ten}" đã có Huân chương Bảo vệ Tổ quốc "${existingDanhHieuName}" (năm ${existingCongHien.nam}). ` +
                     `Không thể lưu danh hiệu "${newDanhHieuName}" vì hạng thấp hơn hoặc bằng.`
                 );
               }
@@ -3035,7 +3035,7 @@ class ProposalService {
             }
           } catch (error) {
             errors.push(
-              `Lỗi import cống hiến personnel_id ${item.personnel_id || ' '}: ${error.message}`
+              `Lỗi import Huân chương Bảo vệ Tổ quốc personnel_id ${item.personnel_id || ' '}: ${error.message}`
             );
           }
         }
@@ -3219,7 +3219,7 @@ class ProposalService {
         for (const item of nienHanData) {
           try {
             if (!item.personnel_id) {
-              errors.push(`Niên hạn thiếu personnel_id: ${JSON.stringify(item)}`);
+              errors.push(`Huy chương Chiến sĩ vẻ vang thiếu personnel_id: ${JSON.stringify(item)}`);
               continue;
             }
 
@@ -3233,7 +3233,7 @@ class ProposalService {
             }
 
             if (!item.danh_hieu) {
-              errors.push(`Niên hạn thiếu danh_hieu cho quân nhân ${quanNhan.id}`);
+              errors.push(`Huy chương Chiến sĩ vẻ vang thiếu danh_hieu cho quân nhân ${quanNhan.id}`);
               continue;
             }
 
@@ -3312,7 +3312,7 @@ class ProposalService {
             }
           } catch (error) {
             errors.push(
-              `Lỗi import niên hạn personnel_id ${item.personnel_id || 'N/A'}: ${error.message}`
+              `Lỗi import Huy chương Chiến sĩ vẻ vang personnel_id ${item.personnel_id || 'N/A'}: ${error.message}`
             );
           }
         }

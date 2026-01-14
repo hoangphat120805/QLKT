@@ -109,8 +109,8 @@ const DANH_HIEU_MAP = {
 const LOAI_DE_XUAT_MAP = {
   CA_NHAN_HANG_NAM: 'Cá nhân Hằng năm',
   DON_VI_HANG_NAM: 'Đơn vị Hằng năm',
-  NIEN_HAN: 'Niên hạn',
-  CONG_HIEN: 'Cống hiến',
+  NIEN_HAN: 'Huy chương Chiến sĩ vẻ vang',
+  CONG_HIEN: 'Huân chương Bảo vệ Tổ quốc',
   DOT_XUAT: 'Đột xuất',
   HC_QKQT: 'Huy chương Quân kỳ Quyết thắng',
   KNC_VSNXD_QDNDVN: 'Kỷ niệm chương Vì sự nghiệp xây dựng QĐNDVN',
@@ -123,8 +123,8 @@ const LOAI_DE_XUAT_MAP = {
 const AWARD_TYPE_MAP = {
   ANNUAL_PERSONAL: 'Cá nhân Hằng năm',
   ANNUAL_UNIT: 'Đơn vị Hằng năm',
-  CONTRIBUTION: 'Cống hiến',
-  TENURE: 'Niên hạn',
+  CONTRIBUTION: 'Huân chương Bảo vệ Tổ quốc',
+  TENURE: 'Huy chương Chiến sĩ vẻ vang',
   ADHOC: 'Đột xuất',
   SCIENTIFIC: 'Thành tích khoa học',
 };
@@ -170,8 +170,8 @@ function getAwardTypeName(awardType) {
  */
 function getLoaiKhenThuongByDanhHieu(danhHieu) {
   if (!danhHieu) return 'Chưa xác định';
-  if (danhHieu.startsWith('HCBVTQ')) return 'Cống hiến';
-  if (danhHieu.startsWith('HCCSVV')) return 'Niên hạn';
+  if (danhHieu.startsWith('HCBVTQ')) return 'Huân chương Bảo vệ Tổ quốc';
+  if (danhHieu.startsWith('HCCSVV')) return 'Huy chương Chiến sĩ vẻ vang';
   if (['CSTDCS', 'CSTT', 'BKBQP', 'CSTDTQ', 'BKTTCP'].includes(danhHieu)) return 'Cá nhân Hằng năm';
   if (['ĐVQT', 'ĐVTT'].includes(danhHieu)) return 'Đơn vị Hằng năm';
   if (danhHieu === 'HC_QKQT') return 'Huy chương Quân kỳ Quyết thắng';

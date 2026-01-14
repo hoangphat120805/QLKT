@@ -74,7 +74,7 @@ export default function ServiceHistoryModal({
       title={
         <span>
           <HistoryOutlined style={{ marginRight: 8 }} />
-          Lịch sử khen thưởng niên hạn - {personnel?.ho_ten}
+          Lịch sử Huy chương Chiến sĩ vẻ vang - {personnel?.ho_ten}
         </span>
       }
       open={visible}
@@ -135,7 +135,7 @@ export default function ServiceHistoryModal({
             )}
           </div>
         ) : (
-          <Text type="secondary">Chưa có dữ liệu lịch sử niên hạn</Text>
+          <Text type="secondary">Chưa có dữ liệu lịch sử huy chương chiến sĩ vẻ vang</Text>
         )}
       </Spin>
     </Modal>

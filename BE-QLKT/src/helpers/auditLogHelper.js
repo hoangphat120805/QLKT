@@ -1184,8 +1184,8 @@ const createLogDescription = {
       const loaiQuyetDinh = req.body?.loai_quyet_dinh || '';
       const loaiNames = {
         DANH_HIEU_HANG_NAM: 'Danh hiệu hằng năm',
-        DANH_HIEU_NIEN_HAN: 'Danh hiệu niên hạn',
-        CONG_HIEN: 'Khen thưởng cống hiến',
+        DANH_HIEU_NIEN_HAN: 'Huy chương Chiến sĩ vẻ vang',
+        CONG_HIEN: 'Huân chương Bảo vệ Tổ quốc',
         BKBQP: 'Bằng khen Bộ Quốc phòng',
         CSTDTQ: 'Chiến sĩ thi đua toàn quốc',
       };
@@ -1626,10 +1626,10 @@ const createLogDescription = {
           CA_NHAN_HANG_NAM: 'Danh hiệu cá nhân hằng năm',
           DON_VI_HANG_NAM: 'Danh hiệu đơn vị hằng năm',
           NCKH: 'Thành tích khoa học (ĐTKH/SKKH)',
-          NIEN_HAN: 'Khen thưởng niên hạn',
+          NIEN_HAN: 'Huy chương Chiến sĩ vẻ vang',
           HC_QKQT: 'Huy chương Quân kỳ Quyết thắng',
           KNC_VSNXD_QDNDVN: 'Kỷ niệm chương VSNXD QĐNDVN',
-          CONG_HIEN: 'Khen thưởng cống hiến',
+          CONG_HIEN: 'Huân chương Bảo vệ Tổ quốc',
         };
 
         const typeName = bulkTypeNames[type] || type || 'Khen thưởng';

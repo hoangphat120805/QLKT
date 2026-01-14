@@ -1226,7 +1226,7 @@ class PersonnelService {
         if (existingAward) {
           ineligiblePersonnel.push({
             personnelId,
-            reason: 'Đã nhận danh hiệu cống hiến',
+            reason: 'Đã nhận Huân chương Bảo vệ Tổ quốc',
             status: 'APPROVED',
             awardYear: existingAward.nam,
             awardTitle: existingAward.danh_hieu,
@@ -1259,7 +1259,7 @@ class PersonnelService {
             if (found) {
               ineligiblePersonnel.push({
                 personnelId,
-                reason: 'Đang chờ duyệt đề xuất cống hiến',
+                reason: 'Đang chờ duyệt đề xuất Huân chương Bảo vệ Tổ quốc',
                 status: 'PENDING',
                 proposalId: proposal.id,
                 proposalYear: proposal.nam,

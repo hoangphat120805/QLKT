@@ -110,8 +110,8 @@ export default function AdminProposalsPage() {
   const proposalTypeLabels: Record<string, { label: string; color: string }> = {
     CA_NHAN_HANG_NAM: { label: 'Cá nhân HN', color: 'blue' },
     DON_VI_HANG_NAM: { label: 'Đơn vị HN', color: 'cyan' },
-    NIEN_HAN: { label: 'Niên hạn', color: 'purple' },
-    CONG_HIEN: { label: 'Cống hiến', color: 'magenta' },
+    NIEN_HAN: { label: 'Huy chương Chiến sĩ vẻ vang', color: 'purple' },
+    CONG_HIEN: { label: 'Huân chương Bảo vệ Tổ quốc', color: 'magenta' },
     DOT_XUAT: { label: 'Đột xuất', color: 'orange' },
     NCKH: { label: 'ĐTKH/SKKH', color: 'green' },
   };

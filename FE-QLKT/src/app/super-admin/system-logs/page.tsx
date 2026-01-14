@@ -44,7 +44,12 @@ export default function SystemLogsPage() {
   useEffect(() => {
     const fetchLogs = async () => {
       try {
-        setLoading(true);
+        // Chỉ set loading ban đầu, khi chuyển trang thì dùng tableLoading
+        if (logs.length === 0) {
+          setLoading(true);
+        } else {
+          setTableLoading(true);
+        }
         const res = await apiClient.getSystemLogs({
           ...filters,
           page: pagination.current,
@@ -91,6 +96,7 @@ export default function SystemLogsPage() {
         setLogs([]);
       } finally {
         setLoading(false);
+        setTableLoading(false);
       }
     };
 
@@ -394,7 +400,7 @@ export default function SystemLogsPage() {
             </Text>
           </div>
           <div style={{ padding: 0 }}>
-            <LogsTable logs={logs} loading={loading} />
+            <LogsTable logs={logs} loading={loading || tableLoading} />
             {pagination.total > 0 && (
               <div
                 style={{
@@ -413,10 +419,19 @@ export default function SystemLogsPage() {
                   showTotal={(total, range) => `${range[0]}-${range[1]} của ${total} nhật ký`}
                   pageSizeOptions={['10', '20', '50', '100']}
                   onChange={(page, pageSize) => {
+                    setTableLoading(true);
                     setPagination(prev => ({
                       ...prev,
                       current: page,
                       pageSize: pageSize || prev.pageSize,
+                    }));
+                  }}
+                  onShowSizeChange={(current, size) => {
+                    setTableLoading(true);
+                    setPagination(prev => ({
+                      ...prev,
+                      current: 1,
+                      pageSize: size,
                     }));
                   }}
                 />

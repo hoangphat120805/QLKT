@@ -196,10 +196,10 @@ export default function ManagerProposalsPage() {
     const typeConfig = {
       CA_NHAN_HANG_NAM: { color: 'blue', text: 'Cá nhân hằng năm' },
       DON_VI_HANG_NAM: { color: 'purple', text: 'Đơn vị hằng năm' },
-      NIEN_HAN: { color: 'cyan', text: 'Niên hạn' },
+      NIEN_HAN: { color: 'cyan', text: 'Huy chương Chiến sĩ vẻ vang' },
       HC_QKQT: { color: 'gold', text: 'HC Quân kỳ quyết thắng' },
       KNC_VSNXD_QDNDVN: { color: 'lime', text: 'KNC VSNXD QĐNDVN' },
-      CONG_HIEN: { color: 'geekblue', text: 'Cống hiến' },
+      CONG_HIEN: { color: 'geekblue', text: 'Huân chương Bảo vệ Tổ quốc' },
       DOT_XUAT: { color: 'orange', text: 'Đột xuất' },
       NCKH: { color: 'magenta', text: 'Nghiên cứu khoa học' },
     };
@@ -212,10 +212,10 @@ export default function ManagerProposalsPage() {
     const typeConfig = {
       CA_NHAN_HANG_NAM: 'Cá nhân hằng năm',
       DON_VI_HANG_NAM: 'Đơn vị hằng năm',
-      NIEN_HAN: 'Niên hạn',
+      NIEN_HAN: 'Huy chương Chiến sĩ vẻ vang',
       HC_QKQT: 'HC Quân kỳ quyết thắng',
       KNC_VSNXD_QDNDVN: 'KNC VSNXD QĐNDVN',
-      CONG_HIEN: 'Cống hiến',
+      CONG_HIEN: 'Huân chương Bảo vệ Tổ quốc',
       DOT_XUAT: 'Đột xuất',
       NCKH: 'Nghiên cứu khoa học',
     };
@@ -295,11 +295,11 @@ export default function ManagerProposalsPage() {
           case 'HC_QKQT':
           case 'KNC_VSNXD_QDNDVN':
             count = record.so_nien_han ?? 0;
-            tooltip = 'Số quân nhân đề xuất niên hạn';
+            tooltip = 'Số quân nhân đề xuất huy chương chiến sĩ vẻ vang';
             break;
           case 'CONG_HIEN':
             count = record.so_cong_hien ?? 0;
-            tooltip = 'Số quân nhân đề xuất cống hiến';
+            tooltip = 'Số quân nhân đề xuất huân chương bảo vệ tổ quốc';
             break;
           case 'DON_VI_HANG_NAM':
             count = record.so_danh_hieu ?? 0;

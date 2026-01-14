@@ -167,10 +167,10 @@ export default function ProposalReviewPage() {
     const typeMap: Record<string, string> = {
       CA_NHAN_HANG_NAM: 'Cá nhân hằng năm',
       DON_VI_HANG_NAM: 'Đơn vị hằng năm',
-      NIEN_HAN: 'Niên hạn',
+      NIEN_HAN: 'Huy chương Chiến sĩ vẻ vang',
       HC_QKQT: 'Huy chương Quân kỳ Quyết thắng',
       KNC_VSNXD_QDNDVN: 'Kỷ niệm chương VSNXD QĐNDVN',
-      CONG_HIEN: 'Cống hiến',
+      CONG_HIEN: 'Huân chương Bảo vệ Tổ quốc',
       NCKH: 'Nghiên cứu khoa học',
       DOT_XUAT: 'Đột xuất',
     };

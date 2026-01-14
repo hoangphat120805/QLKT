@@ -309,8 +309,8 @@ export default function ManagerProposalDetailPage() {
     const typeConfig: Record<string, string> = {
       CA_NHAN_HANG_NAM: 'Cá nhân Hằng năm',
       DON_VI_HANG_NAM: 'Đơn vị Hằng năm',
-      NIEN_HAN: 'Niên hạn',
-      CONG_HIEN: 'Cống hiến',
+      NIEN_HAN: 'Huy chương Chiến sĩ vẻ vang',
+      CONG_HIEN: 'Huân chương Bảo vệ Tổ quốc',
       DOT_XUAT: 'Đột xuất',
       NCKH: 'ĐTKH/SKKH',
       HC_QKQT: 'Huy chương quân kỳ Quyết thắng',
@@ -783,7 +783,7 @@ export default function ManagerProposalDetailPage() {
             title={
               <span>
                 <TrophyOutlined style={{ marginRight: 8 }} />
-                Khen Thưởng Cống Hiến ({proposal.data_cong_hien?.length || 0})
+                Huân chương Bảo vệ Tổ quốc ({proposal.data_cong_hien?.length || 0})
               </span>
             }
           >

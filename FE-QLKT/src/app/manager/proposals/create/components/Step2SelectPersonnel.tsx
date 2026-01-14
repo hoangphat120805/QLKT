@@ -168,7 +168,7 @@ export default function Step2SelectPersonnel({
     },
   ];
 
-  // Thêm cột ngày nhập ngũ, xuất ngũ và tổng tháng cho đề xuất niên hạn
+  // Thêm cột ngày nhập ngũ, xuất ngũ và tổng tháng cho đề xuất huy chương chiến sĩ vẻ vang
   if (proposalType === 'NIEN_HAN') {
     // Hàm tính tổng số tháng từ ngày nhập ngũ đến hiện tại (hoặc ngày xuất ngũ)
     const calculateTotalMonths = (

@@ -433,7 +433,7 @@ class AwardBulkService {
         for (const item of titleData) {
           try {
             if (!item.danh_hieu) {
-              errors.push(`Niên hạn thiếu danh_hieu cho quân nhân ${item.personnel_id}`);
+              errors.push(`Huy chương Chiến sĩ vẻ vang thiếu danh_hieu cho quân nhân ${item.personnel_id}`);
               continue;
             }
 
@@ -443,7 +443,7 @@ class AwardBulkService {
               errors.push(
                 `Danh hiệu "${
                   item.danh_hieu
-                }" không hợp lệ cho niên hạn. Chỉ cho phép: ${allowedDanhHieus.join(', ')}`
+                }" không hợp lệ cho Huy chương Chiến sĩ vẻ vang. Chỉ cho phép: ${allowedDanhHieus.join(', ')}`
               );
               continue;
             }
@@ -522,7 +522,7 @@ class AwardBulkService {
             affectedPersonnelIds.add(item.personnel_id);
           } catch (error) {
             errors.push(
-              `Lỗi khi thêm niên hạn cho quân nhân ${item.personnel_id}: ${error.message}`
+              `Lỗi khi thêm Huy chương Chiến sĩ vẻ vang cho quân nhân ${item.personnel_id}: ${error.message}`
             );
           }
         }
@@ -611,7 +611,7 @@ class AwardBulkService {
         for (const item of titleData) {
           try {
             if (!item.danh_hieu) {
-              errors.push(`Cống hiến thiếu danh_hieu cho quân nhân ${item.personnel_id}`);
+              errors.push(`Huân chương Bảo vệ Tổ quốc thiếu danh_hieu cho quân nhân ${item.personnel_id}`);
               continue;
             }
 
@@ -621,7 +621,7 @@ class AwardBulkService {
               errors.push(
                 `Danh hiệu "${
                   item.danh_hieu
-                }" không hợp lệ cho cống hiến. Chỉ cho phép: ${allowedDanhHieus.join(', ')}`
+                }" không hợp lệ cho Huân chương Bảo vệ Tổ quốc. Chỉ cho phép: ${allowedDanhHieus.join(', ')}`
               );
               continue;
             }
@@ -658,7 +658,7 @@ class AwardBulkService {
             affectedPersonnelIds.add(item.personnel_id);
           } catch (error) {
             errors.push(
-              `Lỗi khi thêm cống hiến cho quân nhân ${item.personnel_id}: ${error.message}`
+              `Lỗi khi thêm Huân chương Bảo vệ Tổ quốc cho quân nhân ${item.personnel_id}: ${error.message}`
             );
           }
         }

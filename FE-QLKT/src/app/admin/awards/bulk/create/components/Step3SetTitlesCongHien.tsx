@@ -214,7 +214,7 @@ export default function Step3SetTitlesCongHien({
     }
   };
 
-  // Kiểm tra quân nhân có đủ điều kiện cho hạng cống hiến không từ API data
+  // Kiểm tra quân nhân có đủ điều kiện cho hạng huân chương bảo vệ tổ quốc không từ API data
   const checkEligibleForRank = (
     profile: any,
     rank: 'HANG_NHAT' | 'HANG_NHI' | 'HANG_BA'
@@ -440,7 +440,7 @@ export default function Step3SetTitlesCongHien({
               <strong>{personnel.length}</strong> quân nhân)
             </p>
             <p style={{ marginTop: 8, paddingLeft: 16, borderLeft: '3px solid #1890ff' }}>
-              <strong>Lưu ý cho đề xuất Cống hiến:</strong>
+              <strong>Lưu ý cho đề xuất Huân chương Bảo vệ Tổ quốc:</strong>
               <br />- Yêu cầu thời gian: <strong>Nam: 10 năm (120 tháng)</strong>,{' '}
               <strong>Nữ: 6 năm 8 tháng (80 tháng)</strong> - giảm 1/3 thời gian
               <br />

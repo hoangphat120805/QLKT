@@ -120,8 +120,8 @@ export default function BulkAddAwardsPage() {
     },
     NIEN_HAN: {
       icon: <ClockCircleOutlined />,
-      label: 'Niên hạn',
-      description: 'HCCSVV các hạng',
+      label: 'Huy chương Chiến sĩ vẻ vang',
+      description: 'Huy chương Chiến sĩ vẻ vang 3 hạng',
     },
     HC_QKQT: {
       icon: <TrophyOutlined />,
@@ -135,8 +135,8 @@ export default function BulkAddAwardsPage() {
     },
     CONG_HIEN: {
       icon: <HeartOutlined />,
-      label: 'Cống hiến',
-      description: 'HC BVTQ 3 hạng',
+      label: 'Huân chương Bảo vệ Tổ quốc',
+      description: 'Huân chương Bảo vệ Tổ quốc 3 hạng',
     },
     NCKH: {
       icon: <ExperimentOutlined />,

@@ -8,9 +8,6 @@ import {
   Button,
   Table,
   Modal,
-  Form,
-  Input,
-  Select,
   Space,
   Typography,
   Breadcrumb,
@@ -22,7 +19,6 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import {
   LeftOutlined,
-  PlusOutlined,
   DeleteOutlined,
   EditOutlined,
   HomeOutlined,
@@ -55,16 +51,12 @@ interface RewardRecord {
 export default function AnnualRewardsPage() {
   const params = useParams();
   const personnelId = params?.id as string;
-  const [form] = Form.useForm();
 
   const [loading, setLoading] = useState(true);
   const [personnel, setPersonnel] = useState<any>(null);
   const [rewards, setRewards] = useState<RewardRecord[]>([]);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingReward, setEditingReward] = useState<any>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -90,67 +82,6 @@ export default function AnnualRewardsPage() {
       setLoading(false);
     }
   }
-
-  const handleOpenDialog = (reward?: any) => {
-    if (reward) {
-      setEditingReward(reward);
-      form.setFieldsValue({
-        nam: reward.nam?.toString() || new Date().getFullYear().toString(),
-        danh_hieu: reward.danh_hieu || '',
-        cap_bac: reward.cap_bac || undefined,
-        chuc_vu: reward.chuc_vu || '',
-        ghi_chu: reward.ghi_chu || '',
-      });
-    } else {
-      setEditingReward(null);
-      form.setFieldsValue({
-        nam: new Date().getFullYear().toString(),
-        danh_hieu: '',
-        cap_bac: undefined,
-        chuc_vu: '',
-        ghi_chu: '',
-      });
-    }
-    setDialogOpen(true);
-  };
-
-  const handleCloseDialog = () => {
-    setDialogOpen(false);
-    setEditingReward(null);
-    form.resetFields();
-  };
-
-  const onSubmit = async (values: any) => {
-    try {
-      setSubmitting(true);
-
-      const payload = {
-        nam: parseInt(values.nam),
-        danh_hieu: values.danh_hieu,
-        cap_bac: values.cap_bac || null,
-        chuc_vu: values.chuc_vu || null,
-        ghi_chu: values.ghi_chu || null,
-      };
-
-      const res = editingReward
-        ? await apiClient.updateAnnualReward(editingReward.id, payload)
-        : await apiClient.createAnnualReward(personnelId, payload);
-
-      if (res.success) {
-        message.success(
-          editingReward ? 'Cập nhật khen thưởng thành công' : 'Thêm khen thưởng thành công'
-        );
-        handleCloseDialog();
-        loadData();
-      } else {
-        message.error(res.message || 'Có lỗi xảy ra');
-      }
-    } catch (error) {
-      message.error('Có lỗi xảy ra');
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -428,9 +359,6 @@ export default function AnnualRewardsPage() {
             </Paragraph>
           )}
         </div>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => handleOpenDialog()}>
-          Thêm khen thưởng
-        </Button>
       </div>
 
       {/* Table */}
@@ -455,74 +383,6 @@ export default function AnnualRewardsPage() {
           />
         </Card>
       )}
-
-      {/* Form Modal */}
-      <Modal
-        title={editingReward ? 'Sửa khen thưởng' : 'Thêm khen thưởng mới'}
-        open={dialogOpen}
-        onCancel={handleCloseDialog}
-        footer={null}
-        width={600}
-      >
-        <Form form={form} onFinish={onSubmit} layout="vertical" style={{ marginTop: 24 }}>
-          <Form.Item
-            name="nam"
-            label="Năm"
-            rules={[{ required: true, message: 'Năm không hợp lệ' }]}
-          >
-            <Input placeholder="Nhập năm (YYYY)" maxLength={4} size="large" />
-          </Form.Item>
-
-          <Form.Item
-            name="danh_hieu"
-            label="Danh hiệu"
-            rules={[{ required: true, message: 'Vui lòng chọn danh hiệu' }]}
-          >
-            <Select placeholder="Chọn danh hiệu" size="large">
-              <Select.Option value="CSTDCS">Chiến sĩ thi đua cơ sở</Select.Option>
-              <Select.Option value="CSTT">Chiến sĩ tiên tiến</Select.Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item name="cap_bac" label="Cấp bậc (tại thời điểm đề nghị)">
-            <Select placeholder="Chọn cấp bậc" size="large" allowClear>
-              <Select.Option value="Thượng tá">Thượng tá</Select.Option>
-              <Select.Option value="Trung tá">Trung tá</Select.Option>
-              <Select.Option value="Thiếu tá">Thiếu tá</Select.Option>
-              <Select.Option value="Đại úy">Đại úy</Select.Option>
-              <Select.Option value="Thượng úy">Thượng úy</Select.Option>
-              <Select.Option value="Trung úy">Trung úy</Select.Option>
-              <Select.Option value="Thiếu úy">Thiếu úy</Select.Option>
-              <Select.Option value="Thượng sĩ">Thượng sĩ</Select.Option>
-              <Select.Option value="Trung sĩ">Trung sĩ</Select.Option>
-              <Select.Option value="Hạ sĩ">Hạ sĩ</Select.Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item name="chuc_vu" label="Chức vụ (tại thời điểm đề nghị)">
-            <Input placeholder="Nhập chức vụ" size="large" />
-          </Form.Item>
-
-          <Form.Item name="ghi_chu" label="Ghi chú">
-            <Input.TextArea
-              placeholder="Ghi chú (ví dụ: chuyển từ đơn vị khác)"
-              rows={3}
-              size="large"
-            />
-          </Form.Item>
-
-          <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
-            <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-              <Button onClick={handleCloseDialog} disabled={submitting}>
-                Hủy
-              </Button>
-              <Button type="primary" htmlType="submit" loading={submitting}>
-                {editingReward ? 'Cập nhật' : 'Tạo mới'}
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Modal>
 
       {/* Delete Confirmation Modal */}
       <Modal
