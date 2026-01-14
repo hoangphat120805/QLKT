@@ -140,8 +140,8 @@ export default function BulkAddAwardsPage() {
     },
     NCKH: {
       icon: <ExperimentOutlined />,
-      label: 'ĐTKH/SKKH',
-      description: 'Nghiên cứu khoa học / Sáng kiến khoa học',
+      label: 'Nghiên cứu khoa học',
+      description: 'Đề tài khoa học / Sáng kiến khoa học',
     },
   };
 
