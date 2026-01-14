@@ -114,7 +114,7 @@ export default function Step2SelectPersonnel({
 
     // Unit filter
     let matchesUnit = true;
-    if (unitFilter !== 'ALL') {
+    if (unitFilter && unitFilter !== 'ALL') {
       const unitId = unitFilter.split('|')[0];
       matchesUnit = p.don_vi_truc_thuoc_id === unitId || p.co_quan_don_vi_id === unitId;
     }
@@ -136,7 +136,34 @@ export default function Step2SelectPersonnel({
       key: 'ho_ten',
       width: 200,
       align: 'center',
-      render: (text: string) => <Text strong>{text}</Text>,
+      render: (text: string, record) => {
+        // Hiển thị thêm Cơ quan đơn vị / Đơn vị trực thuộc ngay dưới họ tên
+        const coQuan = record.DonViTrucThuoc?.CoQuanDonVi || record.CoQuanDonVi;
+        const donViTrucThuoc = record.DonViTrucThuoc;
+
+        let donViDisplay: string | null = null;
+
+        if (donViTrucThuoc?.ten_don_vi) {
+          // Ưu tiên đơn vị trực thuộc, kèm theo cơ quan nếu có
+          donViDisplay = coQuan?.ten_don_vi
+            ? `${donViTrucThuoc.ten_don_vi} (${coQuan.ten_don_vi})`
+            : donViTrucThuoc.ten_don_vi;
+        } else if (coQuan?.ten_don_vi) {
+          // Chỉ có cơ quan đơn vị
+          donViDisplay = coQuan.ten_don_vi;
+        }
+
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <Text strong>{text}</Text>
+            {donViDisplay && (
+              <Text type="secondary" style={{ fontSize: '12px', marginTop: 4 }}>
+                {donViDisplay}
+              </Text>
+            )}
+          </div>
+        );
+      },
     },
     {
       title: 'Ngày sinh',
@@ -355,7 +382,7 @@ export default function Step2SelectPersonnel({
         <Select
           placeholder="Lọc theo đơn vị"
           value={unitFilter}
-          onChange={setUnitFilter}
+          onChange={value => setUnitFilter(value || 'ALL')}
           style={{ width: 250 }}
           size="large"
           allowClear

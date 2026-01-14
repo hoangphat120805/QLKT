@@ -27,12 +27,14 @@ class PersonnelService {
   /**
    * Lấy danh sách quân nhân (có phân trang)
    * Admin: lấy tất cả
-   * Manager: lọc theo đơn vị của mình
+   * Manager: lọc theo đơn vị của mình (bao gồm cả quân nhân thuộc đơn vị trực thuộc)
    */
-  async getPersonnel(page = 1, limit = 10, userRole, userQuanNhanId) {
+  async getPersonnel(page = 1, limit = 10, userRole, userQuanNhanId, filters = {}) {
     try {
       const skip = (page - 1) * limit;
+      const { search, unit_id } = filters;
       let whereCondition = {};
+      const andConditions = [];
 
       // Nếu là MANAGER, chỉ lấy quân nhân trong đơn vị của mình
       if (userRole === 'MANAGER' && userQuanNhanId) {
@@ -41,12 +43,63 @@ class PersonnelService {
           select: { co_quan_don_vi_id: true, don_vi_truc_thuoc_id: true },
         });
 
-        if (manager) {
-          // MANAGER thuộc cơ quan đơn vị, lấy tất cả quân nhân trong cơ quan đơn vị đó
-          if (manager.co_quan_don_vi_id) {
-            whereCondition.co_quan_don_vi_id = manager.co_quan_don_vi_id;
-          }
+        if (manager && manager.co_quan_don_vi_id) {
+          // Lấy tất cả đơn vị trực thuộc của cơ quan đơn vị này
+          const donViTrucThuocList = await prisma.donViTrucThuoc.findMany({
+            where: { co_quan_don_vi_id: manager.co_quan_don_vi_id },
+            select: { id: true },
+          });
+
+          const donViTrucThuocIds = donViTrucThuocList.map(dv => dv.id);
+
+          // Filter: quân nhân thuộc cơ quan đơn vị HOẶC thuộc đơn vị trực thuộc của cơ quan đơn vị đó
+          andConditions.push({
+            OR: [
+              { co_quan_don_vi_id: manager.co_quan_don_vi_id },
+              ...(donViTrucThuocIds.length > 0
+                ? [{ don_vi_truc_thuoc_id: { in: donViTrucThuocIds } }]
+                : []),
+            ],
+          });
         }
+      }
+
+      // Filter theo unit_id nếu có (lọc theo cơ quan đơn vị hoặc đơn vị trực thuộc)
+      if (unit_id) {
+        // Lấy tất cả đơn vị trực thuộc của cơ quan đơn vị được filter
+        const donViTrucThuocList = await prisma.donViTrucThuoc.findMany({
+          where: { co_quan_don_vi_id: unit_id },
+          select: { id: true },
+        });
+        const donViTrucThuocIds = donViTrucThuocList.map(dv => dv.id);
+
+        // Quân nhân thuộc cơ quan đơn vị này HOẶC thuộc đơn vị trực thuộc của nó
+        andConditions.push({
+          OR: [
+            { co_quan_don_vi_id: unit_id },
+            ...(donViTrucThuocIds.length > 0
+              ? [{ don_vi_truc_thuoc_id: { in: donViTrucThuocIds } }]
+              : []),
+          ],
+        });
+      }
+
+      // Filter theo search (tìm theo họ tên hoặc CCCD)
+      if (search && search.trim()) {
+        const searchTerm = search.trim();
+        andConditions.push({
+          OR: [
+            { ho_ten: { contains: searchTerm, mode: 'insensitive' } },
+            { cccd: { contains: searchTerm, mode: 'insensitive' } },
+          ],
+        });
+      }
+
+      // Kết hợp tất cả điều kiện
+      if (andConditions.length > 0) {
+        whereCondition = {
+          AND: andConditions,
+        };
       }
 
       const [personnel, total] = await Promise.all([
@@ -119,19 +172,28 @@ class PersonnelService {
         throw new Error('Bạn không có quyền xem thông tin này');
       }
 
-      // MANAGER chỉ xem được quân nhân trong đơn vị của mình
+      // MANAGER chỉ xem được quân nhân trong đơn vị của mình (bao gồm đơn vị trực thuộc)
       if (userRole === 'MANAGER' && userQuanNhanId) {
         const manager = await prisma.quanNhan.findUnique({
           where: { id: userQuanNhanId },
           select: { co_quan_don_vi_id: true, don_vi_truc_thuoc_id: true },
         });
 
-        if (manager) {
-          // MANAGER thuộc cơ quan đơn vị, chỉ xem được quân nhân trong cùng cơ quan đơn vị
-          if (manager.co_quan_don_vi_id) {
-            if (personnel.co_quan_don_vi_id !== manager.co_quan_don_vi_id) {
-              throw new Error('Bạn không có quyền xem thông tin quân nhân ngoài đơn vị');
-            }
+        if (manager && manager.co_quan_don_vi_id) {
+          // Lấy tất cả đơn vị trực thuộc của cơ quan đơn vị này
+          const donViTrucThuocList = await prisma.donViTrucThuoc.findMany({
+            where: { co_quan_don_vi_id: manager.co_quan_don_vi_id },
+            select: { id: true },
+          });
+          const donViTrucThuocIds = donViTrucThuocList.map(dv => dv.id);
+
+          // Kiểm tra quân nhân có thuộc cơ quan đơn vị HOẶC đơn vị trực thuộc không
+          const isInCoQuanDonVi = personnel.co_quan_don_vi_id === manager.co_quan_don_vi_id;
+          const isInDonViTrucThuoc =
+            personnel.don_vi_truc_thuoc_id && donViTrucThuocIds.includes(personnel.don_vi_truc_thuoc_id);
+
+          if (!isInCoQuanDonVi && !isInDonViTrucThuoc) {
+            throw new Error('Bạn không có quyền xem thông tin quân nhân ngoài đơn vị');
           }
         }
       }
@@ -492,25 +554,46 @@ class PersonnelService {
 
       // Xử lý đơn vị: ưu tiên co_quan_don_vi_id và don_vi_truc_thuoc_id từ frontend
       if (co_quan_don_vi_id !== undefined || don_vi_truc_thuoc_id !== undefined) {
-        // Frontend gửi explicit co_quan_don_vi_id và don_vi_truc_thuoc_id
-        updateData.co_quan_don_vi_id =
-          co_quan_don_vi_id !== undefined ? co_quan_don_vi_id : personnel.co_quan_don_vi_id;
-        updateData.don_vi_truc_thuoc_id =
-          don_vi_truc_thuoc_id !== undefined
-            ? don_vi_truc_thuoc_id
-            : personnel.don_vi_truc_thuoc_id;
+        // Nếu có don_vi_truc_thuoc_id, tự động lấy co_quan_don_vi_id từ đơn vị cha
+        if (don_vi_truc_thuoc_id) {
+          const donViTrucThuoc = await prisma.donViTrucThuoc.findUnique({
+            where: { id: don_vi_truc_thuoc_id },
+            select: { co_quan_don_vi_id: true },
+          });
+
+          if (donViTrucThuoc) {
+            // Tự động set co_quan_don_vi_id theo đơn vị cha của đơn vị trực thuộc
+            updateData.co_quan_don_vi_id = donViTrucThuoc.co_quan_don_vi_id;
+            updateData.don_vi_truc_thuoc_id = don_vi_truc_thuoc_id;
+          } else {
+            throw new Error('Đơn vị trực thuộc không tồn tại');
+          }
+        } else if (co_quan_don_vi_id) {
+          // Chỉ có cơ quan đơn vị, không có đơn vị trực thuộc
+          updateData.co_quan_don_vi_id = co_quan_don_vi_id;
+          updateData.don_vi_truc_thuoc_id = null;
+        } else {
+          // don_vi_truc_thuoc_id = null, giữ hoặc cập nhật co_quan_don_vi_id
+          updateData.co_quan_don_vi_id =
+            co_quan_don_vi_id !== undefined ? co_quan_don_vi_id : personnel.co_quan_don_vi_id;
+          updateData.don_vi_truc_thuoc_id = null;
+        }
       } else if (unit_id && unit_id !== currentUnitId) {
         // Legacy: xử lý unit_id (tự động phát hiện loại đơn vị)
         const [coQuanDonVi, donViTrucThuoc] = await Promise.all([
           prisma.coQuanDonVi.findUnique({ where: { id: unit_id } }),
-          prisma.donViTrucThuoc.findUnique({ where: { id: unit_id } }),
+          prisma.donViTrucThuoc.findUnique({
+            where: { id: unit_id },
+            select: { id: true, co_quan_don_vi_id: true },
+          }),
         ]);
 
         if (coQuanDonVi) {
           updateData.co_quan_don_vi_id = unit_id;
           updateData.don_vi_truc_thuoc_id = null;
         } else if (donViTrucThuoc) {
-          updateData.co_quan_don_vi_id = null;
+          // Tự động set co_quan_don_vi_id theo đơn vị cha
+          updateData.co_quan_don_vi_id = donViTrucThuoc.co_quan_don_vi_id;
           updateData.don_vi_truc_thuoc_id = unit_id;
         }
       } else {
@@ -585,51 +668,103 @@ class PersonnelService {
         });
       }
 
-      // Nếu đổi đơn vị, cập nhật số lượng quân nhân
-      if (unit_id && unit_id !== currentUnitId) {
-        const oldUnitId = currentUnitId;
-        const newUnitId = unit_id;
+      // Nếu đổi đơn vị, cập nhật số lượng quân nhân và gửi thông báo
+      let unitTransferInfo = null;
 
-        // Giảm số lượng ở đơn vị cũ
-        if (oldUnitId) {
-          const [oldCoQuanDonVi, oldDonViTrucThuoc] = await Promise.all([
-            prisma.coQuanDonVi.findUnique({ where: { id: oldUnitId } }),
-            prisma.donViTrucThuoc.findUnique({ where: { id: oldUnitId } }),
-          ]);
+      // Phát hiện chuyển đơn vị: so sánh đơn vị cũ và mới
+      const oldCoQuanDonViId = personnel.co_quan_don_vi_id;
+      const oldDonViTrucThuocId = personnel.don_vi_truc_thuoc_id;
+      const newCoQuanDonViId = updateData.co_quan_don_vi_id;
+      const newDonViTrucThuocId = updateData.don_vi_truc_thuoc_id;
 
-          if (oldCoQuanDonVi) {
-            await prisma.coQuanDonVi.update({
-              where: { id: oldUnitId },
-              data: { so_luong: { decrement: 1 } },
+      // Kiểm tra xem đơn vị có thay đổi không
+      const coQuanDonViChanged = oldCoQuanDonViId !== newCoQuanDonViId;
+      const donViTrucThuocChanged = oldDonViTrucThuocId !== newDonViTrucThuocId;
+      const unitChanged = coQuanDonViChanged || donViTrucThuocChanged;
+
+      if (unitChanged) {
+        // Lấy thông tin đơn vị cũ và mới để gửi notification
+        let oldUnitInfo = null;
+        let newUnitInfo = null;
+
+        // Xác định đơn vị cũ (ưu tiên đơn vị trực thuộc nếu có)
+        const oldPrimaryUnitId = oldDonViTrucThuocId || oldCoQuanDonViId;
+        if (oldPrimaryUnitId) {
+          if (oldDonViTrucThuocId) {
+            const oldDvtt = await prisma.donViTrucThuoc.findUnique({
+              where: { id: oldDonViTrucThuocId },
+              select: { id: true, ten_don_vi: true },
             });
-          } else if (oldDonViTrucThuoc) {
-            await prisma.donViTrucThuoc.update({
-              where: { id: oldUnitId },
-              data: { so_luong: { decrement: 1 } },
+            if (oldDvtt) {
+              oldUnitInfo = { id: oldDvtt.id, ten_don_vi: oldDvtt.ten_don_vi, isCoQuanDonVi: false };
+              // Giảm số lượng ở đơn vị trực thuộc cũ
+              await prisma.donViTrucThuoc.update({
+                where: { id: oldDonViTrucThuocId },
+                data: { so_luong: { decrement: 1 } },
+              });
+            }
+          } else if (oldCoQuanDonViId) {
+            const oldCqDv = await prisma.coQuanDonVi.findUnique({
+              where: { id: oldCoQuanDonViId },
+              select: { id: true, ten_don_vi: true },
             });
+            if (oldCqDv) {
+              oldUnitInfo = { id: oldCqDv.id, ten_don_vi: oldCqDv.ten_don_vi, isCoQuanDonVi: true };
+              // Giảm số lượng ở cơ quan đơn vị cũ
+              await prisma.coQuanDonVi.update({
+                where: { id: oldCoQuanDonViId },
+                data: { so_luong: { decrement: 1 } },
+              });
+            }
           }
         }
 
-        // Tăng số lượng ở đơn vị mới
-        const [newCoQuanDonVi, newDonViTrucThuoc] = await Promise.all([
-          prisma.coQuanDonVi.findUnique({ where: { id: newUnitId } }),
-          prisma.donViTrucThuoc.findUnique({ where: { id: newUnitId } }),
-        ]);
+        // Xác định đơn vị mới (ưu tiên đơn vị trực thuộc nếu có)
+        const newPrimaryUnitId = newDonViTrucThuocId || newCoQuanDonViId;
+        if (newPrimaryUnitId) {
+          if (newDonViTrucThuocId) {
+            const newDvtt = await prisma.donViTrucThuoc.findUnique({
+              where: { id: newDonViTrucThuocId },
+              select: { id: true, ten_don_vi: true },
+            });
+            if (newDvtt) {
+              newUnitInfo = { id: newDvtt.id, ten_don_vi: newDvtt.ten_don_vi, isCoQuanDonVi: false };
+              // Tăng số lượng ở đơn vị trực thuộc mới
+              await prisma.donViTrucThuoc.update({
+                where: { id: newDonViTrucThuocId },
+                data: { so_luong: { increment: 1 } },
+              });
+            }
+          } else if (newCoQuanDonViId) {
+            const newCqDv = await prisma.coQuanDonVi.findUnique({
+              where: { id: newCoQuanDonViId },
+              select: { id: true, ten_don_vi: true },
+            });
+            if (newCqDv) {
+              newUnitInfo = { id: newCqDv.id, ten_don_vi: newCqDv.ten_don_vi, isCoQuanDonVi: true };
+              // Tăng số lượng ở cơ quan đơn vị mới
+              await prisma.coQuanDonVi.update({
+                where: { id: newCoQuanDonViId },
+                data: { so_luong: { increment: 1 } },
+              });
+            }
+          }
+        }
 
-        if (newCoQuanDonVi) {
-          await prisma.coQuanDonVi.update({
-            where: { id: newUnitId },
-            data: { so_luong: { increment: 1 } },
-          });
-        } else if (newDonViTrucThuoc) {
-          await prisma.donViTrucThuoc.update({
-            where: { id: newUnitId },
-            data: { so_luong: { increment: 1 } },
-          });
+        // Lưu thông tin chuyển đơn vị để trả về và gửi notification
+        if (oldUnitInfo || newUnitInfo) {
+          unitTransferInfo = {
+            oldUnit: oldUnitInfo,
+            newUnit: newUnitInfo,
+          };
         }
       }
 
-      return updatedPersonnel;
+      // Trả về kết quả với thông tin chuyển đơn vị (nếu có)
+      return {
+        ...updatedPersonnel,
+        unitTransferInfo,
+      };
     } catch (error) {
       throw error;
     }

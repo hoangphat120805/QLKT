@@ -25,6 +25,7 @@ export default function SystemLogsPage() {
   const { theme } = useTheme();
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tableLoading, setTableLoading] = useState(false);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 20,

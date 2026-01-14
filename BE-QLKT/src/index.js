@@ -127,8 +127,6 @@ app.use(require('./routes/index'));
 
 app.listen(PORT, () => {
   console.log(`🚀 Server đang chạy trên cổng ${PORT}`);
-  console.log(`📍 API endpoint: http://localhost:${PORT}/api`);
-  console.log(`💚 Health check: http://localhost:${PORT}/health`);
   console.log(`🔍 Prisma Studio: npx prisma studio`);
 });
 

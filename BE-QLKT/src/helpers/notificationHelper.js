@@ -95,13 +95,14 @@ class NotificationHelper {
   async notifyManagerOnProposalApproval(proposal, approver) {
     try {
       const proposalTypeName = formatProposalType(proposal.loai_de_xuat);
+      const approverDisplayName = await getDisplayName(approver.username);
       const notification = await prisma.thongBao.create({
         data: {
           nguoi_nhan_id: proposal.nguoi_de_xuat_id,
           recipient_role: 'MANAGER',
           type: NOTIFICATION_TYPES.PROPOSAL_APPROVED,
           title: 'Đề xuất đã được phê duyệt',
-          message: `${proposalTypeName} của bạn đã được ${approver.username} phê duyệt`,
+          message: `${proposalTypeName} của bạn đã được ${approverDisplayName} phê duyệt`,
           resource: RESOURCE_TYPES.PROPOSALS,
           tai_nguyen_id: proposal.id,
           link: `/manager/proposals/${proposal.id}`,
@@ -122,13 +123,14 @@ class NotificationHelper {
   async notifyManagerOnProposalRejection(proposal, rejector, reason) {
     try {
       const proposalTypeName = formatProposalType(proposal.loai_de_xuat);
+      const rejectorDisplayName = await getDisplayName(rejector.username);
       const notification = await prisma.thongBao.create({
         data: {
           nguoi_nhan_id: proposal.nguoi_de_xuat_id,
           recipient_role: 'MANAGER',
           type: NOTIFICATION_TYPES.PROPOSAL_REJECTED,
           title: 'Đề xuất bị từ chối',
-          message: `${proposalTypeName} của bạn đã bị từ chối. Lý do: ${reason}`,
+          message: `${proposalTypeName} của bạn đã bị ${rejectorDisplayName} từ chối. Lý do: ${reason || 'Không có lý do cụ thể'}`,
           resource: RESOURCE_TYPES.PROPOSALS,
           tai_nguyen_id: proposal.id,
           link: `/manager/proposals/${proposal.id}`,
@@ -261,13 +263,23 @@ class NotificationHelper {
         return null; // Quân nhân chưa có tài khoản
       }
 
+      const approverDisplayName = await getDisplayName(approverUsername);
+
+      // Map loại thành tích sang tiếng Việt
+      const loaiMap = {
+        DTKH: 'Đề tài khoa học',
+        SKKH: 'Sáng kiến khoa học',
+        NCKH: 'Nghiên cứu khoa học',
+      };
+      const loaiName = loaiMap[achievement.loai] || achievement.loai || 'Thành tích khoa học';
+
       const notification = await prisma.thongBao.create({
         data: {
           nguoi_nhan_id: account.id,
           recipient_role: account.role,
           type: NOTIFICATION_TYPES.ACHIEVEMENT_APPROVED,
           title: 'Thành tích khoa học đã được phê duyệt',
-          message: `Thành tích khoa học ${achievement.loai} năm ${achievement.nam} của bạn đã được ${approverUsername} phê duyệt`,
+          message: `${loaiName} năm ${achievement.nam || 'không xác định'} của bạn đã được ${approverDisplayName} phê duyệt`,
           resource: RESOURCE_TYPES.ACHIEVEMENTS,
           tai_nguyen_id: achievement.id,
           link: `/user/profile`,
@@ -292,10 +304,11 @@ class NotificationHelper {
   async notifyOnAwardDeleted(award, personnel, awardType, adminUsername) {
     try {
       const notifications = [];
+      const adminDisplayName = await getDisplayName(adminUsername);
 
       // Map loại khen thưởng sang tên tiếng Việt
       const awardTypeNameMap = {
-        HCCSVV: 'Huy chương Chiến sĩ Vẻ vang',
+        HCCSVV: 'Huy chương Chiến sĩ vẻ vang',
         HCBVTQ: 'Huân chương Bảo vệ Tổ quốc',
         KNC_VSNXD: 'Kỷ niệm chương VSNXD QĐNDVN',
         HCQKQT: 'Huy chương Quân kỳ Quyết thắng',
@@ -331,9 +344,9 @@ class NotificationHelper {
             recipient_role: manager.role,
             type: NOTIFICATION_TYPES.AWARD_DELETED,
             title: 'Khen thưởng đã bị xóa',
-            message: `${adminUsername} đã xóa ${awardTypeName}${danhHieu ? ` (${danhHieu})` : ''}${
+            message: `${adminDisplayName} đã xóa ${awardTypeName}${danhHieu ? ` (${danhHieu})` : ''}${
               nam ? ` năm ${nam}` : ''
-            } của quân nhân ${personnel.ho_ten}`,
+            } của quân nhân ${personnel.ho_ten || 'Chưa xác định'}`,
             resource: RESOURCE_TYPES.AWARDS,
             tai_nguyen_id: personnel.id,
             link: `/manager/personnel/${personnel.id}`,
@@ -360,7 +373,7 @@ class NotificationHelper {
           title: 'Khen thưởng của bạn đã bị xóa',
           message: `${awardTypeName}${danhHieu ? ` (${danhHieu})` : ''}${
             nam ? ` năm ${nam}` : ''
-          } của bạn đã bị ${adminUsername} xóa khỏi hệ thống`,
+          } của bạn đã bị ${adminDisplayName} xóa khỏi hệ thống`,
           resource: RESOURCE_TYPES.AWARDS,
           tai_nguyen_id: personnel.id,
           link: `/user/profile`,
@@ -396,6 +409,7 @@ class NotificationHelper {
       }
 
       const notifications = [];
+      const approverDisplayName = await getDisplayName(approverUsername);
 
       // Lấy thông tin tài khoản của các quân nhân
       const accounts = await prisma.taiKhoan.findMany({
@@ -477,11 +491,11 @@ class NotificationHelper {
         // Tạo message
         let message = '';
         if (userAwards.length > 0) {
-          message = `Khen thưởng của bạn đã được ${approverUsername} thêm vào hệ thống: ${userAwards.join(
+          message = `Khen thưởng của bạn đã được ${approverDisplayName} thêm vào hệ thống: ${userAwards.join(
             ', '
           )}.`;
         } else {
-          message = `Khen thưởng của bạn đã được ${approverUsername} thêm vào hệ thống.`;
+          message = `Khen thưởng của bạn đã được ${approverDisplayName} thêm vào hệ thống.`;
         }
 
         notifications.push({
@@ -726,6 +740,177 @@ class NotificationHelper {
     } catch (error) {
       console.error('Error sending bulk award added notifications:', error);
       // Không throw error để không ảnh hưởng đến quá trình thêm khen thưởng
+      return 0;
+    }
+  }
+
+  /**
+   * Gửi thông báo khi quân nhân chuyển đơn vị
+   * -> Manager đơn vị mới nhận thông báo "Quân nhân [Tên] đã được chuyển đến đơn vị của bạn"
+   * -> Manager đơn vị cũ nhận thông báo "Quân nhân [Tên] đã chuyển đi khỏi đơn vị"
+   * -> Quân nhân (nếu có tài khoản) nhận thông báo "Bạn đã được chuyển sang đơn vị [Tên đơn vị]"
+   * @param {Object} personnel - Thông tin quân nhân
+   * @param {Object} oldUnit - Thông tin đơn vị cũ { id, ten_don_vi, isCoQuanDonVi }
+   * @param {Object} newUnit - Thông tin đơn vị mới { id, ten_don_vi, isCoQuanDonVi }
+   * @param {string} adminUsername - Username của admin thực hiện chuyển đơn vị
+   */
+  async notifyOnPersonnelTransfer(personnel, oldUnit, newUnit, adminUsername) {
+    try {
+      const notifications = [];
+      const adminDisplayName = await getDisplayName(adminUsername);
+
+      // Helper function để lấy co_quan_don_vi_id từ unit info
+      const getCoQuanDonViId = async unitInfo => {
+        if (!unitInfo || !unitInfo.id) return null;
+
+        if (unitInfo.isCoQuanDonVi) {
+          return unitInfo.id;
+        }
+
+        // Nếu là đơn vị trực thuộc, lấy co_quan_don_vi_id từ đơn vị cha
+        const donViTrucThuoc = await prisma.donViTrucThuoc.findUnique({
+          where: { id: unitInfo.id },
+          select: { co_quan_don_vi_id: true },
+        });
+        return donViTrucThuoc?.co_quan_don_vi_id || null;
+      };
+
+      // Lấy co_quan_don_vi_id của cả 2 đơn vị
+      const oldCoQuanDonViId = await getCoQuanDonViId(oldUnit);
+      const newCoQuanDonViId = await getCoQuanDonViId(newUnit);
+
+      // Kiểm tra xem có phải chuyển trong cùng cơ quan đơn vị không
+      const isSameCoQuanDonVi = oldCoQuanDonViId && newCoQuanDonViId && oldCoQuanDonViId === newCoQuanDonViId;
+
+      if (isSameCoQuanDonVi) {
+        // Trường hợp: Chuyển giữa các đơn vị trực thuộc trong cùng cơ quan đơn vị
+        // Chỉ gửi thông báo cho Manager của cơ quan đơn vị cha
+        const managers = await prisma.taiKhoan.findMany({
+          where: {
+            role: 'MANAGER',
+            QuanNhan: {
+              co_quan_don_vi_id: oldCoQuanDonViId,
+            },
+          },
+          select: {
+            id: true,
+            role: true,
+          },
+        });
+
+        managers.forEach(manager => {
+          notifications.push({
+            nguoi_nhan_id: manager.id,
+            recipient_role: manager.role,
+            type: NOTIFICATION_TYPES.PERSONNEL_TRANSFERRED,
+            title: 'Quân nhân chuyển đơn vị trực thuộc',
+            message: `${adminDisplayName} đã chuyển quân nhân ${personnel.ho_ten || 'Chưa xác định'} từ ${oldUnit?.ten_don_vi || 'đơn vị cũ'} sang ${newUnit?.ten_don_vi || 'đơn vị mới'}`,
+            resource: RESOURCE_TYPES.PERSONNEL,
+            tai_nguyen_id: personnel.id,
+            link: `/manager/personnel/${personnel.id}`,
+          });
+        });
+      } else {
+        // Trường hợp: Chuyển giữa các cơ quan đơn vị khác nhau
+
+        // 1. Thông báo cho Manager đơn vị MỚI
+        if (newCoQuanDonViId) {
+          const newUnitManagers = await prisma.taiKhoan.findMany({
+            where: {
+              role: 'MANAGER',
+              QuanNhan: {
+                co_quan_don_vi_id: newCoQuanDonViId,
+              },
+            },
+            select: {
+              id: true,
+              role: true,
+            },
+          });
+
+          newUnitManagers.forEach(manager => {
+            notifications.push({
+              nguoi_nhan_id: manager.id,
+              recipient_role: manager.role,
+              type: NOTIFICATION_TYPES.PERSONNEL_TRANSFERRED,
+              title: 'Quân nhân mới chuyển đến',
+              message: `${adminDisplayName} đã chuyển quân nhân ${personnel.ho_ten || 'Chưa xác định'} đến đơn vị của bạn${newUnit && !newUnit.isCoQuanDonVi ? ` (${newUnit.ten_don_vi})` : ''}`,
+              resource: RESOURCE_TYPES.PERSONNEL,
+              tai_nguyen_id: personnel.id,
+              link: `/manager/personnel/${personnel.id}`,
+            });
+          });
+        }
+
+        // 2. Thông báo cho Manager đơn vị CŨ
+        if (oldCoQuanDonViId) {
+          const oldUnitManagers = await prisma.taiKhoan.findMany({
+            where: {
+              role: 'MANAGER',
+              QuanNhan: {
+                co_quan_don_vi_id: oldCoQuanDonViId,
+              },
+            },
+            select: {
+              id: true,
+              role: true,
+            },
+          });
+
+          oldUnitManagers.forEach(manager => {
+            // Tránh trùng lặp nếu manager thuộc cả 2 đơn vị (trường hợp hiếm)
+            const alreadyNotified = notifications.some(n => n.nguoi_nhan_id === manager.id);
+            if (!alreadyNotified) {
+              notifications.push({
+                nguoi_nhan_id: manager.id,
+                recipient_role: manager.role,
+                type: NOTIFICATION_TYPES.PERSONNEL_TRANSFERRED,
+                title: 'Quân nhân đã chuyển đi',
+                message: `Quân nhân ${personnel.ho_ten || 'Chưa xác định'} đã được ${adminDisplayName} chuyển sang đơn vị khác`,
+                resource: RESOURCE_TYPES.PERSONNEL,
+                tai_nguyen_id: personnel.id,
+                link: null, // Không có link vì quân nhân đã rời đơn vị
+              });
+            }
+          });
+        }
+      }
+
+      // 3. Thông báo cho chính quân nhân (nếu có tài khoản)
+      const personnelAccount = await prisma.taiKhoan.findFirst({
+        where: {
+          quan_nhan_id: personnel.id,
+        },
+        select: {
+          id: true,
+          role: true,
+        },
+      });
+
+      if (personnelAccount) {
+        notifications.push({
+          nguoi_nhan_id: personnelAccount.id,
+          recipient_role: personnelAccount.role,
+          type: NOTIFICATION_TYPES.PERSONNEL_TRANSFERRED,
+          title: 'Bạn đã được chuyển đơn vị',
+          message: `${adminDisplayName} đã chuyển bạn từ đơn vị ${oldUnit?.ten_don_vi || 'cũ'} sang đơn vị ${newUnit?.ten_don_vi || 'mới'}`,
+          resource: RESOURCE_TYPES.PERSONNEL,
+          tai_nguyen_id: personnel.id,
+          link: personnelAccount.role === 'MANAGER' ? '/manager/dashboard' : '/user/dashboard',
+        });
+      }
+
+      // Tạo thông báo
+      if (notifications.length > 0) {
+        await prisma.thongBao.createMany({
+          data: notifications,
+        });
+      }
+
+      return notifications.length;
+    } catch (error) {
+      console.error('Error sending personnel transfer notifications:', error);
+      // Không throw error để không ảnh hưởng đến quá trình chuyển đơn vị
       return 0;
     }
   }

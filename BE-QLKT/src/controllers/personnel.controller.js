@@ -1,18 +1,25 @@
 const personnelService = require('../services/personnel.service');
 const profileService = require('../services/profile.service');
+const notificationHelper = require('../helpers/notificationHelper');
 
 class PersonnelController {
   /**
-   * GET /api/personnel?page=1&limit=10
+   * GET /api/personnel?page=1&limit=10&search=&unit_id=
    * Lấy danh sách quân nhân
    */
   async getPersonnel(req, res) {
     try {
-      const { page = 1, limit = 10 } = req.query;
+      const { page = 1, limit = 10, search, unit_id } = req.query;
       const userRole = req.user.role;
       const userQuanNhanId = req.user.quan_nhan_id;
 
-      const result = await personnelService.getPersonnel(page, limit, userRole, userQuanNhanId);
+      const result = await personnelService.getPersonnel(
+        page,
+        limit,
+        userRole,
+        userQuanNhanId,
+        { search, unit_id }
+      );
 
       return res.status(200).json({
         success: true,
@@ -180,6 +187,26 @@ class PersonnelController {
           recalcError.message
         );
         // Không throw error để không ảnh hưởng đến việc update personnel
+      }
+
+      // Gửi thông báo nếu có chuyển đơn vị
+      if (result.unitTransferInfo) {
+        try {
+          const { unitTransferInfo, ...personnelData } = result;
+          await notificationHelper.notifyOnPersonnelTransfer(
+            personnelData,
+            unitTransferInfo.oldUnit,
+            unitTransferInfo.newUnit,
+            req.user.username
+          );
+          console.log(`✅ Sent transfer notifications for personnel ${id}`);
+        } catch (notifError) {
+          console.error(
+            `⚠️ Failed to send transfer notifications for personnel ${id}:`,
+            notifError.message
+          );
+          // Không throw error để không ảnh hưởng đến việc update personnel
+        }
       }
 
       return res.status(200).json({

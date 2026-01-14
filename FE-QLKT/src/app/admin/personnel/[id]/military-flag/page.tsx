@@ -81,10 +81,10 @@ export default function AdminMilitaryFlagPage() {
         // HC Quân kỳ Quyết thắng
         if (serviceRes.data && serviceRes.data.hasReceived && serviceRes.data.data) {
           serviceRes.data.data.forEach((item: any) => {
-            mappedFlags.push({
+          mappedFlags.push({
               id: item.id,
-              type: 'HCQKQT',
-              name: 'Huy chương quân kỳ Quyết thắng',
+            type: 'HCQKQT',
+            name: 'Huy chương quân kỳ Quyết thắng',
               nam: item.nam,
               cap_bac: item.cap_bac,
               chuc_vu: item.chuc_vu,

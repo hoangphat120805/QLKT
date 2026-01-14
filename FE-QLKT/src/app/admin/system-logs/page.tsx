@@ -47,7 +47,7 @@ export default function AdminSystemLogsPage() {
       try {
         // Chỉ set loading ban đầu, khi chuyển trang thì dùng tableLoading
         if (logs.length === 0) {
-          setLoading(true);
+        setLoading(true);
         } else {
           setTableLoading(true);
         }

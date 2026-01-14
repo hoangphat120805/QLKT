@@ -221,9 +221,10 @@ export default function PersonnelEditPage() {
           formattedValues.co_quan_don_vi_id = values.co_quan_don_vi_id;
           formattedValues.don_vi_truc_thuoc_id = null;
         } else if (values.don_vi_truc_thuoc_id) {
-          // Nếu chọn đơn vị trực thuộc
+          // Nếu chọn đơn vị trực thuộc, gửi cả co_quan_don_vi_id và don_vi_truc_thuoc_id
+          // BE sẽ tự động lấy co_quan_don_vi_id từ đơn vị cha của don_vi_truc_thuoc_id
           formattedValues.don_vi_truc_thuoc_id = values.don_vi_truc_thuoc_id;
-          formattedValues.co_quan_don_vi_id = null;
+          formattedValues.co_quan_don_vi_id = values.co_quan_don_vi_id;
         } else if (values.co_quan_don_vi_id) {
           // Nếu chỉ chọn cơ quan đơn vị
           formattedValues.co_quan_don_vi_id = values.co_quan_don_vi_id;

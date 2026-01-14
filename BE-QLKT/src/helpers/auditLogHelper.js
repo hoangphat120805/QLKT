@@ -6,6 +6,38 @@
 const { formatDate } = require('./datetimeHelper');
 const { getDanhHieuName, getLoaiDeXuatName } = require('../constants/danhHieu.constants');
 
+// ==================== Constants ====================
+
+/**
+ * Fallback messages thống nhất cho toàn bộ hệ thống log
+ */
+const FALLBACK = {
+  UNKNOWN: 'Chưa xác định',
+  NO_NAME: 'Chưa có tên',
+  NO_UNIT: 'Chưa có đơn vị',
+  NO_POSITION: 'Chưa có chức vụ',
+  NO_FILE: 'Không có file',
+};
+
+/**
+ * Mapping vai trò sang tiếng Việt
+ */
+const ROLE_NAMES = {
+  USER: 'Người dùng',
+  MANAGER: 'Quản lý',
+  ADMIN: 'Quản trị viên',
+  SUPER_ADMIN: 'Quản trị viên cấp cao',
+};
+
+/**
+ * Mapping loại thành tích khoa học sang tiếng Việt
+ */
+const ACHIEVEMENT_TYPE_NAMES = {
+  DTKH: 'Đề tài khoa học',
+  SKKH: 'Sáng kiến khoa học',
+  NCKH: 'Nghiên cứu khoa học',
+};
+
 // ==================== Helper Functions ====================
 
 /**
@@ -163,7 +195,7 @@ const createLogDescription = {
    */
   proposals: {
     CREATE: (req, res, responseData) => {
-      const proposalType = req.body?.loai_de_xuat || req.body?.type || 'N/A';
+      const proposalType = req.body?.loai_de_xuat || req.body?.type || '';
       const typeName = getLoaiDeXuatName(proposalType);
 
       // Lấy thông tin từ response nếu có
@@ -355,7 +387,7 @@ const createLogDescription = {
       return `Phê duyệt đề xuất: ${proposalId}`;
     },
     REJECT: async (req, res, responseData) => {
-      const proposalId = req.params?.id || 'N/A';
+      const proposalId = req.params?.id || null;
       const reason = req.body?.ghi_chu || req.body?.ly_do_tu_choi || req.body?.ly_do || '';
 
       // Lấy thông tin proposal từ responseData hoặc query từ DB
@@ -368,7 +400,7 @@ const createLogDescription = {
       }
 
       // Nếu không có trong response, query từ DB
-      if (!proposal) {
+      if (!proposal && proposalId) {
         try {
           const { prisma } = require('../models');
           proposal = await prisma.bangDeXuat.findUnique({
@@ -388,8 +420,8 @@ const createLogDescription = {
         const typeName = getLoaiDeXuatName(proposal.loai_de_xuat);
 
         const nguoiDeXuat =
-          proposal.NguoiDeXuat?.QuanNhan?.ho_ten || proposal.NguoiDeXuat?.username || 'N/A';
-        const nam = proposal.nam || 'N/A';
+          proposal.NguoiDeXuat?.QuanNhan?.ho_ten || proposal.NguoiDeXuat?.username || FALLBACK.UNKNOWN;
+        const nam = proposal.nam || FALLBACK.UNKNOWN;
 
         // Đếm số lượng
         let soLuong = 0;
@@ -449,10 +481,10 @@ const createLogDescription = {
       }
 
       // Fallback nếu không lấy được thông tin
-      return `Từ chối đề xuất: ${proposalId}${reason ? ` - Lý do: ${reason}` : ''}`;
+      return `Từ chối đề xuất (không xác định được thông tin)${reason ? ` - Lý do: ${reason}` : ''}`;
     },
     DELETE: async (req, res, responseData) => {
-      const proposalId = req.params?.id || 'N/A';
+      const proposalId = req.params?.id || null;
 
       // Lấy thông tin proposal từ responseData hoặc query từ DB
       let proposal = null;
@@ -464,7 +496,7 @@ const createLogDescription = {
       }
 
       // Nếu không có trong response, query từ DB
-      if (!proposal) {
+      if (!proposal && proposalId) {
         try {
           const { prisma } = require('../models');
           proposal = await prisma.bangDeXuat.findUnique({
@@ -483,13 +515,13 @@ const createLogDescription = {
       if (proposal) {
         const typeName = getLoaiDeXuatName(proposal.loai_de_xuat);
         const nguoiDeXuat =
-          proposal.NguoiDeXuat?.QuanNhan?.ho_ten || proposal.NguoiDeXuat?.username || 'N/A';
-        const nam = proposal.nam || 'Chưa có dữ liệu';
+          proposal.NguoiDeXuat?.QuanNhan?.ho_ten || proposal.NguoiDeXuat?.username || FALLBACK.UNKNOWN;
+        const nam = proposal.nam || FALLBACK.UNKNOWN;
 
         return `Xóa đề xuất ${typeName} (năm ${nam}) do ${nguoiDeXuat} đề xuất`;
       }
 
-      return `Xóa đề xuất: ${proposalId}`;
+      return `Xóa đề xuất (không xác định được thông tin)`;
     },
   },
 
@@ -498,8 +530,8 @@ const createLogDescription = {
    */
   'annual-rewards': {
     CREATE: async (req, res, responseData) => {
-      const danhHieu = req.body?.danh_hieu || 'N/A';
-      const nam = req.body?.nam || 'N/A';
+      const danhHieu = req.body?.danh_hieu || '';
+      const nam = req.body?.nam || '';
       const personnelId = req.body?.personnel_id || req.body?.quan_nhan_id || null;
 
       // Lấy tên danh hiệu từ helper
@@ -532,13 +564,15 @@ const createLogDescription = {
         // Ignore parse error
       }
 
-      return `Tạo danh hiệu hằng năm: ${danhHieuName}${
+      const danhHieuDisplay = danhHieuName || FALLBACK.UNKNOWN;
+      const namDisplay = nam || FALLBACK.UNKNOWN;
+      return `Tạo danh hiệu hằng năm: ${danhHieuDisplay}${
         hoTen ? ` cho quân nhân ${hoTen}` : ''
-      } - Năm ${nam}`;
+      } - Năm ${namDisplay}`;
     },
     UPDATE: async (req, res, responseData) => {
-      const danhHieu = req.body?.danh_hieu || 'N/A';
-      const nam = req.body?.nam || 'N/A';
+      const danhHieu = req.body?.danh_hieu || '';
+      const nam = req.body?.nam || '';
       const rewardId = req.params?.id || null;
 
       // Lấy tên danh hiệu từ helper
@@ -564,12 +598,14 @@ const createLogDescription = {
         // Ignore parse error
       }
 
-      return `Cập nhật danh hiệu hằng năm: ${danhHieuName}${
+      const danhHieuDisplay = danhHieuName || FALLBACK.UNKNOWN;
+      const namDisplay = nam || FALLBACK.UNKNOWN;
+      return `Cập nhật danh hiệu hằng năm: ${danhHieuDisplay}${
         hoTen ? ` cho quân nhân ${hoTen}` : ''
-      } - Năm ${nam}`;
+      } - Năm ${namDisplay}`;
     },
     DELETE: async (req, res, responseData) => {
-      const rewardId = req.params?.id || 'N/A';
+      const rewardId = req.params?.id || null;
 
       // Lấy thông tin từ response hoặc query từ DB
       let hoTen = '';
@@ -593,7 +629,7 @@ const createLogDescription = {
       }
 
       // Query từ DB nếu thiếu thông tin
-      if ((!hoTen || !danhHieu) && rewardId !== 'N/A') {
+      if ((!hoTen || !danhHieu) && rewardId) {
         try {
           const { prisma } = require('../models');
           const rewardRecord = await prisma.danhHieuHangNam.findUnique({
@@ -619,11 +655,11 @@ const createLogDescription = {
         }`;
       }
 
-      return `Xóa danh hiệu hằng năm: ${rewardId}`;
+      return `Xóa danh hiệu hằng năm (không xác định được thông tin)`;
     },
     BULK: (req, res, responseData) => {
-      const danhHieu = req.body?.danh_hieu || 'N/A';
-      const nam = req.body?.nam || 'N/A';
+      const danhHieu = req.body?.danh_hieu || '';
+      const nam = req.body?.nam || '';
       let personnelCount = 0;
       let successCount = 0;
       let skippedCount = 0;
@@ -653,9 +689,10 @@ const createLogDescription = {
 
       // Map danh hiệu sang tiếng Việt
       const { getDanhHieuName } = require('../constants/danhHieu.constants');
-      const danhHieuName = getDanhHieuName(danhHieu);
+      const danhHieuName = getDanhHieuName(danhHieu) || FALLBACK.UNKNOWN;
+      const namDisplay = nam || FALLBACK.UNKNOWN;
 
-      let description = `Thêm đồng loạt danh hiệu hằng năm: ${danhHieuName} - Năm ${nam}`;
+      let description = `Thêm đồng loạt danh hiệu hằng năm: ${danhHieuName} - Năm ${namDisplay}`;
 
       if (successCount > 0 || personnelCount > 0) {
         const parts = [];
@@ -682,7 +719,7 @@ const createLogDescription = {
       return description;
     },
     IMPORT: (req, res, responseData) => {
-      const fileName = req.file?.originalname || 'N/A';
+      const fileName = req.file?.originalname || FALLBACK.NO_FILE;
       let successCount = 0;
       let failCount = 0;
 
@@ -710,8 +747,8 @@ const createLogDescription = {
    */
   'position-history': {
     CREATE: async (req, res, responseData) => {
-      const personnelId = req.params?.personnelId || req.body?.personnel_id || 'N/A';
-      const chucVuId = req.body?.chuc_vu_id || 'N/A';
+      const personnelId = req.params?.personnelId || req.body?.personnel_id || null;
+      const chucVuId = req.body?.chuc_vu_id || null;
 
       // Parse response data
       const parsedData = parseResponseData(responseData);
@@ -725,12 +762,12 @@ const createLogDescription = {
       let ngayKetThuc = history?.ngay_ket_thuc || req.body?.ngay_ket_thuc || '';
 
       // Query database nếu thiếu thông tin
-      if ((!hoTen && personnelId !== 'N/A') || (!tenChucVu && chucVuId !== 'N/A')) {
+      if ((!hoTen && personnelId) || (!tenChucVu && chucVuId)) {
         await withPrisma(async prisma => {
-          if (!hoTen && personnelId !== 'N/A') {
+          if (!hoTen && personnelId) {
             hoTen = await queryPersonnelName(personnelId, prisma);
           }
-          if (!tenChucVu && chucVuId !== 'N/A') {
+          if (!tenChucVu && chucVuId) {
             const positionInfo = await queryPositionInfo(chucVuId, prisma);
             tenChucVu = positionInfo.tenChucVu;
             if (!tenDonVi) {
@@ -744,8 +781,6 @@ const createLogDescription = {
       let description = 'Tạo lịch sử chức vụ';
       if (hoTen) {
         description += ` cho quân nhân: ${hoTen}`;
-      } else if (personnelId !== 'N/A') {
-        description += ` cho quân nhân ID: ${personnelId}`;
       }
 
       if (tenChucVu) {
@@ -753,8 +788,6 @@ const createLogDescription = {
         if (tenDonVi) {
           description += ` (${tenDonVi})`;
         }
-      } else if (chucVuId !== 'N/A') {
-        description += ` - Chức vụ ID: ${chucVuId}`;
       }
 
       description += formatDateRange(ngayBatDau, ngayKetThuc);
@@ -762,7 +795,7 @@ const createLogDescription = {
       return description;
     },
     UPDATE: async (req, res, responseData) => {
-      const historyId = req.params?.id || 'N/A';
+      const historyId = req.params?.id || null;
       const chucVuId = req.body?.chuc_vu_id || null;
 
       // Parse response data
@@ -783,7 +816,7 @@ const createLogDescription = {
           : undefined;
 
       // Query database nếu thiếu thông tin
-      if ((!hoTen || !tenChucVu) && historyId !== 'N/A') {
+      if ((!hoTen || !tenChucVu) && historyId) {
         await withPrisma(async prisma => {
           // Query lịch sử chức vụ để lấy personnelId và chucVuId
           const historyRecord = await prisma.lichSuChucVu.findUnique({
@@ -819,8 +852,6 @@ const createLogDescription = {
       let description = 'Cập nhật lịch sử chức vụ';
       if (hoTen) {
         description += ` cho quân nhân: ${hoTen}`;
-      } else {
-        description += ` ID: ${historyId}`;
       }
 
       if (tenChucVu) {
@@ -835,7 +866,7 @@ const createLogDescription = {
       return description;
     },
     DELETE: async (req, res, responseData) => {
-      const historyId = req.params?.id || 'N/A';
+      const historyId = req.params?.id || null;
 
       // Parse response data (service trả về thông tin trước khi xóa)
       const parsedData = parseResponseData(responseData);
@@ -847,7 +878,7 @@ const createLogDescription = {
       let tenDonVi = getUnitNameFromChucVu(result?.ChucVu);
 
       // Query database nếu thiếu thông tin
-      if ((!hoTen || !tenChucVu) && historyId !== 'N/A') {
+      if ((!hoTen || !tenChucVu) && historyId) {
         await withPrisma(async prisma => {
           const history = await prisma.lichSuChucVu.findUnique({
             where: { id: historyId },
@@ -884,8 +915,6 @@ const createLogDescription = {
       let description = 'Xóa lịch sử chức vụ';
       if (hoTen) {
         description += ` của quân nhân: ${hoTen}`;
-      } else {
-        description += ` ID: ${historyId}`;
       }
 
       if (tenChucVu) {
@@ -893,6 +922,10 @@ const createLogDescription = {
         if (tenDonVi) {
           description += ` (${tenDonVi})`;
         }
+      }
+
+      if (!hoTen && !tenChucVu) {
+        description += ` (không xác định được thông tin)`;
       }
 
       return description;
@@ -904,40 +937,150 @@ const createLogDescription = {
    */
   accounts: {
     CREATE: (req, res, responseData) => {
-      const username = req.body?.username || 'N/A';
+      const username = req.body?.username || FALLBACK.UNKNOWN;
       const role = req.body?.role || '';
-      const roleNames = {
-        USER: 'Người dùng',
-        MANAGER: 'Quản lý',
-        ADMIN: 'Quản trị viên',
-        SUPER_ADMIN: 'Quản trị viên cấp cao',
-      };
-      const roleName = roleNames[role] || role;
-      return `Tạo tài khoản: ${username}${role ? ` (${roleName})` : ''}`;
-    },
-    UPDATE: (req, res, responseData) => {
-      const username = req.body?.username || 'N/A';
-      const role = req.body?.role || '';
-      const roleNames = {
-        USER: 'Người dùng',
-        MANAGER: 'Quản lý',
-        ADMIN: 'Quản trị viên',
-        SUPER_ADMIN: 'Quản trị viên cấp cao',
-      };
-      const roleName = roleNames[role] || role;
-      return `Cập nhật tài khoản: ${username}${role ? ` (${roleName})` : ''}`;
-    },
-    DELETE: (req, res, responseData) => {
+      const roleName = ROLE_NAMES[role] || role;
+
+      // Lấy họ tên từ response nếu có
+      let hoTen = '';
       try {
         const data = typeof responseData === 'string' ? JSON.parse(responseData) : responseData;
-        const username = data?.data?.username || `ID ${req.params?.id || 'N/A'}`;
-        return `Xóa tài khoản: ${username}`;
+        hoTen = data?.data?.QuanNhan?.ho_ten || data?.data?.ho_ten || '';
       } catch (e) {
-        return `Xóa tài khoản: ID ${req.params?.id || 'N/A'}`;
+        // Ignore
       }
+
+      let description = `Tạo tài khoản: ${username}`;
+      if (hoTen && hoTen !== username) {
+        description = `Tạo tài khoản cho ${hoTen} (${username})`;
+      }
+      if (roleName) {
+        description += ` - Vai trò: ${roleName}`;
+      }
+      return description;
     },
-    RESET_PASSWORD: (req, res, responseData) => {
-      const username = req.body?.username || req.body?.account_id || 'N/A';
+    UPDATE: async (req, res, responseData) => {
+      const accountId = req.params?.id;
+      const role = req.body?.role || '';
+      const hasPassword = !!req.body?.password;
+      const roleName = ROLE_NAMES[role] || role;
+
+      // Lấy thông tin từ response hoặc query từ DB
+      let username = req.body?.username || '';
+      let hoTen = '';
+
+      try {
+        const data = typeof responseData === 'string' ? JSON.parse(responseData) : responseData;
+        username = data?.data?.username || username;
+        hoTen = data?.data?.QuanNhan?.ho_ten || '';
+      } catch (e) {
+        // Ignore
+      }
+
+      // Query từ DB nếu thiếu thông tin
+      if ((!username || !hoTen) && accountId) {
+        try {
+          const { prisma } = require('../models');
+          const account = await prisma.taiKhoan.findUnique({
+            where: { id: accountId },
+            select: {
+              username: true,
+              QuanNhan: { select: { ho_ten: true } },
+            },
+          });
+          if (account) {
+            username = username || account.username;
+            hoTen = hoTen || account.QuanNhan?.ho_ten || '';
+          }
+        } catch (error) {
+          // Ignore
+        }
+      }
+
+      // Tạo mô tả
+      let displayName = hoTen && hoTen !== username ? `${hoTen} (${username})` : username || FALLBACK.UNKNOWN;
+      let description = `Cập nhật tài khoản: ${displayName}`;
+
+      const changes = [];
+      if (roleName) {
+        changes.push(`vai trò: ${roleName}`);
+      }
+      if (hasPassword) {
+        changes.push('đặt lại mật khẩu');
+      }
+      if (changes.length > 0) {
+        description += ` - ${changes.join(', ')}`;
+      }
+
+      return description;
+    },
+    DELETE: async (req, res, responseData) => {
+      const accountId = req.params?.id;
+      let username = '';
+      let hoTen = '';
+
+      try {
+        const data = typeof responseData === 'string' ? JSON.parse(responseData) : responseData;
+        username = data?.data?.username || '';
+        hoTen = data?.data?.QuanNhan?.ho_ten || data?.data?.ho_ten || '';
+      } catch (e) {
+        // Ignore
+      }
+
+      // Query từ DB nếu thiếu thông tin
+      if ((!username || !hoTen) && accountId) {
+        try {
+          const { prisma } = require('../models');
+          const account = await prisma.taiKhoan.findUnique({
+            where: { id: accountId },
+            select: {
+              username: true,
+              QuanNhan: { select: { ho_ten: true } },
+            },
+          });
+          if (account) {
+            username = username || account.username;
+            hoTen = hoTen || account.QuanNhan?.ho_ten || '';
+          }
+        } catch (error) {
+          // Ignore
+        }
+      }
+
+      // Tạo mô tả
+      if (hoTen && username) {
+        return `Xóa tài khoản: ${hoTen} (${username})`;
+      } else if (username) {
+        return `Xóa tài khoản: ${username}`;
+      }
+      return `Xóa tài khoản (không xác định được thông tin)`;
+    },
+    RESET_PASSWORD: async (req, res, responseData) => {
+      const accountId = req.body?.account_id;
+
+      // Nếu có account_id, query username từ DB
+      if (accountId) {
+        try {
+          const { prisma } = require('../models');
+          const account = await prisma.taiKhoan.findUnique({
+            where: { id: accountId },
+            select: {
+              username: true,
+              QuanNhan: { select: { ho_ten: true } },
+            },
+          });
+
+          if (account) {
+            const displayName = account.QuanNhan?.ho_ten || account.username;
+            return `Đặt lại mật khẩu cho tài khoản: ${displayName} (${account.username})`;
+          }
+        } catch (error) {
+          console.error('Error fetching account for reset password log:', error);
+        }
+      }
+
+      // Fallback nếu không query được
+      const username = req.body?.username || FALLBACK.UNKNOWN;
       return `Đặt lại mật khẩu cho tài khoản: ${username}`;
     },
   },
@@ -947,34 +1090,76 @@ const createLogDescription = {
    */
   personnel: {
     CREATE: (req, res, responseData) => {
-      const hoTen = req.body?.ho_ten || 'N/A';
       const cccd = req.body?.cccd || '';
+
+      // Lấy họ tên từ response (service có thể set ho_ten = cccd khi tạo mới)
+      let hoTen = req.body?.ho_ten || '';
+      try {
+        const data = typeof responseData === 'string' ? JSON.parse(responseData) : responseData;
+        hoTen = data?.data?.ho_ten || data?.data?.QuanNhan?.ho_ten || hoTen;
+      } catch (e) {
+        // Ignore
+      }
+
+      // Nếu họ tên = cccd hoặc không có, chỉ hiển thị cccd
+      if (!hoTen || hoTen === cccd) {
+        return `Tạo quân nhân mới với CCCD: ${cccd || FALLBACK.UNKNOWN}`;
+      }
+
       return `Tạo quân nhân: ${hoTen}${cccd ? ` (CCCD: ${cccd})` : ''}`;
     },
     UPDATE: (req, res, responseData) => {
-      const hoTen = req.body?.ho_ten || 'N/A';
       try {
         const data = typeof responseData === 'string' ? JSON.parse(responseData) : responseData;
         const personnel = data?.data || data;
-        if (personnel?.ho_ten) {
-          return `Cập nhật quân nhân: ${personnel.ho_ten}`;
+        const hoTen = personnel?.ho_ten || req.body?.ho_ten || FALLBACK.NO_NAME;
+
+        // Kiểm tra xem có chuyển đơn vị không
+        if (personnel?.unitTransferInfo) {
+          const { oldUnit, newUnit } = personnel.unitTransferInfo;
+          const oldUnitName = oldUnit?.ten_don_vi || FALLBACK.NO_UNIT;
+          const newUnitName = newUnit?.ten_don_vi || FALLBACK.NO_UNIT;
+          return `Chuyển đơn vị quân nhân: ${hoTen} từ "${oldUnitName}" sang "${newUnitName}"`;
         }
+
+        return `Cập nhật thông tin quân nhân: ${hoTen}`;
       } catch (e) {
-        // Ignore parse error
+        const hoTen = req.body?.ho_ten || FALLBACK.NO_NAME;
+        return `Cập nhật thông tin quân nhân: ${hoTen}`;
       }
-      return `Cập nhật quân nhân: ${hoTen}`;
     },
-    DELETE: (req, res, responseData) => {
+    DELETE: async (req, res, responseData) => {
+      const personnelId = req.params?.id;
+      let hoTen = '';
+
       try {
         const data = typeof responseData === 'string' ? JSON.parse(responseData) : responseData;
-        const hoTen = data?.data?.ho_ten || `ID ${req.params?.id || 'N/A'}`;
-        return `Xóa quân nhân: ${hoTen}`;
+        hoTen = data?.data?.ho_ten || '';
       } catch (e) {
-        return `Xóa quân nhân: ID ${req.params?.id || 'N/A'}`;
+        // Ignore
       }
+
+      // Query từ DB nếu thiếu thông tin
+      if (!hoTen && personnelId) {
+        try {
+          const { prisma } = require('../models');
+          const personnel = await prisma.quanNhan.findUnique({
+            where: { id: personnelId },
+            select: { ho_ten: true },
+          });
+          hoTen = personnel?.ho_ten || '';
+        } catch (error) {
+          // Ignore
+        }
+      }
+
+      if (hoTen) {
+        return `Xóa quân nhân: ${hoTen}`;
+      }
+      return `Xóa quân nhân (không xác định được thông tin)`;
     },
     IMPORT: (req, res, responseData) => {
-      const fileName = req.file?.originalname || 'N/A';
+      const fileName = req.file?.originalname || FALLBACK.NO_FILE;
       let successCount = 0;
       let failCount = 0;
 
@@ -1024,7 +1209,7 @@ const createLogDescription = {
       if (req.body?.ten_co_quan_don_vi) {
         return `Tạo cơ quan đơn vị: ${req.body.ten_co_quan_don_vi}`;
       }
-      return `Tạo đơn vị: ${req.body?.ten_don_vi || req.body?.ten_co_quan_don_vi || 'N/A'}`;
+      return `Tạo đơn vị: ${req.body?.ten_don_vi || req.body?.ten_co_quan_don_vi || FALLBACK.UNKNOWN}`;
     },
     UPDATE: (req, res, responseData) => {
       try {
@@ -1046,7 +1231,7 @@ const createLogDescription = {
       if (req.body?.ten_co_quan_don_vi) {
         return `Cập nhật cơ quan đơn vị: ${req.body.ten_co_quan_don_vi}`;
       }
-      return `Cập nhật đơn vị: ${req.body?.ten_don_vi || req.body?.ten_co_quan_don_vi || 'N/A'}`;
+      return `Cập nhật đơn vị: ${req.body?.ten_don_vi || req.body?.ten_co_quan_don_vi || FALLBACK.UNKNOWN}`;
     },
     DELETE: (req, res, responseData) => {
       try {
@@ -1061,7 +1246,7 @@ const createLogDescription = {
       } catch (e) {
         // Ignore parse error
       }
-      return `Xóa đơn vị: ID ${req.params?.id || 'N/A'}`;
+      return `Xóa đơn vị (không xác định được thông tin)`;
     },
   },
 
@@ -1070,7 +1255,7 @@ const createLogDescription = {
    */
   positions: {
     CREATE: async (req, res, responseData) => {
-      const tenChucVu = req.body?.ten_chuc_vu || 'N/A';
+      const tenChucVu = req.body?.ten_chuc_vu || FALLBACK.NO_POSITION;
       const unitId = req.body?.unit_id || null;
       const ngayHienTai = formatDate(new Date());
 
@@ -1099,7 +1284,7 @@ const createLogDescription = {
       return description;
     },
     UPDATE: async (req, res, responseData) => {
-      const positionId = req.params?.id || 'N/A';
+      const positionId = req.params?.id;
       const tenChucVu = req.body?.ten_chuc_vu || null;
       const ngayHienTai = formatDate(new Date());
 
@@ -1112,11 +1297,11 @@ const createLogDescription = {
       let tenDonVi = getUnitNameFromChucVu(position);
 
       // Query database nếu thiếu thông tin
-      if ((!finalTenChucVu || !tenDonVi) && positionId !== 'N/A') {
+      if ((!finalTenChucVu || !tenDonVi) && positionId) {
         await withPrisma(async prisma => {
           const positionInfo = await queryPositionInfo(positionId, prisma);
           if (!finalTenChucVu) {
-            finalTenChucVu = positionInfo.tenChucVu || positionId;
+            finalTenChucVu = positionInfo.tenChucVu || FALLBACK.NO_POSITION;
           }
           if (!tenDonVi) {
             tenDonVi = positionInfo.tenDonVi;
@@ -1124,7 +1309,7 @@ const createLogDescription = {
         });
       }
 
-      let description = `Cập nhật chức vụ: ${finalTenChucVu || positionId}`;
+      let description = `Cập nhật chức vụ: ${finalTenChucVu || FALLBACK.NO_POSITION}`;
       if (tenDonVi) {
         description += ` (${tenDonVi})`;
       }
@@ -1134,7 +1319,7 @@ const createLogDescription = {
       return description;
     },
     DELETE: async (req, res, responseData) => {
-      const positionId = req.params?.id || 'N/A';
+      const positionId = req.params?.id;
       const ngayHienTai = formatDate(new Date());
 
       // Parse response data (service trả về thông tin trước khi xóa)
@@ -1146,7 +1331,7 @@ const createLogDescription = {
       let tenDonVi = getUnitNameFromChucVu(position);
 
       // Query database nếu thiếu thông tin
-      if ((!tenChucVu || !tenDonVi) && positionId !== 'N/A') {
+      if ((!tenChucVu || !tenDonVi) && positionId) {
         await withPrisma(async prisma => {
           const positionInfo = await queryPositionInfo(positionId, prisma);
           if (!tenChucVu) {
@@ -1165,7 +1350,7 @@ const createLogDescription = {
           description += ` (${tenDonVi})`;
         }
       } else {
-        description += ` ID: ${positionId}`;
+        description += ` (không xác định được thông tin)`;
       }
       if (ngayHienTai) {
         description += ` - Ngày: ${ngayHienTai}`;
@@ -1180,7 +1365,7 @@ const createLogDescription = {
    */
   decisions: {
     CREATE: (req, res, responseData) => {
-      const soQuyetDinh = req.body?.so_quyet_dinh || 'N/A';
+      const soQuyetDinh = req.body?.so_quyet_dinh || FALLBACK.UNKNOWN;
       const loaiQuyetDinh = req.body?.loai_quyet_dinh || '';
       const loaiNames = {
         DANH_HIEU_HANG_NAM: 'Danh hiệu hằng năm',
@@ -1193,7 +1378,7 @@ const createLogDescription = {
       return `Tạo quyết định: ${soQuyetDinh}${loaiName ? ` (${loaiName})` : ''}`;
     },
     UPDATE: (req, res, responseData) => {
-      const soQuyetDinh = req.body?.so_quyet_dinh || 'N/A';
+      const soQuyetDinh = req.body?.so_quyet_dinh || FALLBACK.UNKNOWN;
       try {
         const data = typeof responseData === 'string' ? JSON.parse(responseData) : responseData;
         const decision = data?.data || data;
@@ -1215,7 +1400,7 @@ const createLogDescription = {
       } catch (e) {
         // Ignore parse error
       }
-      return `Xóa quyết định: ID ${req.params?.id || 'N/A'}`;
+      return `Xóa quyết định (không xác định được thông tin)`;
     },
   },
 
@@ -1224,16 +1409,12 @@ const createLogDescription = {
    */
   'scientific-achievements': {
     CREATE: async (req, res, responseData) => {
-      const loai = req.body?.loai || 'N/A';
+      const loai = req.body?.loai || '';
       const moTa = req.body?.mo_ta || '';
       const nam = req.body?.nam || '';
       const personnelId = req.body?.personnel_id || req.body?.quan_nhan_id || null;
 
-      const loaiNames = {
-        DTKH: 'Đề tài khoa học',
-        SKKH: 'Sáng kiến khoa học',
-      };
-      const loaiName = loaiNames[loai] || loai;
+      const loaiName = ACHIEVEMENT_TYPE_NAMES[loai] || loai || FALLBACK.UNKNOWN;
 
       // Lấy tên quân nhân nếu có
       let hoTen = '';
@@ -1266,16 +1447,12 @@ const createLogDescription = {
       }${nam ? ` (Năm ${nam})` : ''}`;
     },
     UPDATE: async (req, res, responseData) => {
-      const loai = req.body?.loai || 'N/A';
+      const loai = req.body?.loai || '';
       const moTa = req.body?.mo_ta || '';
       const nam = req.body?.nam || '';
       const achievementId = req.params?.id || null;
 
-      const loaiNames = {
-        DTKH: 'Đề tài khoa học',
-        SKKH: 'Sáng kiến khoa học',
-      };
-      const loaiName = loaiNames[loai] || loai;
+      const loaiName = ACHIEVEMENT_TYPE_NAMES[loai] || loai || FALLBACK.UNKNOWN;
 
       // Lấy thông tin từ response hoặc query từ DB
       let hoTen = '';
@@ -1301,7 +1478,7 @@ const createLogDescription = {
       }${nam ? ` (Năm ${nam})` : ''}`;
     },
     DELETE: async (req, res, responseData) => {
-      const achievementId = req.params?.id || 'N/A';
+      const achievementId = req.params?.id || null;
 
       // Lấy thông tin từ response hoặc query từ DB
       let hoTen = '';
@@ -1325,7 +1502,7 @@ const createLogDescription = {
       }
 
       // Query từ DB nếu thiếu thông tin
-      if ((!hoTen || !loai) && achievementId !== 'N/A') {
+      if ((!hoTen || !loai) && achievementId) {
         try {
           const { prisma } = require('../models');
           const achievementRecord = await prisma.thanhTichKhoaHoc.findUnique({
@@ -1342,11 +1519,7 @@ const createLogDescription = {
         }
       }
 
-      const loaiNames = {
-        DTKH: 'Đề tài khoa học',
-        SKKH: 'Sáng kiến khoa học',
-      };
-      const loaiName = loaiNames[loai] || loai;
+      const loaiName = ACHIEVEMENT_TYPE_NAMES[loai] || loai || FALLBACK.UNKNOWN;
 
       if (hoTen && loai) {
         return `Xóa thành tích khoa học: ${loaiName}${
@@ -1354,7 +1527,7 @@ const createLogDescription = {
         } của quân nhân ${hoTen}`;
       }
 
-      return `Xóa thành tích khoa học: ID ${achievementId}`;
+      return `Xóa thành tích khoa học (không xác định được thông tin)`;
     },
   },
 
@@ -1363,7 +1536,7 @@ const createLogDescription = {
    */
   auth: {
     LOGIN: (req, res, responseData) => {
-      const username = req.body?.username || 'N/A';
+      const username = req.body?.username || FALLBACK.UNKNOWN;
       return `Đăng nhập hệ thống: ${username}`;
     },
     LOGOUT: (req, res, responseData) => {
@@ -1380,7 +1553,7 @@ const createLogDescription = {
   'adhoc-awards': {
     CREATE: async (req, res, responseData) => {
       const type = req.body?.type === 'CA_NHAN' ? 'cá nhân' : 'tập thể';
-      const awardForm = req.body?.awardForm || 'N/A';
+      const awardForm = req.body?.awardForm || FALLBACK.UNKNOWN;
       const year = req.body?.year || '';
       const personnelId = req.body?.personnelId || null;
       const unitId = req.body?.unitId || null;
@@ -1453,7 +1626,7 @@ const createLogDescription = {
     },
     UPDATE: async (req, res, responseData) => {
       const awardId = req.params?.id || null;
-      let awardForm = req.body?.awardForm || 'Chưa có dữ liệu';
+      let awardForm = req.body?.awardForm || FALLBACK.UNKNOWN;
       let hoTen = '';
       let tenDonVi = '';
 
@@ -1515,8 +1688,8 @@ const createLogDescription = {
       return description;
     },
     DELETE: async (req, res, responseData) => {
-      const awardId = req.params?.id || 'Chưa có dữ liệu';
-      let awardForm = 'Chưa có dữ liệu';
+      const awardId = req.params?.id || null;
+      let awardForm = FALLBACK.UNKNOWN;
       let hoTen = '';
       let tenDonVi = '';
 
@@ -1541,7 +1714,7 @@ const createLogDescription = {
       }
 
       // Query từ DB nếu thiếu thông tin
-      if (!hoTen && !tenDonVi && awardId !== 'Chưa có dữ liệu') {
+      if (!hoTen && !tenDonVi && awardId) {
         try {
           const { prisma } = require('../models');
           const award = await prisma.khenThuongDotXuat.findUnique({

@@ -93,7 +93,6 @@ export default function AdminDecisionsPage() {
       } else {
         setTableLoading(true);
       }
-      const paginationToUse = customPagination || pagination;
       const params: any = {
         page: paginationToUse.current,
         limit: paginationToUse.pageSize,
@@ -217,6 +216,7 @@ export default function AdminDecisionsPage() {
       dataIndex: 'so_quyet_dinh',
       key: 'so_quyet_dinh',
       width: 200,
+      align: 'center',
       render: (text: string) => (
         <Text strong>
           {text}
@@ -235,6 +235,7 @@ export default function AdminDecisionsPage() {
       dataIndex: 'ngay_ky',
       key: 'ngay_ky',
       width: 120,
+      align: 'center',
       render: (date: string) => dayjs(date).format('DD/MM/YYYY'),
     },
     {
@@ -242,12 +243,14 @@ export default function AdminDecisionsPage() {
       dataIndex: 'nguoi_ky',
       key: 'nguoi_ky',
       width: 210,
+      align: 'center',
     },
     {
       title: 'Loại khen thưởng',
       dataIndex: 'loai_khen_thuong',
       key: 'loai_khen_thuong',
       width: 150,
+      align: 'center',
       render: (type: string | null) => {
         if (!type) return '-';
         const option = loaiKhenThuongOptions.find(opt => opt.value === type);
@@ -259,6 +262,7 @@ export default function AdminDecisionsPage() {
       dataIndex: 'ghi_chu',
       key: 'ghi_chu',
       width: 200,
+      align: 'center',
       render: (text: string | null) => {
         if (!text) return <Text type="secondary">-</Text>;
         return (
@@ -392,22 +396,22 @@ export default function AdminDecisionsPage() {
           dataSource={decisions}
           rowKey="id"
             loading={loading || tableLoading}
-            pagination={{
-              current: pagination.current,
-              pageSize: pagination.pageSize,
-              total: pagination.total,
-              showSizeChanger: true,
-              showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} quyết định`,
-              pageSizeOptions: ['10', '20', '50', '100'],
-              onChange: (page, pageSize) => {
+          pagination={{
+            current: pagination.current,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
+            showSizeChanger: true,
+            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} quyết định`,
+            pageSizeOptions: ['10', '20', '50', '100'],
+            onChange: (page, pageSize) => {
                 setTableLoading(true);
-                setPagination({ ...pagination, current: page, pageSize: pageSize || pagination.pageSize });
-              },
-              onShowSizeChange: (current, size) => {
+              setPagination({ ...pagination, current: page, pageSize: pageSize || pagination.pageSize });
+            },
+            onShowSizeChange: (current, size) => {
                 setTableLoading(true);
-                setPagination({ ...pagination, current: 1, pageSize: size });
-              },
-            }}
+              setPagination({ ...pagination, current: 1, pageSize: size });
+            },
+          }}
           bordered
           locale={{
             emptyText: 'Không có quyết định nào',

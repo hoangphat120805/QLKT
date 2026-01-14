@@ -15,6 +15,7 @@ const NOTIFICATION_TYPES = {
   PERSONNEL_UPDATED: 'PERSONNEL_UPDATED', // Cập nhật thông tin quân nhân
   PERSONNEL_DELETED: 'PERSONNEL_DELETED', // Xóa quân nhân
   NEW_PERSONNEL: 'NEW_PERSONNEL', // Quân nhân mới (alias cho PERSONNEL_ADDED)
+  PERSONNEL_TRANSFERRED: 'PERSONNEL_TRANSFERRED', // Quân nhân chuyển đơn vị
 
   // Thành tích khoa học
   ACHIEVEMENT_SUBMITTED: 'ACHIEVEMENT_SUBMITTED', // Nộp thành tích khoa học
