@@ -8,60 +8,48 @@ import {
   Button,
   Table,
   Modal,
-  Form,
-  Input,
-  Select,
   Space,
   Typography,
   Breadcrumb,
-  Popconfirm,
   message,
   Spin,
   ConfigProvider,
   theme as antdTheme,
-  DatePicker,
-  Row,
-  Col,
   Tag,
 } from 'antd';
 import type { TableColumnsType } from 'antd';
 import {
   LeftOutlined,
-  PlusOutlined,
-  DeleteOutlined,
-  EditOutlined,
   HomeOutlined,
-  TrophyOutlined,
 } from '@ant-design/icons';
 import { apiClient } from '@/lib/api-client';
-import { formatDate } from '@/lib/utils';
 import { useTheme } from '@/components/theme-provider';
-import dayjs from 'dayjs';
+import { downloadDecisionFile } from '@/utils/downloadDecisionFile';
 
 const { Title, Paragraph } = Typography;
 
 interface MilitaryFlag {
   id: string;
+  type: string;
   name: string;
-  ngay_cap?: string;
+  nam?: number;
+  cap_bac?: string;
+  chuc_vu?: string;
+  so_quyet_dinh?: string;
+  ghi_chu?: string;
+  ngay_nhan?: string;
   status: string;
 }
 
-export default function MilitaryFlagPage() {
+export default function ManagerMilitaryFlagPage() {
   const params = useParams();
   const personnelId = params?.id as string;
   const { theme } = useTheme();
-  const [form] = Form.useForm();
-
   const [loading, setLoading] = useState(true);
   const [personnel, setPersonnel] = useState<any>(null);
-  const [militaryFlag, setMilitaryFlag] = useState<any>(null);
   const [flags, setFlags] = useState<MilitaryFlag[]>([]);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingFlag, setEditingFlag] = useState<any>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -70,7 +58,7 @@ export default function MilitaryFlagPage() {
   async function loadData() {
     try {
       setLoading(true);
-      const [personnelRes, militaryRes] = await Promise.all([
+      const [personnelRes, serviceRes] = await Promise.all([
         apiClient.getPersonnelById(personnelId),
         apiClient.getMilitaryFlagByPersonnel(personnelId),
       ]);
@@ -78,21 +66,29 @@ export default function MilitaryFlagPage() {
       if (personnelRes.success) {
         setPersonnel(personnelRes.data);
       }
-      if (militaryRes.success) {
-        setMilitaryFlag(militaryRes.data);
-        // Map military flag data to flags array
+      if (serviceRes.success) {
+        // Map service profile data to flags array
         const mappedFlags: MilitaryFlag[] = [];
-        if (militaryRes.data && militaryRes.data.hasReceived && militaryRes.data.data) {
-          militaryRes.data.data.forEach((flag: any, index: number) => {
+
+        // HC Quân kỳ Quyết thắng
+        if (serviceRes.data && serviceRes.data.hasReceived && serviceRes.data.data) {
+          serviceRes.data.data.forEach((item: any) => {
             mappedFlags.push({
-              id: `flag_${index}`,
+              id: item.id,
+              type: 'HCQKQT',
               name: 'Huy chương quân kỳ Quyết thắng',
-              ngay_cap: flag.ngay_cap,
+              nam: item.nam,
+              cap_bac: item.cap_bac,
+              chuc_vu: item.chuc_vu,
+              so_quyet_dinh: item.so_quyet_dinh,
+              ghi_chu: item.ghi_chu,
+              ngay_nhan: item.createdAt,
               status: 'DA_NHAN',
             });
           });
         }
-        setFlags(mappedFlags.filter(f => f.status === 'DA_NHAN'));
+
+        setFlags(mappedFlags);
       }
     } catch (error) {
       message.error('Không thể tải dữ liệu');
@@ -111,56 +107,14 @@ export default function MilitaryFlagPage() {
     return <Tag color={s.color}>{s.label}</Tag>;
   };
 
-  const handleOpenDialog = (flag?: any) => {
-    if (flag) {
-      setEditingFlag(flag);
-      form.setFieldsValue({
-        name: flag.name,
-        ngay_cap: flag.ngay_cap ? dayjs(flag.ngay_cap) : null,
-        status: flag.status,
-      });
-    } else {
-      setEditingFlag(null);
-      form.resetFields();
-    }
-    setDialogOpen(true);
-  };
-
-  const handleCloseDialog = () => {
-    setDialogOpen(false);
-    setEditingFlag(null);
-    form.resetFields();
-  };
-
-  const onSubmit = async (values: any) => {
-    try {
-      setSubmitting(true);
-
-      const payload = {
-        name: values.name,
-        ngay_cap: values.ngay_cap ? dayjs(values.ngay_cap).format('YYYY-MM-DD') : null,
-        status: values.status,
-      };
-
-      // Note: This would need actual API endpoints for military flags
-      // For now, just show success message
-      message.success(
-        editingFlag ? 'Cập nhật huân chương thành công' : 'Thêm huân chương thành công'
-      );
-      handleCloseDialog();
-      loadData();
-    } catch (error: any) {
-      message.error(error?.response?.data?.message || error?.message || 'Có lỗi xảy ra');
-    } finally {
-      setSubmitting(false);
-    }
+  const handleOpenDecisionFile = async (soQuyetDinh: string) => {
+    await downloadDecisionFile(soQuyetDinh);
   };
 
   const handleDelete = async () => {
     if (!deleteId) return;
     try {
-      // Note: This would need actual API endpoint
-      message.success('Xóa huân chương thành công');
+      message.success('Xóa Huy chương quân kỳ Quyết thắng thành công');
       setDeleteModalOpen(false);
       setDeleteId(null);
       loadData();
@@ -171,17 +125,78 @@ export default function MilitaryFlagPage() {
 
   const columns: TableColumnsType<MilitaryFlag> = [
     {
-      title: 'Tên huân chương',
-      dataIndex: 'name',
-      key: 'name',
-      width: 300,
-      render: (name: string) => <div style={{ fontWeight: 500 }}>{name}</div>,
+      title: 'Năm',
+      dataIndex: 'nam',
+      key: 'nam',
+      width: 80,
+      minWidth: 70,
+      align: 'center',
+      render: (nam: number) => nam || '-',
+    },
+    {
+      title: 'Cấp bậc',
+      dataIndex: 'cap_bac',
+      key: 'cap_bac',
+      width: 120,
+      minWidth: 100,
+      align: 'center',
+      render: (capBac: string) => capBac || '-',
+    },
+    {
+      title: 'Chức vụ',
+      dataIndex: 'chuc_vu',
+      key: 'chuc_vu',
+      width: 150,
+      minWidth: 120,
+      align: 'center',
+      ellipsis: true,
+      render: (chucVu: string) => chucVu || '-',
+    },
+    {
+      title: 'Số quyết định',
+      dataIndex: 'so_quyet_dinh',
+      key: 'so_quyet_dinh',
+      width: 140,
+      minWidth: 120,
+      align: 'center',
+      render: (soQuyetDinh: string) => {
+        if (!soQuyetDinh || soQuyetDinh.trim() === '') {
+          return <span style={{ color: '#999' }}>Chưa có</span>;
+        }
+        return (
+          <a
+            onClick={e => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleOpenDecisionFile(soQuyetDinh);
+            }}
+            style={{
+              color: '#52c41a',
+              fontWeight: 500,
+              textDecoration: 'underline',
+              cursor: 'pointer',
+            }}
+          >
+            {soQuyetDinh}
+          </a>
+        );
+      },
+    },
+    {
+      title: 'Ghi chú',
+      dataIndex: 'ghi_chu',
+      key: 'ghi_chu',
+      width: 200,
+      minWidth: 150,
+      ellipsis: true,
+      render: (ghiChu: string) => ghiChu || '-',
     },
     {
       title: 'Trạng thái',
       dataIndex: 'status',
       key: 'status',
       width: 120,
+      minWidth: 100,
       align: 'center',
       render: (status: string) => getStatusTag(status),
     },
@@ -207,7 +222,7 @@ export default function MilitaryFlagPage() {
           <Breadcrumb.Item>
             <Link href={`/manager/personnel/${personnelId}`}>{personnel?.ho_ten}</Link>
           </Breadcrumb.Item>
-          <Breadcrumb.Item>Huy chương QKQT</Breadcrumb.Item>
+          <Breadcrumb.Item>Huy chương quân kỳ Quyết thắng</Breadcrumb.Item>
         </Breadcrumb>
 
         {/* Header */}
@@ -236,9 +251,6 @@ export default function MilitaryFlagPage() {
               </Paragraph>
             )}
           </div>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => handleOpenDialog()}>
-            Thêm huân chương
-          </Button>
         </div>
 
         {/* Table */}
@@ -256,58 +268,31 @@ export default function MilitaryFlagPage() {
               dataSource={flags}
               rowKey="id"
               pagination={false}
+              scroll={{ x: 'max-content' }}
+              size="small"
               locale={{
-                emptyText: 'Chưa có dữ liệu huy chương QKQT',
+                emptyText: 'Chưa có dữ liệu Huy chương quân kỳ Quyết thắng',
               }}
             />
           </Card>
         )}
 
-        {/* Form Modal */}
+        {/* Delete Confirmation Modal */}
         <Modal
-          title={editingFlag ? 'Sửa huy chương QKQT' : 'Thêm huy chương QKQT mới'}
-          open={dialogOpen}
-          onCancel={handleCloseDialog}
-          footer={null}
-          width={600}
-          centered
+          title="Xác nhận xóa"
+          open={deleteModalOpen}
+          onOk={handleDelete}
+          onCancel={() => {
+            setDeleteModalOpen(false);
+            setDeleteId(null);
+          }}
+          okText="Xóa"
+          cancelText="Hủy"
+          okButtonProps={{ danger: true }}
         >
-          <Form form={form} onFinish={onSubmit} layout="vertical" style={{ marginTop: 24 }}>
-            <Form.Item
-              name="name"
-              label="Tên huân chương"
-              rules={[{ required: true, message: 'Vui lòng nhập tên huân chương' }]}
-            >
-              <Input placeholder="Nhập tên huân chương" size="large" />
-            </Form.Item>
-
-            <Form.Item name="ngay_cap" label="Ngày cấp">
-              <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} size="large" />
-            </Form.Item>
-
-            <Form.Item
-              name="status"
-              label="Trạng thái"
-              rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}
-            >
-              <Select placeholder="Chọn trạng thái" size="large">
-                <Select.Option value="DA_NHAN">Đã nhận</Select.Option>
-                <Select.Option value="DU_DIEU_KIEN">Đủ điều kiện</Select.Option>
-                <Select.Option value="CHUA_DU">Chưa đủ</Select.Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
-              <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-                <Button onClick={handleCloseDialog} disabled={submitting}>
-                  Hủy
-                </Button>
-                <Button type="primary" htmlType="submit" loading={submitting}>
-                  {editingFlag ? 'Cập nhật' : 'Tạo mới'}
-                </Button>
-              </Space>
-            </Form.Item>
-          </Form>
+          <Paragraph>
+            Bạn có chắc chắn muốn xóa Huy chương quân kỳ Quyết thắng này? Hành động này không thể hoàn tác.
+          </Paragraph>
         </Modal>
       </div>
     </ConfigProvider>

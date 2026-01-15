@@ -8,13 +8,9 @@ import {
   Button,
   Table,
   Modal,
-  Form,
-  Input,
-  Select,
   Space,
   Typography,
   Breadcrumb,
-  Popconfirm,
   message,
   Spin,
   ConfigProvider,
@@ -24,11 +20,7 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import {
   LeftOutlined,
-  PlusOutlined,
-  DeleteOutlined,
-  EditOutlined,
   HomeOutlined,
-  FilePdfOutlined,
 } from '@ant-design/icons';
 import { apiClient } from '@/lib/api-client';
 import { downloadDecisionFile } from '@/utils/downloadDecisionFile';
@@ -55,20 +47,16 @@ interface RewardRecord {
   file_quyet_dinh_cstdtq?: string;
 }
 
-export default function AnnualRewardsPage() {
+export default function ManagerAnnualRewardsPage() {
   const params = useParams();
   const personnelId = params?.id as string;
   const { theme } = useTheme();
-  const [form] = Form.useForm();
 
   const [loading, setLoading] = useState(true);
   const [personnel, setPersonnel] = useState<any>(null);
   const [rewards, setRewards] = useState<RewardRecord[]>([]);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingReward, setEditingReward] = useState<any>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -95,58 +83,21 @@ export default function AnnualRewardsPage() {
     }
   }
 
-  const handleOpenDialog = (reward?: any) => {
-    if (reward) {
-      setEditingReward(reward);
-      form.setFieldsValue({
-        nam: reward.nam?.toString() || new Date().getFullYear().toString(),
-        danh_hieu: reward.danh_hieu || '',
-      });
-    } else {
-      setEditingReward(null);
-      form.setFieldsValue({
-        nam: new Date().getFullYear().toString(),
-        danh_hieu: '',
-      });
-    }
-    setDialogOpen(true);
-  };
-
-  const handleCloseDialog = () => {
-    setDialogOpen(false);
-    setEditingReward(null);
-    form.resetFields();
-  };
-
-  const onSubmit = async (values: any) => {
+  const handleDelete = async () => {
+    if (!deleteId) return;
     try {
-      setSubmitting(true);
-
-      const payload = {
-        nam: parseInt(values.nam),
-        danh_hieu: values.danh_hieu,
-        cap_bac: values.cap_bac || null,
-        chuc_vu: values.chuc_vu || null,
-        ghi_chu: values.ghi_chu || null,
-      };
-
-      const res = editingReward
-        ? await apiClient.updateAnnualReward(editingReward.id, payload)
-        : await apiClient.createAnnualReward(personnelId, payload);
+      const res = await apiClient.deleteAnnualReward(deleteId);
 
       if (res.success) {
-        message.success(
-          editingReward ? 'Cập nhật khen thưởng thành công' : 'Thêm khen thưởng thành công'
-        );
-        handleCloseDialog();
+        message.success('Xóa khen thưởng thành công');
+        setDeleteModalOpen(false);
+        setDeleteId(null);
         loadData();
       } else {
-        message.error(res.message || 'Có lỗi xảy ra');
+        message.error(res.message || 'Có lỗi xảy ra khi xóa');
       }
     } catch (error) {
-      message.error('Có lỗi xảy ra');
-    } finally {
-      setSubmitting(false);
+      message.error('Có lỗi xảy ra khi xóa');
     }
   };
 
@@ -409,11 +360,6 @@ export default function AnnualRewardsPage() {
               </Paragraph>
             )}
           </div>
-          <Link href={`/manager/proposals/create`}>
-            <Button type="primary" icon={<PlusOutlined />}>
-              Thêm khen thưởng
-            </Button>
-          </Link>
         </div>
 
         {/* Table */}
@@ -438,6 +384,24 @@ export default function AnnualRewardsPage() {
             />
           </Card>
         )}
+
+        {/* Delete Confirmation Modal */}
+        <Modal
+          title="Xác nhận xóa"
+          open={deleteModalOpen}
+          onOk={handleDelete}
+          onCancel={() => {
+            setDeleteModalOpen(false);
+            setDeleteId(null);
+          }}
+          okText="Xóa"
+          cancelText="Hủy"
+          okButtonProps={{ danger: true }}
+        >
+          <Paragraph>
+            Bạn có chắc chắn muốn xóa khen thưởng này? Hành động này không thể hoàn tác.
+          </Paragraph>
+        </Modal>
       </div>
     </ConfigProvider>
   );
