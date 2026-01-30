@@ -13,6 +13,14 @@ function isPreviewable(filename: string): boolean {
 }
 
 /**
+ * Kiểm tra file có phải PDF không
+ */
+function isPdf(filename: string): boolean {
+  const ext = filename.split('.').pop()?.toLowerCase() || '';
+  return ext === 'pdf';
+}
+
+/**
  * Lấy MIME type từ extension
  */
 function getMimeType(filename: string): string {
@@ -48,11 +56,110 @@ function downloadBlob(blob: Blob, filename: string): void {
 }
 
 /**
+ * Mở PDF viewer với toolbar hiển thị tên file
+ */
+function openPdfWithViewer(blobUrl: string, filename: string): void {
+  const newWindow = window.open('', '_blank');
+  if (newWindow) {
+    newWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>${filename}</title>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e;
+          }
+          .toolbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: #16213e;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+          }
+          .filename {
+            color: #fff;
+            font-size: 14px;
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 60%;
+          }
+          .btn {
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #1890ff;
+            transition: background 0.2s;
+          }
+          .btn:hover { background: #40a9ff; }
+          .pdf-container {
+            position: fixed;
+            top: 50px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+          }
+          embed, iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="toolbar">
+          <span class="filename">📄 ${filename}</span>
+          <button class="btn" onclick="downloadFile()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Tải về
+          </button>
+        </div>
+        <div class="pdf-container">
+          <embed src="${blobUrl}" type="application/pdf" />
+        </div>
+        <script>
+          function downloadFile() {
+            const link = document.createElement('a');
+            link.href = '${blobUrl}';
+            link.download = '${filename}';
+            link.click();
+          }
+        </script>
+      </body>
+      </html>
+    `);
+    newWindow.document.close();
+  } else {
+    message.error('Không thể mở cửa sổ mới. Vui lòng cho phép popup.');
+  }
+}
+
+/**
  * Mở file trong tab mới hoặc tải về tùy loại file
- * - PDF/Image: Mở xem trước trong tab mới
+ * - PDF: Mở viewer với toolbar hiển thị tên file
+ * - Image: Mở trực tiếp
  * - DOC/DOCX/khác: Tải về với tên file đúng
- * @param filePath - Đường dẫn file (có thể là full path hoặc chỉ filename)
- * @param customFilename - Tên file tùy chỉnh
  */
 export async function previewFile(filePath: string, customFilename?: string): Promise<void> {
   try {
@@ -71,15 +178,18 @@ export async function previewFile(filePath: string, customFilename?: string): Pr
 
     const mimeType = getMimeType(filename);
     const blob = new Blob([response.data], { type: mimeType });
+    const blobUrl = window.URL.createObjectURL(blob);
 
-    if (isPreviewable(filename)) {
-      // File có thể xem trước -> mở trong tab mới
-      const blobUrl = window.URL.createObjectURL(blob);
+    if (isPdf(filename)) {
+      // PDF -> mở viewer với toolbar
+      openPdfWithViewer(blobUrl, filename);
+    } else if (isPreviewable(filename)) {
+      // Image -> mở trực tiếp
       window.open(blobUrl, '_blank');
     } else {
-      // File không thể xem trước -> tải về
+      // Không xem trước được -> tải về với tên đúng
       downloadBlob(blob, filename);
-      message.success('Đã tải file');
+      message.success(`Đã tải file: ${filename}`);
     }
   } catch (error) {
     message.error('Lỗi khi mở file');
@@ -89,7 +199,6 @@ export async function previewFile(filePath: string, customFilename?: string): Pr
 
 /**
  * Mở xem trước file quyết định từ số quyết định
- * @param soQuyetDinh - Số quyết định
  */
 export async function previewDecisionFile(soQuyetDinh: string): Promise<void> {
   try {
@@ -101,11 +210,12 @@ export async function previewDecisionFile(soQuyetDinh: string): Promise<void> {
 
     const blob = new Blob([response.data], { type: 'application/pdf' });
     const blobUrl = window.URL.createObjectURL(blob);
+    const filename = `${soQuyetDinh}.pdf`;
 
     message.destroy('preview');
 
-    // Mở blob URL trực tiếp
-    window.open(blobUrl, '_blank');
+    // Mở viewer với toolbar
+    openPdfWithViewer(blobUrl, filename);
   } catch (error: any) {
     console.error('Error previewing decision file:', error);
 
@@ -127,8 +237,6 @@ export async function previewDecisionFile(soQuyetDinh: string): Promise<void> {
 
 /**
  * Mở xem trước hoặc tải file đính kèm với API path tùy chỉnh
- * @param apiPath - Đường dẫn API để lấy file
- * @param filename - Tên file hiển thị
  */
 export async function previewFileWithApi(apiPath: string, filename: string): Promise<void> {
   try {
@@ -138,15 +246,18 @@ export async function previewFileWithApi(apiPath: string, filename: string): Pro
 
     const mimeType = getMimeType(filename);
     const blob = new Blob([response.data], { type: mimeType });
+    const blobUrl = window.URL.createObjectURL(blob);
 
-    if (isPreviewable(filename)) {
-      // File có thể xem trước -> mở trong tab mới
-      const blobUrl = window.URL.createObjectURL(blob);
+    if (isPdf(filename)) {
+      // PDF -> mở viewer với toolbar
+      openPdfWithViewer(blobUrl, filename);
+    } else if (isPreviewable(filename)) {
+      // Image -> mở trực tiếp
       window.open(blobUrl, '_blank');
     } else {
-      // File không thể xem trước -> tải về
+      // Không xem trước được -> tải về với tên đúng
       downloadBlob(blob, filename);
-      message.success('Đã tải file');
+      message.success(`Đã tải file: ${filename}`);
     }
   } catch (error) {
     message.error('Lỗi khi mở file');

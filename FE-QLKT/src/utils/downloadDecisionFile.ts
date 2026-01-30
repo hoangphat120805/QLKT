@@ -56,10 +56,6 @@ export async function downloadDecisionFile(soQuyetDinh: string): Promise<void> {
               white-space: nowrap;
               max-width: 60%;
             }
-            .btn-group {
-              display: flex;
-              gap: 8px;
-            }
             .btn {
               color: #fff;
               border: none;
@@ -70,16 +66,10 @@ export async function downloadDecisionFile(soQuyetDinh: string): Promise<void> {
               display: flex;
               align-items: center;
               gap: 6px;
+              background: #1890ff;
               transition: background 0.2s;
             }
-            .download-btn {
-              background: #1890ff;
-            }
-            .download-btn:hover { background: #40a9ff; }
-            .print-btn {
-              background: #52c41a;
-            }
-            .print-btn:hover { background: #73d13d; }
+            .btn:hover { background: #40a9ff; }
             .pdf-container {
               position: fixed;
               top: 50px;
@@ -97,24 +87,14 @@ export async function downloadDecisionFile(soQuyetDinh: string): Promise<void> {
         <body>
           <div class="toolbar">
             <span class="filename">📄 ${filename}</span>
-            <div class="btn-group">
-              <button class="btn print-btn" onclick="window.print()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                  <rect x="6" y="14" width="12" height="8"></rect>
-                </svg>
-                In
-              </button>
-              <button class="btn download-btn" onclick="downloadFile()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                  <polyline points="7 10 12 15 17 10"></polyline>
-                  <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-                Tải về
-              </button>
-            </div>
+            <button class="btn" onclick="downloadFile()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Tải về
+            </button>
           </div>
           <div class="pdf-container">
             <embed src="${blobUrl}" type="application/pdf" />
