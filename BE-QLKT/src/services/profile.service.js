@@ -680,10 +680,10 @@ class ProfileService {
       let du_dieu_kien_bkbqp = false;
       let du_dieu_kien_cstdtq = false;
       let du_dieu_kien_bkttcp = false;
-      // Chỉ lưu CSTDCS (Chiến sĩ thi đua cơ sở) vào JSON tổng CSTDCS
-      // Các danh hiệu khác (CSTT, BKBQP, CSTD TQ, BKTTCP...) được xử lý riêng
+      // Lưu danh hiệu vào JSON - bao gồm CSTDCS và các năm có BKBQP/CSTDTQ/BKTTCP
+      // Điều này đảm bảo hiển thị được các năm có CSTDTQ mà không có CSTDCS
       const tong_cstdcs_json = danhHieuList
-        .filter(dh => dh.danh_hieu === 'CSTDCS')
+        .filter(dh => dh.danh_hieu === 'CSTDCS' || dh.nhan_bkbqp || dh.nhan_cstdtq || dh.nhan_bkttcp)
         .map(dh => ({
           nam: dh.nam,
           danh_hieu: dh.danh_hieu,

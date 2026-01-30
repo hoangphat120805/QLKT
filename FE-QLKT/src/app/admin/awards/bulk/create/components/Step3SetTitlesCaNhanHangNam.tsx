@@ -500,7 +500,7 @@ export default function Step3SetTitlesCaNhanHangNam({
           </div>
           <div>
             <Text type={allTitlesSet ? 'success' : 'warning'}>
-              Đã set danh hiệu:{' '}
+              Đã thêm danh hiệu:{' '}
               <strong>
                 {titleData.filter(d => selectedPersonnelIds.includes(d.personnel_id)).length}/
                 {personnel.length}

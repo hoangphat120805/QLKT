@@ -436,7 +436,7 @@ export default function Step3SetTitlesCongHien({
             </Text>
             <br />
             <Text type={allTitlesSet ? 'success' : 'warning'}>
-              Đã set danh hiệu:{' '}
+              Đã thêm danh hiệu:{' '}
               <strong>
                 {titleData.filter(d => d.danh_hieu).length}/{personnel.length}
               </strong>

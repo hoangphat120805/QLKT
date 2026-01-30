@@ -302,6 +302,38 @@ export default function Step2SelectPersonnelNienHan({
     return false;
   };
 
+  // Hàm lấy priority sắp xếp: 0=đủ điều kiện, 1=đang chờ duyệt, 2=đã nhận đủ, 3=không đủ điều kiện
+  const getSortPriority = (record: Personnel): number => {
+    // Kiểm tra giới tính
+    const missingGender = !record.gioi_tinh || (record.gioi_tinh !== 'NAM' && record.gioi_tinh !== 'NU');
+    if (missingGender) return 3;
+
+    // Kiểm tra ngày nhập ngũ
+    if (!record.ngay_nhap_ngu) return 3;
+
+    const serviceProfile = serviceProfilesMap[record.id];
+    const hasHangNhat = serviceProfile?.hccsvv_hang_nhat_status === 'DA_NHAN';
+
+    // Đã nhận đủ tất cả hạng
+    if (hasHangNhat) return 2;
+
+    // Kiểm tra có đang chờ duyệt không (PENDING status)
+    const pendingBa = serviceProfile?.hccsvv_hang_ba_status === 'DANG_CHO_DUYET';
+    const pendingNhi = serviceProfile?.hccsvv_hang_nhi_status === 'DANG_CHO_DUYET';
+    const pendingNhat = serviceProfile?.hccsvv_hang_nhat_status === 'DANG_CHO_DUYET';
+    if (pendingBa || pendingNhi || pendingNhat) return 1;
+
+    // Kiểm tra đủ điều kiện đề xuất hạng tiếp theo
+    if (canProposeNextRank(record)) return 0;
+
+    return 3; // Không đủ điều kiện
+  };
+
+  // Sắp xếp: đủ điều kiện → đang chờ duyệt → đã nhận đủ → không đủ điều kiện
+  const sortedPersonnel = [...filteredPersonnel].sort((a, b) => {
+    return getSortPriority(a) - getSortPriority(b);
+  });
+
   const columns: ColumnsType<Personnel> = [
     {
       title: 'STT',
@@ -962,7 +994,7 @@ export default function Step2SelectPersonnelNienHan({
 
       <Table
         columns={columns}
-        dataSource={filteredPersonnel}
+        dataSource={sortedPersonnel}
         rowKey="id"
         rowSelection={rowSelection}
         loading={loading || checkingProfiles}

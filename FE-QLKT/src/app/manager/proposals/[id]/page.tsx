@@ -20,6 +20,7 @@ import {
   HomeOutlined,
   ArrowLeftOutlined,
   DownloadOutlined,
+  EyeOutlined,
   ClockCircleOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
@@ -31,8 +32,8 @@ import { format } from 'date-fns';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
 import { downloadDecisionFile } from '@/utils/downloadDecisionFile';
+import { previewFileWithApi } from '@/utils/filePreview';
 import { useTheme } from '@/components/theme-provider';
-import axiosInstance from '@/utils/axiosInstance';
 import styles from './proposal-detail.module.css';
 
 const { Title, Text } = Typography;
@@ -586,38 +587,16 @@ export default function ManagerProposalDetailPage() {
                   </div>
                   <Button
                     type="primary"
-                    icon={<DownloadOutlined />}
-                    onClick={async () => {
-                      try {
-                        // Sử dụng axiosInstance để tự động gửi token authentication
-                        const response = await axiosInstance.get(
-                          `/api/proposals/uploads/${file.filename}`,
-                          {
-                            responseType: 'blob', // Nhận file dưới dạng blob
-                          }
-                        );
-
-                        const blob = response.data;
-
-                        // Create download link with original filename
-                        const downloadUrl = window.URL.createObjectURL(blob);
-                        const link = document.createElement('a');
-                        link.href = downloadUrl;
-                        link.download = file.originalName; // Sử dụng tên file gốc
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        window.URL.revokeObjectURL(downloadUrl);
-
-                        message.success('Tải file thành công');
-                      } catch (error) {
-                        message.error('Lỗi khi tải file');
-                        console.error('Download error:', error);
-                      }
+                    icon={<EyeOutlined />}
+                    onClick={() => {
+                      previewFileWithApi(
+                        `/api/proposals/uploads/${file.filename}`,
+                        file.originalName
+                      );
                     }}
                     className={styles.downloadButton}
                   >
-                    Tải xuống
+                    Xem file
                   </Button>
                 </div>
               ))}

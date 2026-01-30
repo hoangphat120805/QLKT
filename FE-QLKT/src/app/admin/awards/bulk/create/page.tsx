@@ -151,7 +151,7 @@ export default function BulkAddAwardsPage() {
     return [
       { title: 'Chọn loại', icon: <TrophyOutlined /> },
       { title: step2Title, icon: <TeamOutlined /> },
-      { title: 'Set danh hiệu', icon: <CheckCircleOutlined /> },
+      { title: 'Thêm danh hiệu', icon: <CheckCircleOutlined /> },
       { title: 'Xem lại thông tin', icon: <FileTextOutlined /> },
       { title: 'Thêm số quyết định', icon: <FileTextOutlined /> },
       { title: 'Thêm khen thưởng', icon: <CheckCircleOutlined /> },

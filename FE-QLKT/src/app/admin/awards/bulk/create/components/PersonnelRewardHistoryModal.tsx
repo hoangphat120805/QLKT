@@ -89,6 +89,7 @@ export default function PersonnelRewardHistoryModal({
       width: 200,
       align: 'center',
       render: text => {
+        if (!text) return <Text type="secondary">-</Text>;
         const map: Record<string, string> = {
           CSTDCS: 'Chiến sĩ thi đua cơ sở',
           CSTT: 'Chiến sĩ tiên tiến',

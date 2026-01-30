@@ -323,7 +323,7 @@ export default function Step3SetTitlesKNCVSNXD({
           Tổng số quân nhân: <strong>{personnel.length}</strong>
         </Text>
         <Text type={allTitlesSet ? 'success' : 'warning'}>
-          Đã set danh hiệu:{' '}
+          Đã thêm danh hiệu:{' '}
           <strong>
             {titleData.filter(d => d.danh_hieu).length}/{personnel.length}
           </strong>

@@ -261,6 +261,28 @@ export default function Step2SelectPersonnelHCQKQT({
     return { eligible: true };
   };
 
+  // Hàm lấy priority sắp xếp: 0=đủ điều kiện, 1=đang chờ duyệt, 2=đã nhận, 3=không đủ điều kiện
+  const getSortPriority = (record: Personnel): number => {
+    const alreadyReceived = alreadyReceivedMap[record.id];
+    const reason = receivedReasonMap[record.id] || '';
+
+    if (alreadyReceived) {
+      // Phân biệt đang chờ duyệt và đã nhận dựa vào reason
+      if (reason.includes('chờ duyệt') || reason.includes('Đang chờ')) return 1; // Đang chờ duyệt
+      return 2; // Đã nhận
+    }
+
+    const eligibility = checkEligibleForHCQKQT(record);
+    if (eligibility.eligible) return 0; // Đủ điều kiện
+
+    return 3; // Không đủ điều kiện
+  };
+
+  // Sắp xếp: đủ điều kiện → đang chờ duyệt → đã nhận → không đủ điều kiện
+  const sortedPersonnel = [...filteredPersonnel].sort((a, b) => {
+    return getSortPriority(a) - getSortPriority(b);
+  });
+
   const columns: ColumnsType<Personnel> = [
     {
       title: 'STT',
@@ -789,7 +811,7 @@ export default function Step2SelectPersonnelHCQKQT({
 
       <Table
         columns={columns}
-        dataSource={filteredPersonnel}
+        dataSource={sortedPersonnel}
         rowKey="id"
         rowSelection={rowSelection}
         loading={loading || checkingReceived}

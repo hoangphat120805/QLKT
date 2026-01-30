@@ -155,7 +155,7 @@ export default function CreateProposalPage() {
     return [
       { title: 'Chọn loại', icon: <TrophyOutlined /> },
       { title: step2Title, icon: <TeamOutlined /> },
-      { title: 'Set danh hiệu', icon: <CheckCircleOutlined /> },
+      { title: 'Thêm danh hiệu', icon: <CheckCircleOutlined /> },
       { title: 'Upload file', icon: <UploadOutlined /> },
       { title: 'Xem lại & Gửi', icon: <CheckCircleOutlined /> },
     ];

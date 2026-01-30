@@ -286,6 +286,32 @@ export default function Step2SelectPersonnelCongHien({
     return matchesSearch && matchesUnit;
   });
 
+  // Hàm lấy priority sắp xếp: 0=đủ điều kiện, 1=đang chờ duyệt, 2=đã nhận, 3=không đủ điều kiện
+  const getSortPriority = (record: Personnel): number => {
+    const ineligible = ineligiblePersonnel.find(i => i.personnelId === record.id);
+
+    // Kiểm tra đã nhận hoặc đang chờ duyệt
+    if (ineligible) {
+      if (ineligible.status === 'PENDING') return 1; // Đang chờ duyệt
+      if (ineligible.status === 'APPROVED') return 2; // Đã nhận
+    }
+
+    // Kiểm tra giới tính
+    const missingGender = !record.gioi_tinh || (record.gioi_tinh !== 'NAM' && record.gioi_tinh !== 'NU');
+    if (missingGender) return 3;
+
+    // Kiểm tra đủ điều kiện
+    const highestAward = getHighestEligibleAward(record.id);
+    if (highestAward) return 0; // Đủ điều kiện
+
+    return 3; // Không đủ điều kiện
+  };
+
+  // Sắp xếp: đủ điều kiện → đang chờ duyệt → đã nhận → không đủ điều kiện
+  const sortedPersonnel = [...filteredPersonnel].sort((a, b) => {
+    return getSortPriority(a) - getSortPriority(b);
+  });
+
   const columns: ColumnsType<Personnel> = [
     {
       title: 'STT',
@@ -903,7 +929,7 @@ export default function Step2SelectPersonnelCongHien({
 
       <Table
         columns={columns}
-        dataSource={filteredPersonnel}
+        dataSource={sortedPersonnel}
         rowKey="id"
         rowSelection={rowSelection}
         loading={loading || checkingEligibility}

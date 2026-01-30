@@ -434,7 +434,7 @@ export default function Step3SetTitlesDonViHangNam({
             </Text>
             <br />
             <Text type={allTitlesSet ? 'success' : 'warning'}>
-              Đã set danh hiệu:{' '}
+              Đã thêm danh hiệu:{' '}
               <strong>
                 {titleData.filter(d => d.danh_hieu).length}/{units.length}
               </strong>
