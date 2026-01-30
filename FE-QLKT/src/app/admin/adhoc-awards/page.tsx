@@ -46,6 +46,7 @@ import {
 import type { TableColumnsType, UploadFile } from 'antd';
 import { apiClient } from '@/lib/api-client';
 import { downloadDecisionFile } from '@/utils/downloadDecisionFile';
+import { previewFileWithApi } from '@/utils/filePreview';
 import axiosInstance from '@/utils/axiosInstance';
 
 
@@ -617,24 +618,8 @@ export default function AdhocAwardsPage() {
     setFilesModalData([]);
   };
 
-  const handleDownloadFile = async (file: FileInfo) => {
-    try {
-      const response = await axiosInstance.get(`/api/adhoc-awards/uploads/${file.filename}`, {
-        responseType: 'blob',
-      });
-      const blob = response.data;
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = file.originalName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      message.success('Tải file thành công');
-    } catch {
-      message.error('Lỗi khi tải file');
-    }
+  const handlePreviewFile = async (file: FileInfo) => {
+    await previewFileWithApi(`/api/adhoc-awards/uploads/${file.filename}`, file.originalName);
   };
 
   // =============================================================================
@@ -2059,9 +2044,9 @@ export default function AdhocAwardsPage() {
                           key="download"
                           type="link"
                           icon={<DownloadOutlined />}
-                          onClick={() => handleDownloadFile(file)}
+                          onClick={() => handlePreviewFile(file)}
                         >
-                          Tải xuống
+                          Xem file
                         </Button>,
                       ]}
                     >
@@ -2105,7 +2090,7 @@ export default function AdhocAwardsPage() {
                   key="download"
                   type="primary"
                   icon={<DownloadOutlined />}
-                  onClick={() => handleDownloadFile(file)}
+                  onClick={() => handlePreviewFile(file)}
                 >
                   Tải xuống
                 </Button>,

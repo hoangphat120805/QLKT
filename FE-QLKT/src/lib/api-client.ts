@@ -853,6 +853,24 @@ export const apiClient = {
     }
   },
 
+  // Create HCCSVV directly (Super Admin only - for past awards)
+  async createHCCSVVDirect(body: {
+    quan_nhan_id: string;
+    danh_hieu: string;
+    nam: number;
+    cap_bac?: string;
+    chuc_vu?: string;
+    so_quyet_dinh?: string;
+    ghi_chu?: string;
+  }): Promise<ApiResponse> {
+    try {
+      const res = await axiosInstance.post('/api/hccsvv', body);
+      return { success: true, data: res.data?.data || res.data, message: res.data?.message };
+    } catch (e: any) {
+      return { success: false, message: e?.response?.data?.message || e.message };
+    }
+  },
+
   // Contribution Awards (Huân chương Bảo vệ Tổ quốc)
   async getContributionAwardsTemplate(): Promise<Blob> {
     try {

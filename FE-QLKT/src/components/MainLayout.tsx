@@ -223,6 +223,11 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
           icon: <TeamOutlined />,
           label: <Link href="/super-admin/accounts">Quản lý Tài khoản</Link>,
         },
+        // {
+        //   key: 'add-awards',
+        //   icon: <TrophyOutlined />,
+        //   label: <Link href="/super-admin/add-awards">Thêm khen thưởng</Link>,
+        // },
         {
           key: 'system-logs',
           icon: <FileTextOutlined />,
@@ -409,6 +414,9 @@ export default function MainLayout({ children, role = 'ADMIN' }: MainLayoutProps
     // Xử lý cho SUPER_ADMIN
     if (pathname.startsWith('/super-admin/accounts')) {
       return 'accounts';
+    }
+    if (pathname.startsWith('/super-admin/add-awards')) {
+      return 'add-awards';
     }
     if (pathname.startsWith('/super-admin/system-logs')) {
       return 'system-logs';

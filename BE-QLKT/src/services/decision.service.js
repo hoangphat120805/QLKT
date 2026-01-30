@@ -209,7 +209,7 @@ class DecisionService {
       // Kiểm tra file có tồn tại không
       // file_path có thể là: "uploads/decisions/filename.pdf" hoặc đường dẫn đầy đủ
       let filePath = decision.file_path;
-      
+
       // Nếu là đường dẫn tương đối, tạo đường dẫn đầy đủ
       if (!path.isAbsolute(filePath)) {
         filePath = path.join(__dirname, '..', '..', filePath);
@@ -219,7 +219,7 @@ class DecisionService {
         await fs.access(filePath);
         // File tồn tại, lấy filename từ path
         const filename = path.basename(filePath);
-        
+
         return {
           success: true,
           filePath: filePath,
@@ -231,7 +231,7 @@ class DecisionService {
           success: false,
           filePath: null,
           filename: null,
-          error: 'File không tồn tại trên server',
+          error: 'File không tồn tại trong hệ thống',
         };
       }
     } catch (error) {
@@ -257,9 +257,7 @@ class DecisionService {
       }
 
       // Lọc các số quyết định hợp lệ
-      const validSoQDs = soQuyetDinhs
-        .filter((sq) => sq && sq.trim() !== '')
-        .map((sq) => sq.trim());
+      const validSoQDs = soQuyetDinhs.filter(sq => sq && sq.trim() !== '').map(sq => sq.trim());
 
       if (validSoQDs.length === 0) {
         return {};
@@ -276,13 +274,13 @@ class DecisionService {
 
       // Tạo map từ số quyết định -> decision
       const decisionMap = {};
-      decisions.forEach((d) => {
+      decisions.forEach(d => {
         decisionMap[d.so_quyet_dinh] = d;
       });
 
       // Tạo kết quả cho mỗi số quyết định
       const result = {};
-      validSoQDs.forEach((soQD) => {
+      validSoQDs.forEach(soQD => {
         const decision = decisionMap[soQD];
         if (!decision) {
           result[soQD] = {
@@ -320,8 +318,7 @@ class DecisionService {
    */
   async createDecision(data) {
     try {
-      const { so_quyet_dinh, nam, ngay_ky, nguoi_ky, file_path, loai_khen_thuong, ghi_chu } =
-        data;
+      const { so_quyet_dinh, nam, ngay_ky, nguoi_ky, file_path, loai_khen_thuong, ghi_chu } = data;
 
       // Kiểm tra số quyết định đã tồn tại chưa
       const existingDecision = await prisma.fileQuyetDinh.findUnique({
@@ -372,8 +369,7 @@ class DecisionService {
         throw new Error('Quyết định không tồn tại');
       }
 
-      const { so_quyet_dinh, nam, ngay_ky, nguoi_ky, file_path, loai_khen_thuong, ghi_chu } =
-        data;
+      const { so_quyet_dinh, nam, ngay_ky, nguoi_ky, file_path, loai_khen_thuong, ghi_chu } = data;
 
       // Nếu thay đổi số quyết định, kiểm tra trùng
       if (so_quyet_dinh && so_quyet_dinh !== existingDecision.so_quyet_dinh) {
@@ -452,7 +448,7 @@ class DecisionService {
         },
       });
 
-      return years.map((y) => y.nam);
+      return years.map(y => y.nam);
     } catch (error) {
       throw error;
     }
@@ -475,9 +471,7 @@ class DecisionService {
         },
       });
 
-      return types
-        .map((t) => t.loai_khen_thuong)
-        .filter((t) => t !== null);
+      return types.map(t => t.loai_khen_thuong).filter(t => t !== null);
     } catch (error) {
       throw error;
     }

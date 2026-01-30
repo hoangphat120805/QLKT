@@ -73,6 +73,24 @@ router.get(
 );
 
 /**
+ * @route   POST /api/hccsvv
+ * @desc    Thêm khen thưởng HCCSVV trực tiếp (không cần tính điều kiện)
+ * @access  SUPER_ADMIN
+ */
+router.post(
+  '/',
+  verifyToken,
+  checkRole(['SUPER_ADMIN']),
+  auditLog({
+    action: 'CREATE',
+    resource: 'hccsvv',
+    getDescription: getLogDescription('hccsvv', 'CREATE'),
+    getResourceId: (req, res) => res.locals.createdId || null,
+  }),
+  hccsvvController.createDirect
+);
+
+/**
  * @route   DELETE /api/hccsvv/:id
  * @desc    Xóa khen thưởng HCCSVV (không xóa đề xuất)
  * @access  ADMIN

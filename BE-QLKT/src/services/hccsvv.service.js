@@ -453,6 +453,88 @@ class HCCSVVService {
   }
 
   /**
+   * Create HCCSVV award directly (without checking eligibility)
+   * Used by Super Admin to add past awards
+   * @param {Object} data - Award data
+   * @param {string} adminUsername - Username of admin creating the award
+   * @returns {Promise<Object>}
+   */
+  async createDirect(data, adminUsername = 'SuperAdmin') {
+    const { quan_nhan_id, danh_hieu, nam, cap_bac, chuc_vu, so_quyet_dinh, ghi_chu } = data;
+
+    // Validate danh_hieu
+    const validDanhHieu = ['HCCSVV_HANG_BA', 'HCCSVV_HANG_NHI', 'HCCSVV_HANG_NHAT'];
+    if (!validDanhHieu.includes(danh_hieu)) {
+      throw new Error(
+        `Danh hiệu không hợp lệ. Chỉ chấp nhận: ${validDanhHieu.join(', ')}`
+      );
+    }
+
+    // Check if personnel exists
+    const personnel = await prisma.quanNhan.findUnique({
+      where: { id: quan_nhan_id },
+    });
+
+    if (!personnel) {
+      throw new Error('Không tìm thấy quân nhân');
+    }
+
+    // Check if already exists (unique constraint: quan_nhan_id + danh_hieu)
+    const existing = await prisma.khenThuongHCCSVV.findUnique({
+      where: {
+        quan_nhan_id_danh_hieu: {
+          quan_nhan_id: quan_nhan_id,
+          danh_hieu: danh_hieu,
+        },
+      },
+    });
+
+    if (existing) {
+      throw new Error(
+        `Quân nhân ${personnel.ho_ten} đã có ${getDanhHieuName(danh_hieu)}`
+      );
+    }
+
+    // Create the award
+    const createdRecord = await prisma.khenThuongHCCSVV.create({
+      data: {
+        quan_nhan_id,
+        danh_hieu,
+        nam,
+        cap_bac: cap_bac || personnel.cap_bac,
+        chuc_vu: chuc_vu,
+        so_quyet_dinh: so_quyet_dinh,
+        ghi_chu: ghi_chu,
+      },
+      include: {
+        QuanNhan: {
+          select: {
+            ho_ten: true,
+            cccd: true,
+            CoQuanDonVi: { select: { ten_don_vi: true } },
+            DonViTrucThuoc: { select: { ten_don_vi: true } },
+          },
+        },
+      },
+    });
+
+    // Recalculate tenure profile
+    try {
+      await profileService.recalculateTenureProfile(quan_nhan_id);
+      console.log(`✅ Auto-recalculated tenure profile for personnel ${quan_nhan_id}`);
+    } catch (recalcError) {
+      console.error(
+        `⚠️ Failed to auto-recalculate tenure profile for personnel ${quan_nhan_id}:`,
+        recalcError.message
+      );
+    }
+
+    console.log(`✅ SuperAdmin ${adminUsername} created HCCSVV award for ${personnel.ho_ten}`);
+
+    return createdRecord;
+  }
+
+  /**
    * Delete HCCSVV award
    * @param {string} id - Award ID
    * @param {string} adminUsername - Username của admin thực hiện xóa

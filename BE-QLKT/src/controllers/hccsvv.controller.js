@@ -187,6 +187,50 @@ class HCCSVVController {
   }
 
   /**
+   * POST /api/hccsvv
+   * Thêm khen thưởng HCCSVV trực tiếp (không cần tính điều kiện)
+   */
+  async createDirect(req, res) {
+    try {
+      const { quan_nhan_id, danh_hieu, nam, cap_bac, chuc_vu, so_quyet_dinh, ghi_chu } = req.body;
+      const adminUsername = req.user?.username || 'SuperAdmin';
+
+      // Validate required fields
+      if (!quan_nhan_id || !danh_hieu || !nam) {
+        return res.status(400).json({
+          success: false,
+          message: 'Thiếu thông tin bắt buộc: quan_nhan_id, danh_hieu, nam',
+        });
+      }
+
+      const result = await hccsvvService.createDirect({
+        quan_nhan_id,
+        danh_hieu,
+        nam: parseInt(nam),
+        cap_bac,
+        chuc_vu,
+        so_quyet_dinh,
+        ghi_chu,
+      }, adminUsername);
+
+      // Save created ID for audit log
+      res.locals.createdId = result.id;
+
+      return res.status(201).json({
+        success: true,
+        message: 'Thêm khen thưởng HCCSVV thành công',
+        data: result,
+      });
+    } catch (error) {
+      console.error('Create HCCSVV direct error:', error);
+      return res.status(400).json({
+        success: false,
+        message: error.message || 'Thêm khen thưởng thất bại',
+      });
+    }
+  }
+
+  /**
    * DELETE /api/hccsvv/:id
    * Xóa khen thưởng HCCSVV (không xóa đề xuất)
    */

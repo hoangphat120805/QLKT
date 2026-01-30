@@ -3,7 +3,7 @@
 import { Modal, Button, Descriptions, Tabs, Table, Tag, Typography, message } from 'antd';
 import { HistoryOutlined, DownloadOutlined, FileTextOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import axiosInstance from '@/utils/axiosInstance';
+import { previewFileWithApi } from '@/utils/filePreview';
 import { formatDate } from '@/lib/utils';
 
 const { Text } = Typography;
@@ -60,35 +60,18 @@ export default function PersonnelRewardHistoryModal({
 
   const hasData = tongCstdcs.length > 0 || tongNckh.length > 0;
 
-  // Hàm tải file quyết định
-  const handleDownloadFile = async (filePath: string, soQuyetDinh: string) => {
-    try {
-      if (!filePath) {
-        message.warning('Không có file quyết định');
-        return;
-      }
-
-      // Extract filename from path (uploads/decisions/filename.pdf -> filename.pdf)
-      const filename = filePath.split('/').pop() || 'quyet-dinh.pdf';
-
-      const response = await axiosInstance.get(`/api/annual-rewards/decision-files/${filename}`, {
-        responseType: 'blob',
-      });
-
-      const blob = response.data;
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${soQuyetDinh || 'quyet-dinh'}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      message.success('Tải file thành công');
-    } catch (error: any) {
-      console.error('Download error:', error);
-      message.error('Không thể tải file quyết định');
+  // Hàm xem file quyết định
+  const handlePreviewFile = async (filePath: string, soQuyetDinh: string) => {
+    if (!filePath) {
+      message.warning('Không có file quyết định');
+      return;
     }
+    // Extract filename from path (uploads/decisions/filename.pdf -> filename.pdf)
+    const filename = filePath.split('/').pop() || 'quyet-dinh.pdf';
+    await previewFileWithApi(
+      `/api/annual-rewards/decision-files/${filename}`,
+      `${soQuyetDinh || 'quyet-dinh'}.pdf`
+    );
   };
 
   const cstdcsColumns: ColumnsType<any> = [
@@ -143,7 +126,7 @@ export default function PersonnelRewardHistoryModal({
                   color: fileCSTDCS ? '#1890ff' : undefined,
                   textDecoration: fileCSTDCS ? 'underline' : 'none',
                 }}
-                onClick={() => fileCSTDCS && handleDownloadFile(fileCSTDCS, soQDCSTDCS)}
+                onClick={() => fileCSTDCS && handlePreviewFile(fileCSTDCS, soQDCSTDCS)}
               >
                 {danhHieu}: {soQDCSTDCS}
                 {fileCSTDCS && <DownloadOutlined style={{ marginLeft: '4px' }} />}
@@ -163,7 +146,7 @@ export default function PersonnelRewardHistoryModal({
                   color: fileBKBQP ? '#1890ff' : undefined,
                   textDecoration: fileBKBQP ? 'underline' : 'none',
                 }}
-                onClick={() => fileBKBQP && handleDownloadFile(fileBKBQP, soQDBKBQP)}
+                onClick={() => fileBKBQP && handlePreviewFile(fileBKBQP, soQDBKBQP)}
               >
                 BKBQP: {soQDBKBQP}
                 {fileBKBQP && <DownloadOutlined style={{ marginLeft: '4px' }} />}
@@ -183,7 +166,7 @@ export default function PersonnelRewardHistoryModal({
                   color: fileCSTDTQ ? '#1890ff' : undefined,
                   textDecoration: fileCSTDTQ ? 'underline' : 'none',
                 }}
-                onClick={() => fileCSTDTQ && handleDownloadFile(fileCSTDTQ, soQDCSTDTQ)}
+                onClick={() => fileCSTDTQ && handlePreviewFile(fileCSTDTQ, soQDCSTDTQ)}
               >
                 CSTDTQ: {soQDCSTDTQ}
                 {fileCSTDTQ && <DownloadOutlined style={{ marginLeft: '4px' }} />}
@@ -280,7 +263,7 @@ export default function PersonnelRewardHistoryModal({
                 justifyContent: 'center',
                 gap: '4px',
               }}
-              onClick={() => filePath && handleDownloadFile(filePath, soQD)}
+              onClick={() => filePath && handlePreviewFile(filePath, soQD)}
             >
               {soQD}
               {filePath && <DownloadOutlined />}

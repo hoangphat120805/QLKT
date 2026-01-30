@@ -28,12 +28,11 @@ import {
   EyeOutlined,
   SearchOutlined,
   FileTextOutlined,
-  DownloadOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import Link from 'next/link';
-import axiosInstance from '@/utils/axiosInstance';
 import { apiClient } from '@/lib/api-client';
+import { previewFile } from '@/utils/filePreview';
 import dayjs from 'dayjs';
 import DecisionModal from '@/components/DecisionModal';
 
@@ -180,26 +179,8 @@ export default function AdminDecisionsPage() {
     await fetchDecisions(newPagination);
   };
 
-  const handleDownloadFile = async (filePath: string) => {
-    try {
-      const filename = filePath.split('/').pop();
-      const response = await axiosInstance.get(`/api/proposals/uploads/${filename}`, {
-        responseType: 'blob',
-      });
-      const blob = response.data;
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename || 'quyet-dinh.pdf';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      message.success('Tải file thành công');
-    } catch (error) {
-      message.error('Lỗi khi tải file');
-      console.error('Download error:', error);
-    }
+  const handlePreviewFile = (filePath: string) => {
+    previewFile(filePath);
   };
 
   const columns: ColumnsType<Decision> = [
@@ -321,12 +302,12 @@ export default function AdminDecisionsPage() {
             {record.file_path && (
               <Button
                 type="link"
-                icon={<DownloadOutlined />}
-                onClick={() => handleDownloadFile(record.file_path!)}
+                icon={<FileTextOutlined />}
+                onClick={() => handlePreviewFile(record.file_path!)}
                 size="small"
                 style={{ padding: '0 4px', minWidth: '60px' }}
               >
-                Tải
+                Xem PDF
               </Button>
             )}
           </Space>
@@ -430,12 +411,12 @@ export default function AdminDecisionsPage() {
           </Button>,
           selectedDecision?.file_path && (
             <Button
-              key="download"
+              key="preview"
               type="primary"
-              icon={<DownloadOutlined />}
-              onClick={() => handleDownloadFile(selectedDecision!.file_path!)}
+              icon={<EyeOutlined />}
+              onClick={() => handlePreviewFile(selectedDecision!.file_path!)}
             >
-              Tải file PDF
+              Xem file PDF
             </Button>
           ),
         ]}
@@ -472,7 +453,7 @@ export default function AdminDecisionsPage() {
                 <Button
                   type="link"
                   icon={<FileTextOutlined />}
-                  onClick={() => handleDownloadFile(selectedDecision!.file_path!)}
+                  onClick={() => handlePreviewFile(selectedDecision!.file_path!)}
                 >
                   {selectedDecision.file_path.split('/').pop()}
                 </Button>

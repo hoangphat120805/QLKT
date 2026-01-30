@@ -39,8 +39,8 @@ import DecisionModal from '@/components/DecisionModal';
 import { format } from 'date-fns';
 import { apiClient } from '@/lib/api-client';
 import { downloadDecisionFile } from '@/utils/downloadDecisionFile';
+import { previewFileWithApi } from '@/utils/filePreview';
 import { useTheme } from '@/components/theme-provider';
-import axiosInstance from '@/utils/axiosInstance';
 import { getDanhHieuName } from '@/constants/danhHieu.constants';
 
 const { Title, Paragraph, Text } = Typography;
@@ -1450,35 +1450,15 @@ export default function ProposalDetailPage() {
                 </div>
                 <Button
                   type="link"
-                  icon={<DownloadOutlined />}
+                  icon={<FileTextOutlined />}
                   style={{ padding: '0 8px', borderRadius: '6px' }}
-                  onClick={async () => {
-                    try {
-                      const filename = file.filename;
-                      const response = await axiosInstance.get(
-                        `/api/proposals/uploads/${filename}`,
-                        {
-                          responseType: 'blob',
-                        }
-                      );
-                      const blob = response.data;
-                      const url = window.URL.createObjectURL(blob);
-                      const link = document.createElement('a');
-                      link.href = url;
-                      link.download =
-                        file.originalName || file.originalname || file.filename || 'download';
-                      document.body.appendChild(link);
-                      link.click();
-                      document.body.removeChild(link);
-                      window.URL.revokeObjectURL(url);
-                      message.success('Tải file thành công');
-                    } catch (error) {
-                      message.error('Lỗi khi tải file');
-                      console.error('Download error:', error);
-                    }
+                  onClick={() => {
+                    const filename = file.filename;
+                    const displayName = file.originalName || file.originalname || file.filename || 'document.pdf';
+                    previewFileWithApi(`/api/proposals/uploads/${filename}`, displayName);
                   }}
                 >
-                  Tải về
+                  Xem file
                 </Button>
               </div>
             ))}
